@@ -8,6 +8,10 @@
   },
   "author": "Wilkins White <ww@novadynamics.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DaxBot/node-canopen"
+  },
   "dependencies": {
     "ini": "^1.3.5",
     "mocha": "^5.2.0",
