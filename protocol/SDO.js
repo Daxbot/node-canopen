@@ -47,17 +47,19 @@ class SDO
 
     parse(msg)
     {
-        let error = 0;
-        let index = msg.data.readUInt16LE(1);
+        const command = msg.data[0];
+        const index = msg.data.readUInt16LE(1);
 
-        if(msg.data[0] == 0x80)
+        let error = 0;
+        if(command == 0x80)
             error = abortCodes[msg.data.readUInt32LE(4)];
 
-        return [index, error];
+        return [command, index, error];
     }
 
-    upload(section, subIndex)
+    upload(index, subIndex, timeout=1000)
     {
+        console.log("upload", index);
         return new Promise((resolve, reject)=>{
             resolve();
         });
@@ -65,6 +67,7 @@ class SDO
 
     download(index, subIndex, data, timeout=1000)
     {
+        console.log("download", index);
         return new Promise((resolve, reject)=>{
             let entry = this.device.get(index);
             if(entry == undefined)
@@ -79,13 +82,26 @@ class SDO
             if(subIndex != 0)
                 entry = entry[subindex];
 
+            const timer = setTimeout(()=>{ reject("SDO protocol timed out"); }, timeout);
+
             this.message.data[1] = (entry.index & 0xFF);
             this.message.data[2] = (entry.index >> 8);
             this.message.data[3] = subIndex;
 
-            let [value, size, raw] = this.device._parseRaw(entry.dataType, data)
+            const [value, size, raw] = this.device._parseRaw(entry.dataType, data)
+            let bytesSent = 0;
+            let toggle = 1;
 
-            if(size > 4)
+            if(size <= 4)
+            {
+                // Expedited transfer
+                this.message.data[0] = 0x23 | ((4-size) << 2);
+                for(let i = 0; i < size; i++)
+                    this.message.data[4+i] = raw[i];
+
+                bytesSent = size;
+            }
+            else
             {
                 // Segmented transfer
                 this.message.data[0] = 0x21;
@@ -94,29 +110,48 @@ class SDO
                 this.message.data[6] = size >> 16;
                 this.message.data[7] = size >> 24;
             }
-            else
+
+            const callback = ([command, index, error])=>
             {
-                // Expedited transfer
-                this.message.data[0] = 0x23 | ((4-size) << 2);
-                for(let i = 0; i < size; i++)
-                    this.message.data[4+i] = raw[i];
+                if(command == 0x80)
+                {
+                    clearTimeout(timer);
+                    this.device.removeListener("SDO", callback);
+                    reject(error);
+                }
+                else if((command == (0x20 | (toggle << 4)))
+                     || (command == 0x60 && index == entry.index))
+                {
+                    if(bytesSent < size)
+                    {
+                        let count = Math.min(7, (size - bytesSent));
+                        for(let i = 0; i < count; i++)
+                            this.message.data[i+1] = raw[i+bytesSent];
+
+                        for(let i = count; i < 7; i++)
+                            this.message.data[i+1] = 0;
+
+                        bytesSent += count;
+                        toggle ^= 1;
+
+                        this.message.data[0] = (toggle << 4) | (7-count) << 1;
+                        if(bytesSent == size)
+                            this.message.data[0] |= 1;
+
+                        this.device.channel.send(this.message);
+                    }
+                    else
+                    {
+                        clearTimeout(timer);
+                        this.device.removeListener("SDO", callback);
+                        entry.value = value;
+                        entry.size = size;
+                        entry.raw = raw;
+                        resolve();
+                    }
+                }
             }
-
-            const timer = setTimeout(()=>{ reject("SDO protocol timed out"); }, timeout);
-
-            this.device.once("SDO"+entry.index.toString(16), ()=>{
-                clearTimeout(timer);
-                entry.value = value;
-                entry.size = size;
-                entry.raw = raw;
-                resolve()
-            });
-
-            this.device.once("Abort"+entry.index.toString(16), (e)=>{
-                clearTimeout(timer);
-                reject(e)
-            });
-
+            this.device.on("SDO", callback);
             this.device.channel.send(this.message);
         });
     }

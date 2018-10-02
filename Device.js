@@ -154,10 +154,10 @@ class Device extends EventEmitter
 
     update(index, subIndex, value=null, timeout=500)
     {
-        if(value)
-            return this.SDO.download(index, subIndex, value, timeout);
-        else
+        if(value == null || value == undefined)
             return this.SDO.upload(index, subIndex, timeout);
+        else
+            return this.SDO.download(index, subIndex, value, timeout);
     }
 
     get(section)
@@ -179,9 +179,7 @@ class Device extends EventEmitter
         }
         if(msg.id == 0x580 + this.deviceId)
         {
-            let [index, error] = this.SDO.parse(msg);
-            if(error) this.emit("Abort"+index.toString(16), error);
-            else this.emit("SDO"+index.toString(16));
+            this.emit("SDO", this.SDO.parse(msg));
         }
         else if(msg.id == 0x180 + this.deviceId
              || msg.id == 0x280 + this.deviceId
