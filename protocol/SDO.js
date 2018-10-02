@@ -45,51 +45,118 @@ class SDO
         };
     }
 
-    parse(msg)
-    {
-        const command = msg.data[0];
-        const index = msg.data.readUInt16LE(1);
-
-        let error = 0;
-        if(command == 0x80)
-            error = abortCodes[msg.data.readUInt32LE(4)];
-
-        return [command, index, error];
-    }
-
     upload(index, subIndex, timeout=1000)
     {
-        console.log("upload", index);
-        return new Promise((resolve, reject)=>{
-            resolve();
-        });
-    }
-
-    download(index, subIndex, data, timeout=1000)
-    {
-        console.log("download", index);
-        return new Promise((resolve, reject)=>{
+        return new Promise((resolve, reject)=>
+        {
             let entry = this.device.get(index);
             if(entry == undefined)
                 reject("'" + index + "' not a data object");
 
             if(Array.isArray(entry))
-                if(entry.length != 1)
-                    reject("'" + index + "' name is not unique")
-                else
-                    entry = entry[0];
+                reject("'" + index + "' name is not unique")
 
             if(subIndex != 0)
                 entry = entry[subindex];
 
-            const timer = setTimeout(()=>{ reject("SDO protocol timed out"); }, timeout);
+            const timer = setTimeout(()=>{ reject(abortCodes[0x05040000]); }, timeout);
 
-            this.message.data[1] = (entry.index & 0xFF);
+            this.message.data[0] = 0x40;
+            this.message.data[1] = entry.index;
+            this.message.data[2] = (entry.index >> 8);
+            this.message.data[3] = subIndex;
+            this.message.data.fill(0, 4);
+
+            const buffer = Buffer.alloc(entry.size);
+
+            let bufferOffset = 0;
+            let toggle = 1;
+
+            const callback = (data)=>
+            {
+                const SCS = (data[0] >> 5);
+                if(data[0] == 0x80)
+                {
+                    clearTimeout(timer);
+                    this.device.removeListener("SDO", callback);
+                    reject(abortCodes[data.readUInt32LE(4)]);
+                }
+                else if(SCS == 2)
+                {
+                    if(data[0] & 0x02)
+                    {
+                        // Expedited transfer
+                        const count = (data[0] & 1) ? (data[0] >> 2) & 3 : 4;
+                        for(let i = 0; i < count; i++)
+                            buffer[i] = data[i+1];
+
+                        entry.value = this.device._rawToType(buffer, entry.dataType);
+                        entry.raw = buffer;
+                        entry.size = buffer.length;
+                        resolve();
+                    }
+                    else
+                    {
+                        // Segmented transfer
+                        toggle ^= 1;
+                        this.message.data[0] = 0x60 | (toggle << 4);
+                        this.message.data.fill(0, 1);
+                        this.device.channel.send(this.message);
+                    }
+                }
+                else if(SCS == 0 && ((data[0] & 0x10) == (toggle << 4)))
+                {
+                    const count = (7 - ((data[0] >> 1) & 0x7));
+                    for(let i = 0; i < count; i++)
+                        buffer[bufferOffset+i] = data[1+i];
+
+                    bufferOffset += count;
+                    
+                    if(data[0] & 1)
+                    {
+                        entry.value = this.device._rawToType(buffer, entry.dataType);
+                        entry.raw = buffer;
+                        entry.size = buffer.length;
+                        resolve();
+                    }
+                    else
+                    {
+                        toggle ^= 1;
+                        this.message.data[0] = 0x60 | (toggle << 4);
+                        this.message.data.fill(0, 1);
+                        this.device.channel.send(this.message);
+                    }
+                }
+            }
+            this.device.on("SDO", callback);
+            this.device.channel.send(this.message);
+        });
+    }
+
+    download(index, subIndex, value, timeout=1000)
+    {
+        return new Promise((resolve, reject)=>
+        {
+            let entry = this.device.get(index);
+            if(entry == undefined)
+                reject("'" + index + "' not a data object");
+
+            if(Array.isArray(entry))
+                reject("'" + index + "' name is not unique")
+
+            if(subIndex != 0)
+                entry = entry[subindex];
+
+            const timer = setTimeout(()=>{ reject(abortCodes[0x05040000]); }, timeout);
+
+            this.message.data[1] = 0xFF;
             this.message.data[2] = (entry.index >> 8);
             this.message.data[3] = subIndex;
 
-            const [value, size, raw] = this.device._parseRaw(entry.dataType, data)
-            let bytesSent = 0;
+            const raw = this.device._typeToRaw(value, entry.dataType)
+            const size = raw.length;
+
+            let bufferOffset = 0;
             let toggle = 1;
 
             if(size <= 4)
@@ -99,7 +166,7 @@ class SDO
                 for(let i = 0; i < size; i++)
                     this.message.data[4+i] = raw[i];
 
-                bytesSent = size;
+                bufferOffset = size;
             }
             else
             {
@@ -111,31 +178,30 @@ class SDO
                 this.message.data[7] = size >> 24;
             }
 
-            const callback = ([command, index, error])=>
+            const callback = (data)=>
             {
-                if(command == 0x80)
+                if(data[0] == 0x80)
                 {
                     clearTimeout(timer);
                     this.device.removeListener("SDO", callback);
-                    reject(error);
+                    reject(abortCodes[data.readUInt32LE(4)]);
                 }
-                else if((command == (0x20 | (toggle << 4)))
-                     || (command == 0x60 && index == entry.index))
+                else if(data[0] == 0x60 || (data[0] == (0x20 | (toggle << 4))))
                 {
-                    if(bytesSent < size)
+                    if(bufferOffset < size)
                     {
-                        let count = Math.min(7, (size - bytesSent));
+                        let count = Math.min(7, (size - bufferOffset));
                         for(let i = 0; i < count; i++)
-                            this.message.data[i+1] = raw[i+bytesSent];
+                            this.message.data[1+i] = raw[bufferOffset+i];
 
                         for(let i = count; i < 7; i++)
-                            this.message.data[i+1] = 0;
+                            this.message.data[1+i] = 0;
 
-                        bytesSent += count;
+                        bufferOffset += count;
                         toggle ^= 1;
 
                         this.message.data[0] = (toggle << 4) | (7-count) << 1;
-                        if(bytesSent == size)
+                        if(bufferOffset == size)
                             this.message.data[0] |= 1;
 
                         this.device.channel.send(this.message);

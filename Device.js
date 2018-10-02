@@ -79,16 +79,20 @@ class Device extends EventEmitter
                 const dataType = parseInt(data.DataType);
                 const objectType = parseInt(data.ObjectType);
 
-                let value, size, raw;
+                let value, raw, size;
                 if(objectType == objectTypes.ARRAY 
                 || objectType == objectTypes.RECORD)
                 {
                     value = [];
-                    size = [];
                     raw = [];
+                    size = [];
                 }
                 else
-                    [value, size, raw] = this._parseRaw(dataType, data.DefaultValue);
+                {
+                    value = this._parseTypedString(data.DefaultValue, dataType);
+                    raw = this._typeToRaw(value, dataType);
+                    size = raw.length;
+                }
 
                 this.dataObjects[section] = {
                     name:       data.ParameterName,
@@ -97,8 +101,8 @@ class Device extends EventEmitter
                     objectType: objectType,
                     access:     (data.AccessType) ? data.AccessType : 'rw',
                     value:      value,
-                    size:       size,
                     raw:        raw,
+                    size:       size,
                 };
 
                 try
@@ -141,12 +145,13 @@ class Device extends EventEmitter
                 if(sub != '0')
                 {
                     const dataType = parseInt(data.DataType);
-                    const [value, size, raw] = this._parseRaw(dataType, data.DefaultValue);
+                    const value = this._parseTypedString(data.DefaultValue, dataType);
+                    const raw = this._typeToRaw(value, dataType);
 
                     this.dataObjects[main].dataType = dataType;
                     this.dataObjects[main].value[parseInt(sub)-1] = value; 
-                    this.dataObjects[main].size[parseInt(sub)-1] = size; 
                     this.dataObjects[main].raw[parseInt(sub)-1] = raw; 
+                    this.dataObjects[main].size[parseInt(sub)-1] = raw.length; 
                 }
             }
         }
@@ -160,12 +165,17 @@ class Device extends EventEmitter
             return this.SDO.download(index, subIndex, value, timeout);
     }
 
-    get(section)
+    get(index)
     {
-        if(this.dataObjects[section] != undefined)
-            return this.dataObjects[section];
-        else
-            return this.nameLookup[section];
+        let entry = this.dataObjects[index]
+        if(entry == undefined)
+        {
+            entry = this.nameLookup[index];
+            if(entry && entry.length == 1)
+                entry = entry[0];
+        }
+
+        return entry;
     }
 
     _onMessage(msg)
@@ -179,7 +189,7 @@ class Device extends EventEmitter
         }
         if(msg.id == 0x580 + this.deviceId)
         {
-            this.emit("SDO", this.SDO.parse(msg));
+            this.emit("SDO", msg.data);
         }
         else if(msg.id == 0x180 + this.deviceId
              || msg.id == 0x280 + this.deviceId
@@ -190,79 +200,104 @@ class Device extends EventEmitter
         }
     }
 
-    _parseRaw(dataType, data)
+    _rawToType(raw, dataType)
     {
-        let value, size, raw, buffer;
-
         switch(dataType)
         {
             case dataTypes.BOOLEAN:
-                size = 1;
-                value = data ? (parseInt(data) != 0) : false;
-                raw = new Uint8Array( value ? [1] : [0] );
+                return raw[0] != 0;
+            case dataTypes.INTEGER8:
+                return raw.readInt8(0);
+            case dataTypes.UNSIGNED8:
+                return raw.readUInt8(0);
+            case dataTypes.INTEGER16:
+                return raw.readInt16LE(0);
+            case dataTypes.UNSIGNED16:
+                return raw.readUInt16LE(0);
+            case dataTypes.INTEGER32:
+                return raw.readInt32LE(0);
+            case dataTypes.UNSIGNED32:
+                return raw.readUInt32LE(0);
+            case dataTypes.REAL32:
+                return raw.readFloatLE(0);
+            case dataTypes.REAL64:
+                return raw.readDoubleLE(0);
+            case dataTypes.VISIBLE_STRING:
+            default:
+                return raw;
+        }
+    }
+
+    _typeToRaw(value, dataType)
+    {
+        let raw;
+        switch(dataType)
+        {
+            case dataTypes.BOOLEAN:
+                raw = Buffer.from(value ? [1] : [0] );
                 break;
             case dataTypes.INTEGER8:
+                raw = Buffer.alloc(1);
+                raw.writeInt8(value);
+                break;
             case dataTypes.UNSIGNED8:
-                size = 1;
-                value = data ? parseInt(data) : 0;
-                raw = new Uint8Array([value]);
+                raw = Buffer.alloc(1);
+                raw.writeUInt8(value);
                 break;
             case dataTypes.INTEGER16:
+                raw = Buffer.alloc(2);
+                raw.writeInt16LE(value);
+                break;
             case dataTypes.UNSIGNED16:
-                size = 2;
-                value = data ? parseInt(data) : 0;
-                buffer = new ArrayBuffer(size);
-                new Uint16Array(buffer).set([value]);
-                raw = new Uint8Array(buffer);
+                raw = Buffer.alloc(2);
+                raw.writeUInt16LE(value);
                 break;
             case dataTypes.INTEGER32:
-            case dataTypes.UNSIGNED32:
-                size = 4;
-                value = data ? parseInt(data) : 0;
-                buffer = new ArrayBuffer(size);
-                new Uint32Array(buffer).set([value]);
-                raw = new Uint8Array(buffer);
+                raw = Buffer.alloc(4);
+                raw.writeInt32LE(value);
                 break;
-            case dataTypes.UNSIGNED64:
-            case dataTypes.INTEGER64:
-                size = 8;
-                value = data ? parseInt(data) : 0;
-                raw = new Uint8Array(size);
-                raw[0] = value >> 54;
-                raw[1] = value >> 48;
-                raw[2] = value >> 40;
-                raw[3] = value >> 32;
-                raw[4] = value >> 24;
-                raw[5] = value >> 16;
-                raw[6] = value >> 8;
-                raw[7] = value >> 0;
+            case dataTypes.UNSIGNED32:
+                raw = Buffer.alloc(4);
+                raw.writeUInt32LE(value);
                 break;
             case dataTypes.REAL32:
-                size = 4;
-                value = data ? parseFloat(data) : 0.0;
-                buffer = new ArrayBuffer(size);
-                new Float32Array(buffer).set([value]);
-                raw = new Uint8Array(buffer);
+                raw = Buffer.alloc(4);
+                raw.writeFloatLE(value);
                 break;
             case dataTypes.REAL64:
-                size = 8;
-                value = data ? parseFloat(data) : 0.0;
-                buffer = new ArrayBuffer(size);
-                new Float64Array(buffer).set([value]);
-                raw = new Uint8Array(buffer);
+                raw = Buffer.alloc(8);
+                raw.writeDoubleLE(value);
                 break;
             case dataTypes.OCTET_STRING:
-                value = raw = data ? Uint8Array.from(data) : new Uint8Array();
-                size = value.length;
-                break;
-
+                raw = Buffer.from(value);
             default:
-                value = data ? data : "";
-                raw = Uint8Array.from(value);
-                size = raw.length;
+                raw = value;
         }
 
-        return [value, size, raw];
+        return raw;
+    }
+
+    _parseTypedString(data, dataType)
+    {
+        switch(dataType)
+        {
+            case dataTypes.BOOLEAN:
+                return data ? (parseInt(data) != 0) : false;
+            case dataTypes.INTEGER8:
+            case dataTypes.UNSIGNED8:
+            case dataTypes.INTEGER16:
+            case dataTypes.UNSIGNED16:
+            case dataTypes.INTEGER32:
+            case dataTypes.UNSIGNED32:
+                return data ? parseInt(data) : 0;
+            case dataTypes.REAL32:
+            case dataTypes.REAL64:
+                return data ? parseFloat(data) : 0.0;
+            case dataTypes.OCTET_STRING:
+                return data ? Buffer.from(data) : Buffer.alloc(0);
+            default:
+                return data ? data : "";
+        }
     }
 }
 
