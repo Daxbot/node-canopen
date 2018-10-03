@@ -79,24 +79,22 @@ class Device extends EventEmitter
                 const dataType = parseInt(data.DataType);
                 const objectType = parseInt(data.ObjectType);
 
-                let value, raw, size;
-                if(objectType == objectTypes.ARRAY 
-                || objectType == objectTypes.RECORD)
+                let value = [];
+                let raw = [];
+                let size = [];
+
+                if(objectType != objectTypes.ARRAY
+                && objectType != objectTypes.RECORD)
                 {
-                    value = [];
-                    raw = [];
-                    size = [];
-                }
-                else
-                {
-                    value = this._parseTypedString(data.DefaultValue, dataType);
-                    raw = this._typeToRaw(value, dataType);
-                    size = raw.length;
+                    value[0] = this._parseTypedString(data.DefaultValue, dataType);
+                    raw[0] = this._typeToRaw(value, dataType);
+                    size[0] = raw.length;
                 }
 
-                this.dataObjects[section] = {
+                const index = parseInt(section, 16);
+                this.dataObjects[index] = {
                     name:       data.ParameterName,
-                    index:      parseInt(section, 16),
+                    index:      index,
                     dataType:   dataType,
                     objectType: objectType,
                     access:     (data.AccessType) ? data.AccessType : 'rw',
@@ -107,17 +105,17 @@ class Device extends EventEmitter
 
                 try
                 {
-                    this.nameLookup[data.ParameterName].push(this.dataObjects[section]);
+                    this.nameLookup[data.ParameterName].push(this.dataObjects[index]);
                 }
                 catch(TypeError)
                 {
-                    this.nameLookup[data.ParameterName] = [this.dataObjects[section]];
+                    this.nameLookup[data.ParameterName] = [this.dataObjects[index]];
                 }
 
                 Object.defineProperties(this, {
-                    [section]: {
+                    [index]: {
                         get: ()=>{
-                            return this.get(section);
+                            return this.get(index);
                         },
                         set: ()=>{
                             throw TypeError("Read Only")
@@ -130,7 +128,7 @@ class Device extends EventEmitter
                     Object.defineProperties(this, {
                         [data.ParameterName]: {
                             get: ()=>{
-                                return this.get(section);
+                                return this.get(index);
                             },
                             set: ()=>{
                                 throw TypeError("Read Only")
@@ -142,19 +140,22 @@ class Device extends EventEmitter
             else if(subIndexMatch.test(section))
             {
                 const [main, sub] = section.split('sub');
-                if(sub != '0')
-                {
-                    const dataType = parseInt(data.DataType);
-                    const value = this._parseTypedString(data.DefaultValue, dataType);
-                    const raw = this._typeToRaw(value, dataType);
+                const dataType = parseInt(data.DataType);
+                const value = this._parseTypedString(data.DefaultValue, dataType);
+                const raw = this._typeToRaw(value, dataType);
 
-                    this.dataObjects[main].dataType = dataType;
-                    this.dataObjects[main].value[parseInt(sub)-1] = value; 
-                    this.dataObjects[main].raw[parseInt(sub)-1] = raw; 
-                    this.dataObjects[main].size[parseInt(sub)-1] = raw.length; 
-                }
+                const index = parseInt(main, 16);
+                const subIndex = parseInt(sub, 16);
+                this.dataObjects[index].value[subIndex] = value;
+                this.dataObjects[index].raw[subIndex] = raw;
+                this.dataObjects[index].size[subIndex] = raw.length;
+
+                if(sub != '0')
+                    this.dataObjects[index].dataType = dataType;
             }
         }
+
+        this.PDO.init();
     }
 
     update(index, subIndex, value=null, timeout=500)
@@ -178,26 +179,17 @@ class Device extends EventEmitter
         return entry;
     }
 
-    _onMessage(msg)
+    _onMessage(message)
     {
-        if(!msg || msg.rtr || msg.ext)
+        if(!message)
             return;
         
-        if(msg.id == 0x80 + this.deviceId)
-        {
-            this.emit("Emergency", this.EMCY.parse(msg));
-        }
-        if(msg.id == 0x580 + this.deviceId)
-        {
-            this.emit("SDO", msg.data);
-        }
-        else if(msg.id == 0x180 + this.deviceId
-             || msg.id == 0x280 + this.deviceId
-             || msg.id == 0x380 + this.deviceId
-             || msg.id == 0x480 + this.deviceId)
-        {
-            this.emit("PDO"+msg.id.toString(16));
-        }
+        if(message.id == 0x80 + this.deviceId)
+            this.emit("Emergency", this.EMCY.parse(message));
+        else if(message.id == 0x580 + this.deviceId)
+            this.emit("SDO", message.data);
+        else if(message.id >= 0x180 && message.id < 0x580)
+            this.PDO.parse(message);
     }
 
     _rawToType(raw, dataType)

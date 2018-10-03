@@ -64,9 +64,6 @@ class SDO
             if(Array.isArray(entry))
                 reject("'" + index + "' name is not unique")
 
-            if(subIndex != 0)
-                entry = entry[subindex];
-
             const timer = setTimeout(()=>{ reject(abortCodes[0x05040000]); }, timeout);
 
             this.message.data[0] = 0x40;
@@ -75,7 +72,7 @@ class SDO
             this.message.data[3] = subIndex;
             this.message.data.fill(0, 4);
 
-            const buffer = Buffer.alloc(entry.size);
+            const buffer = Buffer.alloc(entry.size[subIndex]);
 
             let bufferOffset = 0;
             let toggle = 1;
@@ -98,9 +95,9 @@ class SDO
                             for(let i = 0; i < count; i++)
                                 buffer[i] = data[i+1];
 
-                            entry.value = this.device._rawToType(buffer, entry.dataType);
-                            entry.raw = buffer;
-                            entry.size = buffer.length;
+                            entry.value[subIndex] = this.device._rawToType(buffer, entry.dataType);
+                            entry.raw[subIndex] = buffer;
+                            entry.size[subIndex] = buffer.length;
                             this.device.removeListener("SDO", handler);
                             resolve();
                         }
@@ -124,9 +121,9 @@ class SDO
 
                             if(data[0] & 1)
                             {
-                                entry.value = this.device._rawToType(buffer, entry.dataType);
-                                entry.raw = buffer;
-                                entry.size = buffer.length;
+                                entry.value[subIndex] = this.device._rawToType(buffer, entry.dataType);
+                                entry.raw[subIndex] = buffer;
+                                entry.size[subIndex] = buffer.length;
                                 this.device.removeListener("SDO", handler);
                                 resolve();
                             }
@@ -156,9 +153,6 @@ class SDO
 
             if(Array.isArray(entry))
                 reject("'" + index + "' name is not unique")
-
-            if(subIndex != 0)
-                entry = entry[subindex];
 
             const timer = setTimeout(()=>{ reject(abortCodes[0x05040000]); }, timeout);
 
@@ -227,9 +221,9 @@ class SDO
                         else
                         {
                             clearTimeout(timer);
-                            entry.value = value;
-                            entry.size = size;
-                            entry.raw = raw;
+                            entry.value[subIndex] = value;
+                            entry.size[subIndex] = size;
+                            entry.raw[subIndex] = raw;
                             this.device.removeListener("SDO", handler);
                             resolve();
                         }
