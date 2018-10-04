@@ -53,17 +53,22 @@ class SDO
         };
     }
 
-    upload(index, subIndex, timeout=1000)
+    /** Upload the value from the remote device to the local copy. */
+    upload(entry, subIndex=0, timeout=1000)
     {
+        if(Array.isArray(entry))
+        {
+            if(entry.length > 1)
+            {
+                return this.upload(entry[0], subIndex, timeout).then(
+                    ()=>{ return this.upload(entry.slice(1), subIndex, timeout)}
+                );
+            }
+            else entry = entry[0];
+        }
+
         return new Promise((resolve, reject)=>
         {
-            let entry = this.device.get(index);
-            if(entry == undefined)
-                reject("'" + index + "' not a data object");
-
-            if(Array.isArray(entry))
-                reject("'" + index + "' name is not unique")
-
             const timer = setTimeout(()=>{ reject(abortCodes[0x05040000]); }, timeout);
 
             this.message.data[0] = 0x40;
@@ -72,7 +77,7 @@ class SDO
             this.message.data[3] = subIndex;
             this.message.data.fill(0, 4);
 
-            const buffer = Buffer.alloc(entry.size[subIndex]);
+            const buffer = Buffer.alloc(entry.data[subIndex].size);
 
             let bufferOffset = 0;
             let toggle = 1;
@@ -95,9 +100,13 @@ class SDO
                             for(let i = 0; i < count; i++)
                                 buffer[i] = data[i+1];
 
-                            entry.value[subIndex] = this.device._rawToType(buffer, entry.dataType);
-                            entry.raw[subIndex] = buffer;
-                            entry.size[subIndex] = buffer.length;
+                            const dataType = entry.data[subIndex].type;
+                            entry.data[subIndex] = {
+                                value:  this.device._rawToType(buffer, dataType),
+                                type:   dataType,
+                                raw:    buffer,
+                                size:   buffer.length,
+                            }
                             this.device.removeListener("SDO", handler);
                             resolve();
                         }
@@ -121,9 +130,13 @@ class SDO
 
                             if(data[0] & 1)
                             {
-                                entry.value[subIndex] = this.device._rawToType(buffer, entry.dataType);
-                                entry.raw[subIndex] = buffer;
-                                entry.size[subIndex] = buffer.length;
+                                const dataType = entry.data[subIndex].type;
+                                entry.data[subIndex] = {
+                                    value:  this.device._rawToType(buffer, dataType),
+                                    type:   dataType,
+                                    raw:    buffer,
+                                    size:   buffer.length,
+                                }
                                 this.device.removeListener("SDO", handler);
                                 resolve();
                             }
@@ -143,35 +156,38 @@ class SDO
         });
     }
 
-    download(index, subIndex, value, timeout=1000)
+    /** Download the value from the local copy to the remote device. */
+    download(entry, subIndex=0, timeout=1000)
     {
+        if(Array.isArray(entry))
+        {
+            if(entry.length > 1)
+            {
+                return this.download(entry[0], subIndex, timeout).then(
+                    ()=>{ return this.download(entry.slice(1), subIndex, timeout)}
+                );
+            }
+            else entry = entry[0];
+        }
+
         return new Promise((resolve, reject)=>
         {
-            let entry = this.device.get(index);
-            if(entry == undefined)
-                reject("'" + index + "' not a data object");
-
-            if(Array.isArray(entry))
-                reject("'" + index + "' name is not unique")
-
             const timer = setTimeout(()=>{ reject(abortCodes[0x05040000]); }, timeout);
 
             this.message.data[1] = entry.index;
             this.message.data[2] = (entry.index >> 8);
             this.message.data[3] = subIndex;
 
-            const raw = this.device._typeToRaw(value, entry.dataType)
-            const size = raw.length;
-
             let bufferOffset = 0;
             let toggle = 1;
 
+            const size = entry.data[subIndex].size
             if(size <= 4)
             {
                 // Expedited transfer
                 this.message.data[0] = 0x23 | ((4-size) << 2);
                 for(let i = 0; i < size; i++)
-                    this.message.data[4+i] = raw[i];
+                    this.message.data[4+i] = entry.data[subIndex].raw[i];
 
                 bufferOffset = size;
             }
@@ -200,11 +216,11 @@ class SDO
 
                         toggle ^= 1;
                     case SCS.DOWNLOAD_INITIATE:
-                        if(bufferOffset < size)
+                        if(bufferOffset < entry.size)
                         {
-                            let count = Math.min(7, (size - bufferOffset));
+                            let count = Math.min(7, (entry.size - bufferOffset));
                             for(let i = 0; i < count; i++)
-                                this.message.data[1+i] = raw[bufferOffset+i];
+                                this.message.data[1+i] = entry.data[subIndex].raw[bufferOffset+i];
 
                             for(let i = count; i < 7; i++)
                                 this.message.data[1+i] = 0;
@@ -213,7 +229,7 @@ class SDO
                             toggle ^= 1;
 
                             this.message.data[0] = (toggle << 4) | (7-count) << 1;
-                            if(bufferOffset == size)
+                            if(bufferOffset == entry.size)
                                 this.message.data[0] |= 1;
 
                             this.device.channel.send(this.message);
@@ -221,9 +237,6 @@ class SDO
                         else
                         {
                             clearTimeout(timer);
-                            entry.value[subIndex] = value;
-                            entry.size[subIndex] = size;
-                            entry.raw[subIndex] = raw;
                             this.device.removeListener("SDO", handler);
                             resolve();
                         }

@@ -72,44 +72,44 @@ class Device extends EventEmitter
         const indexMatch = RegExp('^[0-9A-Fa-f]{4}$')
         const subIndexMatch = RegExp('^([0-9A-Fa-f]{4})sub([0-9A-Fa-f]+)$')
 
-        for(const [section, data] of Object.entries(od))
+        for(const [section, entry] of Object.entries(od))
         {
             if(indexMatch.test(section))
             {
-                const dataType = parseInt(data.DataType);
-                const objectType = parseInt(data.ObjectType);
-
-                let value = [];
-                let raw = [];
-                let size = [];
+                const objectType = parseInt(entry.ObjectType);
+                let data = [];
 
                 if(objectType != objectTypes.ARRAY
                 && objectType != objectTypes.RECORD)
                 {
-                    value[0] = this._parseTypedString(data.DefaultValue, dataType);
-                    raw[0] = this._typeToRaw(value, dataType);
-                    size[0] = raw.length;
+                    const dataType = parseInt(entry.DataType);
+                    const value = this._parseTypedString(entry.DefaultValue, dataType);
+                    const raw = this._typeToRaw(value, dataType);
+
+                    data[0] = {
+                        value:  value,
+                        type:   dataType,
+                        raw:    raw,
+                        size:   raw.length,
+                    };
                 }
 
                 const index = parseInt(section, 16);
                 this.dataObjects[index] = {
-                    name:       data.ParameterName,
+                    name:       entry.ParameterName,
                     index:      index,
-                    dataType:   dataType,
                     objectType: objectType,
-                    access:     (data.AccessType) ? data.AccessType : 'rw',
-                    value:      value,
-                    raw:        raw,
-                    size:       size,
+                    access:     (entry.AccessType) ? entry.AccessType : 'rw',
+                    data:       data,
                 };
 
                 try
                 {
-                    this.nameLookup[data.ParameterName].push(this.dataObjects[index]);
+                    this.nameLookup[entry.ParameterName].push(this.dataObjects[index]);
                 }
                 catch(TypeError)
                 {
-                    this.nameLookup[data.ParameterName] = [this.dataObjects[index]];
+                    this.nameLookup[entry.ParameterName] = [this.dataObjects[index]];
                 }
 
                 Object.defineProperties(this, {
@@ -123,10 +123,10 @@ class Device extends EventEmitter
                     },
                 });
 
-                if(this[data.ParameterName] == undefined)
+                if(this[entry.ParameterName] == undefined)
                 {
                     Object.defineProperties(this, {
-                        [data.ParameterName]: {
+                        [entry.ParameterName]: {
                             get: ()=>{
                                 return this.get(index);
                             },
@@ -140,30 +140,22 @@ class Device extends EventEmitter
             else if(subIndexMatch.test(section))
             {
                 const [main, sub] = section.split('sub');
-                const dataType = parseInt(data.DataType);
-                const value = this._parseTypedString(data.DefaultValue, dataType);
+                const dataType = parseInt(entry.DataType);
+                const value = this._parseTypedString(entry.DefaultValue, dataType);
                 const raw = this._typeToRaw(value, dataType);
 
                 const index = parseInt(main, 16);
                 const subIndex = parseInt(sub, 16);
-                this.dataObjects[index].value[subIndex] = value;
-                this.dataObjects[index].raw[subIndex] = raw;
-                this.dataObjects[index].size[subIndex] = raw.length;
-
-                if(sub != '0')
-                    this.dataObjects[index].dataType = dataType;
+                this.dataObjects[index].data[subIndex] = {
+                    value:  value,
+                    type:   dataType,
+                    raw:    raw,
+                    size:   raw.length,
+                }
             }
         }
 
         this.PDO.init();
-    }
-
-    update(index, subIndex, value=null, timeout=500)
-    {
-        if(value == null || value == undefined)
-            return this.SDO.upload(index, subIndex, timeout);
-        else
-            return this.SDO.download(index, subIndex, value, timeout);
     }
 
     get(index)
@@ -185,11 +177,11 @@ class Device extends EventEmitter
             return;
         
         if(message.id == 0x80 + this.deviceId)
-            this.emit("Emergency", this.EMCY.parse(message));
+            this.emit("Emergency", this.EMCY._parse(message));
         else if(message.id == 0x580 + this.deviceId)
             this.emit("SDO", message.data);
         else if(message.id >= 0x180 && message.id < 0x580)
-            this.PDO.parse(message);
+            this.PDO._parse(message);
     }
 
     _rawToType(raw, dataType)

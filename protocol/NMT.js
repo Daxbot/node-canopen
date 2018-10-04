@@ -9,18 +9,17 @@ class NMT
     constructor(device)
     {
         this.device = device;
-        this.message = {
-            id: 0x0,
-            ext: false,
-            rtr: false,
-            data: Buffer.from([0, device.deviceId])
-        }
+        this.deviceId = device.deviceId;
     }
 
     _send(command)
     {
-        this.message['data'][0] = command;
-        this.device.channel.send(this.message)
+        this.device.channel.send({
+            id: 0x0,
+            ext: false,
+            rtr: false,
+            data: Buffer.from([command, this.deviceId])
+        })
     }
 
     PreOperational()

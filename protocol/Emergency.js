@@ -86,7 +86,7 @@ class Emergency
         // TODO: Store active errors
     }
 
-    parse(message)
+    _parse(message)
     {
         const code = message.data.readUInt16LE(0);
         const reg = message.data[2];
