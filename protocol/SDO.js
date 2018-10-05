@@ -77,9 +77,8 @@ class SDO
             this.message.data[3] = subIndex;
             this.message.data.fill(0, 4);
 
-            const buffer = Buffer.alloc(entry.data[subIndex].size);
-
-            let bufferOffset = 0;
+            let buffer = Buffer.from([]);
+            let size = 0;
             let toggle = 1;
 
             const handler = (data)=>
@@ -97,15 +96,16 @@ class SDO
                         {
                             // Expedited transfer
                             const count = (data[0] & 1) ? (data[0] >> 2) & 3 : 4;
-                            for(let i = 0; i < count; i++)
-                                buffer[i] = data[i+1];
+                            size += count;
+
+                            buffer = Buffer.from(data.slice(1, count+1));
 
                             const dataType = entry.data[subIndex].type;
                             entry.data[subIndex] = {
                                 value:  this.device._rawToType(buffer, dataType),
                                 type:   dataType,
                                 raw:    buffer,
-                                size:   buffer.length,
+                                size:   size,
                             }
                             this.device.removeListener("SDO", handler);
                             resolve();
@@ -123,10 +123,10 @@ class SDO
                         if((data[0] & 0x10) == (toggle << 4))
                         {
                             const count = (7 - ((data[0] >> 1) & 0x7));
-                            for(let i = 0; i < count; i++)
-                                buffer[bufferOffset+i] = data[1+i];
+                            const payload = data.slice(1, count+1);
+                            size += count;
 
-                            bufferOffset += count;
+                            buffer = Buffer.concat([buffer, payload], size);
 
                             if(data[0] & 1)
                             {
@@ -135,7 +135,7 @@ class SDO
                                     value:  this.device._rawToType(buffer, dataType),
                                     type:   dataType,
                                     raw:    buffer,
-                                    size:   buffer.length,
+                                    size:   size,
                                 }
                                 this.device.removeListener("SDO", handler);
                                 resolve();
