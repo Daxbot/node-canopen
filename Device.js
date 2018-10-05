@@ -52,7 +52,7 @@ const objectTypes = {
 
 class Device extends EventEmitter
 {
-    constructor(channel, deviceId, edsPath)
+    constructor(channel, deviceId, edsPath=null)
     {
         super();
 
@@ -68,65 +68,54 @@ class Device extends EventEmitter
 
         channel.addListener("onMessage", this._onMessage, this);
 
-        const od = ini.parse(fs.readFileSync(edsPath, 'utf-8'));
-        const indexMatch = RegExp('^[0-9A-Fa-f]{4}$')
-        const subIndexMatch = RegExp('^([0-9A-Fa-f]{4})sub([0-9A-Fa-f]+)$')
-
-        for(const [section, entry] of Object.entries(od))
+        if(edsPath)
         {
-            if(indexMatch.test(section))
+            const od = ini.parse(fs.readFileSync(edsPath, 'utf-8'));
+            const indexMatch = RegExp('^[0-9A-Fa-f]{4}$')
+            const subIndexMatch = RegExp('^([0-9A-Fa-f]{4})sub([0-9A-Fa-f]+)$')
+
+            for(const [section, entry] of Object.entries(od))
             {
-                const objectType = parseInt(entry.ObjectType);
-                let data = [];
-
-                if(objectType != objectTypes.ARRAY
-                && objectType != objectTypes.RECORD)
+                if(indexMatch.test(section))
                 {
-                    const dataType = parseInt(entry.DataType);
-                    const value = this._parseTypedString(entry.DefaultValue, dataType);
-                    const raw = this._typeToRaw(value, dataType);
+                    const objectType = parseInt(entry.ObjectType);
+                    let data = [];
 
-                    data[0] = {
-                        value:  value,
-                        type:   dataType,
-                        raw:    raw,
-                        size:   raw.length,
+                    if(objectType != objectTypes.ARRAY
+                    && objectType != objectTypes.RECORD)
+                    {
+                        const dataType = parseInt(entry.DataType);
+                        const value = this._parseTypedString(entry.DefaultValue, dataType);
+                        const raw = this._typeToRaw(value, dataType);
+
+                        data[0] = {
+                            value:  value,
+                            type:   dataType,
+                            raw:    raw,
+                            size:   raw.length,
+                        };
+                    }
+
+                    const index = parseInt(section, 16);
+                    this.dataObjects[index] = {
+                        name:       entry.ParameterName,
+                        index:      index,
+                        objectType: objectType,
+                        access:     (entry.AccessType) ? entry.AccessType : 'rw',
+                        data:       data,
                     };
-                }
 
-                const index = parseInt(section, 16);
-                this.dataObjects[index] = {
-                    name:       entry.ParameterName,
-                    index:      index,
-                    objectType: objectType,
-                    access:     (entry.AccessType) ? entry.AccessType : 'rw',
-                    data:       data,
-                };
+                    try
+                    {
+                        this.nameLookup[entry.ParameterName].push(this.dataObjects[index]);
+                    }
+                    catch(TypeError)
+                    {
+                        this.nameLookup[entry.ParameterName] = [this.dataObjects[index]];
+                    }
 
-                try
-                {
-                    this.nameLookup[entry.ParameterName].push(this.dataObjects[index]);
-                }
-                catch(TypeError)
-                {
-                    this.nameLookup[entry.ParameterName] = [this.dataObjects[index]];
-                }
-
-                Object.defineProperties(this, {
-                    [index]: {
-                        get: ()=>{
-                            return this.get(index);
-                        },
-                        set: ()=>{
-                            throw TypeError("Read Only")
-                        },
-                    },
-                });
-
-                if(this[entry.ParameterName] == undefined)
-                {
                     Object.defineProperties(this, {
-                        [entry.ParameterName]: {
+                        [index]: {
                             get: ()=>{
                                 return this.get(index);
                             },
@@ -135,27 +124,41 @@ class Device extends EventEmitter
                             },
                         },
                     });
-                }
-            }
-            else if(subIndexMatch.test(section))
-            {
-                const [main, sub] = section.split('sub');
-                const dataType = parseInt(entry.DataType);
-                const value = this._parseTypedString(entry.DefaultValue, dataType);
-                const raw = this._typeToRaw(value, dataType);
 
-                const index = parseInt(main, 16);
-                const subIndex = parseInt(sub, 16);
-                this.dataObjects[index].data[subIndex] = {
-                    value:  value,
-                    type:   dataType,
-                    raw:    raw,
-                    size:   raw.length,
+                    if(this[entry.ParameterName] == undefined)
+                    {
+                        Object.defineProperties(this, {
+                            [entry.ParameterName]: {
+                                get: ()=>{
+                                    return this.get(index);
+                                },
+                                set: ()=>{
+                                    throw TypeError("Read Only")
+                                },
+                            },
+                        });
+                    }
+                }
+                else if(subIndexMatch.test(section))
+                {
+                    const [main, sub] = section.split('sub');
+                    const dataType = parseInt(entry.DataType);
+                    const value = this._parseTypedString(entry.DefaultValue, dataType);
+                    const raw = this._typeToRaw(value, dataType);
+
+                    const index = parseInt(main, 16);
+                    const subIndex = parseInt(sub, 16);
+                    this.dataObjects[index].data[subIndex] = {
+                        value:  value,
+                        type:   dataType,
+                        raw:    raw,
+                        size:   raw.length,
+                    }
                 }
             }
+
+            this.PDO.init();
         }
-
-        this.PDO.init();
     }
 
     get(index)
