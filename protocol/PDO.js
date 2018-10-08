@@ -1,15 +1,34 @@
+/** Default TPDO communication object Ids.
+ * 
+ * TPDOs with these Ids will have the deviceId appended.
+ * @private
+ * @const {number}
+ * @memberof PDO
+ */
 const defaultTPDOs = [0x180, 0x280, 0x380, 0x480];
+
+/** Default RPDO communication object Ids.
+ * 
+ * RPDOs with these Ids will have the deviceId appended.
+ * @private
+ * @const {number}
+ * @memberof PDO
+ */
 const defaultRPDOs = [0x200, 0x300, 0x400, 0x500];
 
+/** CANopen PDO protocol handler. 
+ * @param {Device} device - parent device.
+ */
 class PDO
 {
     constructor(device)
     {
         this.device = device;
-        this.TPDO = {}
-        this.RPDO = {}
+        this.TPDO = {};
+        this.RPDO = {};
     }
 
+    /** Initialize PDO mapping from the parent's dataObjects */
     init()
     {
         for(const [index, entry] of Object.entries(this.device.dataObjects))
@@ -40,7 +59,7 @@ class PDO
                         index:      mapIndex,
                         subIndex:   mapSubIndex,
                         bitLength:  mapBitLength,
-                    }
+                    };
 
                     this.TPDO[objectId].size += mapBitLength/8;
                 }
@@ -69,13 +88,16 @@ class PDO
                         subIndex:   mapSubIndex,
                         bitLength:  mapBitLength,
                     }
-                    this.device.dataObjects[mapIndex].PDO = objectId
+                    this.device.dataObjects[mapIndex].PDO = objectId;
                     this.RPDO[objectId].size += mapBitLength/8;
                 }
             }
         }
     }
 
+    /** Transmit a PDO. 
+     * @param {number} id - PDO to transmit.
+     */
     transmit(id)
     {
         const map = this.RPDO[id].map;
@@ -103,6 +125,10 @@ class PDO
         });
     }
 
+    /** Parse a CANopen Emergency message.
+     * @private
+     * @param {Object} message - CAN frame to parse.
+     */
     _parse(message)
     {
         if(message.id in this.TPDO)
@@ -130,6 +156,6 @@ class PDO
             }
         }
     }
-};
+}
 
 module.exports=exports=PDO;

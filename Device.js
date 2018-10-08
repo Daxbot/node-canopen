@@ -1,12 +1,18 @@
 const fs = require('fs');
 const ini = require('ini');
 const EventEmitter = require('events');
+const bitwise = require('bitwise');
 
 const SDO = require('./protocol/SDO');
 const PDO = require('./protocol/PDO');
 const NMT = require('./protocol/NMT');
-const EMCY = require('./protocol/Emergency');
+const EMCY = require('./Emergency');
 
+ /** CANopen EDS data types.
+  * @protected
+  * @const {number}
+  * @memberof Device
+  */
 const dataTypes = {
     BOOLEAN: 1,
     INTEGER8: 2,
@@ -23,6 +29,7 @@ const dataTypes = {
     TIME_DIFFERENCE: 13,
     DOMAIN: 15,
     REAL64: 17,
+    INTEGER24: 16,
     INTEGER40: 18,
     INTEGER48: 19,
     INTEGER56: 20,
@@ -38,6 +45,11 @@ const dataTypes = {
     IDENTITY: 35,
 };
 
+ /** CANopen EDS object types.
+  * @protected
+  * @const {number}
+  * @memberof Device
+  */
 const objectTypes = {
     NULL: 0,
     DOMAIN: 2,
@@ -48,31 +60,41 @@ const objectTypes = {
     RECORD: 9,
 };
 
-
-
+/** CANopen device 
+ * @param {RawChannel} channel - socketcan RawChannel object.
+ * @param {number} deviceId - device identifier.
+ * @param {string | null} edsPath - path to the device's electronic data sheet.
+ */
 class Device extends EventEmitter
 {
     constructor(channel, deviceId, edsPath=null)
     {
-        super();
+        if(channel.send == undefined)
+            throw ReferenceError("arg0 'channel' has no send method");
 
+        if(channel.addListener == undefined)
+            throw ReferenceError("arg0 'channel' has no addListener method");
+
+        if(!deviceId || deviceId > 0xFF)
+            throw RangeError("ID must be in range 1-255");
+
+        super();
         this.channel = channel;
         this.deviceId = deviceId;
         this.dataObjects = {};
         this.nameLookup = {};
 
-        this.SDO = new SDO(this);
-        this.PDO = new PDO(this);
-        this.NMT = new NMT(this);
-        this.EMCY = new EMCY();
+        this._SDO = new SDO(this);
+        this._PDO = new PDO(this);
+        this._NMT = new NMT(this);
 
         channel.addListener("onMessage", this._onMessage, this);
 
         if(edsPath)
         {
             const od = ini.parse(fs.readFileSync(edsPath, 'utf-8'));
-            const indexMatch = RegExp('^[0-9A-Fa-f]{4}$')
-            const subIndexMatch = RegExp('^([0-9A-Fa-f]{4})sub([0-9A-Fa-f]+)$')
+            const indexMatch = RegExp('^[0-9A-Fa-f]{4}$');
+            const subIndexMatch = RegExp('^([0-9A-Fa-f]{4})sub([0-9A-Fa-f]+)$');
 
             for(const [section, entry] of Object.entries(od))
             {
@@ -81,8 +103,7 @@ class Device extends EventEmitter
                     const objectType = parseInt(entry.ObjectType);
                     let data = [];
 
-                    if(objectType != objectTypes.ARRAY
-                    && objectType != objectTypes.RECORD)
+                    if(objectType != objectTypes.ARRAY && objectType != objectTypes.RECORD)
                     {
                         const dataType = parseInt(entry.DataType);
                         const value = this._parseTypedString(entry.DefaultValue, dataType);
@@ -113,31 +134,6 @@ class Device extends EventEmitter
                     {
                         this.nameLookup[entry.ParameterName] = [this.dataObjects[index]];
                     }
-
-                    Object.defineProperties(this, {
-                        [index]: {
-                            get: ()=>{
-                                return this.get(index);
-                            },
-                            set: ()=>{
-                                throw TypeError("Read Only")
-                            },
-                        },
-                    });
-
-                    if(this[entry.ParameterName] == undefined)
-                    {
-                        Object.defineProperties(this, {
-                            [entry.ParameterName]: {
-                                get: ()=>{
-                                    return this.get(index);
-                                },
-                                set: ()=>{
-                                    throw TypeError("Read Only")
-                                },
-                            },
-                        });
-                    }
                 }
                 else if(subIndexMatch.test(section))
                 {
@@ -153,7 +149,7 @@ class Device extends EventEmitter
                         type:   dataType,
                         raw:    raw,
                         size:   raw.length,
-                    }
+                    };
                 }
             }
 
@@ -161,9 +157,17 @@ class Device extends EventEmitter
         }
     }
 
-    get(index)
+    get SDO() { return this._SDO; }
+    get PDO() { return this._PDO; }
+    get NMT() { return this._NMT; }
+    get dataTypes() { return dataTypes; }
+
+    /** Get a dataObject.
+     * @param {number | string} index - index or name of the dataObject.
+     */
+    getEntry(index)
     {
-        let entry = this.dataObjects[index]
+        let entry = this.dataObjects[index];
         if(entry == undefined)
         {
             entry = this.nameLookup[index];
@@ -174,19 +178,93 @@ class Device extends EventEmitter
         return entry;
     }
 
+    /** Get the value of a dataObject.
+     * @param {number | string} index - index or name of the dataObject.
+     */
+    getValue(index, subIndex)
+    {
+        const entry = this.getEntry(index);
+        if(entry && Array.isArray(entry))
+            throw TypeError("Ambiguous name: " + index);
+
+        return entry.data[subIndex].value;
+    }
+
+    /** Get the raw value of a dataObject.
+     * @param {number | string} index - index or name of the dataObject.
+     */
+    getRaw(index, subIndex)
+    {
+        const entry = this.getEntry(index);
+        if(entry && Array.isArray(entry))
+            throw TypeError("Ambiguous name: " + index);
+
+        return entry.data[subIndex].raw;
+    }
+
+    /** Set the value of a dataObject.
+     * @param {number | string} index - index or name of the dataObject.
+     */
+    setValue(index, subIndex, value)
+    {
+        const entry = this.getEntry(index);
+        if(entry && Array.isArray(entry))
+            throw TypeError("Ambiguous name: " + index);
+
+        const dataType = entry.data[subIndex].type;
+        const raw = this._typeToRaw(value, dataType);
+        entry.data[subIndex] = {
+            value:  value,
+            type:   dataType,
+            raw:    raw,
+            size:   raw.length,
+        };
+    }
+
+    /** Set the raw value of a dataObject.
+     * @param {number | string} index - index or name of the dataObject.
+     */
+    setRaw(index, subIndex, raw)
+    {
+        const entry = this.getEntry(index);
+        if(entry && Array.isArray(entry))
+            throw TypeError("Ambiguous name: " + index);
+
+        const dataType = entry.data[subIndex].type;
+        const value = this._rawToType(raw, dataType)
+        entry.data[subIndex] = {
+            value:  value,
+            type:   dataType,
+            raw:    raw,
+            size:   raw.length,
+        };
+    }
+
+    /** socketcan 'onMessage' listener.
+     * @protected
+     * @param {Object} message - CAN frame.
+     */
     _onMessage(message)
     {
         if(!message)
             return;
         
         if(message.id == 0x80 + this.deviceId)
-            this.emit("Emergency", this.EMCY._parse(message));
-        else if(message.id == 0x580 + this.deviceId)
+            this.emit("Emergency", EMCY._parse(message));
+        else if(message.id == (0x580 + this.deviceId))
             this.emit("SDO", message.data);
+        else if(message.id == (0x600 + this.deviceId))
+            this.SDO._serve(message);
         else if(message.id >= 0x180 && message.id < 0x580)
             this.PDO._parse(message);
     }
 
+    /** Convert a Buffer object to a value based on type.
+     * @protected
+     * @param {Buffer} raw - data to convert.
+     * @param {dataTypes} dataType - type of the data.
+     * @return {number | string}
+     */
     _rawToType(raw, dataType)
     {
         switch(dataType)
@@ -195,57 +273,95 @@ class Device extends EventEmitter
                 return raw[0] != 0;
             case dataTypes.INTEGER8:
                 return raw.readInt8(0);
-            case dataTypes.UNSIGNED8:
-                return raw.readUInt8(0);
             case dataTypes.INTEGER16:
                 return raw.readInt16LE(0);
-            case dataTypes.UNSIGNED16:
-                return raw.readUInt16LE(0);
             case dataTypes.INTEGER32:
                 return raw.readInt32LE(0);
+            case dataTypes.UNSIGNED8:
+                return raw.readUInt8(0);
+            case dataTypes.UNSIGNED16:
+                return raw.readUInt16LE(0);
             case dataTypes.UNSIGNED32:
+            case dataTypes.TIME_OF_DAY:
+            case dataTypes.TIME_DIFFERENCE:
                 return raw.readUInt32LE(0);
             case dataTypes.REAL32:
                 return raw.readFloatLE(0);
             case dataTypes.REAL64:
                 return raw.readDoubleLE(0);
             case dataTypes.VISIBLE_STRING:
+            case dataTypes.OCTET_STRING:
+            case dataTypes.UNICODE_STRING:
+                return raw.toString();
             default:
                 return raw;
         }
     }
 
+    /** Convert a value to a Buffer object based on type.
+     * @protected
+     * @param {number | string} value - data to convert.
+     * @param {dataTypes} dataType - type of the data.
+     * @return {Buffer}
+     */
     _typeToRaw(value, dataType)
     {
-        let raw;
+        let raw = Buffer.alloc(0);
+        if(value == null)
+            return raw;
+
         switch(dataType)
         {
             case dataTypes.BOOLEAN:
                 raw = Buffer.from(value ? [1] : [0] );
                 break;
             case dataTypes.INTEGER8:
-                raw = Buffer.alloc(1);
-                raw.writeInt8(value);
-                break;
             case dataTypes.UNSIGNED8:
-                raw = Buffer.alloc(1);
-                raw.writeUInt8(value);
+                raw = Buffer.from([value & 0xFF]);
                 break;
             case dataTypes.INTEGER16:
-                raw = Buffer.alloc(2);
-                raw.writeInt16LE(value);
-                break;
             case dataTypes.UNSIGNED16:
                 raw = Buffer.alloc(2);
-                raw.writeUInt16LE(value);
+                raw[0] = ((value >>> 0) & 0xFF);
+                raw[1] = ((value >>> 8) & 0xFF);
+                break;
+            case dataTypes.INTEGER24:
+            case dataTypes.UNSIGNED24:
+                raw = Buffer.alloc(3);
+                for(let i = 0; i < 3; i++)
+                    raw[i] = ((value >>> i*8) & 0xFF);
                 break;
             case dataTypes.INTEGER32:
-                raw = Buffer.alloc(4);
-                raw.writeInt32LE(value);
-                break;
             case dataTypes.UNSIGNED32:
+            case dataTypes.TIME_OF_DAY:
+            case dataTypes.TIME_DIFFERENCE:
                 raw = Buffer.alloc(4);
-                raw.writeUInt32LE(value);
+                for(let i = 0; i < 4; i++)
+                    raw[i] = ((value >>> i*8) & 0xFF);
+                break;
+            case dataTypes.INTEGER40:
+            case dataTypes.UNSIGNED40:
+                raw = Buffer.alloc(5);
+                for(let i = 0; i < 5; i++)
+                    raw[i] = ((value >>> i*8) & 0xFF);
+                break;
+            case dataTypes.INTEGER48:
+            case dataTypes.UNSIGNED48:
+                raw = Buffer.alloc(6);
+                for(let i = 0; i < 6; i++)
+                    raw[i] = ((value >>> i*8) & 0xFF);
+                break;
+            case dataTypes.INTEGER56:
+            case dataTypes.UNSIGNED56:
+                raw = Buffer.alloc(7);
+                for(let i = 0; i < 7; i++)
+                    raw[i] = ((value >>> i*8) & 0xFF);
+                break;
+            case dataTypes.INTEGER64:
+            case dataTypes.UNSIGNED64:
+                raw = Buffer.alloc(8);
+                for(let i = 0; i < 8; i++)
+                    raw[i] = ((value >>> i*8) & 0xFF);
                 break;
             case dataTypes.REAL32:
                 raw = Buffer.alloc(4);
@@ -255,15 +371,22 @@ class Device extends EventEmitter
                 raw = Buffer.alloc(8);
                 raw.writeDoubleLE(value);
                 break;
+            case dataTypes.VISIBLE_STRING:
             case dataTypes.OCTET_STRING:
+            case dataTypes.UNICODE_STRING:
                 raw = Buffer.from(value);
-            default:
-                raw = value;
+                break;
         }
 
         return raw;
     }
 
+    /** Parse an EDS string based on type.
+     * @protected
+     * @param {string} data - data to convert.
+     * @param {dataTypes} dataType - type of the data.
+     * @return {number | string | Buffer}
+     */
     _parseTypedString(data, dataType)
     {
         switch(dataType)
@@ -288,4 +411,4 @@ class Device extends EventEmitter
     }
 }
 
-module.exports=exports=Device;
+module.exports=exports= Device;

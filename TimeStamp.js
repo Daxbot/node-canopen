@@ -1,3 +1,4 @@
+/** CANopen Timestamp producer. */
 class TimeStamp
 {
 }
