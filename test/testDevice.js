@@ -81,10 +81,10 @@ describe('Device', () => {
             if(testValue == undefined)
                 continue;
 
-            const raw = device._typeToRaw(testValue, type);
+            const raw = device.typeToRaw(testValue, type);
             assert(Buffer.isBuffer(raw), `${name}: isBuffer()`);
 
-            const parsed = device._rawToType(raw, type);
+            const parsed = device.rawToType(raw, type);
             assert.strictEqual(testValue, parsed, `${name}: ${testValue} == ${parsed} (${raw})`);
         }
 

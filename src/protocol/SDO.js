@@ -38,7 +38,7 @@ const abortCodes = {
 };
 
  /** CANopen SDO "Client Command Specifier" codes.
-  * @protected
+  * @private
   * @const {number}
   * @memberof SDO
   */
@@ -51,7 +51,7 @@ const abortCodes = {
 };
 
  /** CANopen SDO "Server Command Specifier" codes.
-  * @protected
+  * @private
   * @const {number}
   * @memberof SDO
   */
@@ -81,6 +81,10 @@ class SDO {
         this.server = {
             state: State.NONE,
         };
+    }
+
+    get abortCodes() {
+        return abortCodes;
     }
 
     serverStart() {
@@ -143,7 +147,7 @@ class SDO {
 
                             const dataType = entry.data[subIndex].type;
                             entry.data[subIndex] = {
-                                value:  this.device._rawToType(buffer, dataType),
+                                value:  this.device.rawToType(buffer, dataType),
                                 type:   dataType,
                                 raw:    buffer,
                                 size:   size,
@@ -176,7 +180,7 @@ class SDO {
                             if(data[0] & 1) {
                                 const dataType = entry.data[subIndex].type;
                                 entry.data[subIndex] = {
-                                    value:  this.device._rawToType(buffer, dataType),
+                                    value:  this.device.rawToType(buffer, dataType),
                                     type:   dataType,
                                     raw:    buffer,
                                     size:   size,
@@ -351,7 +355,7 @@ class SDO {
                     const raw = data.slice(4, count+4);
 
                     entry.data[subIndex] = {
-                        value:  this.device._rawToType(raw, dataType),
+                        value:  this.device.rawToType(raw, dataType),
                         type:   dataType,
                         raw:    raw,
                         size:   raw.length,
@@ -512,7 +516,7 @@ class SDO {
                         const dataType = entry.data[this.server.subIndex].type;
 
                         entry.data[this.server.subIndex] = {
-                            value:  this.device._rawToType(this.server.buffer, dataType),
+                            value:  this.device.rawToType(this.server.buffer, dataType),
                             type:   dataType,
                             raw:    this.server.buffer,
                             size:   this.server.buffer.length,

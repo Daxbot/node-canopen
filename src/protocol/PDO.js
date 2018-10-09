@@ -136,7 +136,7 @@ class PDO {
                     raw[j] = message.data[dataOffset+j];
                     dataOffset += 1;
                 }
-                entry.data[subIndex].value = this.device._rawToType(raw, dataType);
+                entry.data[subIndex].value = this.device.rawToType(raw, dataType);
                 entry.data[subIndex].raw = raw;
             }
         }

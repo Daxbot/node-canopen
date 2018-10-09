@@ -100,7 +100,7 @@ class Device extends EventEmitter {
                     if(objectType != objectTypes.ARRAY && objectType != objectTypes.RECORD) {
                         const dataType = parseInt(entry.DataType);
                         const value = this._parseTypedString(entry.DefaultValue, dataType);
-                        const raw = this._typeToRaw(value, dataType);
+                        const raw = this.typeToRaw(value, dataType);
 
                         data[0] = {
                             value:  value,
@@ -130,7 +130,7 @@ class Device extends EventEmitter {
                     const [main, sub] = section.split('sub');
                     const dataType = parseInt(entry.DataType);
                     const value = this._parseTypedString(entry.DefaultValue, dataType);
-                    const raw = this._typeToRaw(value, dataType);
+                    const raw = this.typeToRaw(value, dataType);
 
                     const index = parseInt(main, 16);
                     const subIndex = parseInt(sub, 16);
@@ -158,6 +158,9 @@ class Device extends EventEmitter {
     }
     get dataTypes() { 
         return dataTypes; 
+    }
+    get objectTypes() { 
+        return objectTypes; 
     }
 
     /** Get a dataObject.
@@ -207,7 +210,7 @@ class Device extends EventEmitter {
 
         if(value !== entry.data[subIndex].value) {
             const dataType = entry.data[subIndex].type;
-            const raw = this._typeToRaw(value, dataType);
+            const raw = this.typeToRaw(value, dataType);
             entry.data[subIndex] = {
                 value:      value,
                 type:       dataType,
@@ -227,7 +230,7 @@ class Device extends EventEmitter {
             throw TypeError("Ambiguous name: " + index);
 
         const dataType = entry.data[subIndex].type;
-        const value = this._rawToType(raw, dataType);
+        const value = this.rawToType(raw, dataType);
         if(value !== entry.data[subIndex].value) {
             entry.data[subIndex] = {
                 value:      value,
@@ -239,31 +242,12 @@ class Device extends EventEmitter {
         }
     }
 
-    /** socketcan 'onMessage' listener.
-     * @protected
-     * @param {Object} message - CAN frame.
-     */
-    _onMessage(message) {
-        if(!message)
-            return;
-        
-        if(message.id == 0x80 + this.deviceId)
-            this.emit("Emergency", EMCY._parse(message));
-        else if(message.id == (0x580 + this.deviceId))
-            this.emit("SDO", message.data);
-        else if(message.id == (0x600 + this.deviceId))
-            this.SDO._serve(message);
-        else if(message.id >= 0x180 && message.id < 0x580)
-            this.PDO._process(message);
-    }
-
     /** Convert a Buffer object to a value based on type.
-     * @protected
      * @param {Buffer} raw - data to convert.
      * @param {dataTypes} dataType - type of the data.
      * @return {number | string}
      */
-    _rawToType(raw, dataType) {
+    rawToType(raw, dataType) {
         switch(dataType) {
             case dataTypes.BOOLEAN:
                 return raw[0] != 0;
@@ -295,12 +279,11 @@ class Device extends EventEmitter {
     }
 
     /** Convert a value to a Buffer object based on type.
-     * @protected
      * @param {number | string} value - data to convert.
      * @param {dataTypes} dataType - type of the data.
      * @return {Buffer}
      */
-    _typeToRaw(value, dataType) {
+    typeToRaw(value, dataType) {
         let raw = Buffer.alloc(0);
         if(value == null)
             return raw;
@@ -376,7 +359,7 @@ class Device extends EventEmitter {
     }
 
     /** Parse an EDS string based on type.
-     * @protected
+     * @private
      * @param {string} data - data to convert.
      * @param {dataTypes} dataType - type of the data.
      * @return {number | string | Buffer}
@@ -400,6 +383,24 @@ class Device extends EventEmitter {
             default:
                 return data ? data : "";
         }
+    }
+
+    /** socketcan 'onMessage' listener.
+     * @private
+     * @param {Object} message - CAN frame.
+     */
+    _onMessage(message) {
+        if(!message)
+            return;
+        
+        if(message.id == 0x80 + this.deviceId)
+            this.emit("Emergency", EMCY._parse(message));
+        else if(message.id == (0x580 + this.deviceId))
+            this.emit("SDO", message.data);
+        else if(message.id == (0x600 + this.deviceId))
+            this.SDO._serve(message);
+        else if(message.id >= 0x180 && message.id < 0x580)
+            this.PDO._process(message);
     }
 }
 
