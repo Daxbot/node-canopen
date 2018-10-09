@@ -73,10 +73,8 @@ const State = {
 /** CANopen SDO protocol handler. 
  * @param {Device} device - parent device.
  */
-class SDO
-{
-    constructor(device)
-    {
+class SDO {
+    constructor(device) {
         this.device = device;
         this.deviceId = device.deviceId;
         this.server = {
@@ -84,17 +82,14 @@ class SDO
         };
     }
 
-    serverStart()
-    {
+    serverStart() {
         if(this.server.state == State.NONE)
             this.server.state = State.IDLE;
     }
 
-    serverStop()
-    {
+    serverStop() {
         this.server.state = State.NONE;
-        if(this.server.timer)
-        {
+        if(this.server.timer) {
             clearTimeout(this.server.timer)
             this.server.timer = null;
         }
@@ -105,22 +100,18 @@ class SDO
      * @param {number} subIndex - data subIndex to upload.
      * @param {number} timeout - time before transfer is aborted.
      */
-    upload(entry, subIndex=0, timeout=1000)
-    {
-        if(Array.isArray(entry))
-        {
-            if(entry.length > 1)
-            {
-                return this.upload(entry[0], subIndex, timeout).then(
-                    ()=>{ return this.upload(entry.slice(1), subIndex, timeout); }
+    upload(entry, subIndex=0, timeout=1000) {
+        if(Array.isArray(entry)) {
+            if(entry.length > 1) {
+                return this.upload(entry[0], subIndex, timeout)
+                    .then( () => { return this.upload(entry.slice(1), subIndex, timeout); }
                 );
             }
             else entry = entry[0];
         }
 
-        return new Promise((resolve, reject)=>
-        {
-            const timer = setTimeout(()=>{ reject(new Error(abortCodes[0x05040000])); }, timeout);
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout( () => { reject(new Error(abortCodes[0x05040000])); }, timeout);
 
             const sendBuffer = Buffer.alloc(8);
             sendBuffer[0] = (CCS.UPLOAD_INITIATE << 5);
@@ -133,10 +124,8 @@ class SDO
             let size = 0;
             let toggle = 1;
 
-            const handler = (data)=>
-            {
-                switch(data[0] >> 5)
-                {
+            const handler = (data) => {
+                switch(data[0] >> 5) {
                     case SCS.ABORT:
                         clearTimeout(timer);
                         this.device.removeListener("SDO", handler);
@@ -144,8 +133,7 @@ class SDO
                         break;
 
                     case SCS.UPLOAD_INITIATE:
-                        if(data[0] & 0x02)
-                        {
+                        if(data[0] & 0x02) {
                             // Expedited transfer
                             const count = (data[0] & 1) ? (4 - ((data[0] >> 2) & 3)) : 4;
                             size += count;
@@ -162,8 +150,7 @@ class SDO
                             this.device.removeListener("SDO", handler);
                             resolve();
                         }
-                        else
-                        {
+                        else {
                             // Segmented transfer
                             toggle ^= 1;
                             sendBuffer[0] = (CCS.UPLOAD_SEGMENT << 5)
@@ -178,16 +165,14 @@ class SDO
                         }
                         break;
                     case SCS.UPLOAD_SEGMENT:
-                        if((data[0] & 0x10) == (toggle << 4))
-                        {
+                        if((data[0] & 0x10) == (toggle << 4)) {
                             const count = (7 - ((data[0] >> 1) & 0x7));
                             const payload = data.slice(1, count+1);
                             size += count;
 
                             buffer = Buffer.concat([buffer, payload], size);
 
-                            if(data[0] & 1)
-                            {
+                            if(data[0] & 1) {
                                 const dataType = entry.data[subIndex].type;
                                 entry.data[subIndex] = {
                                     value:  this.device._rawToType(buffer, dataType),
@@ -198,8 +183,7 @@ class SDO
                                 this.device.removeListener("SDO", handler);
                                 resolve();
                             }
-                            else
-                            {
+                            else {
                                 toggle ^= 1;
                                 sendBuffer[0] = (CCS.UPLOAD_SEGMENT << 5) 
                                 sendBuffer[0] |= (toggle << 4);
@@ -230,21 +214,17 @@ class SDO
      * @param {number} subIndex - data subIndex to download.
      * @param {number} timeout - time before transfer is aborted.
      */
-    download(entry, subIndex=0, timeout=1000)
-    {
-        if(Array.isArray(entry))
-        {
-            if(entry.length > 1)
-            {
-                return this.download(entry[0], subIndex, timeout).then(
-                    ()=>{ return this.download(entry.slice(1), subIndex, timeout); }
+    download(entry, subIndex=0, timeout=1000) {
+        if(Array.isArray(entry)) {
+            if(entry.length > 1) {
+                return this.download(entry[0], subIndex, timeout)
+                    .then( () => { return this.download(entry.slice(1), subIndex, timeout); }
                 );
             }
             else entry = entry[0];
         }
 
-        return new Promise((resolve, reject)=>
-        {
+        return new Promise( (resolve, reject) => {
             const timer = setTimeout(()=>{ reject(new Error(abortCodes[0x05040000])); }, timeout);
 
             const sendBuffer = Buffer.alloc(8);
@@ -256,8 +236,7 @@ class SDO
             let toggle = 1;
 
             const size = entry.data[subIndex].size;
-            if(size <= 4)
-            {
+            if(size <= 4) {
                 // Expedited transfer
                 sendBuffer[0] = (CCS.DOWNLOAD_INITIATE << 5);
                 sendBuffer[0] |= ((4-size) << 2) | 0x2;
@@ -269,8 +248,7 @@ class SDO
 
                 bufferOffset = size;
             }
-            else
-            {
+            else {
                 // Segmented transfer
                 sendBuffer[0] = (CCS.DOWNLOAD_INITIATE << 5) | 0x1;
                 sendBuffer[4] = size;
@@ -279,10 +257,8 @@ class SDO
                 sendBuffer[7] = size >> 24;
             }
 
-            const handler = (data)=>
-            {
-                switch(data[0] >> 5)
-                {
+            const handler = (data) => {
+                switch(data[0] >> 5) {
                     case SCS.ABORT:
                         clearTimeout(timer);
                         this.device.removeListener("SDO", handler);
@@ -295,8 +271,7 @@ class SDO
                         toggle ^= 1;
                         /* falls through */
                     case SCS.DOWNLOAD_INITIATE:
-                        if(bufferOffset < size)
-                        {
+                        if(bufferOffset < size) {
                             let count = Math.min(7, (size - bufferOffset));
                             for(let i = 0; i < count; i++)
                                 sendBuffer[1+i] = entry.data[subIndex].raw[bufferOffset+i];
@@ -318,8 +293,7 @@ class SDO
                                 data: sendBuffer,
                             });
                         }
-                        else
-                        {
+                        else {
                             clearTimeout(timer);
                             this.device.removeListener("SDO", handler);
                             resolve();
@@ -341,10 +315,8 @@ class SDO
      * @private
      * @param {Object} message - CAN frame to parse.
      */
-    _serve(message)
-    {
-        switch(this.server.state)
-        {
+    _serve(message) {
+        switch(this.server.state) {
             case State.NONE:
                 return;
             case State.IDLE:
@@ -362,18 +334,15 @@ class SDO
     /** Handle State.IDLE. 
      * @private
      */
-    _serveIdle(data)
-    {
+    _serveIdle(data) {
         const index = (data.readUInt16LE(1));
         const subIndex = (data.readUInt8(3));
         const entry = this.device.dataObjects[index];
         const size = entry.data[subIndex].size;
 
-        switch(data[0] >> 5)
-        {
+        switch(data[0] >> 5) {
             case CCS.DOWNLOAD_INITIATE:
-                if(data[0] & 0x02)
-                {
+                if(data[0] & 0x02) {
                     // Expedited transfer
                     const count = (data[0] & 1) ? (4 - ((data[0] >> 2) & 3)) : 4;
                     const entry = this.device.dataObjects[index];
@@ -400,8 +369,7 @@ class SDO
                         data: sendBuffer,
                     });
                 }
-                else
-                {
+                else {
                     // Segmented transfer
                     const sendBuffer = Buffer.alloc(8);
                     sendBuffer[0] = (SCS.DOWNLOAD_INITIATE << 5);
@@ -428,8 +396,7 @@ class SDO
                 }
                 break;
             case CCS.UPLOAD_INITIATE:
-                if(size <= 4)
-                {
+                if(size <= 4) {
                     // Expedited transfer
                     const sendBuffer = Buffer.alloc(8);
                     sendBuffer[0] = (SCS.UPLOAD_INITIATE << 5);
@@ -450,8 +417,7 @@ class SDO
                         data: sendBuffer,
                     });
                 }
-                else
-                {
+                else {
                     // Segmented transfer
                     const sendBuffer = Buffer.alloc(8);
                     sendBuffer[0] = (SCS.UPLOAD_INITIATE << 5) | 0x1;
@@ -487,13 +453,10 @@ class SDO
     /** Handle State.UPLOAD. 
      * @private
      */
-    _serveUpload(data)
-    {
-        switch(data[0] >> 5)
-        {
+    _serveUpload(data) {
+        switch(data[0] >> 5) {
             case CCS.UPLOAD_SEGMENT:
-                if((data[0] & 0x10) == (this.server.toggle << 4))
-                {
+                if((data[0] & 0x10) == (this.server.toggle << 4)) {
                     const entry = this.device.getEntry(this.server.index);
                     const subIndex = this.server.subIndex;
                     const size = entry.data[subIndex].size;
@@ -510,8 +473,7 @@ class SDO
                     this.server.bufferOffset += count;
 
                     sendBuffer[0] = (this.server.toggle << 4) | (7-count) << 1;
-                    if(this.server.bufferOffset == size)
-                    {
+                    if(this.server.bufferOffset == size) {
                         sendBuffer[0] |= 1;
                         clearTimeout(this.server.timer);
                         this.server.timer = null;
@@ -525,7 +487,6 @@ class SDO
                         rtr: false,
                         data: sendBuffer,
                     });
-
                 }
                 else this._serveAbort(0x05030000);
                 break;
@@ -535,21 +496,17 @@ class SDO
     /** Handle State.DOWNLOAD. 
      * @private
      */
-    _serveDownload(data)
-    {
-        switch(data[0] >> 5)
-        {
+    _serveDownload(data) {
+        switch(data[0] >> 5) {
             case CCS.DOWNLOAD_SEGMENT:
-                if((data[0] & 0x10) == (this.server.toggle << 4))
-                {
+                if((data[0] & 0x10) == (this.server.toggle << 4)) {
                     const count = (7 - ((data[0] >> 1) & 0x7));
                     const payload = data.slice(1, count+1);
                     const size = this.server.buffer.length + count;
 
                     this.server.buffer = Buffer.concat([this.server.buffer, payload], size);
 
-                    if(data[0] & 1)
-                    {
+                    if(data[0] & 1) {
                         const entry = this.device.getEntry(this.server.index);
                         const dataType = entry.data[this.server.subIndex].type;
 
@@ -581,8 +538,7 @@ class SDO
             }
     }
 
-    _serveAbort(code)
-    {
+    _serveAbort(code) {
         const sendBuffer = Buffer.alloc(8);
         sendBuffer[0] = (SCS.ABORT << 5);
         sendBuffer[1] = this.server.index;
@@ -598,9 +554,8 @@ class SDO
         });
 
         this.server.state = State.IDLE;
-        if(this.server.timer)
-        {
-            clearTimeout(this.server.timer)
+        if(this.server.timer) {
+            clearTimeout(this.server.timer);
             this.server.timer = null;
         }
     }

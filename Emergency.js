@@ -1,13 +1,11 @@
 /** CANopen Emergency protocol handler. */
-class Emergency
-{
+class Emergency {
     /** Parse a CANopen Emergency message.
      * @private
      * @param {Object} message - CAN frame to parse.
      * @return {Array.<string, number, number, number, number>} 
      */
-    static _parse(message)
-    {
+    static _parse(message) {
         const code = message.data.readUInt16LE(0);
         const reg = message.data[2];
         const bit = message.data[3];
@@ -21,10 +19,8 @@ class Emergency
      * @param {number} code - CANopen error code to parse.
      * @return {string}
      */
-    static _parseCode(code)
-    {
-        switch(code)
-        {
+    static _parseCode(code) {
+        switch(code) {
             case 0x8110:
                 return 'CAN Overrun';
             case 0x8120:
@@ -46,8 +42,7 @@ class Emergency
             case 0x8250:
                 return 'RPDO Timeout';
             default:
-                switch(code >> 2)
-                {
+                switch(code >> 2) {
                     case 0x00:
                         return 'Error Reset';
                     case 0x10:

@@ -19,22 +19,17 @@ const defaultRPDOs = [0x200, 0x300, 0x400, 0x500];
 /** CANopen PDO protocol handler. 
  * @param {Device} device - parent device.
  */
-class PDO
-{
-    constructor(device)
-    {
+class PDO {
+    constructor(device) {
         this.device = device;
         this.TPDO = {};
         this.RPDO = {};
     }
 
     /** Initialize PDO mapping from the parent's dataObjects */
-    init()
-    {
-        for(const [index, entry] of Object.entries(this.device.dataObjects))
-        {
-            if((index & 0xFF00) == 0x1800)
-            {
+    init() {
+        for(const [index, entry] of Object.entries(this.device.dataObjects)) {
+            if((index & 0xFF00) == 0x1800) {
                 let objectId = entry.data[1].value;
                 if(defaultTPDOs.includes(objectId))
                     objectId += this.device.deviceId;
@@ -49,8 +44,7 @@ class PDO
                 };
 
                 const map = this.device.dataObjects[0x1A00 + (index & 0xFF)];
-                for(let j = 1; j < map.data.length; j++)
-                {
+                for(let j = 1; j < map.data.length; j++) {
                     const mapIndex = (map.data[j].value >> 16);
                     const mapSubIndex = (map.data[j].value >> 8) & 0xFF;
                     const mapBitLength = (map.data[j].value & 0xFF);
@@ -64,8 +58,7 @@ class PDO
                     this.TPDO[objectId].size += mapBitLength/8;
                 }
             }
-            else if((index & 0xFF00) == 0x1400)
-            {
+            else if((index & 0xFF00) == 0x1400) {
                 let objectId = entry.data[1].value;
                 if(defaultRPDOs.includes(objectId))
                     objectId += this.device.deviceId;
@@ -77,8 +70,7 @@ class PDO
                 };
 
                 const map = this.device.dataObjects[0x1600 + (index & 0xFF)];
-                for(let j = 1; j < map.data.length; j++)
-                {
+                for(let j = 1; j < map.data.length; j++) {
                     const mapIndex = (map.data[j].value >> 16);
                     const mapSubIndex = (map.data[j].value >> 8) & 0xFF;
                     const mapBitLength = (map.data[j].value & 0xFF);
@@ -98,20 +90,17 @@ class PDO
     /** Transmit a PDO. 
      * @param {number} id - PDO to transmit.
      */
-    transmit(id)
-    {
+    transmit(id) {
         const map = this.RPDO[id].map;
         let dataOffset = 0;
         
         let data = Buffer.alloc(this.RPDO[id].size);
-        for(let i = 0; i < map.length; i++)
-        {
+        for(let i = 0; i < map.length; i++) {
             const entry = this.device.dataObjects[map[i].index];
             const bitLength = map[i].bitLength;
             const subIndex = map[i].subIndex;
 
-            for(let j = 0; j < bitLength/8; j++)
-            {
+            for(let j = 0; j < bitLength/8; j++) {
                 data[dataOffset+j] = entry.data[subIndex].raw[j];
                 dataOffset += 1;
             }
@@ -129,15 +118,12 @@ class PDO
      * @private
      * @param {Object} message - CAN frame to parse.
      */
-    _parse(message)
-    {
-        if(message.id in this.TPDO)
-        {
+    _parse(message) {
+        if(message.id in this.TPDO) {
             const map = this.TPDO[message.id].map;
             let dataOffset = 0;
 
-            for(let i = 0; i < map.length; i++)
-            {
+            for(let i = 0; i < map.length; i++) {
                 const entry = this.device.dataObjects[map[i].index];
                 const bitLength = map[i].bitLength;
                 const subIndex = map[i].subIndex;
@@ -146,8 +132,7 @@ class PDO
                 const dataType = entry.data[subIndex].type;
 
                 let raw = Buffer.alloc(dataSize);
-                for(let j = 0; j < bitLength/8; j++)
-                {
+                for(let j = 0; j < bitLength/8; j++) {
                     raw[j] = message.data[dataOffset+j];
                     dataOffset += 1;
                 }

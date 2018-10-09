@@ -1,6 +1,5 @@
 /** CANopen Timestamp producer. */
-class TimeStamp
-{
+class TimeStamp {
 }
 
 module.exports=exports=TimeStamp;

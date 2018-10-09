@@ -77,8 +77,7 @@ describe('testDevice', () => {
             TIME_DIFFERENCE: (Date.now() >>> 0),
         };
 
-        for(const [name, type] of Object.entries(device.dataTypes))
-        {
+        for(const [name, type] of Object.entries(device.dataTypes)) {
             const testValue = testValues[name];
             if(testValue == undefined)
                 continue;

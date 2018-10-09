@@ -14,10 +14,8 @@ const commands = {
 /** CANopen NMT protocol handler.
  * @param {Device} device - parent device.
  */
-class NMT
-{
-    constructor(device)
-    {
+class NMT {
+    constructor(device) {
         this.device = device;
         this.deviceId = device.deviceId;
     }
@@ -26,8 +24,7 @@ class NMT
      * @private
      * @param {commands} command - NMT command to serve.
      */
-    _send(command)
-    {
+    _send(command) {
         this.device.channel.send({
             id: 0x0,
             ext: false,
@@ -37,32 +34,27 @@ class NMT
     }
 
     /** Set the device to Pre Operational state. */
-    PreOperational()
-    {
+    PreOperational() {
         this._send(commands.ENTER_PRE_OPERATIONAL);
     }
 
     /** Set the device to Operational state. */
-    Operational()
-    {
+    Operational() {
         this._send(commands.ENTER_OPERATIONAL);
     }
 
     /** Set the device to Stopped state. */
-    Stopped()
-    {
+    Stopped() {
         this._send(commands.ENTER_STOPPED);
     }
 
     /** Reset the device. */
-    ResetDevice()
-    {
+    ResetDevice() {
         this._send(commands.RESET_NODE);
     }
 
     /** Reset device communication. */
-    ResetCommunication()
-    {
+    ResetCommunication() {
         this._send(commands.RESET_COMMUNICATION);
     }
 }

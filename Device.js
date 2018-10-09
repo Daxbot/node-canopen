@@ -1,7 +1,6 @@
 const fs = require('fs');
 const ini = require('ini');
 const EventEmitter = require('events');
-const bitwise = require('bitwise');
 
 const SDO = require('./protocol/SDO');
 const PDO = require('./protocol/PDO');
@@ -65,10 +64,8 @@ const objectTypes = {
  * @param {number} deviceId - device identifier.
  * @param {string | null} edsPath - path to the device's electronic data sheet.
  */
-class Device extends EventEmitter
-{
-    constructor(channel, deviceId, edsPath=null)
-    {
+class Device extends EventEmitter {
+    constructor(channel, deviceId, edsPath=null) {
         if(channel.send == undefined)
             throw ReferenceError("arg0 'channel' has no send method");
 
@@ -90,21 +87,17 @@ class Device extends EventEmitter
 
         channel.addListener("onMessage", this._onMessage, this);
 
-        if(edsPath)
-        {
+        if(edsPath) {
             const od = ini.parse(fs.readFileSync(edsPath, 'utf-8'));
             const indexMatch = RegExp('^[0-9A-Fa-f]{4}$');
             const subIndexMatch = RegExp('^([0-9A-Fa-f]{4})sub([0-9A-Fa-f]+)$');
 
-            for(const [section, entry] of Object.entries(od))
-            {
-                if(indexMatch.test(section))
-                {
+            for(const [section, entry] of Object.entries(od)) {
+                if(indexMatch.test(section)) {
                     const objectType = parseInt(entry.ObjectType);
                     let data = [];
 
-                    if(objectType != objectTypes.ARRAY && objectType != objectTypes.RECORD)
-                    {
+                    if(objectType != objectTypes.ARRAY && objectType != objectTypes.RECORD) {
                         const dataType = parseInt(entry.DataType);
                         const value = this._parseTypedString(entry.DefaultValue, dataType);
                         const raw = this._typeToRaw(value, dataType);
@@ -126,17 +119,14 @@ class Device extends EventEmitter
                         data:       data,
                     };
 
-                    try
-                    {
+                    try {
                         this.nameLookup[entry.ParameterName].push(this.dataObjects[index]);
                     }
-                    catch(TypeError)
-                    {
+                    catch(TypeError) {
                         this.nameLookup[entry.ParameterName] = [this.dataObjects[index]];
                     }
                 }
-                else if(subIndexMatch.test(section))
-                {
+                else if(subIndexMatch.test(section)) {
                     const [main, sub] = section.split('sub');
                     const dataType = parseInt(entry.DataType);
                     const value = this._parseTypedString(entry.DefaultValue, dataType);
@@ -157,16 +147,23 @@ class Device extends EventEmitter
         }
     }
 
-    get SDO() { return this._SDO; }
-    get PDO() { return this._PDO; }
-    get NMT() { return this._NMT; }
-    get dataTypes() { return dataTypes; }
+    get SDO() { 
+        return this._SDO; 
+    }
+    get PDO() { 
+        return this._PDO; 
+    }
+    get NMT() { 
+        return this._NMT; 
+    }
+    get dataTypes() { 
+        return dataTypes; 
+    }
 
     /** Get a dataObject.
      * @param {number | string} index - index or name of the dataObject.
      */
-    getEntry(index)
-    {
+    getEntry(index) {
         let entry = this.dataObjects[index];
         if(entry == undefined)
         {
@@ -181,8 +178,7 @@ class Device extends EventEmitter
     /** Get the value of a dataObject.
      * @param {number | string} index - index or name of the dataObject.
      */
-    getValue(index, subIndex)
-    {
+    getValue(index, subIndex) {
         const entry = this.getEntry(index);
         if(entry && Array.isArray(entry))
             throw TypeError("Ambiguous name: " + index);
@@ -193,8 +189,7 @@ class Device extends EventEmitter
     /** Get the raw value of a dataObject.
      * @param {number | string} index - index or name of the dataObject.
      */
-    getRaw(index, subIndex)
-    {
+    getRaw(index, subIndex) {
         const entry = this.getEntry(index);
         if(entry && Array.isArray(entry))
             throw TypeError("Ambiguous name: " + index);
@@ -205,8 +200,7 @@ class Device extends EventEmitter
     /** Set the value of a dataObject.
      * @param {number | string} index - index or name of the dataObject.
      */
-    setValue(index, subIndex, value)
-    {
+    setValue(index, subIndex, value) {
         const entry = this.getEntry(index);
         if(entry && Array.isArray(entry))
             throw TypeError("Ambiguous name: " + index);
@@ -224,8 +218,7 @@ class Device extends EventEmitter
     /** Set the raw value of a dataObject.
      * @param {number | string} index - index or name of the dataObject.
      */
-    setRaw(index, subIndex, raw)
-    {
+    setRaw(index, subIndex, raw) {
         const entry = this.getEntry(index);
         if(entry && Array.isArray(entry))
             throw TypeError("Ambiguous name: " + index);
@@ -244,8 +237,7 @@ class Device extends EventEmitter
      * @protected
      * @param {Object} message - CAN frame.
      */
-    _onMessage(message)
-    {
+    _onMessage(message) {
         if(!message)
             return;
         
@@ -265,10 +257,8 @@ class Device extends EventEmitter
      * @param {dataTypes} dataType - type of the data.
      * @return {number | string}
      */
-    _rawToType(raw, dataType)
-    {
-        switch(dataType)
-        {
+    _rawToType(raw, dataType) {
+        switch(dataType) {
             case dataTypes.BOOLEAN:
                 return raw[0] != 0;
             case dataTypes.INTEGER8:
@@ -304,14 +294,12 @@ class Device extends EventEmitter
      * @param {dataTypes} dataType - type of the data.
      * @return {Buffer}
      */
-    _typeToRaw(value, dataType)
-    {
+    _typeToRaw(value, dataType) {
         let raw = Buffer.alloc(0);
         if(value == null)
             return raw;
 
-        switch(dataType)
-        {
+        switch(dataType) {
             case dataTypes.BOOLEAN:
                 raw = Buffer.from(value ? [1] : [0] );
                 break;
@@ -387,10 +375,8 @@ class Device extends EventEmitter
      * @param {dataTypes} dataType - type of the data.
      * @return {number | string | Buffer}
      */
-    _parseTypedString(data, dataType)
-    {
-        switch(dataType)
-        {
+    _parseTypedString(data, dataType) {
+        switch(dataType) {
             case dataTypes.BOOLEAN:
                 return data ? (parseInt(data) != 0) : false;
             case dataTypes.INTEGER8:

@@ -2,8 +2,7 @@ const canopen = require('../index');
 const VirtualChannel = require('./common/VirtualChannel.js');
 const assert = require('assert');
 
-describe('testSDO', ()=>
-{
+describe('testSDO', () => {
     // Create a loopback channel
     const channel = new VirtualChannel();
 
@@ -22,8 +21,7 @@ describe('testSDO', ()=>
         client.setValue(targetIndex, 0, 0xdecaf);
         server.setValue(targetIndex, 0, 0xc0ffee);
 
-        function check()
-        {
+        function check() {
             const clientValue = client.getValue(targetIndex, 0);
             const serverValue = server.getValue(targetIndex, 0);
             assert.strictEqual(clientValue, serverValue, `${clientValue.toString(16)} == ${serverValue.toString(16)}`);
@@ -42,14 +40,12 @@ describe('testSDO', ()=>
         client.setValue(targetIndex, 0, 0xdecaf);
         server.setValue(targetIndex, 0, 0xc0ffee);
 
-        function check()
-        {
+        function check() {
             const clientValue = client.getValue(targetIndex, 0);
             const serverValue = server.getValue(targetIndex, 0);
             assert.strictEqual(clientValue, serverValue, `${clientValue.toString(16)} == ${serverValue.toString(16)}`);
             done();
         }
-
 
         // Start client download
         client.SDO.upload(client.getEntry(targetIndex)).then(check, done).catch(done);
@@ -63,14 +59,12 @@ describe('testSDO', ()=>
         client.setValue(targetIndex, 0, "decaf");
         server.setValue(targetIndex, 0, "coffee");
 
-        function check()
-        {
+        function check() {
             const clientValue = client.getValue(targetIndex, 0);
             const serverValue = server.getValue(targetIndex, 0);
             assert.strictEqual(clientValue, serverValue, `${clientValue.toString(16)} == ${serverValue.toString(16)}`);
             done();
         }
-
 
         // Start client download
         client.SDO.upload(client.getEntry(targetIndex)).then(check, done).catch(done);
@@ -84,8 +78,7 @@ describe('testSDO', ()=>
         client.setValue(targetIndex, 0, "decaf");
         server.setValue(targetIndex, 0, "coffee");
 
-        function check()
-        {
+        function check() {
             const clientValue = client.getValue(targetIndex, 0);
             const serverValue = server.getValue(targetIndex, 0);
             assert.strictEqual(clientValue, serverValue, `${clientValue.toString(16)} == ${serverValue.toString(16)}`);
@@ -121,14 +114,12 @@ describe('testSDO', ()=>
         };
 
         /* jshint ignore:start */
-        async function awaitUpload(entry, done)
-        {
+        async function awaitUpload(entry, done) {
             await client.SDO.upload(entry).catch(done);
         }
         /* jshint ignore:end */
 
-        for(const [name, type] of Object.entries(client.dataTypes))
-        {
+        for(const [name, type] of Object.entries(client.dataTypes)) {
             const testValue = testValues[name];
             if(testValue == undefined)
                 continue;
@@ -171,14 +162,12 @@ describe('testSDO', ()=>
         };
 
         /* jshint ignore:start */
-        async function awaitDownload(entry, done)
-        {
+        async function awaitDownload(entry, done) {
             await client.SDO.download(entry).catch(done);
         }
         /* jshint ignore:end */
 
-        for(const [name, type] of Object.entries(client.dataTypes))
-        {
+        for(const [name, type] of Object.entries(client.dataTypes)) {
             const testValue = testValues[name];
             if(testValue == undefined)
                 continue;

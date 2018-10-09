@@ -1,10 +1,8 @@
 /** CANopen Sync producer.
  * @param {RawChannel} channel - socketcan RawChannel object.
  */
-class Sync
-{
-    constructor(channel)
-    {
+class Sync {
+    constructor(channel) {
         this.channel = channel;
         this.timer = null;
         this.syncCount = 0;
@@ -13,8 +11,7 @@ class Sync
     /** Serve a Sync object to the channel.
      * @private
      */
-    _sendSync()
-    {
+    _sendSync() {
         this.syncCount += 1;
         this.channel.send({
             id: 0x0,
@@ -28,14 +25,12 @@ class Sync
      * 
      * @param {number} syncTime - milliseconds between Sync objects.
      */
-    start(syncTime)
-    {
+    start(syncTime) {
         this.timer = setInterval(()=>{ this._sendSync() }, syncTime);
     }
 
     /** Stop serving Sync objects. */
-    stop()
-    {
+    stop() {
         clearInterval(this.timer);
     }
 }
