@@ -2,12 +2,11 @@
   "name": "canopen",
   "version": "1.0.0",
   "description": "CANopen implementation for Javascript",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "test": "mocha",
-    "lint": "jshint",
-    "document": "documentation lint index.js && documentation build index.js -f html -o docs",
-    "canopend": "node examples/canopend.js"
+    "test": "mocha ./test/testDevice.js ./test/*.js",
+    "lint": "jshint src/ test/ examples/ || true",
+    "document": "documentation lint && documentation build -f html -o docs"
   },
   "author": "Wilkins White <ww@novadynamics.com>",
   "license": "MIT",

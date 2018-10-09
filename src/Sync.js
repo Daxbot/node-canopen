@@ -26,7 +26,7 @@ class Sync {
      * @param {number} syncTime - milliseconds between Sync objects.
      */
     start(syncTime) {
-        this.timer = setInterval(()=>{ this._sendSync() }, syncTime);
+        this.timer = setInterval(()=>{ this._sendSync(); }, syncTime);
     }
 
     /** Stop serving Sync objects. */

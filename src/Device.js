@@ -205,14 +205,17 @@ class Device extends EventEmitter {
         if(entry && Array.isArray(entry))
             throw TypeError("Ambiguous name: " + index);
 
-        const dataType = entry.data[subIndex].type;
-        const raw = this._typeToRaw(value, dataType);
-        entry.data[subIndex] = {
-            value:  value,
-            type:   dataType,
-            raw:    raw,
-            size:   raw.length,
-        };
+        if(value !== entry.data[subIndex].value) {
+            const dataType = entry.data[subIndex].type;
+            const raw = this._typeToRaw(value, dataType);
+            entry.data[subIndex] = {
+                value:      value,
+                type:       dataType,
+                raw:        raw,
+                size:       raw.length,
+                changed:    true,
+            };
+        }
     }
 
     /** Set the raw value of a dataObject.
@@ -224,13 +227,16 @@ class Device extends EventEmitter {
             throw TypeError("Ambiguous name: " + index);
 
         const dataType = entry.data[subIndex].type;
-        const value = this._rawToType(raw, dataType)
-        entry.data[subIndex] = {
-            value:  value,
-            type:   dataType,
-            raw:    raw,
-            size:   raw.length,
-        };
+        const value = this._rawToType(raw, dataType);
+        if(value !== entry.data[subIndex].value) {
+            entry.data[subIndex] = {
+                value:      value,
+                type:       dataType,
+                raw:        raw,
+                size:       raw.length,
+                changed:    true,
+            };
+        }
     }
 
     /** socketcan 'onMessage' listener.
@@ -248,7 +254,7 @@ class Device extends EventEmitter {
         else if(message.id == (0x600 + this.deviceId))
             this.SDO._serve(message);
         else if(message.id >= 0x180 && message.id < 0x580)
-            this.PDO._parse(message);
+            this.PDO._process(message);
     }
 
     /** Convert a Buffer object to a value based on type.

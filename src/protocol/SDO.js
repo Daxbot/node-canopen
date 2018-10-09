@@ -72,6 +72,7 @@ const State = {
 
 /** CANopen SDO protocol handler. 
  * @param {Device} device - parent device.
+ * @todo rework server state machine
  */
 class SDO {
     constructor(device) {
@@ -90,7 +91,7 @@ class SDO {
     serverStop() {
         this.server.state = State.NONE;
         if(this.server.timer) {
-            clearTimeout(this.server.timer)
+            clearTimeout(this.server.timer);
             this.server.timer = null;
         }
     }
@@ -153,7 +154,7 @@ class SDO {
                         else {
                             // Segmented transfer
                             toggle ^= 1;
-                            sendBuffer[0] = (CCS.UPLOAD_SEGMENT << 5)
+                            sendBuffer[0] = (CCS.UPLOAD_SEGMENT << 5);
                             sendBuffer[0] |= (toggle << 4);
                             sendBuffer.fill(0, 1);
                             this.device.channel.send({
@@ -185,7 +186,7 @@ class SDO {
                             }
                             else {
                                 toggle ^= 1;
-                                sendBuffer[0] = (CCS.UPLOAD_SEGMENT << 5) 
+                                sendBuffer[0] = (CCS.UPLOAD_SEGMENT << 5);
                                 sendBuffer[0] |= (toggle << 4);
                                 sendBuffer.fill(0, 1);
                                 this.device.channel.send({

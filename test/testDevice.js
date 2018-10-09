@@ -1,9 +1,8 @@
-const canopen = require('../index');
+const canopen = require('../src/index');
 const VirtualChannel = require('./common/VirtualChannel.js');
 const assert = require('assert');
 
-describe('testDevice', () => {
-
+describe('Device', () => {
     it("Object Creation", (done) => {
         
         // No channel

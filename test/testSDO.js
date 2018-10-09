@@ -1,12 +1,10 @@
-const canopen = require('../index');
+const canopen = require('../src/index');
 const VirtualChannel = require('./common/VirtualChannel.js');
 const assert = require('assert');
 
-describe('testSDO', () => {
-    // Create a loopback channel
-    const channel = new VirtualChannel();
-
+describe('SDO', () => {
     // Create an SDO client and server at deviceId 0xA
+    const channel = new VirtualChannel();
     const client = new canopen.Device(channel, 0xA, './test/common/test.eds');
     const server = new canopen.Device(channel, 0xA, './test/common/test.eds');
 
@@ -119,7 +117,7 @@ describe('testSDO', () => {
         }
         /* jshint ignore:end */
 
-        for(const [name, type] of Object.entries(client.dataTypes)) {
+        for(const name of Object.keys(client.dataTypes)) {
             const testValue = testValues[name];
             if(testValue == undefined)
                 continue;
@@ -167,7 +165,7 @@ describe('testSDO', () => {
         }
         /* jshint ignore:end */
 
-        for(const [name, type] of Object.entries(client.dataTypes)) {
+        for(const name of Object.keys(client.dataTypes)) {
             const testValue = testValues[name];
             if(testValue == undefined)
                 continue;
