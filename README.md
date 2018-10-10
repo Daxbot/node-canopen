@@ -1,4 +1,6 @@
 # node-canopen
+[![Build Status](https://travis-ci.org/DaxBot/node-canopen.svg?branch=master)](https://travis-ci.org/DaxBot/node-canopen)
+
 CANopen is the internationally standardized (EN 50325-4) (CiA301) CAN-based higher-layer protocol for embedded control system. For more information on CANopen see http://www.can-cia.org/
 
 This library allows manipulation and representation of a CANopen network from within a NodeJS application and was written as a replacement to the no longer maintained [CANopenSocket](https://github.com/CANopenNode/CANopenSocket) suite of applications. The library is planned to support all standard CANopen protocols and be usable in both a client and server configuration.  Currently only the following protocols are supported:
