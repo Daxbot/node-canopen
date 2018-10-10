@@ -1,52 +1,42 @@
-const canopen = require('../src/index');
+const canopen = require('../index');
 const VirtualChannel = require('./common/VirtualChannel.js');
 const assert = require('assert');
 
 describe('Device', () => {
     it("Object Creation", (done) => {
+
+        // Valid
+        new canopen.Device(new VirtualChannel(), 0xA);
         
         // No channel
-        try {
+        assert.throws(() => {
             new canopen.Device(null, 0xA);
-            done("Failed to throw error on channel == null");
-        }
-        catch (e) { }
+        });
 
         // Channel has no send method
-        try {
+        assert.throws(() => {
             const channel = new VirtualChannel();
             channel.send = undefined;
-
             new canopen.Device(channel, 0xA);
-            done("Failed to throw error on channel.send == undefined");
-        }
-        catch (e) { }
+        });
 
         // Channel has no addListener method
-        try {
+        assert.throws(() => {
             const channel = new VirtualChannel();
             channel.addListener = undefined;
-
             new canopen.Device(channel, 0xA);
-            done("Failed to throw error on channel.addListener == undefined");
-        }
-        catch (e) { }
+        });
 
         // No deviceId
-        try {
+        assert.throws(() => {
             new canopen.Device(new VirtualChannel(), null);
-            done("Failed to throw error on deviceId == null");
-        }
-        catch (e) { }
+        });
 
         // deviceId out of range
-        try {
+        assert.throws(() => {
             new canopen.Device(new VirtualChannel(), 0x100);
-            done("Failed to throw error on deviceId > 0xFF");
-        }
-        catch (e) { }
+        });
 
-        // Load EDS
         done();
     });
 

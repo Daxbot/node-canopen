@@ -1,4 +1,4 @@
-const canopen = require('../src/index');
+const canopen = require('../index');
 const VirtualChannel = require('./common/VirtualChannel.js');
 const assert = require('assert');
 
