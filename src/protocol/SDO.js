@@ -87,11 +87,13 @@ class SDO {
         return abortCodes;
     }
 
+    /** Start serving SDO requests */
     serverStart() {
         if(this.server.state == State.NONE)
             this.server.state = State.IDLE;
     }
 
+    /** Stop serving SDO requests */
     serverStop() {
         this.server.state = State.NONE;
         if(this.server.timer) {
