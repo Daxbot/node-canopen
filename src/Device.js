@@ -63,6 +63,7 @@ const objectTypes = {
  * @param {RawChannel} channel - socketcan RawChannel object.
  * @param {number} deviceId - device identifier.
  * @param {string | null} edsPath - path to the device's electronic data sheet.
+ * @param {boolean} heartbeat - enable heartbeat production.
  */
 class Device extends EventEmitter {
     constructor(channel, deviceId, edsPath=null, heartbeat=false) {
