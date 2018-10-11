@@ -36,6 +36,9 @@ class PDO {
                 const mapEntry = this.device.dataObjects[0x1A00 + (index & 0xFF)];
                 for(let j = 1; j < mapEntry.data.length; j++) {
                     const mapIndex = (mapEntry.data[j].value >> 16);
+                    if(mapIndex == 0)
+                        continue;
+
                     const mapSubIndex = (mapEntry.data[j].value >> 8) & 0xFF;
                     const mapBitLength = (mapEntry.data[j].value & 0xFF);
 
@@ -63,6 +66,9 @@ class PDO {
                 const mapEntry = this.device.dataObjects[0x1600 + (index & 0xFF)];
                 for(let j = 1; j < mapEntry.data.length; j++) {
                     const mapIndex = (mapEntry.data[j].value >> 16);
+                    if(mapIndex == 0)
+                        continue;
+
                     const mapSubIndex = (mapEntry.data[j].value >> 8) & 0xFF;
                     const mapBitLength = (mapEntry.data[j].value & 0xFF);
 
@@ -71,6 +77,7 @@ class PDO {
                         subIndex:   mapSubIndex,
                         bitLength:  mapBitLength,
                     };
+
                     this.device.dataObjects[mapIndex].PDO = objectId;
                     this.map[objectId].size += mapBitLength/8;
                 }
@@ -118,7 +125,9 @@ class PDO {
      * @param {Object} message - CAN frame to parse.
      */
     _process(message) {
+        const updated = [];
         const id = (message.id.toString(16));
+
         if(id in this.map) {
             const map = this.map[id].dataObjects;
             let dataOffset = 0;
@@ -136,10 +145,18 @@ class PDO {
                     raw[j] = message.data[dataOffset+j];
                     dataOffset += 1;
                 }
-                entry.data[subIndex].value = this.device.rawToType(raw, dataType);
-                entry.data[subIndex].raw = raw;
+
+                const value = this.device.rawToType(raw, dataType);
+                if(value != entry.data[subIndex].value)
+                {
+                    entry.data[subIndex].value = value;
+                    entry.data[subIndex].raw = raw;
+                    updated.push(entry);
+                }
             }
         }
+
+        return updated;
     }
 }
 

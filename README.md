@@ -9,13 +9,32 @@ This library allows manipulation and representation of a CANopen network from wi
  -------- | ------ | ------
  SDO | :heavy_check_mark: | :heavy_check_mark:
  PDO | :heavy_check_mark: | :heavy_check_mark:
- NMT | :heavy_check_mark: | :x:
+ NMT | :heavy_check_mark: | :heavy_check_mark:
  SYNC | :heavy_check_mark: | :x:
  EMCY | :x: | :x:
  TIME | :x: | :x:
  LSS | :x: | :x:
- 
-## Service Data Object - SDO
+
+## Examples
+### canopend
+Written as a replacement for the CANopenSocket application of the same name, canopend shows how to create a CANopen network master. Read/write commands can be sent to the command socket in order to initate an SDO transfer and return the results. If canopend is started with an EDS file it will parse incoming PDOs and report updates to the command socket.
+
+Socket commands:
+ - `[<sequence>] <node> read  <index> <subindex> <datatype>`
+ - `[<sequence>] <node> write <index> <subindex> <datatype> <value>`
+
+Command responses are as follows:
+
+ Event | Response
+ ----- | --------
+ Successful write | `[<sequence>] OK`
+ Successful read | `[<sequence>] OK <value>`
+ SDO error | `[<sequence>] ERROR <error>`
+ PDO update | `PDO: <name>=<value>`
+ Emergency | `EM: <id> <code> <register> <bit> <info>`
+
+## Modules
+### Service Data Object - SDO
 The CANopen service data object protocol is used for manipulating individual entries on the device and uses a client/server relationship.  The device whose object dictionary is being accessed is the server and the request intiator is the client. The SDO module uses the [SDO::upload](https://daxbot.github.io/node-canopen/#sdoupload) and [SDO::download](https://daxbot.github.io/node-canopen/#sdoupload) methods to initate SDO requests as a client.  To avoid interfering with remote devices the module will not serve requests by default. To begin or end server operation call [SDO::serverStart](https://daxbot.github.io/node-canopen/#sdoserverstop) or [SDO::serverStop](https://daxbot.github.io/node-canopen/#sdoserverstop).
 
 Supported Features:
@@ -23,7 +42,7 @@ Supported Features:
  - Segmented Transfer :heavy_check_mark:
  - Block Transfer :x:
 
-## Process Data Object - PDO
+### Process Data Object - PDO
 The CANopen process data object protocol is used for broadcasting data changes with minimal overhead, similar to a more traditional CAN network architecture. PDO uses a producer/consumer model where a device pushes a message to the bus and any number of nodes can act upon it.  Currently the PDO module handles Transmit PDOs and Receive PDOs the same way.  When a mapped data object is updated using [Device::setValue](https://daxbot.github.io/node-canopen/#devicesetvalue) or [Device::setRaw](https://daxbot.github.io/node-canopen/#devicesetraw) the user can call [PDO::transmit](https://daxbot.github.io/node-canopen/#pdotransmit) to push the changes to the network.  The module will automatically process incoming PDOs and update the object dictionary accordingly.
 
 Supported Features:
@@ -33,22 +52,25 @@ Supported Features:
     - Event timer :x:
  - Synchronous PDOs :x:
 
-## Network Management - NMT
-The CANopen network management protocol is used to manipulate the state of devices on the network and is responsible for heartbeat monitoring.  The NMT module can be used to set a remote device's operational mode.  The standalone Heartbeat module can be used start/stop a hearbeat.  The NMT module currently does not have support for additional node monitoring.
+### Network Management - NMT
+The CANopen network management protocol is used to manipulate the state of devices on the network and is responsible for heartbeat monitoring.  The NMT module can be used to set a device's operational mode.
 
 Supported Features:
- - NMT state changes :heavy_check_mark:
- - Hearbeat :heavy_check_mark:
- - Node guarding :x:
+ - Remote state changes :heavy_check_mark:
+ - Heartbeat monitoring :heavy_check_mark:
+ - Command processing
+    - State changes :heavy_check_mark:
+    - Reset node :x:
+    - Reset communications :x:
 
-## Sync - SYNC
+### Sync - SYNC
 The CANopen sync protocol is used to synchronize actions between devices on the network.  Sync can be started or stopped using the standalone Sync module.
 
-## Emergency - EMCY
+### Emergency - EMCY
 Not yet implemented
 
-##  Timestamp - TIME
+###  Timestamp - TIME
 Not yet implemented
 
-## Layer Setting Services - LSS
+### Layer Setting Services - LSS
 Not yet implemented

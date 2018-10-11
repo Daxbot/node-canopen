@@ -322,7 +322,7 @@ class SDO {
      * @private
      * @param {Object} message - CAN frame to parse.
      */
-    _serve(message) {
+    _process(message) {
         switch(this.server.state) {
             case State.NONE:
                 return;

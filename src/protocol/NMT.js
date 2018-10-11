@@ -1,3 +1,15 @@
+/** NMT internal states.
+ * @protected
+ * @const {number}
+ * @memberof NMT
+ */
+const states = {
+    INITIALIZING: 0,
+    PRE_OPERATIONAL: 127,
+    OPERATIONAL: 5,
+    STOPPED: 4,
+};
+
 /** NMT commands.
  * @private
  * @const {number}
@@ -18,6 +30,7 @@ class NMT {
     constructor(device) {
         this.device = device;
         this.deviceId = device.deviceId;
+        this.status = states.INITIALIZING;
     }
 
     /** Serve an NMT command.
@@ -31,6 +44,25 @@ class NMT {
             rtr: false,
             data: Buffer.from([command, this.deviceId])
         });
+    }
+
+    _process(message) {
+        switch(message.data[0])
+        {
+            case commands.ENTER_OPERATIONAL:
+                this.status = state.OPERATIONAL;
+                break;
+            case commands.STOPPED:
+                this.status = state.STOPPED;
+                break;
+            case commands.PRE_OPERATIONAL:
+                this.status = state.PRE_OPERATIONAL;
+                break;
+        }
+    }
+
+    get states() {
+        return states;
     }
 
     /** Set the device to Pre Operational state. */

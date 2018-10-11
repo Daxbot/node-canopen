@@ -2,9 +2,10 @@
  * @param {RawChannel} channel - socketcan RawChannel object.
  */
 class Sync {
-    constructor(channel) {
+    constructor(channel, syncId=0x80) {
         this.channel = channel;
         this.timer = null;
+        this.syncId = syncId;
         this.syncCount = 0;
     }
 
@@ -14,7 +15,7 @@ class Sync {
     _sendSync() {
         this.syncCount += 1;
         this.channel.send({
-            id: 0x0,
+            id: this.syncId,
             ext: false,
             rtr: false,
             data: Buffer.from([this.syncCount]),

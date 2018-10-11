@@ -5,7 +5,7 @@ class Emergency {
      * @param {Object} message - CAN frame to parse.
      * @return {Array.<string, number, number, number, number>} 
      */
-    static _parse(message) {
+    static _process(message) {
         const code = message.data.readUInt16LE(0);
         const reg = message.data[2];
         const bit = message.data[3];

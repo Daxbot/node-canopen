@@ -65,15 +65,15 @@ const objectTypes = {
  * @param {string | null} edsPath - path to the device's electronic data sheet.
  */
 class Device extends EventEmitter {
-    constructor(channel, deviceId, edsPath=null) {
+    constructor(channel, deviceId, edsPath=null, heartbeat=false) {
         if(channel.send == undefined)
             throw ReferenceError("arg0 'channel' has no send method");
 
         if(channel.addListener == undefined)
             throw ReferenceError("arg0 'channel' has no addListener method");
 
-        if(!deviceId || deviceId > 0xFF)
-            throw RangeError("ID must be in range 1-255");
+        if(!deviceId || deviceId > 0x7F)
+            throw RangeError("ID must be in range 1-127");
 
         super();
         this.channel = channel;
@@ -144,6 +144,14 @@ class Device extends EventEmitter {
             }
 
             this.PDO.init();
+
+            if(heartbeat) {
+                const heartbeatTime = this.getValue(0x1017, 0);
+                if(heartbeatTime > 0) {
+                    this.hearbeat = setInterval(
+                        () => { this._sendHeartbeat(); }, heartbeatTime);
+                }
+            }
         }
     }
 
@@ -394,13 +402,30 @@ class Device extends EventEmitter {
             return;
         
         if(message.id == 0x80 + this.deviceId)
-            this.emit("Emergency", EMCY._parse(message));
+            this.emit('Emergency', this.deviceId, EMCY._process(message));
         else if(message.id == (0x580 + this.deviceId))
-            this.emit("SDO", message.data);
+            this.emit('SDO', message.data);
         else if(message.id == (0x600 + this.deviceId))
-            this.SDO._serve(message);
-        else if(message.id >= 0x180 && message.id < 0x580)
-            this.PDO._process(message);
+            this.SDO._process(message);
+        else if(message.id >= 0x180 && message.id < 0x580) {
+            const updated = this.PDO._process(message);
+            if(updated.length > 0)
+                this.emit('PDO', updated);
+        }
+        else if(message.id == 0x700 + this.deviceId)
+            this.NMT._process(message);
+    }
+
+    /** Serve a Heartbeat object to the channel.
+     * @private
+     */
+    _sendHeartbeat() {
+        this.channel.send({
+            id: 0x700 + this.deviceId,
+            ext: false,
+            rtr: false,
+            data: Buffer.from([this.NMT.status])
+        });
     }
 }
 
