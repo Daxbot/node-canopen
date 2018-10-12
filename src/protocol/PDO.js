@@ -127,7 +127,6 @@ class PDO {
     _process(message) {
         const updated = [];
         const id = (message.id.toString(16));
-
         if(id in this.map) {
             const map = this.map[id].dataObjects;
             let dataOffset = 0;
@@ -143,8 +142,8 @@ class PDO {
                 let raw = Buffer.alloc(dataSize);
                 for(let j = 0; j < bitLength/8; j++) {
                     raw[j] = message.data[dataOffset+j];
-                    dataOffset += 1;
                 }
+                dataOffset += dataSize;
 
                 const value = this.device.rawToType(raw, dataType);
                 if(value != entry.data[subIndex].value)
