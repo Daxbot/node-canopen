@@ -26,8 +26,10 @@ describe('SDO', () => {
             done();
         }
 
-        // Start client upload
-        client.SDO.upload(client.getEntry(targetIndex)).then(check, done).catch(done);
+        client.SDO
+            .upload(targetIndex)
+            .then(check, done)
+            .catch(done);
     });
 
     it("Expedited Download", (done) => {
@@ -45,8 +47,10 @@ describe('SDO', () => {
             done();
         }
 
-        // Start client download
-        client.SDO.upload(client.getEntry(targetIndex)).then(check, done).catch(done);
+        client.SDO
+            .download(targetIndex)
+            .then(check, done)
+            .catch(done);
     });
 
     it("Segmented Upload", (done) => {
@@ -64,8 +68,10 @@ describe('SDO', () => {
             done();
         }
 
-        // Start client download
-        client.SDO.upload(client.getEntry(targetIndex)).then(check, done).catch(done);
+        client.SDO
+            .upload(targetIndex)
+            .then(check, done)
+            .catch(done);
     });
 
     it("Segmented Download", (done) => {
@@ -84,102 +90,90 @@ describe('SDO', () => {
         }
 
         // Start client download
-        client.SDO.download(client.getEntry(targetIndex)).then(check, done).catch(done);
+        client.SDO
+            .download(targetIndex)
+            .then(check, done)
+            .catch(done);
     });
+
+    const testValues = {
+        // Basic
+        BOOLEAN:    true,
+        INTEGER8:   -0x11,
+        INTEGER16:  -0x1122,
+        INTEGER32:  -0x11223344,
+        UNSIGNED8:  0x11,
+        UNSIGNED16: 0x1122,
+        UNSIGNED32: 0x11223344,
+        REAL32:     1.0,
+        REAL64:     1.0,
+
+        // Strings
+        VISIBLE_STRING: "VISIBLE_STRING",
+        OCTET_STRING: "12345678",
+        UNICODE_STRING: "\u03b1\u03b2\u03b3",
+
+        // Timestamp - 32 bit
+        TIME_OF_DAY: (Date.now() >>> 0),
+        TIME_DIFFERENCE: (Date.now() >>> 0),
+    };
 
     it("Generic Data Upload", (done) => {
 
-        const testValues = {
-            // Basic
-            BOOLEAN:    true,
-            INTEGER8:   -0x11,
-            INTEGER16:  -0x1122,
-            INTEGER32:  -0x11223344,
-            UNSIGNED8:  0x11,
-            UNSIGNED16: 0x1122,
-            UNSIGNED32: 0x11223344,
-            REAL32:     1.0,
-            REAL64:     1.0,
-
-            // Strings
-            VISIBLE_STRING: "VISIBLE_STRING",
-            OCTET_STRING: "12345678",
-            UNICODE_STRING: "\u03b1\u03b2\u03b3",
-
-            // Timestamp - 32 bit
-            TIME_OF_DAY: (Date.now() >>> 0),
-            TIME_DIFFERENCE: (Date.now() >>> 0),
-        };
-
-        /* jshint ignore:start */
-        async function awaitUpload(entry, done) {
-            await client.SDO.upload(entry).catch(done);
-        }
-        /* jshint ignore:end */
-
+        const transfers = [];
         for(const name of Object.keys(client.dataTypes)) {
             const testValue = testValues[name];
             if(testValue == undefined)
                 continue;
 
+            /* jshint ignore:start */
+            function check() {
+                const clientValue = client.getValue(name, 0);
+                const serverValue = server.getValue(name, 0);
+                assert.strictEqual(clientValue, serverValue, `${name}: '${clientValue}' == '${serverValue}'`);
+            }
+            /* jshint ignore:end */
+
             client.setValue(name, 0, null);
             server.setValue(name, 0, testValue);
-
-            // Start client upload
-            awaitUpload(client.getEntry(name), done);
-
-            const clientValue = client.getValue(name, 0);
-            const serverValue = server.getValue(name, 0);
-            assert.strictEqual(clientValue, serverValue, `${name}: ${clientValue} == ${serverValue}`);
+            transfers.push(client.SDO.upload(name).then(check));
         }
-        done();
+
+        Promise
+            .all(transfers)
+            .then(
+                ( ) => { done(); },
+                (e) => { done(e); }
+            );
     });
 
     it("Generic Data Download", (done) => {
 
-        const testValues = {
-            // Basic
-            BOOLEAN:    true,
-            INTEGER8:   -0x11,
-            INTEGER16:  -0x1122,
-            INTEGER32:  -0x11223344,
-            UNSIGNED8:  0x11,
-            UNSIGNED16: 0x1122,
-            UNSIGNED32: 0x11223344,
-            REAL32:     1.0,
-            REAL64:     1.0,
-
-            // Strings
-            VISIBLE_STRING: "VISIBLE_STRING",
-            OCTET_STRING: "12345678",
-            UNICODE_STRING: "\u03b1\u03b2\u03b3",
-
-            // Timestamp - 32 bit
-            TIME_OF_DAY: (Date.now() >>> 0),
-            TIME_DIFFERENCE: (Date.now() >>> 0),
-        };
-
-        /* jshint ignore:start */
-        async function awaitDownload(entry, done) {
-            await client.SDO.download(entry).catch(done);
-        }
-        /* jshint ignore:end */
-
+        const transfers = [];
         for(const name of Object.keys(client.dataTypes)) {
             const testValue = testValues[name];
             if(testValue == undefined)
                 continue;
 
+            /* jshint ignore:start */
+            function check() {
+                const clientValue = client.getValue(name, 0);
+                const serverValue = server.getValue(name, 0);
+                assert.strictEqual(clientValue, serverValue, `${name}: '${clientValue}' == '${serverValue}'`);
+            }
+            /* jshint ignore:end */
+
             client.setValue(name, 0, testValue);
             server.setValue(name, 0, null);
-
-            // Start client download
-            awaitDownload(client.getEntry(name), done);
-
-            const clientValue = client.getValue(name, 0);
-            const serverValue = server.getValue(name, 0);
-            assert.strictEqual(clientValue, serverValue, `${name}: ${clientValue} == ${serverValue}`);
+            transfers.push(client.SDO.download(name).then(check));
         }
-        done();
+
+        Promise
+            .all(transfers)
+            .then(
+                ( ) => { done(); },
+                (e) => { done(e); }
+            )
+            .catch(done);
     });
 });

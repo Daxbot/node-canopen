@@ -110,7 +110,7 @@ function reportPDO(updated)
 
         const name = entry.name.replace(' ', '_');
         const report = `PDO: ${name}=${value}`;
-        console.log(report);
+        //console.log(report);
         clients.forEach( (c) => { c.write(report + '\n'); });
     }
 }

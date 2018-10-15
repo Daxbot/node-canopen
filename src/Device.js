@@ -402,19 +402,25 @@ class Device extends EventEmitter {
         if(!message)
             return;
         
-        if(message.id == 0x80 + this.deviceId)
-            this.emit('Emergency', this.deviceId, EMCY._process(message));
-        else if(message.id == (0x580 + this.deviceId))
-            this.emit('SDO', message.data);
-        else if(message.id == (0x600 + this.deviceId))
-            this.SDO._process(message);
-        else if(message.id >= 0x180 && message.id < 0x580) {
+        if(message.id >= 0x180 && message.id < 0x580) {
             const updated = this.PDO._process(message);
             if(updated.length > 0)
                 this.emit('PDO', updated);
         }
-        else if(message.id == 0x700 + this.deviceId)
-            this.NMT._process(message);
+        else switch(message.id - this.deviceId) {
+            case 0x80:
+                this.emit('Emergency', this.deviceId, EMCY._process(message));
+                break;
+            case 0x580:
+                this.SDO._clientProcess(message);
+                break;
+            case 0x600:
+                this.SDO._serverProcess(message);
+                break;
+            case 0x700:
+                this.NMT._process(message);
+                break;
+        }
     }
 
     /** Serve a Heartbeat object to the channel.
