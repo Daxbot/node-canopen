@@ -68,7 +68,7 @@ class Transfer {
         this.device = context.device;
         this.entry = context.entry;
         this.subIndex = context.subIndex;
-        this.timeout = context.timeout;
+        this.timer = context.timer;
         this.size = context.size;
 
         this._init = init;
@@ -90,7 +90,6 @@ class Transfer {
     }
 
     start() {
-        this.timer = setTimeout( () => { this.abort(0x05040000); }, this.timeout);
         this._init();
     }
 
@@ -155,7 +154,7 @@ class SDO {
      * @param {number} subIndex - data subIndex to upload.
      * @param {number} timeout - time before transfer is aborted.
      */
-    upload(entry, subIndex=0, timeout=1000) {
+    upload(entry, subIndex=0, timeout=100) {
         if(Array.isArray(entry)) {
             for(let i = 0; i < entry.length; i++) {
                 return this.upload(entry[i], subIndex, timeout);
@@ -168,11 +167,12 @@ class SDO {
                 if(!entry) reject(new Error(abortCodes[0x06020000]));
             }
 
+            const timer = setTimeout( () => { this._clientAbort(0x05040000); }, timeout);
             const context = {
                 device: this.device,
                 entry: entry,
                 subIndex: subIndex,
-                timeout: timeout,
+                timer: timer,
                 resolve: resolve,
                 reject: reject,
             };
@@ -205,7 +205,7 @@ class SDO {
      * @param {number} subIndex - data subIndex to download.
      * @param {number} timeout - time before transfer is aborted.
      */
-    download(entry, subIndex=0, timeout=1000) {
+    download(entry, subIndex=0, timeout=100) {
         if(Array.isArray(entry)) {
             for(let i = 0; i < entry.length; i++) {
                 return this.download(entry[i], subIndex, timeout);
@@ -222,11 +222,12 @@ class SDO {
                 reject(new Error(abortCodes[0x06090011]));
 
             const size = entry.data[subIndex].size;
+            const timer = setTimeout( () => { this._clientAbort(0x05040000); }, timeout);
             const context = {
                 device: this.device,
                 entry: entry,
                 subIndex: subIndex,
-                timeout: timeout,
+                timer: timer,
                 size: size,
                 resolve: resolve,
                 reject: reject,
@@ -284,7 +285,7 @@ class SDO {
         const data = message.data;
         switch(data[0] >> 5) {
             case SCS.ABORT:
-                this._clientReject(data.readUInt32LE(4));
+                this._clientAbort(data.readUInt32LE(4));
                 break;
             case SCS.UPLOAD_INITIATE:
                 this._clientUploadInitiate(data);
@@ -310,8 +311,8 @@ class SDO {
         if(this.transfer) this.transfer.start();
     }
 
-    _clientReject(code) {
-        this.transfer.reject(code);
+    _clientAbort(code) {
+        this.transfer.abort(code);
         this.transfer = this.queue.shift();
         if(this.transfer) this.transfer.start();
     }
@@ -375,7 +376,7 @@ class SDO {
             if(this.transfer.size == size)
                 this._clientResolve();
             else
-                this._clientReject(0x06070010);
+                this._clientAbort(0x06070010);
         }
         else {
             this.transfer.toggle ^= 1;
