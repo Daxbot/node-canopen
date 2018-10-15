@@ -153,79 +153,88 @@ const server = net.createServer((c) => {
         - SDO download: [<sequence>] <node> write <index> <subindex> <datatype> <value>
         */
 
-        args = data.toString().trim().split(' ');
+        commands = data.toString().trim().split('\n');
+        commands.forEach((command) => {
+            args = command.split(' ');
 
-        let i = 0;
-        let sequence = 0;
-        if(sequenceMatch.test(args[i])) {
-            sequence = parseInt(args[i++].slice(1, -1));
-        }
-        else {
-            while(pending.includes(sequence))
-                sequence = Math.floor(Math.random()*0xFF);
-        }
+            let i = 0;
+            let sequence = 0;
+            if(sequenceMatch.test(args[i])) {
+                sequence = parseInt(args[i++].slice(1, -1));
+            }
+            else {
+                while(pending.includes(sequence))
+                    sequence = Math.floor(Math.random()*0xFF);
+            }
 
-        const deviceId = parseInt(args[i++]);
-        const command = args[i++];
-        const index = parseInt(args[i++]);
-        const subIndex = parseInt(args[i++]);
+            const deviceId = parseInt(args[i++]);
+            const action = args[i++];
+            const index = parseInt(args[i++]);
+            const subIndex = parseInt(args[i++]);
 
-        if(network[deviceId] == undefined)
-        {
-            network[deviceId] = new canopen.Device(channel, deviceId);
-            network[deviceId].on('Emergency', reportEmergency);
-        }
+            if(network[deviceId] == undefined)
+            {
+                network[deviceId] = new canopen.Device(channel, deviceId);
+                network[deviceId].on('Emergency', reportEmergency);
+            }
 
-        const device = network[deviceId];
-        const dataType = dataTypes[args[i++]];
-        const dataString = args[i] ? args[i] : '0';
-        const value = device._parseTypedString(dataString, dataType);
-        const raw = device.typeToRaw(value, dataType);
-        const size = raw.length;
+            const device = network[deviceId];
+            const dataType = dataTypes[args[i++]];
+            const dataString = args[i] ? args[i] : '0';
+            const value = device._parseTypedString(dataString, dataType);
+            const raw = device.typeToRaw(value, dataType);
+            const size = raw.length;
 
-        const entry = {
-            index: index,
-            data: [],
-        };
-        entry.data[subIndex] = {
-            value: value,
-            type: dataType,
-            raw: raw,
-            size: size,
-        };
+            const entry = {
+                index: index,
+                data: [],
+            };
+            entry.data[subIndex] = {
+                value: value,
+                type: dataType,
+                raw: raw,
+                size: size,
+            };
 
-        switch(command[0]) {
-            case 'r':
-            case 'read':
-                device.SDO.upload(entry, subIndex)
-                    .then(
-                        ( ) => {
-                            const result = `[${sequence}] OK ${entry.data[subIndex].value}`;
-                            console.log(result);
-                            c.write(result + '\n');
-                        },
-                        (e) => {
-                            const result = `[${sequence}] ERROR: ${e.message}`;
-                            console.log(result);
-                            c.write(result + '\n');
-                        });
-                break;
-            case 'w':
-            case 'write':
-                device.SDO.download(entry, subIndex)
-                    .then(
-                        ( ) => {
-                            const result = `[${sequence}] OK`;
-                            console.log(result);
-                            c.write(result + '\n');
-                        },
-                        (e) => {
-                            const result = `[${sequence}] ERROR: ${e.message}`;
-                            console.log(result);
-                            c.write(result + '\n');
-                        });
-                break;
-        }
+            switch(action) {
+                case 'r':
+                case 'read':
+                    device.SDO.upload(entry, subIndex)
+                        .then(
+                            ( ) => {
+                                const result = `[${sequence}] OK ${entry.data[subIndex].value}`;
+                                console.log(result);
+                                c.write(result + '\n');
+                            },
+                            (e) => {
+                                const result = `[${sequence}] ERROR: ${e.message}`;
+                                console.error(result);
+                                c.write(result + '\n');
+                            });
+                    break;
+                case 'w':
+                case 'write':
+                    device.SDO.download(entry, subIndex)
+                        .then(
+                            ( ) => {
+                                const result = `[${sequence}] OK`;
+                                console.log(result);
+                                c.write(result + '\n');
+                            },
+                            (e) => {
+                                const result = `[${sequence}] ERROR: ${e.message}`;
+                                console.error(result);
+                                c.write(result + '\n');
+                            });
+                    break;
+                default:
+                    const result = `[${sequence}] ERROR: ${device.abortCode[0x06040043]}`;
+                    console.error(result);
+                    c.write(result + '\n');
+                    break;
+            }
+        });
+        
     });
 });
 
