@@ -63,6 +63,12 @@ const SCS = {
     ABORT: 4,
 };
 
+/** Represents a SDO transfer. 
+ * @private
+ * @param {Object} context - transfer context.
+ * @param {function} init - callback to begin the transfer.
+ * @memberof SDO
+ */
 class Transfer {
     constructor(context, init) {
         this.device = context.device;
@@ -79,6 +85,10 @@ class Transfer {
         this.buffer = Buffer.allocUnsafe(0);
     }
 
+    /** Helper method to send a message to the bus.
+     * @private
+     * @param {Buffer} buffer - data to send.
+     */
     _send(buffer) {
         const id = 0x600 + this.device.deviceId;
         this.device.channel.send({
@@ -89,22 +99,21 @@ class Transfer {
         });
     }
 
+    /** Begin the transfer. */
     start() {
         this._init();
     }
 
+    /** Complete the transfer and resolve its promise. */
     resolve() {
         clearTimeout(this.timer);
         this._resolve();
 
     }
 
-    reject(code) {
-        clearTimeout(this.timer);
-        this._reject(new Error(abortCodes[code]));
-    }
-
+    /** Abort the transfer and reject its promise. */
     abort(code) {
+        clearTimeout(this.timer);
         const sendBuffer = Buffer.alloc(8);
         sendBuffer[0] = 0x80;
         sendBuffer[1] = this.index;
@@ -112,7 +121,7 @@ class Transfer {
         sendBuffer[3] = this.subIndex;
         sendBuffer.writeUInt32LE(code, 4);
         this._send(sendBuffer);
-        this.reject(code);
+        this._reject(new Error(abortCodes[code]));
     }
 }
 
@@ -150,7 +159,7 @@ class SDO {
     }
 
     /** Upload the value from the remote device to the local copy.
-     * @param {object | number | string} index - entry or index to upload.
+     * @param {Object | number | string} entry - entry, index, or name to upload.
      * @param {number} subIndex - data subIndex to upload.
      * @param {number} timeout - time before transfer is aborted.
      */
@@ -201,7 +210,7 @@ class SDO {
     }
 
     /** Download the value from the local copy to the remote device. 
-     * @param {object | number | string} index - entry or index to download.
+     * @param {Object | number | string} entry - entry, index, or name to download.
      * @param {number} subIndex - data subIndex to download.
      * @param {number} timeout - time before transfer is aborted.
      */
@@ -305,18 +314,28 @@ class SDO {
         }
     }
 
+    /** Resolve the current transfer.
+     * @private
+     */
     _clientResolve() {
         this.transfer.resolve();
         this.transfer = this.queue.shift();
         if(this.transfer) this.transfer.start();
     }
 
+    /** Abort the current transfer.
+     * @private
+     */
     _clientAbort(code) {
         this.transfer.abort(code);
         this.transfer = this.queue.shift();
         if(this.transfer) this.transfer.start();
     }
 
+    /** Handle SCS.UPLOAD_INITIATE.
+     * @private
+     * @param {Buffer} data - message data.
+     */
     _clientUploadInitiate(data) {
         if(data[0] & 0x02) {
             // Expedited transfer
@@ -352,6 +371,10 @@ class SDO {
         }
     }
 
+    /** Handle SCS.UPLOAD_SEGMENT.
+     * @private
+     * @param {Buffer} data - message data.
+     */
     _clientUploadSegment(data) {
         if((data[0] & 0x10) != (this.transfer.toggle << 4)) 
             this._clientAbort(0x05030000);
@@ -395,6 +418,10 @@ class SDO {
         }
     }
 
+    /** Handle SCS.DOWNLOAD_INITIATE.
+     * @private
+     * @param {Buffer} data - message data.
+     */
     _clientDownloadInitiate(data) {
         if(this.transfer.size <= 4) {
             // Expedited transfer
@@ -425,6 +452,10 @@ class SDO {
         }
     }
 
+    /** Handle SCS.DOWNLOAD_SEGMENT.
+     * @private
+     * @param {Buffer} data - message data.
+     */
     _clientDownloadSegment(data)
     {
         if((data[0] & 0x10) != (this.transfer.toggle << 4))
@@ -495,6 +526,10 @@ class SDO {
         }
     }
 
+    /** Abort the current transfer.
+     * @private
+     * @param {number} code - abort code.
+     */
     _serverAbort(code) {
         const sendBuffer = Buffer.alloc(8);
         sendBuffer[0] = 0x80;
@@ -516,15 +551,19 @@ class SDO {
         }
     }
 
+    /** Handle CCS.DOWNLOAD_INITIATE.
+     * @private
+     * @param {Buffer} data - message data.
+     */
     _serverDownloadInitiate(data) {
         const index = (data.readUInt16LE(1));
         const entry = this.device.getEntry(index);
         if(!entry)
-            return this._serverAbort(0x06020000)
+            return this._serverAbort(0x06020000);
 
         const subIndex = (data.readUInt8(3));
         if(!entry.data[subIndex])
-            return this._serverAbort(0x06090011)
+            return this._serverAbort(0x06090011);
 
         if(data[0] & 0x02) {
             // Expedited transfer
@@ -575,15 +614,19 @@ class SDO {
         }
     }
 
+    /** Handle CCS.UPLOAD_INITIATE.
+     * @private
+     * @param {Buffer} data - message data.
+     */
     _serverUploadInitiate(data) {
         const index = (data.readUInt16LE(1));
         const entry = this.device.getEntry(index);
         if(!entry)
-            return this._serverAbort(0x06020000)
+            return this._serverAbort(0x06020000);
 
         const subIndex = (data.readUInt8(3));
         if(!entry.data[subIndex])
-            return this._serverAbort(0x06090011)
+            return this._serverAbort(0x06090011);
 
         const size = entry.data[subIndex].size;
 
@@ -635,6 +678,10 @@ class SDO {
         }
     }
 
+    /** Handle CCS.UPLOAD_SEGMENT.
+     * @private
+     * @param {Buffer} data - message data.
+     */
     _serverUploadSegment(data) {
         if((data[0] & 0x10) == (this.server.toggle << 4)) {
             const entry = this.device.getEntry(this.server.index);
@@ -671,6 +718,10 @@ class SDO {
         else this._serverAbort(0x05030000);
     }
 
+    /** Handle CCS.DOWNLOAD_SEGMENT.
+     * @private
+     * @param {Buffer} data - message data.
+     */
     _serverDownloadSegment(data) {
         if((data[0] & 0x10) == (this.server.toggle << 4)) {
             const count = (7 - ((data[0] >> 1) & 0x7));
