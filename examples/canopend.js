@@ -134,7 +134,8 @@ const server = net.createServer((c) => {
     console.log("Client connected");
     clients.push(c);
 
-    c.on('end', () => {
+    function cleanup(e) {
+        if(e) console.log(e);
         console.log("Client disconnected");
         for(let i = 0; i < clients.length; i++) {
             if(clients[i] === c) {
@@ -142,7 +143,9 @@ const server = net.createServer((c) => {
                 break;
             }
         }
-    });
+    }
+    c.on('error', cleanup);
+    c.on('end', cleanup);
 
     c.on('data', (data) => {
         /*
