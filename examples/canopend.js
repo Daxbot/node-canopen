@@ -82,16 +82,14 @@ if(options.help) {
 const channel = socketcan.createRawChannel(options.network);
 channel.start();
 
-const master = new canopen.Device(channel, options.identifier, options.eds, true);
+const network = new canopen.Network(channel);
+const master = network.addDevice(options.identifier, options.eds, true);
 if(options.eds) {
     console.log(`Loaded EDS file '${options.eds}'`);
     master.SDO.serverStart();
 }
-master.NMT.status = master.NMT.states.OPERATIONAL;
+master.state = network.NMT.states.OPERATIONAL;
 
-const network = {
-    [options.identifier]: master,
-};
 const clients = [];
 const pending = [];
 
@@ -109,7 +107,7 @@ function reportPDO(updated)
         else value = entry.data[0].value;
 
         const name = entry.name.replace(' ', '_');
-        const report = `PDO: ${name}=${value}`;
+        const report = `PDO: ${name}=${value | 0}`;
         //console.log(report);
         clients.forEach( (c) => { c.write(report + '\n'); });
     }
@@ -149,92 +147,119 @@ const server = net.createServer((c) => {
 
     c.on('data', (data) => {
         /*
-        - SDO upload:   [<sequence>] <node> read  <index> <subindex> <datatype> 
-        - SDO download: [<sequence>] <node> write <index> <subindex> <datatype> <value>
+        - SDO upload:       [<sequence>] <node> read  <index> <subindex> <datatype> 
+        - SDO download:     [<sequence>] <node> write <index> <subindex> <datatype> <value>
+        - NMT operational:               <node> start/op
+        - NMT stopped:                   <node> stop
+        - NMT pre-op:                    <node> preop
         */
 
         commands = data.toString().trim().split('\n');
         commands.forEach((command) => {
             args = command.split(' ');
+            //console.log(args);
 
-            let i = 0;
-            let sequence = 0;
-            if(sequenceMatch.test(args[i])) {
-                sequence = parseInt(args[i++].slice(1, -1));
+            if(args.length == 2 || args.length == 3) {
+                args = args.slice(-2);
+	        const deviceId = parseInt(args[0]);
+                const action = args[1];
+
+                switch(action) {
+                    case 'op':
+                    case 'operational':
+                    case 'start':
+                        network.NMT.Operational(deviceId);
+                        break;
+                    case 'stop':
+                        network.NMT.Stopped(deviceId);
+                        break;
+                    case 'preop':
+                    case 'preoperational':
+                        network.NMT.PreOperational(deviceId);
+                        break;
+                    default:
+                        console.log("Bad Command:", command);
+                        break;
+                }
             }
             else {
-                while(pending.includes(sequence))
-                    sequence = Math.floor(Math.random()*0xFF);
-            }
+                let i = 0;
+                let sequence = 0;
+                if(sequenceMatch.test(args[i])) {
+                    sequence = parseInt(args[i++].slice(1, -1));
+                }
+                else {
+                    while(pending.includes(sequence))
+                        sequence = Math.floor(Math.random()*0xFF);
+                }
 
-            const deviceId = parseInt(args[i++]);
-            const action = args[i++];
-            const index = parseInt(args[i++]);
-            const subIndex = parseInt(args[i++]);
+                const deviceId = parseInt(args[i++]);
 
-            if(network[deviceId] == undefined)
-            {
-                network[deviceId] = new canopen.Device(channel, deviceId);
-                network[deviceId].on('Emergency', reportEmergency);
-            }
+                if(network.devices[deviceId] == undefined) {
+                    network.addDevice(deviceId).on('Emergency', reportEmergency);
+                }
 
-            const device = network[deviceId];
-            const dataType = dataTypes[args[i++]];
-            const dataString = args[i] ? args[i] : '0';
-            const value = device._parseTypedString(dataString, dataType);
-            const raw = device.typeToRaw(value, dataType);
-            const size = raw.length;
+                const action = args[i++];
+                const index = parseInt(args[i++]);
+                const subIndex = parseInt(args[i++]);
 
-            const entry = {
-                index: index,
-                data: [],
-            };
-            entry.data[subIndex] = {
-                value: value,
-                type: dataType,
-                raw: raw,
-                size: size,
-            };
+                const device = network.devices[deviceId];
+                const dataType = dataTypes[args[i++]];
+                const dataString = args[i] ? args[i] : '0';
+                const value = device._parseTypedString(dataString, dataType);
+                const raw = device.typeToRaw(value, dataType);
+                const size = raw.length;
 
-            switch(action) {
-                case 'r':
-                case 'read':
-                    device.SDO.upload(entry, subIndex)
-                        .then(
-                            ( ) => {
-                                const result = `[${sequence}] OK ${entry.data[subIndex].value}`;
-                                console.log(result);
-                                c.write(result + '\n');
-                            },
-                            (e) => {
-                                const result = `[${sequence}] ERROR: ${e.message}`;
-                                console.error(result);
-                                c.write(result + '\n');
-                            });
-                    break;
-                case 'w':
-                case 'write':
-                    device.SDO.download(entry, subIndex)
-                        .then(
-                            ( ) => {
-                                const result = `[${sequence}] OK`;
-                                console.log(result);
-                                c.write(result + '\n');
-                            },
-                            (e) => {
-                                const result = `[${sequence}] ERROR: ${e.message}`;
-                                console.error(result);
-                                c.write(result + '\n');
-                            });
-                    break;
-                default:
-                    const result = `[${sequence}] ERROR: ${device.abortCode[0x06040043]}`;
-                    console.error(result);
-                    c.write(result + '\n');
-                    break;
+                const entry = {
+                    index: index,
+                    data: [],
+                };
+                entry.data[subIndex] = {
+                    value: value,
+                    type: dataType,
+                    raw: raw,
+                    size: size,
+                };
+
+                switch(action) {
+                    case 'r':
+                    case 'read':
+                        device.SDO.upload(entry, subIndex)
+                            .then(
+                                ( ) => {
+                                    const result = `[${sequence}] OK ${entry.data[subIndex].value}`;
+                                    console.log(result);
+                                    c.write(result + '\n');
+                                },
+                                (e) => {
+                                    const result = `[${sequence}] ERROR: ${e.message}`;
+                                    console.error(result);
+                                    c.write(result + '\n');
+                                });
+                        break;
+                    case 'w':
+                    case 'write':
+                        device.SDO.download(entry, subIndex)
+                            .then(
+                                ( ) => {
+                                    const result = `[${sequence}] OK`;
+                                    console.log(result);
+                                    c.write(result + '\n');
+                                },
+                                (e) => {
+                                    const result = `[${sequence}] ERROR: ${e.message}`;
+                                    console.error(result);
+                                    c.write(result + '\n');
+                                });
+                        break;
+                    default:
+                        const result = `[${sequence}] ERROR: ${device.SDO.abortCodes[0x06040043]}`;
+                        console.error(result);
+                        c.write(result + '\n');
+                        break;
+                }
             }
         });
-        
     });
 });
 
