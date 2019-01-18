@@ -288,29 +288,34 @@ class SDO {
      * @param {Object} message - CAN frame to parse.
      */
     _clientProcess(message) {
-        if(!this.transfer)
-            return;
-
         const data = message.data;
-        switch(data[0] >> 5) {
-            case SCS.ABORT:
-                this._clientAbort(data.readUInt32LE(4));
-                break;
-            case SCS.UPLOAD_INITIATE:
-                this._clientUploadInitiate(data);
-                break;
-            case SCS.UPLOAD_SEGMENT:
-                this._clientUploadSegment(data);
-                break;
-            case SCS.DOWNLOAD_INITIATE:
-                this._clientDownloadInitiate(data); 
-                break;
-            case SCS.DOWNLOAD_SEGMENT:
-                this._clientDownloadSegment(data);
-                break;
-            default:
-                this.transfer.abort(0x05040001);
-                break;
+
+        try {
+            switch(data[0] >> 5) {
+                case SCS.ABORT:
+                    this._clientAbort(data.readUInt32LE(4));
+                    break;
+                case SCS.UPLOAD_INITIATE:
+                    this._clientUploadInitiate(data);
+                    break;
+                case SCS.UPLOAD_SEGMENT:
+                    this._clientUploadSegment(data);
+                    break;
+                case SCS.DOWNLOAD_INITIATE:
+                    this._clientDownloadInitiate(data);
+                    break;
+                case SCS.DOWNLOAD_SEGMENT:
+                    this._clientDownloadSegment(data);
+                    break;
+                default:
+                    this.transfer.abort(0x05040001);
+                    break;
+            }
+        }
+        catch(e) {
+            if(this.transfer) {
+                this._clientAbort(0x08000000);
+            }
         }
     }
 
@@ -376,8 +381,10 @@ class SDO {
      * @param {Buffer} data - message data.
      */
     _clientUploadSegment(data) {
-        if((data[0] & 0x10) != (this.transfer.toggle << 4)) 
+        if((data[0] & 0x10) != (this.transfer.toggle << 4)) {
             this._clientAbort(0x05030000);
+            return;
+        }
 
         const count = (7 - ((data[0] >> 1) & 0x7));
         const payload = data.slice(1, count+1);
@@ -426,30 +433,30 @@ class SDO {
         if(this.transfer.size <= 4) {
             // Expedited transfer
             this._clientResolve();
+            return;
         }
-        else {
-            const sendBuffer = Buffer.alloc(8);
-            const count = Math.min(7, this.transfer.size);
-            const entry = this.transfer.entry;
-            const subIndex = this.transfer.subIndex;
 
-            for(let i = 0; i < count; i++)
-                sendBuffer[1+i] = entry.data[subIndex].raw[i];
+        const sendBuffer = Buffer.alloc(8);
+        const count = Math.min(7, this.transfer.size);
+        const entry = this.transfer.entry;
+        const subIndex = this.transfer.subIndex;
 
-            this.transfer.bufferOffset = count;
+        for(let i = 0; i < count; i++)
+            sendBuffer[1+i] = entry.data[subIndex].raw[i];
 
-            sendBuffer[0] = (CCS.DOWNLOAD_SEGMENT << 5);
-            sendBuffer[0] |= (7-count) << 1;
-            if(this.transfer.bufferOffset == this.transfer.size)
-                sendBuffer[0] |= 1;
+        this.transfer.bufferOffset = count;
 
-            this.device.channel.send({
-                id: 0x600 + this.deviceId,
-                ext: false,
-                rtr: false,
-                data: sendBuffer,
-            });
-        }
+        sendBuffer[0] = (CCS.DOWNLOAD_SEGMENT << 5);
+        sendBuffer[0] |= (7-count) << 1;
+        if(this.transfer.bufferOffset == this.transfer.size)
+            sendBuffer[0] |= 1;
+
+        this.device.channel.send({
+            id: 0x600 + this.deviceId,
+            ext: false,
+            rtr: false,
+            data: sendBuffer,
+        });
     }
 
     /** Handle SCS.DOWNLOAD_SEGMENT.
@@ -458,8 +465,10 @@ class SDO {
      */
     _clientDownloadSegment(data)
     {
-        if((data[0] & 0x10) != (this.transfer.toggle << 4))
+        if((data[0] & 0x10) != (this.transfer.toggle << 4)) {
             this.transfer.abort(0x05030000);
+            return;
+        }
 
         const bufferOffset = this.transfer.bufferOffset;
         const size = this.transfer.size;
