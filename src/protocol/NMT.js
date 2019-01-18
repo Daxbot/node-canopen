@@ -27,67 +27,54 @@ const commands = {
  * @param {Device} device - parent device.
  */
 class NMT {
-    constructor(device) {
-        this.device = device;
-        this.deviceId = device.deviceId;
-        this.status = states.INITIALIZING;
+    constructor(channel) {
+        this.channel = channel;
     }
 
     /** Serve an NMT command.
      * @private
      * @param {commands} command - NMT command to serve.
      */
-    _send(command) {
-        this.device.channel.send({
+    _send(deviceId, command) {
+        this.channel.send({
             id: 0x0,
             ext: false,
             rtr: false,
-            data: Buffer.from([command, this.deviceId])
+            data: Buffer.from([command, deviceId])
         });
-    }
-
-    _process(message) {
-        switch(message.data[0])
-        {
-            case commands.ENTER_OPERATIONAL:
-                this.status = state.OPERATIONAL;
-                break;
-            case commands.STOPPED:
-                this.status = state.STOPPED;
-                break;
-            case commands.PRE_OPERATIONAL:
-                this.status = state.PRE_OPERATIONAL;
-                break;
-        }
     }
 
     get states() {
         return states;
     }
 
+    get commands() {
+        return commands;
+    }
+
     /** Set the device to Pre Operational state. */
-    PreOperational() {
-        this._send(commands.ENTER_PRE_OPERATIONAL);
+    PreOperational(deviceId) {
+        this._send(deviceId, commands.ENTER_PRE_OPERATIONAL);
     }
 
     /** Set the device to Operational state. */
-    Operational() {
-        this._send(commands.ENTER_OPERATIONAL);
+    Operational(deviceId) {
+        this._send(deviceId, commands.ENTER_OPERATIONAL);
     }
 
     /** Set the device to Stopped state. */
-    Stopped() {
-        this._send(commands.ENTER_STOPPED);
+    Stopped(deviceId) {
+        this._send(deviceId, commands.ENTER_STOPPED);
     }
 
     /** Reset the device. */
-    ResetDevice() {
-        this._send(commands.RESET_NODE);
+    ResetDevice(deviceId) {
+        this._send(deviceId, commands.RESET_NODE);
     }
 
     /** Reset device communication. */
-    ResetCommunication() {
-        this._send(commands.RESET_COMMUNICATION);
+    ResetCommunication(deviceId) {
+        this._send(deviceId, commands.RESET_COMMUNICATION);
     }
 }
 

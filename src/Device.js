@@ -4,8 +4,6 @@ const EventEmitter = require('events');
 
 const SDO = require('./protocol/SDO');
 const PDO = require('./protocol/PDO');
-const NMT = require('./protocol/NMT');
-const EMCY = require('./Emergency');
 
  /** CANopen EDS data types.
   * @protected
@@ -67,6 +65,9 @@ const objectTypes = {
  */
 class Device extends EventEmitter {
     constructor(channel, deviceId, edsPath=null, heartbeat=false) {
+        if(channel == undefined)
+            throw ReferenceError("arg0 'channel' undefined");
+
         if(channel.send == undefined)
             throw ReferenceError("arg0 'channel' has no send method");
 
@@ -79,12 +80,12 @@ class Device extends EventEmitter {
         super();
         this.channel = channel;
         this.deviceId = deviceId;
+        this.state = 0;
         this.dataObjects = {};
         this.nameLookup = {};
 
         this._SDO = new SDO(this);
         this._PDO = new PDO(this);
-        this._NMT = new NMT(this);
 
         channel.addListener("onMessage", this._onMessage, this);
 
@@ -162,9 +163,7 @@ class Device extends EventEmitter {
     get PDO() { 
         return this._PDO; 
     }
-    get NMT() { 
-        return this._NMT; 
-    }
+
     get dataTypes() { 
         return dataTypes; 
     }
@@ -418,7 +417,7 @@ class Device extends EventEmitter {
                 this.SDO._serverProcess(message);
                 break;
             case 0x700:
-                this.NMT._process(message);
+                this.state = message.data[0];
                 break;
         }
     }
@@ -431,7 +430,7 @@ class Device extends EventEmitter {
             id: 0x700 + this.deviceId,
             ext: false,
             rtr: false,
-            data: Buffer.from([this.NMT.status])
+            data: Buffer.from([this.state])
         });
     }
 }
