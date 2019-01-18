@@ -149,7 +149,7 @@ const server = net.createServer((c) => {
         /*
         - SDO upload:       [<sequence>] <node> read  <index> <subindex> <datatype> 
         - SDO download:     [<sequence>] <node> write <index> <subindex> <datatype> <value>
-        - NMT operational:               <node> start
+        - NMT operational:               <node> start/op
         - NMT stopped:                   <node> stop
         - NMT pre-op:                    <node> preop
         */
@@ -157,12 +157,16 @@ const server = net.createServer((c) => {
         commands = data.toString().trim().split('\n');
         commands.forEach((command) => {
             args = command.split(' ');
+            //console.log(args);
 
-            if(args.length == 2) {
-                const deviceId = parseInt(args[0]);
+            if(args.length == 2 || args.length == 3) {
+                args = args.slice(-2);
+	        const deviceId = parseInt(args[0]);
                 const action = args[1];
 
                 switch(action) {
+                    case 'op':
+                    case 'operational':
                     case 'start':
                         network.NMT.Operational(deviceId);
                         break;
@@ -170,7 +174,11 @@ const server = net.createServer((c) => {
                         network.NMT.Stopped(deviceId);
                         break;
                     case 'preop':
+                    case 'preoperational':
                         network.NMT.PreOperational(deviceId);
+                        break;
+                    default:
+                        console.log("Bad Command:", command);
                         break;
                 }
             }
@@ -214,6 +222,7 @@ const server = net.createServer((c) => {
                 };
 
                 switch(action) {
+                    case 'r':
                     case 'read':
                         device.SDO.upload(entry, subIndex)
                             .then(
@@ -228,6 +237,7 @@ const server = net.createServer((c) => {
                                     c.write(result + '\n');
                                 });
                         break;
+                    case 'w':
                     case 'write':
                         device.SDO.download(entry, subIndex)
                             .then(
