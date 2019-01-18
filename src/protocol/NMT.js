@@ -24,7 +24,7 @@ const commands = {
  };
 
 /** CANopen NMT protocol handler.
- * @param {Device} device - parent device.
+ * @param {RawChannel} channel - socketcan RawChannel object.
  */
 class NMT {
     constructor(channel) {
