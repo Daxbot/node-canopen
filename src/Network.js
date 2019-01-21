@@ -67,27 +67,27 @@ class Network {
             let state;
 
             switch(message.data[0]) {
-                case NMT.commands.ENTER_OPERATIONAL:
+                case this.NMT.commands.ENTER_OPERATIONAL:
                     state = this.NMT.states.OPERATIONAL;
                     break;
-                case NMT.commands.ENTER_STOPPED:
+                case this.NMT.commands.ENTER_STOPPED:
                     state = this.NMT.states.STOPPED;
                     break;
-                case NMT.commands.ENTER_PRE_OPERATIONAL:
+                case this.NMT.commands.ENTER_PRE_OPERATIONAL:
                     state = this.NMT.states.PRE_OPERATIONAL;
                     break;
-                case NMT.commands.RESET_NODE:
-                case NMT.commands.RESET_COMMUNICATION:
+                case this.NMT.commands.RESET_NODE:
+                case this.NMT.commands.RESET_COMMUNICATION:
                     state = this.NMT.states.INITIALIZING;
                     break;
             }
 
             if(target == 0) {
-                for (const id in self.devices)
-                    self.devices[id].state = state;
+                for (const id in this.devices)
+                    this.devices[id].state = state;
             }
             else {
-                self.devices[target].state = state;
+                this.devices[target].state = state;
             }
         }
     }

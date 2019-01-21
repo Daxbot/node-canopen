@@ -83,6 +83,7 @@ class Device extends EventEmitter {
         this.state = 0;
         this.dataObjects = {};
         this.nameLookup = {};
+        this.heartbeatTimer = null;
 
         this._SDO = new SDO(this);
         this._PDO = new PDO(this);
@@ -146,13 +147,8 @@ class Device extends EventEmitter {
             }
 
             this.PDO.init();
-
             if(heartbeat) {
-                const heartbeatTime = this.getValue(0x1017, 0);
-                if(heartbeatTime > 0) {
-                    this.hearbeat = setInterval(
-                        () => { this._sendHeartbeat(); }, heartbeatTime);
-                }
+                this.startHeartbeat();
             }
         }
     }
@@ -169,6 +165,20 @@ class Device extends EventEmitter {
     }
     get objectTypes() { 
         return objectTypes; 
+    }
+
+    startHeartbeat()
+    {
+        const heartbeatTime = this.getValue(0x1017, 0);
+        if(heartbeatTime > 0) {
+            this.heartbeatTimer = setInterval(
+                () => { this._sendHeartbeat(); }, heartbeatTime);
+        }
+    }
+
+    stopHeartbeat()
+    {
+        clearInterval(this.heartbeatTimer);
     }
 
     /** Get a dataObject.
