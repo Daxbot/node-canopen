@@ -1,3 +1,5 @@
+const EventEmitter = require('events');
+
 const Device = require('./Device');
 const EMCY = require('./protocol/EMCY');
 const NMT = require('./protocol/NMT');
@@ -7,7 +9,7 @@ const Time = require('./protocol/Time');
 /** CANopen Network
  * @param {RawChannel} channel - socketcan RawChannel object.
  */
-class Network {
+class Network extends EventEmitter {
     constructor(channel) {
         if(channel == undefined)
             throw ReferenceError("arg0 'channel' undefined");
@@ -18,19 +20,15 @@ class Network {
         if(channel.addListener == undefined)
             throw ReferenceError("arg0 'channel' has no addListener method");
 
+        super();
         this.channel = channel;
         this.devices = [];
 
-        this._EMCY = new EMCY();
         this._NMT = new NMT(channel);
         this._Sync = new Sync(channel);
         this._Time = new Time(channel);
 
         channel.addListener("onMessage", this._onMessage, this);
-    }
-
-    get Emergency() {
-        return this._EMCY;
     }
 
     get NMT() {
@@ -89,6 +87,10 @@ class Network {
             else {
                 this.devices[target].state = state;
             }
+        }
+        else if((message.id & 0x7F0) == 0x80) {
+            const deviceId = (message.id & 0x00F);
+            this.emit('Emergency', deviceId, EMCY._process(message));
         }
     }
 }

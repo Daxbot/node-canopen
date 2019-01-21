@@ -6,11 +6,12 @@ class Emergency {
      * @return {Array.<string, number, number, number, number>} 
      */
     static _process(message) {
+        console.log(message);
         const code = message.data.readUInt16LE(0);
         const reg = message.data[2];
         const bit = message.data[3];
         const info = message.data.slice(4);
-        const parsed = Emergency._parseCode(code);
+        const parsed = Emergency._parseCode(code) + ': ' + Emergency._parseBit(bit);
         return [parsed, code, reg, bit, info];
     }
 
@@ -42,7 +43,7 @@ class Emergency {
             case 0x8250:
                 return 'RPDO Timeout';
             default:
-                switch(code >> 2) {
+                switch(code >> 8) {
                     case 0x00:
                         return 'Error Reset';
                     case 0x10:
@@ -93,7 +94,80 @@ class Emergency {
                         return 'Additional Functions';
                     case 0xFF:
                         return 'Device Specific';
+                    default:
+                        return 'Invalid Code';
                 }
+        }
+    }
+
+    /** Parse a standard error register.
+     * @private
+     * @param {number} bit - CANopen error bit to parse.
+     * @return {string}
+     */
+    static _parseBit(bit) {
+        if(bit > 0x2F)
+            return 'Manufacturer';
+
+        switch(bit) {
+            case 0x00:
+                return 'No Error';
+            case 0x01:
+                return 'Bus Warning';
+            case 0x02:
+                return 'RXMSG Bad Length';
+            case 0x03:
+                return 'RXMSG Overflow';
+            case 0x04:
+                return 'RPDO Bad Length';
+            case 0x05:
+                return 'RPDO Overflow';
+            case 0x06:
+                return 'RX Bus Passive';
+            case 0x07:
+                return 'TX Bus Passive';
+            case 0x08:
+                return 'NMT Bad Command';
+            case 0x12:
+                return 'TX Bus Off';
+            case 0x13:
+                return 'RXB Overflow';
+            case 0x14:
+                return 'TXB Overflow';
+            case 0x15:
+                return 'TPDO Outside Sync';
+            case 0x18:
+                return 'Sync Timeout';
+            case 0x19:
+                return 'Sync Bad Length';
+            case 0x1A:
+                return 'PDO Bad Mapping';
+            case 0x1B:
+                return 'Heartbeat Timeout';
+            case 0x1C:
+                return 'Remote Reset';
+            case 0x20:
+                return 'EMCY Buffer Full';
+            case 0x22:
+                return 'Microcontroller Reset';
+            case 0x28:
+                return 'Wrong Error Report';
+            case 0x29:
+                return 'Timer Overflow';
+            case 0x2A:
+                return 'Memory Allocation Error';
+            case 0x2B:
+                return 'Generic Error';
+            case 0x2C:
+                return 'Software Error';
+            case 0x2D:
+                return 'Object Dictionary Error';
+            case 0x2E:
+                return 'Device Parameter Error';
+            case 0x2F:
+                return 'Non-Volatile Memory Access Error';
+            default:
+                return 'Unknown';
         }
     }
 }

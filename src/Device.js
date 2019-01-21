@@ -417,9 +417,6 @@ class Device extends EventEmitter {
                 this.emit('PDO', updated);
         }
         else switch(message.id - this.deviceId) {
-            case 0x80:
-                this.emit('Emergency', this.deviceId, EMCY._process(message));
-                break;
             case 0x580:
                 this.SDO._clientProcess(message);
                 break;

@@ -117,10 +117,10 @@ master.on('PDO', reportPDO);
 function reportEmergency(deviceId, [parsed, code, reg, bit, info])
 {
     const report = `EM: ${deviceId} ${code} ${reg} ${bit} ${info}`;
-    console.log(report);
+    console.log(report, '(' + parsed + ')');
     clients.forEach( (c) => { c.write(report + '\n'); });
 }
-master.on('Emergency', reportEmergency);
+network.on('Emergency', reportEmergency);
 
 // Unlink path
 if(fs.existsSync(options.socket)) {
