@@ -6,7 +6,6 @@ class Emergency {
      * @return {Array.<string, number, number, number, number>} 
      */
     static _process(message) {
-        console.log(message);
         const code = message.data.readUInt16LE(0);
         const reg = message.data[2];
         const bit = message.data[3];
