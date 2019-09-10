@@ -223,8 +223,12 @@ class Device extends EventEmitter {
      */
     setValue(index, subIndex, value) {
         const entry = this.getEntry(index);
-        if(entry && Array.isArray(entry))
-            throw TypeError("Ambiguous name: " + index);
+
+        if(!entry)
+            throw ReferenceError("Index not found: " + index);
+
+        if(Array.isArray(entry))
+            throw TypeError("Ambiguous index: " + index);
 
         if(value !== entry.data[subIndex].value) {
             const dataType = entry.data[subIndex].type;

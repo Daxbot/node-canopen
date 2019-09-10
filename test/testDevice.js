@@ -7,7 +7,7 @@ describe('Device', () => {
 
         // Valid
         new canopen.Device(new VirtualChannel(), 0xA);
-        
+
         // No channel
         assert.throws(() => {
             new canopen.Device(null, 0xA);
