@@ -88,7 +88,20 @@ if(options.eds) {
     console.log(`Loaded EDS file '${options.eds}'`);
     master.SDO.serverStart();
 }
+else {
+    master.dataObjects[0x1017] = {
+      name: "Producer heartbeat time",
+      index: 0x1017,
+      objectType: 0x7,
+      access: 'rw',
+      data: [{
+        value: 100,
+        type: 0x06,
+      }],
+    };
+}
 master.state = network.NMT.states.OPERATIONAL;
+master.startHeartbeat();
 
 const clients = [];
 const pending = [];
