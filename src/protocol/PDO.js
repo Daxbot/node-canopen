@@ -1,12 +1,19 @@
 /** PDO communication object identifiers are formed from the baseCOB + deviceId.
- * 
+ *
  * @private
  * @const {number}
  * @memberof PDO
  */
 const baseCOB = [0x180, 0x200, 0x280, 0x300, 0x380, 0x400, 0x480, 0x500];
 
-/** CANopen PDO protocol handler. 
+/** CANopen PDO protocol handler.
+ *
+ * This class provides methods for automatic sync of the local object
+ * dictionary with the remote copy using the PDO protocol.
+ *
+ * For more information on PDO see:
+ * https://en.wikipedia.org/wiki/CANopen#Process_Data_Object_(PDO)_protocol
+ *
  * @param {Device} device - parent device.
  */
 class PDO {
@@ -120,11 +127,10 @@ class PDO {
         }
     }
 
-    /** Parse a CANopen Emergency message.
-     * @private
-     * @param {Object} message - CAN frame to parse.
+    /** Receive PDOs.
+     * @param {Object} message - PDO CAN frame to parse.
      */
-    _process(message) {
+    receive(message) {
         const updated = [];
         const id = (message.id.toString(16));
         if(id in this.map) {

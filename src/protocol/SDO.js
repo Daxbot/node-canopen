@@ -63,7 +63,7 @@ const SCS = {
     ABORT: 4,
 };
 
-/** Represents a SDO transfer. 
+/** Represents a SDO transfer.
  * @private
  * @param {Object} context - transfer context.
  * @param {function} init - callback to begin the transfer.
@@ -125,7 +125,14 @@ class Transfer {
     }
 }
 
-/** CANopen SDO protocol handler. 
+/** CANopen SDO protocol handler.
+ *
+ * This class provides methods for manual sync of the local object
+ * dictionary with the remote copy using the SDO protocol.
+ *
+ * For more information on SDO see:
+ * https://en.wikipedia.org/wiki/CANopen#Service_Data_Object_(SDO)_protocol
+ *
  * @param {Device} device - parent device.
  * @todo rework server state machine
  */
@@ -209,7 +216,7 @@ class SDO {
         });
     }
 
-    /** Download the value from the local copy to the remote device. 
+    /** Download the value from the local copy to the remote device.
      * @param {Object | number | string} entry - entry, index, or name to download.
      * @param {number} subIndex - data subIndex to download.
      * @param {number} timeout - time before transfer is aborted.
@@ -284,10 +291,9 @@ class SDO {
     }
 
     /** Handle transfers as a client.
-     * @private
      * @param {Object} message - CAN frame to parse.
      */
-    _clientProcess(message) {
+    clientReceive(message) {
         const data = message.data;
 
         try {
@@ -500,11 +506,10 @@ class SDO {
         else this._clientResolve();
     }
 
-    /** Handle transfers as a server. 
-     * @private
+    /** Handle transfers as a server.
      * @param {Object} message - CAN frame to parse.
      */
-    _serverProcess(message) {
+    serverReceive(message) {
         if(!this.server.enable)
             return;
 

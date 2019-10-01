@@ -1,4 +1,10 @@
 /** CANopen Sync producer.
+ *
+ * This class provides methods for generating the Sync signal.
+ *
+ * For more information on Sync see:
+ * https://en.wikipedia.org/wiki/CANopen#Synchronization_Object_(SYNC)_protocol
+ *
  * @param {RawChannel} channel - socketcan RawChannel object.
  */
 class Sync {
@@ -23,7 +29,7 @@ class Sync {
     }
 
     /** Start serving Sync objects.
-     * 
+     *
      * @param {number} syncTime - milliseconds between Sync objects.
      */
     start(syncTime) {

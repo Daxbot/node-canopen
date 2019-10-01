@@ -4,10 +4,14 @@ const Device = require('./Device');
 const EMCY = require('./protocol/EMCY');
 const NMT = require('./protocol/NMT');
 const Sync = require('./protocol/Sync');
-const Time = require('./protocol/Time');
 
-/** CANopen Network
+/** A CANopen network
+ *
+ * This class abstracts a CANopen network with multiple devices and
+ * exposes device independant protocols NMT, Emergency, and Sync.
+ *
  * @param {RawChannel} channel - socketcan RawChannel object.
+ * @emits "Emergency" on EMCY broadcasts.
  */
 class Network extends EventEmitter {
     constructor(channel) {
@@ -26,7 +30,6 @@ class Network extends EventEmitter {
 
         this._NMT = new NMT(channel);
         this._Sync = new Sync(channel);
-        this._Time = new Time(channel);
 
         channel.addListener("onMessage", this._onMessage, this);
     }
@@ -37,10 +40,6 @@ class Network extends EventEmitter {
 
     get Sync() {
         return this._Sync;
-    }
-
-    get Time() {
-        return this._Time;
     }
 
     addDevice(deviceId, edsPath=null, heartbeat=false) {
@@ -59,7 +58,7 @@ class Network extends EventEmitter {
     _onMessage(message) {
         if(!message)
             return;
-        
+
         if(message.id == 0x0) {
             const target = message.data[1];
             let state;
@@ -90,7 +89,7 @@ class Network extends EventEmitter {
         }
         else if((message.id & 0x7F0) == 0x80) {
             const deviceId = (message.id & 0x00F);
-            this.emit('Emergency', deviceId, EMCY._process(message));
+            this.emit('Emergency', deviceId, EMCY.receive(message));
         }
     }
 }

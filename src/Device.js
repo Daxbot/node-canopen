@@ -57,11 +57,22 @@ const objectTypes = {
     RECORD: 9,
 };
 
-/** CANopen device 
+/** A CANopen device.
+ *
+ * This class represents a single addressable device (or node) on the bus and
+ * provides methods for manipulating the object dictionary. Device can also
+ * be used as an abstraction for virtual devices such as a CANopen master node.
+ *
+ * Device exposes device specific protocols SDO, PDO, and Hearbeat.
+ *
+ * For more information on the CANopen device model see:
+ * https://en.wikipedia.org/wiki/CANopen#Device_model
+ *
  * @param {RawChannel} channel - socketcan RawChannel object.
  * @param {number} deviceId - device identifier.
  * @param {string | null} edsPath - path to the device's electronic data sheet.
  * @param {boolean} heartbeat - enable heartbeat production.
+ * @emits "PDO" on PDO value changes
  */
 class Device extends EventEmitter {
     constructor(channel, deviceId, edsPath=null, heartbeat=false) {
@@ -91,11 +102,11 @@ class Device extends EventEmitter {
         channel.addListener("onMessage", this._onMessage, this);
 
         if(edsPath) {
-            const od = ini.parse(fs.readFileSync(edsPath, 'utf-8'));
+            const objDict = ini.parse(fs.readFileSync(edsPath, 'utf-8'));
             const indexMatch = RegExp('^[0-9A-Fa-f]{4}$');
             const subIndexMatch = RegExp('^([0-9A-Fa-f]{4})sub([0-9A-Fa-f]+)$');
 
-            for(const [section, entry] of Object.entries(od)) {
+            for(const [section, entry] of Object.entries(objDict)) {
                 if(indexMatch.test(section)) {
                     const objectType = parseInt(entry.ObjectType);
                     let data = [];
@@ -153,18 +164,20 @@ class Device extends EventEmitter {
         }
     }
 
-    get SDO() { 
-        return this._SDO; 
-    }
-    get PDO() { 
-        return this._PDO; 
+    get SDO() {
+        return this._SDO;
     }
 
-    get dataTypes() { 
-        return dataTypes; 
+    get PDO() {
+        return this._PDO;
     }
-    get objectTypes() { 
-        return objectTypes; 
+
+    get dataTypes() {
+        return dataTypes;
+    }
+
+    get objectTypes() {
+        return objectTypes;
     }
 
     startHeartbeat()
@@ -228,7 +241,7 @@ class Device extends EventEmitter {
             throw ReferenceError("Index not found: " + index);
 
         if(Array.isArray(entry))
-            throw TypeError("Ambiguous index: " + index);
+            throw ReferenceError("Ambiguous index: " + index);
 
         if(value !== entry.data[subIndex].value) {
             const dataType = entry.data[subIndex].type;
@@ -414,18 +427,18 @@ class Device extends EventEmitter {
     _onMessage(message) {
         if(!message)
             return;
-        
+
         if(message.id >= 0x180 && message.id < 0x580) {
-            const updated = this.PDO._process(message);
+            const updated = this.PDO.receive(message);
             if(updated.length > 0)
                 this.emit('PDO', updated);
         }
         else switch(message.id - this.deviceId) {
             case 0x580:
-                this.SDO._clientProcess(message);
+                this.SDO.clientReceive(message);
                 break;
             case 0x600:
-                this.SDO._serverProcess(message);
+                this.SDO.serverReceive(message);
                 break;
             case 0x700:
                 this.state = message.data[0];
@@ -446,4 +459,4 @@ class Device extends EventEmitter {
     }
 }
 
-module.exports=exports= Device;
+module.exports=exports=Device;

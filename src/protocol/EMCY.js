@@ -1,11 +1,17 @@
-/** CANopen Emergency protocol handler. */
+/** CANopen Emergency protocol handler.
+ *
+ * This class provides methods for parsing EMCY protocol messages.
+ *
+ * For more information on EMCY see:
+ * https://en.wikipedia.org/wiki/CANopen#Emergency_Object_(EMCY)_protocol
+ */
 class Emergency {
     /** Parse a CANopen Emergency message.
      * @private
      * @param {Object} message - CAN frame to parse.
-     * @return {Array.<string, number, number, number, number>} 
+     * @return {Array.<string, number, number, number, number>}
      */
-    static _process(message) {
+    static receive(message) {
         const code = message.data.readUInt16LE(0);
         const reg = message.data[2];
         const bit = message.data[3];
