@@ -53,6 +53,7 @@ class PDO {
                         index:      mapIndex,
                         subIndex:   mapSubIndex,
                         bitLength:  mapBitLength,
+                        lastValue:  undefined,
                     };
                     this.device.dataObjects[mapIndex].PDO = objectId;
                     this.map[objectId].size += mapBitLength/8;
@@ -83,6 +84,7 @@ class PDO {
                         index:      mapIndex,
                         subIndex:   mapSubIndex,
                         bitLength:  mapBitLength,
+                        lastValue:  undefined,
                     };
 
                     this.device.dataObjects[mapIndex].PDO = objectId;
@@ -104,6 +106,7 @@ class PDO {
                 const index = entryMap[i].index;
                 const subIndex = entryMap[i].subIndex;
                 const bitLength = entryMap[i].bitLength;
+                const lastValue = entryMap[i].lastValue;
                 const entry = this.device.dataObjects[index];
 
                 for(let j = 0; j < bitLength/8; j++) {
@@ -111,12 +114,13 @@ class PDO {
                     dataOffset += 1;
                 }
 
-                if(entry.data[subIndex].changed)
+                if(lastValue != entry.data[subIndex].value) {
+                    entryMap[i].lastValue = entry.data[subIndex].value;
                     valueChanged = true;
+                }
             }
 
-            if(valueChanged)
-            {
+            if(valueChanged) {
                 this.device.channel.send({
                     id:     parseInt(id, 16),
                     ext:    false,
@@ -141,6 +145,7 @@ class PDO {
                 const entry = this.device.dataObjects[map[i].index];
                 const bitLength = map[i].bitLength;
                 const subIndex = map[i].subIndex;
+                const lastValue = map[i].lastValue;
 
                 const dataSize = entry.data[subIndex].size;
                 const dataType = entry.data[subIndex].type;
@@ -152,8 +157,8 @@ class PDO {
                 dataOffset += dataSize;
 
                 const value = this.device.rawToType(raw, dataType);
-                if(value != entry.data[subIndex].value)
-                {
+                if(lastValue != value) {
+                    map[i].lastValue = value;
                     entry.data[subIndex].value = value;
                     entry.data[subIndex].raw = raw;
                     updated.push(entry);

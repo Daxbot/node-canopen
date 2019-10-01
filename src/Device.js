@@ -243,17 +243,15 @@ class Device extends EventEmitter {
         if(Array.isArray(entry))
             throw ReferenceError("Ambiguous index: " + index);
 
-        if(value !== entry.data[subIndex].value) {
-            const dataType = entry.data[subIndex].type;
-            const raw = this.typeToRaw(value, dataType);
-            entry.data[subIndex] = {
-                value:      value,
-                type:       dataType,
-                raw:        raw,
-                size:       raw.length,
-                changed:    true,
-            };
-        }
+        const dataType = entry.data[subIndex].type;
+        const raw = this.typeToRaw(value, dataType);
+
+        entry.data[subIndex] = {
+            value:      value,
+            type:       dataType,
+            raw:        raw,
+            size:       raw.length,
+        };
     }
 
     /** Set the raw value of a dataObject.
@@ -266,15 +264,13 @@ class Device extends EventEmitter {
 
         const dataType = entry.data[subIndex].type;
         const value = this.rawToType(raw, dataType);
-        if(value !== entry.data[subIndex].value) {
-            entry.data[subIndex] = {
-                value:      value,
-                type:       dataType,
-                raw:        raw,
-                size:       raw.length,
-                changed:    true,
-            };
-        }
+
+        entry.data[subIndex] = {
+            value:      value,
+            type:       dataType,
+            raw:        raw,
+            size:       raw.length,
+        };
     }
 
     /** Convert a Buffer object to a value based on type.
