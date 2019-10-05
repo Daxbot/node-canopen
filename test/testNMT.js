@@ -1,90 +1,73 @@
 const canopen = require('../index');
 const VirtualChannel = require('./common/VirtualChannel.js');
-const assert = require('assert');
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+
+const expect = chai.expect;
+chai.use(chaiAsPromised);
 
 describe('NMT', () => {
     const channel = new VirtualChannel();
     const network = new canopen.Network(channel);
     const device = network.addDevice(0xA, './test/common/test.eds');
 
-    it("Target PreOperational", (done) => {
-
+    it("should send PreOperational", function() {
         device.state = network.NMT.states.INITIALIZING;
         network.NMT.PreOperational(0xA);
-        assert.strictEqual(device.state, network.NMT.states.PRE_OPERATIONAL);
-        done();
+        expect(device.state).to.equal(network.NMT.states.PRE_OPERATIONAL);
     });
 
-    it("Target Operational", (done) => {
-
+    it("should send Operational", function() {
         device.state = network.NMT.states.INITIALIZING;
         network.NMT.Operational(0xA);
-        assert.strictEqual(device.state, network.NMT.states.OPERATIONAL);
-        done();
+        expect(device.state).to.equal(network.NMT.states.OPERATIONAL);
     });
 
-    it("Target Stopped", (done) => {
-
+    it("should send Stopped", function() {
         device.state = network.NMT.states.INITIALIZING;
         network.NMT.Stopped(0xA);
-        assert.strictEqual(device.state, network.NMT.states.STOPPED);
-        done();
+        expect(device.state).to.equal(network.NMT.states.STOPPED);
     });
 
-    it("Target ResetDevice", (done) => {
-
+    it("should send ResetDevice", function() {
         device.state = network.NMT.states.OPERATIONAL;
         network.NMT.ResetDevice(0xA);
-        assert.strictEqual(device.state, network.NMT.states.INITIALIZING);
-        done();
+        expect(device.state).to.equal(network.NMT.states.INITIALIZING);
     });
 
-    it("Target ResetCommunication", (done) => {
-
+    it("should send ResetCommunication", function() {
         device.state = network.NMT.states.OPERATIONAL;
         network.NMT.ResetCommunication(0xA);
-        assert.strictEqual(device.state, network.NMT.states.INITIALIZING);
-        done();
+        expect(device.state).to.equal(network.NMT.states.INITIALIZING);
     });
 
-    it("Broadcast PreOperational", (done) => {
-
+    it("should broadcast PreOperational", function() {
         device.state = network.NMT.states.INITIALIZING;
         network.NMT.PreOperational(0);
-        assert.strictEqual(device.state, network.NMT.states.PRE_OPERATIONAL);
-        done();
+        expect(device.state).to.equal(network.NMT.states.PRE_OPERATIONAL);
     });
 
-    it("Broadcast Operational", (done) => {
-
+    it("should broadcast Operational", function() {
         device.state = network.NMT.states.INITIALIZING;
         network.NMT.Operational(0);
-        assert.strictEqual(device.state, network.NMT.states.OPERATIONAL);
-        done();
+        expect(device.state).to.equal(network.NMT.states.OPERATIONAL);
     });
 
-    it("Broadcast Stopped", (done) => {
-
+    it("should broadcast Stopped", function() {
         device.state = network.NMT.states.INITIALIZING;
         network.NMT.Stopped(0);
-        assert.strictEqual(device.state, network.NMT.states.STOPPED);
-        done();
+        expect(device.state).to.equal(network.NMT.states.STOPPED);
     });
 
-    it("Broadcast ResetDevice", (done) => {
-
+    it("should broadcast ResetDevice", function() {
         device.state = network.NMT.states.OPERATIONAL;
         network.NMT.ResetDevice(0);
-        assert.strictEqual(device.state, network.NMT.states.INITIALIZING);
-        done();
+        expect(device.state).to.equal(network.NMT.states.INITIALIZING);
     });
 
-    it("Broadcast ResetCommunication", (done) => {
-
+    it("should broadcast ResetCommunication", function() {
         device.state = network.NMT.states.OPERATIONAL;
         network.NMT.ResetCommunication(0);
-        assert.strictEqual(device.state, network.NMT.states.INITIALIZING);
-        done();
+        expect(device.state).to.equal(network.NMT.states.INITIALIZING);
     });
-
 });

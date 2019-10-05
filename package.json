@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha ./test/testNetwork.js ./test/testDevice.js ./test/*.js",
-    "lint": "jshint src/ test/ examples/ || true",
     "document": "documentation lint && documentation build -f html -o docs",
     "canopend": "node ./examples/canopend.js"
   },
@@ -27,8 +26,10 @@
     "socketcan": "^2.5.0"
   },
   "devDependencies": {
-    "mocha": "^5.2.0",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "chai-bytes": "^0.1.2",
     "documentation": "^8.1.2",
-    "jshint": "^2.9.6"
+    "mocha": "^5.2.0"
   }
 }

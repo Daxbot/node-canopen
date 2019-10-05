@@ -1,46 +1,45 @@
 const canopen = require('../index');
 const VirtualChannel = require('./common/VirtualChannel.js');
-const assert = require('assert');
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
 
-describe('Device', () => {
-    it("Object Creation", (done) => {
+const expect = chai.expect;
+chai.use(chaiAsPromised);
 
-        // Valid
+describe('Device', function() {
+    it("should be constructable", function() {
         new canopen.Device(new VirtualChannel(), 0xA);
-
-        // No channel
-        assert.throws(() => {
-            new canopen.Device(null, 0xA);
-        });
-
-        // Channel has no send method
-        assert.throws(() => {
-            const channel = new VirtualChannel();
-            channel.send = undefined;
-            new canopen.Device(channel, 0xA);
-        });
-
-        // Channel has no addListener method
-        assert.throws(() => {
-            const channel = new VirtualChannel();
-            channel.addListener = undefined;
-            new canopen.Device(channel, 0xA);
-        });
-
-        // No deviceId
-        assert.throws(() => {
-            new canopen.Device(new VirtualChannel(), null);
-        });
-
-        // deviceId out of range
-        assert.throws(() => {
-            new canopen.Device(new VirtualChannel(), 0x100);
-        });
-
-        done();
     });
 
-    it("EDS Parsing", (done) => {
+    it("should require channel", function() {
+        expect(() => { new canopen.Device(null, 0xA); }).to.throw;
+    });
+
+    it("should require channel.send", function() {
+        const channel = new VirtualChannel();
+        channel.send = undefined;
+
+        expect(() => { new canopen.Device(channel, 0xA); }).to.throw;
+    });
+
+    it("should require channel.addListener", function() {
+        const channel = new VirtualChannel();
+        channel.addListener = undefined;
+
+        expect(() => { new canopen.Device(channel, 0xA); }).to.throw;
+    });
+
+    it("should require deviceId be in range 1-127", function() {
+        const channel = new VirtualChannel();
+        channel.addListener = undefined;
+
+        expect(() => { new canopen.Device(channel, null); }).to.throw;
+        expect(() => { new canopen.Device(channel, 0); }).to.throw;
+        expect(() => { new canopen.Device(channel, 128); }).to.throw;
+        expect(() => { new canopen.Device(channel, 0xFFFF); }).to.throw;
+    });
+
+    it("should parse eds", function() {
         const channel = new VirtualChannel();
         const device = new canopen.Device(channel, 0xA, './test/common/test.eds');
 
@@ -72,12 +71,8 @@ describe('Device', () => {
                 continue;
 
             const raw = device.typeToRaw(testValue, type);
-            assert(Buffer.isBuffer(raw), `${name}: isBuffer()`);
-
             const parsed = device.rawToType(raw, type);
-            assert.strictEqual(testValue, parsed, `${name}: ${testValue} == ${parsed} (${raw})`);
+            expect(testValue).to.equal(parsed);
         }
-
-        done();
     });
 });

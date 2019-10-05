@@ -1,32 +1,31 @@
 const canopen = require('../index');
 const VirtualChannel = require('./common/VirtualChannel.js');
-const assert = require('assert');
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
 
-describe('Network', () => {
-    it("Object Creation", (done) => {
+const expect = chai.expect;
+chai.use(chaiAsPromised);
 
-        // Valid
+describe('Network', function() {
+    it("should be constructable", function() {
         new canopen.Network(new VirtualChannel());
-        
-        // No channel
-        assert.throws(() => {
-            new canopen.Network(null);
-        });
+    });
 
-        // Channel has no send method
-        assert.throws(() => {
-            const channel = new VirtualChannel();
-            channel.send = undefined;
-            new canopen.Network(channel);
-        });
+    it("should require channel", function() {
+        expect(() => { new canopen.Network(null); }).to.throw;
+    });
 
-        // Channel has no addListener method
-        assert.throws(() => {
-            const channel = new VirtualChannel();
-            channel.addListener = undefined;
-            new canopen.Network(channel);
-        });
+    it("should require channel.send", function() {
+        const channel = new VirtualChannel();
+        channel.send = undefined;
 
-        done();
+        expect(() => { new canopen.Network(channel); }).to.throw;
+    });
+
+    it("should require channel.addListener", function() {
+        const channel = new VirtualChannel();
+        channel.addListener = undefined;
+
+        expect(() => { new canopen.Network(channel); }).to.throw;
     });
 });

@@ -4,7 +4,7 @@ class VirtualChannel {
     }
 
     send(message) {
-        console.log("\t", message.id.toString(16), message.data);
+        //console.log("\t", message.id.toString(16), message.data);
         for(let i = 0; i < this.callbacks.length; i++)
             this.callbacks[i](message);
     }
