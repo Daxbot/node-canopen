@@ -5,12 +5,13 @@ const EMCY = require('./protocol/EMCY');
 const NMT = require('./protocol/NMT');
 const Sync = require('./protocol/Sync');
 
-/** A CANopen network
+/** A CANopen network.
  *
  * This class abstracts a CANopen network with multiple devices and
  * exposes device independant protocols NMT, Emergency, and Sync.
  *
  * @param {RawChannel} channel - socketcan RawChannel object.
+ * @see CiA301 "Network system model" (§4.5)
  * @emits "Emergency" on EMCY broadcasts.
  */
 class Network extends EventEmitter {

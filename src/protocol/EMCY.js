@@ -1,9 +1,7 @@
 /** CANopen Emergency protocol handler.
  *
  * This class provides methods for parsing EMCY protocol messages.
- *
- * For more information on EMCY see:
- * https://en.wikipedia.org/wiki/CANopen#Emergency_Object_(EMCY)_protocol
+ * @see CiA301 "Emergency object" (§7.2.7)
  */
 class Emergency {
     /** Parse a CANopen Emergency message.

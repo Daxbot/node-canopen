@@ -8,13 +8,11 @@ const baseCOB = [0x180, 0x200, 0x280, 0x300, 0x380, 0x400, 0x480, 0x500];
 
 /** CANopen PDO protocol handler.
  *
- * This class provides methods for automatic sync of the local object
- * dictionary with the remote copy using the PDO protocol.
- *
- * For more information on PDO see:
- * https://en.wikipedia.org/wiki/CANopen#Process_Data_Object_(PDO)_protocol
+ * This class provides methods for no-overhead, real-time, transfers to a
+ * Device's object dictionary.
  *
  * @param {Device} device - parent device.
+ * @see CiA301 "Process data objects (PDO)" (§7.2.2)
  */
 class PDO {
     constructor(device) {

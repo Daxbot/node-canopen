@@ -2,6 +2,7 @@
   * @protected
   * @const {string}
   * @memberof SDO
+  * @see CiA301 "Protocol SDO abort transfer" (§7.2.4.3.17)
   */
  const abortCodes = {
     0x05030000: "Toggle bit not altered",
@@ -33,7 +34,7 @@
     0x08000020: "Data cannot be transferred or stored to application",
     0x08000021: "Data cannot be transferred or stored to application because of local control",
     0x08000022: "Data cannot be transferred or stored to application because of present device state",
-    0x08000023: "Object dictionary not present or dynamic generation fails",
+    0x08000023: "Object dictionary not present or dynamic generation failed",
     0x08000024: "No data available",
 };
 
@@ -41,6 +42,7 @@
   * @private
   * @const {number}
   * @memberof SDO
+  * @see CiA301 "SDO protocols" (§7.2.4.3)
   */
  const CCS = {
     DOWNLOAD_SEGMENT: 0,
@@ -54,6 +56,7 @@
   * @private
   * @const {number}
   * @memberof SDO
+  * @see CiA301 "SDO protocols" (§7.2.4.3)
   */
 const SCS = {
     UPLOAD_SEGMENT: 0,
@@ -71,11 +74,7 @@ const SCS = {
  */
 class Transfer {
     constructor(context, init) {
-        this.device = context.device;
-        this.entry = context.entry;
-        this.subIndex = context.subIndex;
-        this.timer = context.timer;
-        this.size = context.size;
+        this.ctx = context;
 
         this._init = init;
         this._resolve = context.resolve;
@@ -83,32 +82,31 @@ class Transfer {
 
         this.toggle = 0;
         this.buffer = Buffer.allocUnsafe(0);
+        this.size = context.size;
+        this.timer = null;
     }
 
-    /** Helper method to send a message to the bus.
-     * @private
-     * @param {Buffer} buffer - data to send.
-     */
-    _send(buffer) {
-        const id = 0x600 + this.device.deviceId;
-        this.device.channel.send({
-            id:     id,
-            ext:    false,
-            rtr:    false,
-            data:   buffer,
-        });
+    get entry() {
+        return this.ctx.entry;
+    }
+
+    get subIndex() {
+        return this.ctx.subIndex;
     }
 
     /** Begin the transfer. */
     start() {
-        this._init();
+        this.timer = setTimeout(
+            () => { this.abort(0x05040000); },
+            this.ctx.timeout
+        );
+        this._init(this.ctx);
     }
 
     /** Complete the transfer and resolve its promise. */
     resolve() {
         clearTimeout(this.timer);
         this._resolve();
-
     }
 
     /** Abort the transfer and reject its promise. */
@@ -120,21 +118,26 @@ class Transfer {
         sendBuffer[2] = (this.index >> 8);
         sendBuffer[3] = this.subIndex;
         sendBuffer.writeUInt32LE(code, 4);
-        this._send(sendBuffer);
+
+        this.ctx.channel.send({
+            id:     0x600 + this.ctx.deviceId,
+            ext:    false,
+            rtr:    false,
+            data:   sendBuffer,
+        });
+
         this._reject(new Error(abortCodes[code]));
     }
 }
 
-/** CANopen SDO protocol handler.
+/** CANopen 'Service Data Object' protocol.
  *
- * This class provides methods for manual sync of the local object
- * dictionary with the remote copy using the SDO protocol.
- *
- * For more information on SDO see:
- * https://en.wikipedia.org/wiki/CANopen#Service_Data_Object_(SDO)_protocol
+ * This class provides methods for direct access to a Device's
+ * object dictionary using the SDO protocol.
  *
  * @param {Device} device - parent device.
- * @todo rework server state machine
+ * @see CiA301 "Service data objects (SDO)" (§7.2.4)
+ * @todo implement block transfer
  */
 class SDO {
     constructor(device) {
@@ -171,6 +174,9 @@ class SDO {
      * @param {number} timeout - time before transfer is aborted.
      */
     upload(entry, subIndex=0, timeout=100) {
+        if(!timeout)
+            throw TypeError("Timeout must be non-zero");
+
         if(Array.isArray(entry)) {
             for(let i = 0; i < entry.length; i++) {
                 return this.upload(entry[i], subIndex, timeout);
@@ -180,39 +186,50 @@ class SDO {
         return new Promise((resolve, reject) => {
             if(typeof(entry) != 'object') {
                 entry = this.device.getEntry(entry);
-                if(!entry) reject(new Error(abortCodes[0x06020000]));
+                if(!entry)
+                    reject(new Error(abortCodes[0x06020000]));
             }
 
-            const timer = setTimeout( () => { this._clientAbort(0x05040000); }, timeout);
             const context = {
-                device: this.device,
+                deviceId: this.deviceId,
+                channel: this.device.channel,
                 entry: entry,
                 subIndex: subIndex,
-                timer: timer,
+                timeout: timeout,
                 resolve: resolve,
                 reject: reject,
             };
 
-            const transfer = new Transfer(context, () => {
+            function init_upload(ctx) {
                 const sendBuffer = Buffer.alloc(8);
                 sendBuffer[0] = (CCS.UPLOAD_INITIATE << 5);
-                sendBuffer[1] = entry.index;
-                sendBuffer[2] = (entry.index >> 8);
-                sendBuffer[3] = subIndex;
+                sendBuffer[1] = ctx.entry.index;
+                sendBuffer[2] = (ctx.entry.index >> 8);
+                sendBuffer[3] = ctx.subIndex;
 
-                this.device.channel.send({
-                    id:     0x600 + this.deviceId,
+                ctx.channel.send({
+                    id:     0x600 + ctx.deviceId,
                     ext:    false,
                     rtr:    false,
                     data:   sendBuffer,
                 });
-            });
+            };
+
+            const transfer = new Transfer(context, init_upload);
 
             if(!this.transfer) {
                 this.transfer = transfer;
                 transfer.start();
             }
-            else this.queue.push(transfer);
+            else {
+                this.queue.push(transfer);
+            }
+        })
+        .finally(() => {
+            // Start next transfer
+            this.transfer = this.queue.shift();
+            if(this.transfer)
+                this.transfer.start();
         });
     }
 
@@ -222,6 +239,9 @@ class SDO {
      * @param {number} timeout - time before transfer is aborted.
      */
     download(entry, subIndex=0, timeout=100) {
+        if(!timeout)
+            throw TypeError("Timeout must be non-zero");
+
         if(Array.isArray(entry)) {
             for(let i = 0; i < entry.length; i++) {
                 return this.download(entry[i], subIndex, timeout);
@@ -237,56 +257,65 @@ class SDO {
             if(!entry.data[subIndex])
                 reject(new Error(abortCodes[0x06090011]));
 
-            const size = entry.data[subIndex].size;
-            const timer = setTimeout( () => { this._clientAbort(0x05040000); }, timeout);
             const context = {
-                device: this.device,
+                deviceId: this.deviceId,
+                channel: this.device.channel,
                 entry: entry,
                 subIndex: subIndex,
-                timer: timer,
-                size: size,
+                timeout: timeout,
+                size: entry.data[subIndex].size,
                 resolve: resolve,
                 reject: reject,
             };
 
-            const transfer = new Transfer(context, () => {
+            function init_download(ctx) {
                 const sendBuffer = Buffer.alloc(8);
-                sendBuffer[1] = entry.index;
-                sendBuffer[2] = (entry.index >> 8);
-                sendBuffer[3] = subIndex;
+                sendBuffer[1] = ctx.entry.index;
+                sendBuffer[2] = (ctx.entry.index >> 8);
+                sendBuffer[3] = ctx.subIndex;
 
-                if(size <= 4) {
+                if(ctx.size <= 4) {
                     // Expedited transfer
                     sendBuffer[0] = (CCS.DOWNLOAD_INITIATE << 5);
-                    sendBuffer[0] |= ((4-size) << 2) | 0x2;
-                    for(let i = 0; i < size; i++)
-                        sendBuffer[4+i] = entry.data[subIndex].raw[i];
+                    sendBuffer[0] |= ((4-ctx.size) << 2) | 0x2;
+                    for(let i = 0; i < ctx.size; i++)
+                        sendBuffer[4+i] = ctx.entry.data[ctx.subIndex].raw[i];
 
-                    if(size < 4)
-                        sendBuffer[0] |= ((4 - size) << 2) | 0x1;
+                    if(ctx.size < 4)
+                        sendBuffer[0] |= ((4 - ctx.size) << 2) | 0x1;
                 }
                 else {
                     // Segmented transfer
                     sendBuffer[0] = (CCS.DOWNLOAD_INITIATE << 5) | 0x1;
-                    sendBuffer[4] = size;
-                    sendBuffer[5] = size >> 8;
-                    sendBuffer[6] = size >> 16;
-                    sendBuffer[7] = size >> 24;
+                    sendBuffer[4] = ctx.size;
+                    sendBuffer[5] = ctx.size >> 8;
+                    sendBuffer[6] = ctx.size >> 16;
+                    sendBuffer[7] = ctx.size >> 24;
                 }
 
-                this.device.channel.send({
-                    id:     0x600 + this.deviceId,
+                ctx.channel.send({
+                    id:     0x600 + ctx.deviceId,
                     ext:    false,
                     rtr:    false,
                     data:   sendBuffer,
                 });
-            });
+            };
+
+            const transfer = new Transfer(context, init_download);
 
             if(!this.transfer) {
                 this.transfer = transfer;
                 transfer.start();
             }
-            else this.queue.push(transfer);
+            else {
+                this.queue.push(transfer);
+            }
+        })
+        .finally(() => {
+            // Start next transfer
+            this.transfer = this.queue.shift();
+            if(this.transfer)
+                this.transfer.start();
         });
     }
 
@@ -295,7 +324,6 @@ class SDO {
      */
     clientReceive(message) {
         const data = message.data;
-
         try {
             switch(data[0] >> 5) {
                 case SCS.ABORT:
@@ -329,18 +357,16 @@ class SDO {
      * @private
      */
     _clientResolve() {
-        this.transfer.resolve();
-        this.transfer = this.queue.shift();
-        if(this.transfer) this.transfer.start();
+        if(this.transfer)
+            this.transfer.resolve();
     }
 
     /** Abort the current transfer.
      * @private
      */
     _clientAbort(code) {
-        this.transfer.abort(code);
-        this.transfer = this.queue.shift();
-        if(this.transfer) this.transfer.start();
+        if(this.transfer)
+            this.transfer.abort(code);
     }
 
     /** Handle SCS.UPLOAD_INITIATE.
@@ -617,7 +643,10 @@ class SDO {
             this.server.subIndex = subIndex;
             this.server.toggle = 0;
             this.server.buffer = Buffer.from([]);
-            this.server.timer = setTimeout( () => { this._serverAbort(0x05040000); }, 1000);
+            this.server.timer = setTimeout(
+                () => { this._serverAbort(0x05040000); },
+                100
+            );
 
             this.device.channel.send({
                 id: 0x580 + this.deviceId,
@@ -681,7 +710,10 @@ class SDO {
             this.server.subIndex = subIndex;
             this.server.toggle = 0;
             this.server.bufferOffset = 0;
-            this.server.timer = setTimeout( () => { this._serverAbort(0x05040000); }, 1000);
+            this.server.timer = setTimeout(
+                () => { this._serverAbort(0x05040000); },
+                100
+            );
 
             this.device.channel.send({
                 id: 0x580 + this.deviceId,

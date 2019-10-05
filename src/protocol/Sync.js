@@ -2,10 +2,8 @@
  *
  * This class provides methods for generating the Sync signal.
  *
- * For more information on Sync see:
- * https://en.wikipedia.org/wiki/CANopen#Synchronization_Object_(SYNC)_protocol
- *
  * @param {RawChannel} channel - socketcan RawChannel object.
+ * @see CiA301 "Synchronization object (SYNC)" (§7.2.5)
  */
 class Sync {
     constructor(channel, syncId=0x80) {

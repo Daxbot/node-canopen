@@ -1,19 +1,36 @@
 # node-canopen
 [![Build Status](https://travis-ci.org/DaxBot/node-canopen.svg?branch=master)](https://travis-ci.org/DaxBot/node-canopen)
 
-CANopen is the internationally standardized (EN 50325-4) (CiA301) CAN-based higher-layer protocol for embedded control system. For more information on CANopen see http://www.can-cia.org/
+CANopen is the internationally standardized (EN 50325-4) CAN-based
+higher-layer protocol for embedded control system. For more information on
+CANopen see http://www.can-cia.org/
 
-This library allows manipulation and representation of a CANopen network from within a NodeJS application and was written as a replacement to the no longer maintained [CANopenSocket](https://github.com/CANopenNode/CANopenSocket) suite of applications. The library is planned to support all standard CANopen protocols and be usable in both a client and server configuration.  Currently only the following protocols are supported:
+This library allows the manipulation of a CANopen network as defined in CiA 301
+and supports the following protocols:
 
- Protocol | Master/Client | Server
- -------- | ------ | ------
- SDO | :heavy_check_mark: | :heavy_check_mark:
- PDO | :heavy_check_mark: | :heavy_check_mark:
- NMT | :heavy_check_mark: | :heavy_check_mark:
- SYNC | :heavy_check_mark: | :x:
- EMCY | :x: | :x:
- TIME | :x: | :x:
- LSS | :x: | :x:
+## Master/slave (CiA 301, 4.4.2)
+
+Protocol | Master | Slave
+-------- | ------ | ------
+NMT | :heavy_check_mark: | :heavy_check_mark:
+SYNC | :heavy_check_mark: | :x:
+TIME | :x: | :x:
+LSS | :x: | :x:
+
+## Client/server (CiA 301, 4.4.3)
+
+Protocol | Client | Server
+-------- | ------ | ------
+SDO | :heavy_check_mark: | :heavy_check_mark:
+
+## Producer/consumer (CiA 301 4.4.4)
+
+Protocol | Producer | Consumer
+-------- | -------- | --------
+PDO | :heavy_check_mark: | :heavy_check_mark:
+EMCY | :x: | :heavy_check_mark:
+TIME | :x: | :x:
+LSS | :x: | :x:
 
 ## Examples
 ### canopend

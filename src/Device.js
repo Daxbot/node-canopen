@@ -5,7 +5,7 @@ const EventEmitter = require('events');
 const SDO = require('./protocol/SDO');
 const PDO = require('./protocol/PDO');
 
- /** CANopen EDS data types.
+ /** CANopen basic data types (CiA 301, 7.1.4).
   * @protected
   * @const {number}
   * @memberof Device
@@ -60,22 +60,20 @@ const objectTypes = {
 /** A CANopen device.
  *
  * This class represents a single addressable device (or node) on the bus and
- * provides methods for manipulating the object dictionary. Device can also
- * be used as an abstraction for virtual devices such as a CANopen master node.
+ * provides methods for manipulating the object dictionary.
  *
- * Device exposes device specific protocols SDO, PDO, and Hearbeat.
- *
- * For more information on the CANopen device model see:
- * https://en.wikipedia.org/wiki/CANopen#Device_model
+ * Device exposes targeted protocols SDO, PDO, and Hearbeat.
  *
  * @param {RawChannel} channel - socketcan RawChannel object.
  * @param {number} deviceId - device identifier.
  * @param {string | null} edsPath - path to the device's electronic data sheet.
  * @param {boolean} heartbeat - enable heartbeat production.
  * @emits "PDO" on PDO value changes
+ * @see CiA301 "CANopen device model" (§4.3)
  */
 class Device extends EventEmitter {
     constructor(channel, deviceId, edsPath=null, heartbeat=false) {
+
         if(channel == undefined)
             throw ReferenceError("arg0 'channel' undefined");
 

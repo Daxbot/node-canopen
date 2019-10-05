@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset='utf-8' />
-  <title>canopen 1.3.5 | Documentation</title>
+  <title>canopen 1.4.0 | Documentation</title>
   <meta name='viewport' content='width=device-width,initial-scale=1'>
   <link href='assets/bass.css' type='text/css' rel='stylesheet' />
   <link href='assets/style.css' type='text/css' rel='stylesheet' />
@@ -15,7 +15,7 @@
       <div id='split-left' class='overflow-auto fs0 height-viewport-100'>
         <div class='py1 px2'>
           <h3 class='mb0 no-anchor'>canopen</h3>
-          <div class='mb1'><code>1.3.5</code></div>
+          <div class='mb1'><code>1.4.0</code></div>
           <input
             placeholder='Filter'
             id='filter-input'
@@ -356,11 +356,8 @@
 
   <p>A CANopen device.</p>
 <p>This class represents a single addressable device (or node) on the bus and
-provides methods for manipulating the object dictionary. Device can also
-be used as an abstraction for virtual devices such as a CANopen master node.</p>
-<p>Device exposes device specific protocols SDO, PDO, and Hearbeat.</p>
-<p>For more information on the CANopen device model see:
-<a href="https://en.wikipedia.org/wiki/CANopen#Device_model">https://en.wikipedia.org/wiki/CANopen#Device_model</a></p>
+provides methods for manipulating the object dictionary.</p>
+<p>Device exposes targeted protocols SDO, PDO, and Hearbeat.</p>
 
  
   
@@ -452,7 +449,7 @@ be used as an abstraction for virtual devices such as a CANopen master node.</p>
 
   
 
-  <p>CANopen EDS data types.</p>
+  <p>CANopen basic data types (CiA 301, 7.1.4).</p>
 
  
   
@@ -1092,11 +1089,9 @@ be used as an abstraction for virtual devices such as a CANopen master node.</p>
   </div>
   
 
-  <p>CANopen SDO protocol handler.</p>
-<p>This class provides methods for manual sync of the local object
-dictionary with the remote copy using the SDO protocol.</p>
-<p>For more information on SDO see:
-<a href="https://en.wikipedia.org/wiki/CANopen#Service_Data_Object_(SDO)_protocol">https://en.wikipedia.org/wiki/CANopen#Service<em>Data_Object</em>(SDO)_protocol</a></p>
+  <p>CANopen 'Service Data Object' protocol.</p>
+<p>This class provides methods for direct access to a Device's
+object dictionary using the SDO protocol.</p>
 
  
   
@@ -1837,7 +1832,7 @@ dictionary with the remote copy using the PDO protocol.</p>
   </div>
   
 
-  <p>A CANopen network</p>
+  <p>A CANopen network.</p>
 <p>This class abstracts a CANopen network with multiple devices and
 exposes device independant protocols NMT, Emergency, and Sync.</p>
 
