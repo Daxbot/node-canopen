@@ -80,6 +80,7 @@ class Transfer {
         this._resolve = context.resolve;
         this._reject = context.reject;
 
+        this.done = false;
         this.toggle = 0;
         this.buffer = Buffer.allocUnsafe(0);
         this.size = context.size;
@@ -105,6 +106,7 @@ class Transfer {
 
     /** Complete the transfer and resolve its promise. */
     resolve() {
+        this.done = true;
         clearTimeout(this.timer);
         this._resolve();
     }
@@ -126,6 +128,7 @@ class Transfer {
             data:   sendBuffer,
         });
 
+        this.done = true;
         this._reject(new Error(abortCodes[code]));
     }
 }
@@ -144,6 +147,7 @@ class SDO {
         this.device = device;
         this.deviceId = device.deviceId;
         this.transfer = null;
+        this.queue_size = Infinity;
         this.queue = [];
         this.server = {
             enable: false,
@@ -173,10 +177,7 @@ class SDO {
      * @param {number} subIndex - data subIndex to upload.
      * @param {number} timeout - time before transfer is aborted.
      */
-    upload(entry, subIndex=0, timeout=100) {
-        if(!timeout)
-            throw TypeError("Timeout must be non-zero");
-
+    upload(entry, subIndex=0, timeout=30) {
         if(Array.isArray(entry)) {
             for(let i = 0; i < entry.length; i++) {
                 return this.upload(entry[i], subIndex, timeout);
@@ -186,8 +187,29 @@ class SDO {
         return new Promise((resolve, reject) => {
             if(typeof(entry) != 'object') {
                 entry = this.device.getEntry(entry);
-                if(!entry)
+                if(!entry) {
+                    // Bad entry
                     reject(new Error(abortCodes[0x06020000]));
+                    return;
+                }
+            }
+
+            if(!entry.data[subIndex]) {
+                // Bad subIndex
+                reject(new Error(abortCodes[0x06090011]));
+                return;
+            }
+
+            if(!timeout) {
+                // Bad timeout
+                reject(new Error(abortCodes[0x05040000]));
+                return;
+            }
+
+            if(this.queue.length >= this.queue_size) {
+                // Queue overflow
+                reject(new Error(abortCodes[0x08000021]));
+                return;
             }
 
             const context = {
@@ -226,10 +248,12 @@ class SDO {
             }
         })
         .finally(() => {
-            // Start next transfer
-            this.transfer = this.queue.shift();
-            if(this.transfer)
-                this.transfer.start();
+            if(!this.transfer || this.transfer.done) {
+                // Start the next transfer
+                this.transfer = this.queue.shift();
+                if(this.transfer)
+                    this.transfer.start();
+            }
         });
     }
 
@@ -238,10 +262,7 @@ class SDO {
      * @param {number} subIndex - data subIndex to download.
      * @param {number} timeout - time before transfer is aborted.
      */
-    download(entry, subIndex=0, timeout=100) {
-        if(!timeout)
-            throw TypeError("Timeout must be non-zero");
-
+    download(entry, subIndex=0, timeout=30) {
         if(Array.isArray(entry)) {
             for(let i = 0; i < entry.length; i++) {
                 return this.download(entry[i], subIndex, timeout);
@@ -251,11 +272,30 @@ class SDO {
         return new Promise((resolve, reject) => {
             if(typeof(entry) != 'object') {
                 entry = this.device.getEntry(entry);
-                if(!entry) reject(new Error(abortCodes[0x06020000]));
+                if(!entry) {
+                    // Bad entry
+                    reject(new Error(abortCodes[0x06020000]));
+                    return;
+                }
             }
 
-            if(!entry.data[subIndex])
+            if(!entry.data[subIndex]) {
+                // Bad subIndex
                 reject(new Error(abortCodes[0x06090011]));
+                return;
+            }
+
+            if(!timeout) {
+                // Bad timeout
+                reject(new Error(abortCodes[0x05040000]));
+                return;
+            }
+
+            if(this.queue.length >= this.queue_size) {
+                // Queue overflow
+                reject(new Error(abortCodes[0x08000021]));
+                return;
+            }
 
             const context = {
                 deviceId: this.deviceId,
@@ -312,10 +352,12 @@ class SDO {
             }
         })
         .finally(() => {
-            // Start next transfer
-            this.transfer = this.queue.shift();
-            if(this.transfer)
-                this.transfer.start();
+            if(!this.transfer || this.transfer.done) {
+                // Start the next transfer
+                this.transfer = this.queue.shift();
+                if(this.transfer)
+                    this.transfer.start();
+            }
         });
     }
 
