@@ -6,6 +6,14 @@
  */
 const baseCOB = [0x180, 0x200, 0x280, 0x300, 0x380, 0x400, 0x480, 0x500];
 
+/** PDO dummy objects
+ *
+ * @private
+ * @const {number}
+ * @memberof PDO
+ */
+const dummyObj = [0x2, 0x3, 0x4, 0x5, 0x6, 0x7];
+
 /** CANopen PDO protocol handler.
  *
  * This class provides methods for no-overhead, real-time, transfers to a
@@ -41,7 +49,7 @@ class PDO {
                 const mapEntry = this.device.dataObjects[0x1A00 + (index & 0xFF)];
                 for(let j = 1; j < mapEntry.data.length; j++) {
                     const mapIndex = (mapEntry.data[j].value >> 16);
-                    if(mapIndex == 0)
+                    if(mapIndex == 0 || dummyObj.includes(mapIndex))
                         continue;
 
                     const mapSubIndex = (mapEntry.data[j].value >> 8) & 0xFF;
@@ -72,7 +80,7 @@ class PDO {
                 const mapEntry = this.device.dataObjects[0x1600 + (index & 0xFF)];
                 for(let j = 1; j < mapEntry.data.length; j++) {
                     const mapIndex = (mapEntry.data[j].value >> 16);
-                    if(mapIndex == 0)
+                    if(mapIndex == 0 || dummyObj.includes(mapIndex))
                         continue;
 
                     const mapSubIndex = (mapEntry.data[j].value >> 8) & 0xFF;
