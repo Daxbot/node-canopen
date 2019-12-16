@@ -172,7 +172,8 @@ class PDO {
             }
         }
 
-        return updated;
+        if(updated.length > 0)
+            this.device.emit('PDO', updated);
     }
 }
 

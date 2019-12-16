@@ -443,6 +443,8 @@ class SDO {
                 raw:    raw,
                 size:   size,
             };
+
+            this.device.emit('SDO', entry);
             this._clientResolve();
         }
         else {
@@ -480,6 +482,11 @@ class SDO {
         const buffer = Buffer.concat([this.transfer.buffer, payload], size);
 
         if(data[0] & 1) {
+            if(this.transfer.size != size) {
+                this._clientAbort(0x06070010);
+                return;
+            }
+
             const entry = this.transfer.entry;
             const dataType = entry.data[this.transfer.subIndex].type;
             const value = this.device.rawToType(buffer, dataType);
@@ -491,10 +498,8 @@ class SDO {
                 size:   size,
             };
 
-            if(this.transfer.size == size)
-                this._clientResolve();
-            else
-                this._clientAbort(0x06070010);
+            this.device.emit('SDO', entry);
+            this._clientResolve();
         }
         else {
             this.transfer.toggle ^= 1;
@@ -842,6 +847,9 @@ class SDO {
             this.server.buffer = Buffer.concat([this.server.buffer, payload], size);
 
             if(data[0] & 1) {
+                clearTimeout(this.server.timer);
+                this.server.timer = null;
+
                 const entry = this.device.getEntry(this.server.index);
                 const dataType = entry.data[this.server.subIndex].type;
 
@@ -852,8 +860,7 @@ class SDO {
                     size:   this.server.buffer.length,
                 };
 
-                clearTimeout(this.server.timer);
-                this.server.timer = null;
+                this.device.emit('SDO', entry);
             }
             else {
                 this.server.timer.refresh();

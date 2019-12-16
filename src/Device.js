@@ -62,13 +62,15 @@ const objectTypes = {
  * This class represents a single addressable device (or node) on the bus and
  * provides methods for manipulating the object dictionary.
  *
- * Device exposes targeted protocols SDO, PDO, and Hearbeat.
+ * Device exposes targeted protocols SDO, PDO, and Heartbeat.
  *
  * @param {RawChannel} channel - socketcan RawChannel object.
  * @param {number} deviceId - device identifier.
  * @param {string | null} edsPath - path to the device's electronic data sheet.
  * @param {boolean} heartbeat - enable heartbeat production.
  * @emits "PDO" on PDO value changes
+ * @emits "SDO" on SDO value changes
+ * @emits "HB" on Heartbeat state changes
  * @see CiA301 "CANopen device model" (§4.3)
  */
 class Device extends EventEmitter {
@@ -423,20 +425,26 @@ class Device extends EventEmitter {
             return;
 
         if(message.id >= 0x180 && message.id < 0x580) {
-            const updated = this.PDO.receive(message);
-            if(updated.length > 0)
-                this.emit('PDO', updated);
+            this.PDO.receive(message);
         }
-        else switch(message.id - this.deviceId) {
-            case 0x580:
-                this.SDO.clientReceive(message);
-                break;
-            case 0x600:
-                this.SDO.serverReceive(message);
-                break;
-            case 0x700:
-                this.state = message.data[0];
-                break;
+        else {
+            switch(message.id - this.deviceId) {
+                case 0x580:
+                    this.SDO.clientReceive(message);
+                    break;
+                case 0x600:
+                    this.SDO.serverReceive(message);
+                    break;
+                case 0x700:
+                    if(this.state != message.data[0]) {
+                        this.emit("HB", {
+                            "old" : this.state,
+                            "new" : message.data[0]
+                        });
+                    }
+                    this.state = message.data[0];
+                    break;
+            }
         }
     }
 
