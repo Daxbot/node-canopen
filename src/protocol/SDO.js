@@ -453,6 +453,8 @@ class SDO {
             if(data[0] & 0x1)
                 this.transfer.size = data.readUInt32LE(4);
 
+            this.transfer.timer.refresh();
+
             this.device.channel.send({
                 id: 0x600 + this.deviceId,
                 ext: false,
@@ -502,6 +504,8 @@ class SDO {
             sendBuffer[0] = (CCS.UPLOAD_SEGMENT << 5);
             sendBuffer[0] |= (this.transfer.toggle << 4);
 
+            this.transfer.timer.refresh();
+
             this.device.channel.send({
                 id: 0x600 + this.deviceId,
                 ext: false,
@@ -536,6 +540,8 @@ class SDO {
         sendBuffer[0] |= (7-count) << 1;
         if(this.transfer.bufferOffset == this.transfer.size)
             sendBuffer[0] |= 1;
+
+        this.transfer.timer.refresh();
 
         this.device.channel.send({
             id: 0x600 + this.deviceId,
@@ -575,6 +581,8 @@ class SDO {
             sendBuffer[0] |= (this.transfer.toggle << 4) | (7-count) << 1;
             if(this.transfer.bufferOffset == size)
                 sendBuffer[0] |= 1;
+
+            this.transfer.timer.refresh();
 
             this.device.channel.send({
                 id: 0x600 + this.deviceId,
@@ -807,6 +815,9 @@ class SDO {
                 clearTimeout(this.server.timer);
                 this.server.timer = null;
             }
+            else {
+                this.server.timer.refresh();
+            }
 
             this.device.channel.send({
                 id: 0x580 + this.deviceId,
@@ -843,6 +854,9 @@ class SDO {
 
                 clearTimeout(this.server.timer);
                 this.server.timer = null;
+            }
+            else {
+                this.server.timer.refresh();
             }
 
             const sendBuffer = Buffer.alloc(8);
