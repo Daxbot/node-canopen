@@ -38,6 +38,18 @@
     0x08000024: "No data available",
 };
 
+/** CANOpen SDO abort error generator
+ * @private
+ * @param {number} abortCode - The abort code number to generate the error for
+ * @returns {Error}
+ */
+function getSDOError(abortCode) {
+    const error = new Error(abortCodes[abortCode]);
+    error.code = abortCode;
+
+    return error;
+}
+
  /** CANopen SDO "Client Command Specifier" codes.
   * @private
   * @const {number}
@@ -129,7 +141,7 @@ class Transfer {
         });
 
         this.done = true;
-        this._reject(new Error(abortCodes[code]));
+        this._reject(getSDOError(code));
     }
 }
 
@@ -189,26 +201,26 @@ class SDO {
                 entry = this.device.getEntry(entry);
                 if(!entry) {
                     // Bad entry
-                    reject(new Error(abortCodes[0x06020000]));
+                    reject(getSDOError(0x06020000));
                     return;
                 }
             }
 
             if(!entry.data[subIndex]) {
                 // Bad subIndex
-                reject(new Error(abortCodes[0x06090011]));
+                reject(getSDOError(0x06090011));
                 return;
             }
 
             if(!timeout) {
                 // Bad timeout
-                reject(new Error(abortCodes[0x05040000]));
+                reject(getSDOError(0x05040000));
                 return;
             }
 
             if(this.queue.length >= this.queue_size) {
                 // Queue overflow
-                reject(new Error(abortCodes[0x08000021]));
+                reject(getSDOError(0x08000021));
                 return;
             }
 
@@ -274,26 +286,26 @@ class SDO {
                 entry = this.device.getEntry(entry);
                 if(!entry) {
                     // Bad entry
-                    reject(new Error(abortCodes[0x06020000]));
+                    reject(getSDOError(0x06020000));
                     return;
                 }
             }
 
             if(!entry.data[subIndex]) {
                 // Bad subIndex
-                reject(new Error(abortCodes[0x06090011]));
+                reject(getSDOError(0x06090011));
                 return;
             }
 
             if(!timeout) {
                 // Bad timeout
-                reject(new Error(abortCodes[0x05040000]));
+                reject(getSDOError(0x05040000));
                 return;
             }
 
             if(this.queue.length >= this.queue_size) {
                 // Queue overflow
-                reject(new Error(abortCodes[0x08000021]));
+                reject(getSDOError(0x08000021));
                 return;
             }
 
