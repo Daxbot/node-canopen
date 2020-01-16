@@ -85,7 +85,9 @@ class Network extends EventEmitter {
                     this.devices[id].state = state;
             }
             else {
-                this.devices[target].state = state;
+                if (this.devices[target]) {
+                    this.devices[target].state = state;
+                }
             }
         }
         else if((message.id & 0x7F0) == 0x80) {
