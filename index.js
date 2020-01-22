@@ -1,4 +1,4 @@
 module.exports=exports={
-    Device: require ('./src/Device'),
-    Network: require('./src/Network'),
+    EDS:        require('./src/EDS'),
+    Device:     require('./src/Device'),
 };

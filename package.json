@@ -1,12 +1,11 @@
 {
   "name": "canopen",
-  "version": "1.4.4",
+  "version": "2.0.0-beta",
   "description": "CANopen implementation for Javascript",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./test/testNetwork.js ./test/testDevice.js ./test/*.js",
-    "document": "documentation lint && documentation build -f html -o docs",
-    "canopend": "node ./examples/canopend.js"
+    "test": "mocha ./test/test*.js ./test/protocol/test*.js",
+    "document": "documentation lint && documentation build -f html -o docs"
   },
   "author": "Wilkins White <ww@novadynamics.com>",
   "license": "MIT",
@@ -20,10 +19,8 @@
     "socketcan"
   ],
   "dependencies": {
-    "command-line-args": "^5.0.2",
-    "command-line-usage": "^5.0.5",
     "ini": "^1.3.5",
-    "socketcan": "^2.5.0"
+    "socketcan": "^2.6.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",

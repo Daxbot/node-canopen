@@ -1,167 +1,90 @@
-const fs = require('fs');
-const ini = require('ini');
 const EventEmitter = require('events');
-
-const SDO = require('./protocol/SDO');
+const EMCY = require('./protocol/EMCY');
+const NMT = require ('./protocol/NMT');
 const PDO = require('./protocol/PDO');
-
- /** CANopen basic data types (CiA 301, 7.1.4).
-  * @protected
-  * @const {number}
-  * @memberof Device
-  */
-const dataTypes = {
-    BOOLEAN: 1,
-    INTEGER8: 2,
-    INTEGER16: 3,
-    INTEGER32: 4,
-    UNSIGNED8: 5,
-    UNSIGNED16: 6,
-    UNSIGNED32: 7,
-    REAL32: 8,
-    VISIBLE_STRING: 9,
-    OCTET_STRING: 10,
-    UNICODE_STRING: 11,
-    TIME_OF_DAY: 12,
-    TIME_DIFFERENCE: 13,
-    DOMAIN: 15,
-    REAL64: 17,
-    INTEGER24: 16,
-    INTEGER40: 18,
-    INTEGER48: 19,
-    INTEGER56: 20,
-    INTEGER64: 21,
-    UNSIGNED24: 22,
-    UNSIGNED40: 24,
-    UNSIGNED48: 25,
-    UNSIGNED56: 26,
-    UNSIGNED64: 27,
-    PDO_PARAMETER: 32,
-    PDO_MAPPING: 33,
-    SDO_PARAMETER: 34,
-    IDENTITY: 35,
-};
-
- /** CANopen EDS object types.
-  * @protected
-  * @const {number}
-  * @memberof Device
-  */
-const objectTypes = {
-    NULL: 0,
-    DOMAIN: 2,
-    DEFTYPE: 5,
-    DEFSTRUCT: 6,
-    VAR: 7,
-    ARRAY: 8,
-    RECORD: 9,
-};
+const SDO = require('./protocol/SDO');
+const SYNC = require('./protocol/SYNC');
+const TIME = require('./protocol/TIME');
+const {EDS} = require('./EDS');
 
 /** A CANopen device.
  *
  * This class represents a single addressable device (or node) on the bus and
  * provides methods for manipulating the object dictionary.
  *
- * Device exposes targeted protocols SDO, PDO, and Heartbeat.
+ * @param {Object} $0
+ * @param {RawChannel} $0.channel - socketcan RawChannel object.
+ * @param {number} $0.id - device identifier.
+ * @param {EDS} $0.eds - the device's electronic data sheet.
+ * @param {boolean} $0.loopback - enable loopback mode.
  *
- * @param {RawChannel} channel - socketcan RawChannel object.
- * @param {number} deviceId - device identifier.
- * @param {string | null} edsPath - path to the device's electronic data sheet.
- * @param {boolean} heartbeat - enable heartbeat production.
- * @emits "PDO" on PDO value changes
- * @emits "SDO" on SDO value changes
- * @emits "HB" on Heartbeat state changes
- * @see CiA301 "CANopen device model" (§4.3)
+ * @emits 'emergency' on consuming an emergency object.
+ * @emits 'nmtTimeout' on missing a tracked heartbeat.
+ * @emits 'nmtChangeState' on change of NMT state.
+ * @emits 'nmtResetNode' on NMT reset node.
+ * @emits 'nmtResetCommunication' on NMT reset communication.
+ * @emits 'sync' on consuming a synchronization object.
+ * @emits 'time' on consuming a time stamp object.
+ * @emits 'pdo' on updating a mapped pdo object.
  */
 class Device extends EventEmitter {
-    constructor(channel, deviceId, edsPath=null, heartbeat=false) {
-
-        if(channel == undefined)
-            throw ReferenceError("arg0 'channel' undefined");
-
-        if(channel.send == undefined)
-            throw ReferenceError("arg0 'channel' has no send method");
-
-        if(channel.addListener == undefined)
-            throw ReferenceError("arg0 'channel' has no addListener method");
-
-        if(!deviceId || deviceId > 0x7F)
-            throw RangeError("ID must be in range 1-127");
-
+    constructor({channel, id, eds, loopback=false}) {
         super();
-        this.channel = channel;
-        this.deviceId = deviceId;
-        this.state = 0;
-        this.dataObjects = {};
-        this.nameLookup = {};
-        this.heartbeatTimer = null;
-
-        this._SDO = new SDO(this);
-        this._PDO = new PDO(this);
-
-        channel.addListener("onMessage", this._onMessage, this);
-
-        if(edsPath) {
-            const objDict = ini.parse(fs.readFileSync(edsPath, 'utf-8'));
-            const indexMatch = RegExp('^[0-9A-Fa-f]{4}$');
-            const subIndexMatch = RegExp('^([0-9A-Fa-f]{4})sub([0-9A-Fa-f]+)$');
-
-            for(const [section, entry] of Object.entries(objDict)) {
-                if(indexMatch.test(section)) {
-                    const objectType = parseInt(entry.ObjectType);
-                    let data = [];
-
-                    if(objectType != objectTypes.ARRAY && objectType != objectTypes.RECORD) {
-                        const dataType = parseInt(entry.DataType);
-                        const value = this._parseTypedString(entry.DefaultValue, dataType);
-                        const raw = this.typeToRaw(value, dataType);
-
-                        data[0] = {
-                            value:  value,
-                            type:   dataType,
-                            raw:    raw,
-                            size:   raw.length,
-                        };
-                    }
-
-                    const index = parseInt(section, 16);
-                    this.dataObjects[index] = {
-                        name:       entry.ParameterName,
-                        index:      index,
-                        objectType: objectType,
-                        access:     (entry.AccessType) ? entry.AccessType : 'rw',
-                        data:       data,
-                    };
-
-                    try {
-                        this.nameLookup[entry.ParameterName].push(this.dataObjects[index]);
-                    }
-                    catch(TypeError) {
-                        this.nameLookup[entry.ParameterName] = [this.dataObjects[index]];
-                    }
-                }
-                else if(subIndexMatch.test(section)) {
-                    const [main, sub] = section.split('sub');
-                    const dataType = parseInt(entry.DataType);
-                    const value = this._parseTypedString(entry.DefaultValue, dataType);
-                    const raw = this.typeToRaw(value, dataType);
-
-                    const index = parseInt(main, 16);
-                    const subIndex = parseInt(sub, 16);
-                    this.dataObjects[index].data[subIndex] = {
-                        value:  value,
-                        type:   dataType,
-                        raw:    raw,
-                        size:   raw.length,
-                    };
-                }
-            }
-
-            this.PDO.init();
-            if(heartbeat) {
-                this.startHeartbeat();
+        if(loopback) {
+            this.channel = {
+                callbacks: [],
+                send: function(message) {
+                    //console.log("\t", message.id.toString(16), message.data);
+                    for(let i = 0; i < this.callbacks.length; i++)
+                        this.callbacks[i](message);
+                },
+                addListener: function(event, callback, instance) {
+                    if(event == 'onMessage')
+                        this.callbacks.push(callback.bind(instance));
+                },
             }
         }
+        else {
+            if(!channel)
+                throw TypeError("Must provide channel (or use loopback mode)");
+
+            this.channel = channel;
+        }
+
+        if(!id || id > 0x7F)
+            throw RangeError("ID must be in range 1-127");
+
+        this.id = id;
+        this.nameLookup = {};
+
+        this._EDS = (eds) ? eds : new EDS();
+        this._EMCY = new EMCY(this);
+        this._NMT = new NMT(this);
+        this._PDO = new PDO(this);
+        this._SDO = new SDO(this);
+        this._SYNC = new SYNC(this);
+        this._TIME = new TIME(this);
+
+        /* Create name lookup. */
+        for(const entry of Object.values(this.dataObjects)) {
+            if(!entry || !entry.parameterName)
+                continue;
+
+            try {
+                this.nameLookup[entry.parameterName].push(entry);
+            }
+            catch(TypeError) {
+                this.nameLookup[entry.parameterName] = [ entry ];
+            }
+        }
+    }
+
+    get dataObjects() {
+        return this.EDS.dataObjects;
+    }
+
+    get EDS() {
+        return this._EDS;
     }
 
     get SDO() {
@@ -172,35 +95,38 @@ class Device extends EventEmitter {
         return this._PDO;
     }
 
-    get dataTypes() {
-        return dataTypes;
+    get EMCY() {
+        return this._EMCY;
     }
 
-    get objectTypes() {
-        return objectTypes;
+    get NMT() {
+        return this._NMT;
     }
 
-    startHeartbeat()
-    {
-        const heartbeatTime = this.getValue(0x1017, 0);
-        if(heartbeatTime > 0) {
-            this.heartbeatTimer = setInterval(
-                () => { this._sendHeartbeat(); }, heartbeatTime);
-        }
+    get SYNC() {
+        return this._SYNC;
     }
 
-    stopHeartbeat()
-    {
-        clearInterval(this.heartbeatTimer);
+    get TIME() {
+        return this._TIME;
     }
 
-    /** Get a dataObject.
-     * @param {number | string} index - index or name of the dataObject.
+    /* Initialize the device and audit the object dictionary. */
+    init() {
+        this.EMCY.init();
+        this.NMT.init();
+        this.PDO.init();
+        this.SDO.init();
+        this.SYNC.init();
+        this.TIME.init();
+    }
+
+    /** Get a DataObject.
+     * @param {number | string} index - index or name of the DataObject.
      */
     getEntry(index) {
-        let entry = this.dataObjects[index];
-        if(entry == undefined)
-        {
+        let entry = this.EDS.dataObjects[index];
+        if(entry == undefined) {
             entry = this.nameLookup[index];
             if(entry && entry.length == 1)
                 entry = entry[0];
@@ -209,255 +135,164 @@ class Device extends EventEmitter {
         return entry;
     }
 
-    /** Get the value of a dataObject.
-     * @param {number | string} index - index or name of the dataObject.
+    /** Get the value of a DataObject.
+     * @param {number | string} index - index or name of the DataObject.
      */
-    getValue(index, subIndex) {
-        const entry = this.getEntry(index);
-        if(entry && Array.isArray(entry))
-            throw TypeError("Ambiguous name: " + index);
-
-        return entry.data[subIndex].value;
-    }
-
-    /** Get the raw value of a dataObject.
-     * @param {number | string} index - index or name of the dataObject.
-     */
-    getRaw(index, subIndex) {
-        const entry = this.getEntry(index);
-        if(entry && Array.isArray(entry))
-            throw TypeError("Ambiguous name: " + index);
-
-        return entry.data[subIndex].raw;
-    }
-
-    /** Set the value of a dataObject.
-     * @param {number | string} index - index or name of the dataObject.
-     */
-    setValue(index, subIndex, value) {
+    getValue(index) {
         const entry = this.getEntry(index);
 
         if(!entry)
-            throw ReferenceError("Index not found: " + index);
+            return undefined;
 
         if(Array.isArray(entry))
-            throw ReferenceError("Ambiguous index: " + index);
+            throw TypeError(`Ambiguous name (${index}).`);
 
-        const dataType = entry.data[subIndex].type;
-        const raw = this.typeToRaw(value, dataType);
+        if(entry.SubNumber !== undefined)
+            throw ReferenceError(`${index} is an array. Try getValueArray().`);
 
-        entry.data[subIndex] = {
-            value:      value,
-            type:       dataType,
-            raw:        raw,
-            size:       raw.length,
-        };
+        return entry.value;
     }
 
-    /** Set the raw value of a dataObject.
-     * @param {number | string} index - index or name of the dataObject.
+    /** Get the value of a DataObject's sub-index.
+     * @param {number | string} index - index or name of the DataObject.
+     * @param {number} subIndex - sub-object index.
      */
-    setRaw(index, subIndex, raw) {
+    getValueArray(index, subIndex) {
         const entry = this.getEntry(index);
-        if(entry && Array.isArray(entry))
-            throw TypeError("Ambiguous name: " + index);
 
-        const dataType = entry.data[subIndex].type;
-        const value = this.rawToType(raw, dataType);
+        if(!entry)
+            return undefined;
 
-        entry.data[subIndex] = {
-            value:      value,
-            type:       dataType,
-            raw:        raw,
-            size:       raw.length,
-        };
-    }
+        if(Array.isArray(entry))
+            throw TypeError(`Ambiguous name (${index}).`);
 
-    /** Convert a Buffer object to a value based on type.
-     * @param {Buffer} raw - data to convert.
-     * @param {dataTypes} dataType - type of the data.
-     * @return {number | string}
-     */
-    rawToType(raw, dataType) {
-        switch(dataType) {
-            case dataTypes.BOOLEAN:
-                return raw[0] != 0;
-            case dataTypes.INTEGER8:
-                return raw.readInt8(0);
-            case dataTypes.INTEGER16:
-                return raw.readInt16LE(0);
-            case dataTypes.INTEGER32:
-                return raw.readInt32LE(0);
-            case dataTypes.UNSIGNED8:
-                return raw.readUInt8(0);
-            case dataTypes.UNSIGNED16:
-                return raw.readUInt16LE(0);
-            case dataTypes.UNSIGNED32:
-            case dataTypes.TIME_OF_DAY:
-            case dataTypes.TIME_DIFFERENCE:
-                return raw.readUInt32LE(0);
-            case dataTypes.REAL32:
-                return raw.readFloatLE(0);
-            case dataTypes.REAL64:
-                return raw.readDoubleLE(0);
-            case dataTypes.VISIBLE_STRING:
-            case dataTypes.OCTET_STRING:
-            case dataTypes.UNICODE_STRING:
-                return raw.toString();
-            default:
-                return raw;
-        }
-    }
-
-    /** Convert a value to a Buffer object based on type.
-     * @param {number | string} value - data to convert.
-     * @param {dataTypes} dataType - type of the data.
-     * @return {Buffer}
-     */
-    typeToRaw(value, dataType) {
-        let raw = Buffer.alloc(0);
-        if(value == null)
-            return raw;
-
-        switch(dataType) {
-            case dataTypes.BOOLEAN:
-                raw = Buffer.from(value ? [1] : [0] );
-                break;
-            case dataTypes.INTEGER8:
-            case dataTypes.UNSIGNED8:
-                raw = Buffer.from([value & 0xFF]);
-                break;
-            case dataTypes.INTEGER16:
-            case dataTypes.UNSIGNED16:
-                raw = Buffer.alloc(2);
-                raw[0] = ((value >>> 0) & 0xFF);
-                raw[1] = ((value >>> 8) & 0xFF);
-                break;
-            case dataTypes.INTEGER24:
-            case dataTypes.UNSIGNED24:
-                raw = Buffer.alloc(3);
-                for(let i = 0; i < 3; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.INTEGER32:
-            case dataTypes.UNSIGNED32:
-            case dataTypes.TIME_OF_DAY:
-            case dataTypes.TIME_DIFFERENCE:
-                raw = Buffer.alloc(4);
-                for(let i = 0; i < 4; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.INTEGER40:
-            case dataTypes.UNSIGNED40:
-                raw = Buffer.alloc(5);
-                for(let i = 0; i < 5; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.INTEGER48:
-            case dataTypes.UNSIGNED48:
-                raw = Buffer.alloc(6);
-                for(let i = 0; i < 6; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.INTEGER56:
-            case dataTypes.UNSIGNED56:
-                raw = Buffer.alloc(7);
-                for(let i = 0; i < 7; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.INTEGER64:
-            case dataTypes.UNSIGNED64:
-                raw = Buffer.alloc(8);
-                for(let i = 0; i < 8; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.REAL32:
-                raw = Buffer.alloc(4);
-                raw.writeFloatLE(value);
-                break;
-            case dataTypes.REAL64:
-                raw = Buffer.alloc(8);
-                raw.writeDoubleLE(value);
-                break;
-            case dataTypes.VISIBLE_STRING:
-            case dataTypes.OCTET_STRING:
-            case dataTypes.UNICODE_STRING:
-                raw = Buffer.from(value);
-                break;
+        if(entry.SubNumber === undefined) {
+            throw ReferenceError(
+                `${index} does not have sub-objects. Try getValue().`);
         }
 
-        return raw;
+        return entry[subIndex].value;
     }
 
-    /** Parse an EDS string based on type.
-     * @private
-     * @param {string} data - data to convert.
-     * @param {dataTypes} dataType - type of the data.
-     * @return {number | string | Buffer}
+    /** Get the raw value of a DataObject.
+     * @param {number | string} index - index or name of the DataObject.
      */
-    _parseTypedString(data, dataType) {
-        switch(dataType) {
-            case dataTypes.BOOLEAN:
-                return data ? (parseInt(data) != 0) : false;
-            case dataTypes.INTEGER8:
-            case dataTypes.UNSIGNED8:
-            case dataTypes.INTEGER16:
-            case dataTypes.UNSIGNED16:
-            case dataTypes.INTEGER32:
-            case dataTypes.UNSIGNED32:
-                return data ? parseInt(data) : 0;
-            case dataTypes.REAL32:
-            case dataTypes.REAL64:
-                return data ? parseFloat(data) : 0.0;
-            case dataTypes.OCTET_STRING:
-                return data ? Buffer.from(data) : Buffer.alloc(0);
-            default:
-                return data ? data : "";
-        }
+    getRaw(index) {
+        const entry = this.getEntry(index);
+
+        if(!entry)
+            return undefined;
+
+        if(Array.isArray(entry))
+            throw TypeError(`Ambiguous name (${index}).`);
+
+        if(entry.SubNumber !== undefined)
+            throw ReferenceError(`${index} is an array. Try getRawArray().`);
+
+        return entry.raw;
     }
 
-    /** socketcan 'onMessage' listener.
-     * @private
-     * @param {Object} message - CAN frame.
+    /** Get the raw value of a DataObject's sub-index.
+     * @param {number | string} index - index or name of the DataObject.
+     * @param {number} subIndex - sub-object index.
      */
-    _onMessage(message) {
-        if(!message)
-            return;
+    getRawArray(index, subIndex) {
+        const entry = this.getEntry(index);
 
-        if(message.id >= 0x180 && message.id < 0x580) {
-            this.PDO.receive(message);
+        if(!entry)
+            return undefined;
+
+        if(Array.isArray(entry))
+            throw TypeError(`Ambiguous name (${index}).`);
+
+        if(entry.SubNumber === undefined) {
+            throw ReferenceError(
+                `${index} does not have sub-objects. Try getRaw().`);
         }
-        else {
-            switch(message.id - this.deviceId) {
-                case 0x580:
-                    this.SDO.clientReceive(message);
-                    break;
-                case 0x600:
-                    this.SDO.serverReceive(message);
-                    break;
-                case 0x700:
-                    if(this.state != message.data[0]) {
-                        this.emit("HB", {
-                            "old" : this.state,
-                            "new" : message.data[0]
-                        });
-                    }
-                    this.state = message.data[0];
-                    break;
-            }
-        }
+
+        return entry[subIndex].raw;
     }
 
-    /** Serve a Heartbeat object to the channel.
-     * @private
+    /** Set the value of a DataObject.
+     * @param {number | string} index - index or name of the DataObject.
+     * @param value - value to set.
      */
-    _sendHeartbeat() {
-        this.channel.send({
-            id: 0x700 + this.deviceId,
-            ext: false,
-            rtr: false,
-            data: Buffer.from([this.state])
-        });
+    setValue(index, value) {
+        const entry = this.getEntry(index);
+
+        if(!entry)
+            throw ReferenceError(`Index not found (${index})`);
+
+        if(Array.isArray(entry))
+            throw ReferenceError(`Ambiguous index (${index})`);
+
+        if(entry.SubNumber !== undefined)
+            throw ReferenceError(`${index} is an array. Try setValueArray().`);
+
+        entry.value = value;
+    }
+
+    /** Set the value of a DataObject's sub-index.
+     * @param {number | string} index - index or name of the DataObject.
+     * @param {number} subIndex - array sub-index to set;
+     * @param value - value to set.
+     */
+    setValueArray(index, subIndex, value) {
+        const entry = this.getEntry(index);
+
+        if(!entry)
+            throw ReferenceError(`Index not found (${index})`);
+
+        if(Array.isArray(entry))
+            throw TypeError(`Ambiguous name (${index}).`);
+
+        if(entry.SubNumber === undefined) {
+            throw ReferenceError(
+                `${index} does not have sub-objects. Try setValue().`);
+        }
+
+        entry[subIndex].value = value;
+    }
+
+    /** Set the raw value of a DataObject.
+     * @param {number | string} index - index or name of the DataObject.
+     * @param {Buffer} raw - raw Buffer to set.
+     */
+    setRaw(index, raw) {
+        const entry = this.getEntry(index);
+
+        if(!entry)
+            throw ReferenceError(`Index not found (${index})`);
+
+        if(Array.isArray(entry))
+            throw TypeError(`Ambiguous name (${index}).`);
+
+        if(entry.SubNumber !== undefined)
+            throw ReferenceError(`${index} is an array. Try setRawArray().`);
+
+        entry.raw = raw;
+    }
+
+    /** Set the raw value of a DataObject's sub-index.
+     * @param {number | string} index - index or name of the DataObject.
+     * @param {number} subIndex - sub-object index.
+     * @param {Buffer} raw - raw Buffer to set.
+     */
+    setRawArray(index, subIndex, raw) {
+        const entry = this.getEntry(index);
+
+        if(!entry)
+            throw ReferenceError(`Index not found (${index})`);
+
+        if(Array.isArray(entry))
+            throw TypeError(`Ambiguous name (${index}).`);
+
+        if(entry.SubNumber === undefined) {
+            throw ReferenceError(
+                `${index} does not have sub-objects. Try setRaw().`);
+        }
+
+        entry[subIndex].raw = raw;
     }
 }
 

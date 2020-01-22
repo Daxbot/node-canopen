@@ -5,89 +5,112 @@ CANopen is the internationally standardized (EN 50325-4) CAN-based
 higher-layer protocol for embedded control system. For more information on
 CANopen see http://www.can-cia.org/
 
-This library allows the manipulation of a CANopen network as defined in CiA 301
-and supports the following protocols:
+This library allows the manipulation of CANopen devices as defined in CiA 301.
 
-## Master/slave (CiA 301, 4.4.2)
+## Protocols
+### Emergency - EMCY
+The CANopen emergency protocol is used to indicate internal errors with a
+CANopen device. Call [EMCY.write][1] to produce an emergency object.
 
-Protocol | Master | Slave
--------- | ------ | ------
-NMT | :heavy_check_mark: | :heavy_check_mark:
-SYNC | :heavy_check_mark: | :x:
-TIME | :x: | :x:
-LSS | :x: | :x:
+ OD Entry | Description             | Notes
+ -------- | ----------------------- | ------------------------
+  0x1001  | Error register          | Required.
+  0x1003  | Pre-defined error field | Required for error history.
+  0x1014  | COB_ID EMCY             | Required for write.
+  0x1015  | Inhibit time EMCY       | Required for inhibit time.
 
-## Client/server (CiA 301, 4.4.3)
+Supported Features:
+ - Error generation :heavy_check_mark:
+ - Error history :heavy_check_mark:
 
-Protocol | Client | Server
--------- | ------ | ------
-SDO | :heavy_check_mark: | :heavy_check_mark:
+[1]: https://daxbot.github.io/node-canopen/#emcywrite
 
-## Producer/consumer (CiA 301 4.4.4)
+### Network Management - NMT
+The CANopen network management protocol is used to manipulate the state of
+NMT slave devices on the network and is responsible for the device heartbeat.
+Call [NMT.start][2] to begin heartbeat generation.
 
-Protocol | Producer | Consumer
--------- | -------- | --------
-PDO | :heavy_check_mark: | :heavy_check_mark:
-EMCY | :x: | :heavy_check_mark:
-TIME | :x: | :x:
-LSS | :x: | :x:
+ OD Entry | Description             | Notes
+ -------- | ----------------------- | ------------------------
+  0x1016  | Consumer heartbeat time | Required for monitoring.
+  0x1017  | Producer heartbeat time | Required for generation.
 
-## Examples
-### canopend
-Written as a replacement for the CANopenSocket application of the same name, canopend shows how to create a CANopen network master. Read/write commands can be sent to the command socket in order to initate an SDO transfer and return the results. If canopend is started with an EDS file it will parse incoming PDOs and report updates to the command socket.
+Supported Features:
+ - Remote state changes :heavy_check_mark:
+ - Heartbeat
+   - Generation :heavy_check_mark:
+   - Monitoring :heavy_check_mark:
+ - Command processing
+    - State changes :heavy_check_mark:
+    - Reset node :heavy_check_mark:
+    - Reset communications :heavy_check_mark:
 
-Socket commands:
- - `[<sequence>] <node> read  <index> <subindex> <datatype>`
- - `[<sequence>] <node> write <index> <subindex> <datatype> <value>`
+[2]: https://daxbot.github.io/node-canopen/#nmtstart
 
-Command responses are as follows:
+### Process Data Object - PDO
+The CANopen process data object protocol is used for broadcasting data changes
+with minimal overhead, similar to a more traditional CAN network architecture.
+A mapped PDO can be sent with the [PDO.write][3] method. Calling
+[PDO.start][4] will begin producing mapped synchronous TPDOs.
 
- Event | Response
- ----- | --------
- Successful write | `[<sequence>] OK`
- Successful read | `[<sequence>] OK <value>`
- SDO error | `[<sequence>] ERROR <error>`
- PDO update | `PDO: <name>=<value>`
- Emergency | `EM: <id> <code> <register> <bit> <info>`
+ OD Entry        | Description                  | Notes
+ --------------- | ---------------------------- | ------------------
+ 0x1400 - 0x15FF | RPDO communication parameter | Required for RPDOs.
+ 0x1600 - 0x17FF | RPDO mapping parameter       | Required for RPDOs.
+ 0x1800 - 0x19FF | TPDO communication parameter | Required for TPDOs.
+ 0x1A00 - 0x1BFF | TPDO mapping parameter       | Required for TPDOs.
 
-## Modules
+Supported Features:
+ - Asynchronous PDOs
+    - Triggered :heavy_check_mark:
+    - Inhibit time :heavy_check_mark:
+    - Event timer :heavy_check_mark:
+    - RTR :x:
+ - Synchronous PDOs :heavy_check_mark:
+ - Multiplex PDOs :x:
+
+[3]: https://daxbot.github.io/node-canopen/#pdowrite
+[4]: https://daxbot.github.io/node-canopen/#pdostart
+
 ### Service Data Object - SDO
-The CANopen service data object protocol is used for manipulating individual entries on the device and uses a client/server relationship.  The device whose object dictionary is being accessed is the server and the request intiator is the client. The SDO module uses the [SDO::upload](https://daxbot.github.io/node-canopen/#sdoupload) and [SDO::download](https://daxbot.github.io/node-canopen/#sdoupload) methods to initate SDO requests as a client.  To avoid interfering with remote devices the module will not serve requests by default. To begin or end server operation call [SDO::serverStart](https://daxbot.github.io/node-canopen/#sdoserverstop) or [SDO::serverStop](https://daxbot.github.io/node-canopen/#sdoserverstop).
+The CANopen service data object protocol provides direct access to a device's
+object dictionary. Call the [SDO.upload][5] or [SDO.download][6] methods to
+initate a transfer.
+
+ OD Entry        | Description          | Notes
+ --------------- | -------------------- | --------------------
+ 0x1200 - 0x127F | SDO server parameter | Required for server.
+ 0x1280 - 0x12FF | SDO client parameter | Required for client.
 
 Supported Features:
  - Expedited Transfer :heavy_check_mark:
  - Segmented Transfer :heavy_check_mark:
  - Block Transfer :x:
 
-### Process Data Object - PDO
-The CANopen process data object protocol is used for broadcasting data changes with minimal overhead, similar to a more traditional CAN network architecture. PDO uses a producer/consumer model where a device pushes a message to the bus and any number of nodes can act upon it.  Currently the PDO module handles Transmit PDOs and Receive PDOs the same way.  When a mapped data object is updated using [Device::setValue](https://daxbot.github.io/node-canopen/#devicesetvalue) or [Device::setRaw](https://daxbot.github.io/node-canopen/#devicesetraw) the user can call [PDO::transmit](https://daxbot.github.io/node-canopen/#pdotransmit) to push the changes to the network.  The module will automatically process incoming PDOs and update the object dictionary accordingly.
+[5]: https://daxbot.github.io/node-canopen/#sdoupload
+[6]: https://daxbot.github.io/node-canopen/#sdodownload
+
+### Synchronization - SYNC
+The CANopen sync protocol is used to synchronize actions between devices on the
+network. Call [SYNC.start][7] to begin producing sync objects.
+
+ OD Entry | Description                 | Notes
+ -------- | --------------------------- | -----------------------------
+  0x1005  | COB-ID SYNC                 | Required.
+  0x1006  | Communication cycle period  | Required for generation.
+  0x1019  | Sync counter overflow value | Required for counter.
 
 Supported Features:
- - Asynchronous PDOs
-    - Triggered :heavy_check_mark:
-    - Inhibit time :x:
-    - Event timer :x:
- - Synchronous PDOs :x:
+ - Sync counter :heavy_check_mark:
 
-### Network Management - NMT
-The CANopen network management protocol is used to manipulate the state of devices on the network and is responsible for heartbeat monitoring.  The NMT module can be used to set a device's operational mode.
+[7]: https://daxbot.github.io/node-canopen/#syncstart
 
-Supported Features:
- - Remote state changes :heavy_check_mark:
- - Heartbeat monitoring :heavy_check_mark:
- - Command processing
-    - State changes :heavy_check_mark:
-    - Reset node :x:
-    - Reset communications :x:
+###  Time stamp - TIME
+The CANopen time protocol is used to provide a simple network clock. Call
+[TIME.write][8] to produce a time stamp object.
 
-### Sync - SYNC
-The CANopen sync protocol is used to synchronize actions between devices on the network.  Sync can be started or stopped using the standalone Sync module.
+ OD Entry | Description | Notes
+ -------- | ----------- | ---------
+  0x1012  | COB-ID TIME | Required.
 
-### Emergency - EMCY
-Not yet implemented
-
-###  Timestamp - TIME
-Not yet implemented
-
-### Layer Setting Services - LSS
-Not yet implemented
+[8]: https://daxbot.github.io/node-canopen/#timewrite
