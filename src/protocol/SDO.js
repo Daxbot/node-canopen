@@ -394,7 +394,7 @@ class SDO {
                     data:   sendBuffer
                 });
 
-                this._serverTransfer[server.cobIdRx].start();
+                this._serverTransfers[server.cobIdRx].start();
             });
         });
 
@@ -575,10 +575,10 @@ class SDO {
         if(data[0] & 0x02) {
             // Expedited transfer
             const count = (data[0] & 1) ? (4 - ((data[0] >> 2) & 3)) : 4;
-            if(entry.raw.length < count)
-                entry._raw = Buffer.alloc(count);
 
-            data.copy(entry.raw, 0, 4, count + 4);
+            const raw = Buffer.alloc(count);
+            data.copy(raw, 0, 4, count+4);
+            entry.raw = raw;
 
             const sendBuffer = Buffer.alloc(8);
             sendBuffer.writeUInt8(SCS.DOWNLOAD_INITIATE << 5);
@@ -731,10 +731,10 @@ class SDO {
                     return _serverAbort(transfer, 0x06090011);
             }
 
-            if(entry.raw.length < size)
-                entry._raw = Buffer.alloc(size);
+            const raw = Buffer.alloc(size);
+            transfer.data.copy(raw);
+            entry.raw = raw;
 
-            transfer.data.copy(entry.raw);
             transfer.resolve();
         }
 

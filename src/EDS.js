@@ -411,6 +411,10 @@ class DataObject extends EventEmitter {
         Object.defineProperty(this, '_maxListeners', { enumerable: false });
     }
 
+    from(src, offset, length) {
+        this.raw.from(src, offset, length);
+    }
+
     get index() {
         return this._index;
     }
@@ -474,6 +478,16 @@ class DataObject extends EventEmitter {
 
     get value() {
         return rawToType(this._raw, this.dataType);
+    }
+
+    set raw(raw) {
+        if(!this.accessType.includes('w'))
+            throw TypeError(`Object is not writable (${this.accessType}).`);
+
+        if(Buffer.compare(raw, this.raw) != 0) {
+            this._raw = raw;
+            this.emit("update", this);
+        }
     }
 
     set value(value) {
