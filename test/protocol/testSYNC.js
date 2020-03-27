@@ -10,14 +10,18 @@ describe('SYNC', function() {
 
     beforeEach(function() {
         node = new Device({ id: 0xA, loopback: true });
-        node.EDS.dataObjects[0x1005] = new EDS.DataObject({
+
+        /* COB-ID SYNC. */
+        node.EDS.addEntry(0x1005, {
             ParameterName:      'COB-ID SYNC',
             ObjectType:         EDS.objectTypes.VAR,
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
             DefaultValue:       0x80,
         });
-        node.EDS.dataObjects[0x1006] = new EDS.DataObject({
+
+        /* Communication cycle period. */
+        node.EDS.addEntry(0x1006, {
             ParameterName:      'Communication cycle period',
             ObjectType:         EDS.objectTypes.VAR,
             DataType:           EDS.dataTypes.UNSIGNED32,
@@ -31,12 +35,12 @@ describe('SYNC', function() {
     });
 
     it('should require 0x1005', function() {
-        delete node.dataObjects[0x1005];
+        node.EDS.removeEntry(0x1005);
         expect(() => { node.SYNC.start(); }).to.throw(ReferenceError);
     });
 
     it('should require 0x1006', function() {
-        delete node.dataObjects[0x1006];
+        node.EDS.removeEntry(0x1006);
         expect(() => { node.SYNC.start(); }).to.throw(ReferenceError);
     });
 

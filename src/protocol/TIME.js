@@ -1,5 +1,5 @@
-const {DataObject, dataTypes} = require('../EDS');
-const TIME_OF_DAY = dataTypes.TIME_OF_DAY;
+const EDS = require('../EDS');
+const TIME_OF_DAY = EDS.dataTypes.TIME_OF_DAY;
 
 /** CANopen TIME protocol handler.
  *
@@ -60,7 +60,7 @@ class TIME {
         if(cobId == 0)
             throw TypeError('COB-ID TIME can not be 0.');
 
-        const data = DataObject.typeToRaw(date, TIME_OF_DAY);
+        const data = EDS.typeToRaw(date, TIME_OF_DAY);
         this.device.channel.send({
             id:     cobId,
             data:   data,
@@ -73,7 +73,7 @@ class TIME {
      */
     _onMessage(message) {
         if(message && (message.id & 0x7FF) == this.cobId) {
-            const date = DataObject.rawToType(message.data, TIME_OF_DAY);
+            const date = EDS.rawToType(message.data, TIME_OF_DAY);
             this.device.emit('time', date);
         }
     }

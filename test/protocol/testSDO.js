@@ -12,41 +12,44 @@ describe('SDO', function() {
 
     beforeEach(function() {
         node = new Device({ id: 0xA, loopback: true });
-        node.EDS.dataObjects[0x1200] = new EDS.DataObject({
+        /* SDO server parameters. */
+        node.EDS.addEntry(0x1200, {
             ParameterName:      'SDO server parameter',
             ObjectType:         EDS.objectTypes.RECORD,
             SubNumber:          2,
         });
-        node.EDS.dataObjects[0x1200][1] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1200, 1, {
             ParameterName:      'COB-ID client to server',
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
             DefaultValue:       0x600,
         });
-        node.EDS.dataObjects[0x1200][2] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1200, 2, {
             ParameterName:      'COB-ID server to client',
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
             DefaultValue:       0x580,
         });
-        node.EDS.dataObjects[0x1280] = new EDS.DataObject({
+
+        /* SDO client parameters. */
+        node.EDS.addEntry(0x1280, {
             ParameterName:      'SDO client parameter',
             ObjectType:         EDS.objectTypes.RECORD,
             SubNumber:          3,
         });
-        node.EDS.dataObjects[0x1280][1] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1280, 1, {
             ParameterName:      'COB-ID client to server',
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
             DefaultValue:       0x600,
         });
-        node.EDS.dataObjects[0x1280][2] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1280, 2, {
             ParameterName:      'COB-ID server to client',
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
             DefaultValue:       0x580,
         });
-        node.EDS.dataObjects[0x1280][3] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1280, 3, {
             ParameterName:      'Node-ID of the SDO server',
             DataType:           EDS.dataTypes.UNSIGNED8,
             AccessType:         EDS.accessTypes.READ_WRITE,
@@ -113,10 +116,10 @@ describe('SDO', function() {
 
         testValues["REAL64"].writeDoubleLE(Math.PI);
 
-        testValues["TIME_OF_DAY"] = EDS.DataObject.typeToRaw(
+        testValues["TIME_OF_DAY"] = EDS.typeToRaw(
             Date.now(), EDS.dataTypes.TIME_OF_DAY);
 
-        testValues["TIME_DIFFERENCE"] = EDS.DataObject.typeToRaw(
+        testValues["TIME_DIFFERENCE"] = EDS.typeToRaw(
             Date.now(), EDS.dataTypes.TIME_DIFFERENCE);
 
         for(const key of Object.keys(testValues)) {

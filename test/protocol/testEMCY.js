@@ -9,19 +9,22 @@ describe('EMCY', function() {
     let node = null;
 
     beforeEach(function() {
+        /* Pre-defined error field. */
         node = new Device({ id: 0xA, loopback: true });
-        node.EDS.dataObjects[0x1003] = new EDS.DataObject({
+        node.EDS.addEntry(0x1003, {
             ParameterName:      'Pre-defined error field',
             ObjectType:         EDS.objectTypes.ARRAY,
             SubNumber:          1,
         });
-        node.EDS.dataObjects[0x1003][1] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1003, 1, {
             ParameterName:      'Standard error field',
             ObjectType:         EDS.objectTypes.VAR,
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1014] = new EDS.DataObject({
+
+        /* COB-ID EMCY. */
+        node.EDS.addEntry(0x1014, {
             ParameterName:      'COB-ID EMCY',
             ObjectType:         EDS.objectTypes.VAR,
             DataType:           EDS.dataTypes.UNSIGNED32,
@@ -35,12 +38,12 @@ describe('EMCY', function() {
     });
 
     it('should require 0x1001', function() {
-        delete node.dataObjects[0x1001];
+        node.EDS.removeEntry(0x1001);
         expect(() => { node.init(); }).to.throw(ReferenceError);
     });
 
     it('should require 0x1014', function() {
-        delete node.dataObjects[0x1014];
+        node.EDS.removeEntry(0x1014);
         expect(() => { node.EMCY.write(0x1000); }).to.throw(ReferenceError);
     });
 
@@ -59,7 +62,7 @@ describe('EMCY', function() {
     it('should track error history', function() {
         node.init();
         node.EMCY.write(0x1234).then(() => {
-            expect(node.dataObjects[0x1003][1].value).to.equal(0x1234);
+            expect(node.EDS.getSubEntry(0x1003, 1).value).to.equal(0x1234);
         });
     });
 });

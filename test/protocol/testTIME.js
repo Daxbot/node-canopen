@@ -10,7 +10,9 @@ describe('TIME', function() {
 
     beforeEach(function() {
         node = new Device({ id: 0xA, loopback: true });
-        node.EDS.dataObjects[0x1012] = new EDS.DataObject({
+
+        /* COB-ID TIME. */
+        node.EDS.addEntry(0x1012, {
             ParameterName:      'COB-ID TIME',
             ObjectType:         EDS.objectTypes.VAR,
             DataType:           EDS.dataTypes.UNSIGNED32,
@@ -24,7 +26,7 @@ describe('TIME', function() {
     });
 
     it('should require 0x1012', function() {
-        delete node.dataObjects[0x1012];
+        node.EDS.removeEntry(0x1012);
         expect(() => { node.TIME.write(); }).to.throw(ReferenceError);
     });
 

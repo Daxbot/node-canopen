@@ -68,14 +68,150 @@ const dataTypes = {
     IDENTITY: 35,
 };
 
+/** Convert a Buffer object to a value based on type.
+ * @param {Buffer} raw - data to convert.
+ * @param {dataTypes} dataType - type of the data.
+ * @return {number | string}
+ */
+function rawToType(raw, dataType) {
+    switch(dataType) {
+        case dataTypes.BOOLEAN:
+            return !!raw.readUInt8();
+        case dataTypes.INTEGER8:
+            return raw.readInt8();
+        case dataTypes.INTEGER16:
+            return raw.readInt16LE();
+        case dataTypes.INTEGER32:
+            return raw.readInt32LE();
+        case dataTypes.UNSIGNED8:
+            return raw.readUInt8();
+        case dataTypes.UNSIGNED16:
+            return raw.readUInt16LE();
+        case dataTypes.UNSIGNED32:
+            return raw.readUInt32LE();
+        case dataTypes.REAL32:
+            return raw.readFloatLE();
+        case dataTypes.REAL64:
+            return raw.readDoubleLE();
+        case dataTypes.VISIBLE_STRING:
+        case dataTypes.OCTET_STRING:
+        case dataTypes.UNICODE_STRING:
+            return raw.toString();
+        case dataTypes.TIME_OF_DAY:
+        case dataTypes.TIME_DIFFERENCE:
+            const ms = raw.readUInt32LE();
+            const days = raw.readUInt16LE(4);
+            return new Date(days*8.64e7 + ms);
+        default:
+            return raw;
+    }
+}
+
+/** Convert a value to a Buffer object based on type.
+ * @param {number | string | Date} value - data to convert.
+ * @param {number} dataType - type of the data.
+ * @return {Buffer}
+ */
+function typeToRaw(value, dataType) {
+    if(value === null)
+        value = 0;
+
+    let raw;
+    switch(parseInt(dataType)) {
+        case dataTypes.BOOLEAN:
+            raw = Buffer.from(value ? [1] : [0] );
+            break;
+        case dataTypes.INTEGER8:
+        case dataTypes.UNSIGNED8:
+            raw = Buffer.from([value & 0xFF]);
+            break;
+        case dataTypes.INTEGER16:
+        case dataTypes.UNSIGNED16:
+            raw = Buffer.from([
+                (value >>> 0) & 0xFF,
+                (value >>> 8) & 0xFF,
+            ]);
+            break;
+        case dataTypes.INTEGER24:
+        case dataTypes.UNSIGNED24:
+            raw = Buffer.alloc(3);
+            for(let i = 0; i < 3; i++)
+                raw[i] = ((value >>> i*8) & 0xFF);
+            break;
+        case dataTypes.INTEGER32:
+        case dataTypes.UNSIGNED32:
+            raw = Buffer.alloc(4);
+            for(let i = 0; i < 4; i++)
+                raw[i] = ((value >>> i*8) & 0xFF);
+            break;
+        case dataTypes.INTEGER40:
+        case dataTypes.UNSIGNED40:
+            raw = Buffer.alloc(5);
+            for(let i = 0; i < 5; i++)
+                raw[i] = ((value >>> i*8) & 0xFF);
+            break;
+        case dataTypes.INTEGER48:
+        case dataTypes.UNSIGNED48:
+            raw = Buffer.alloc(6);
+            for(let i = 0; i < 6; i++)
+                raw[i] = ((value >>> i*8) & 0xFF);
+            break;
+        case dataTypes.INTEGER56:
+        case dataTypes.UNSIGNED56:
+            raw = Buffer.alloc(7);
+            for(let i = 0; i < 7; i++)
+                raw[i] = ((value >>> i*8) & 0xFF);
+            break;
+        case dataTypes.INTEGER64:
+        case dataTypes.UNSIGNED64:
+            raw = Buffer.alloc(8);
+            for(let i = 0; i < 8; i++)
+                raw[i] = ((value >>> i*8) & 0xFF);
+            break;
+        case dataTypes.REAL32:
+            raw = Buffer.alloc(4);
+            raw.writeFloatLE(value);
+            break;
+        case dataTypes.REAL64:
+            raw = Buffer.alloc(8);
+            raw.writeDoubleLE(value);
+            break;
+        case dataTypes.VISIBLE_STRING:
+        case dataTypes.OCTET_STRING:
+        case dataTypes.UNICODE_STRING:
+            raw = (value) ? Buffer.from(value) : Buffer.alloc(0);
+            break;
+        case dataTypes.TIME_OF_DAY:
+        case dataTypes.TIME_DIFFERENCE:
+            raw = Buffer.alloc(6);
+            if(util.types.isDate(value)) {
+                const midnight = new Date(
+                    value.getFullYear(), value.getMonth(), value.getDate());
+
+                /* Milliseconds since midnight. */
+                const ms = value.getTime() - midnight.getTime();
+
+                /* Days since epoch. */
+                const days = Math.floor(value/8.64e7);
+
+                raw.writeUInt32LE(ms);
+                raw.writeUInt16LE(days, 4);
+            }
+            break;
+    }
+
+    return raw;
+}
+
 /** A Canopen Data Object.
  * @emits 'update' on value change.
  * @see CiA306 "Object descriptions" (§4.6.3)
  */
 class DataObject extends EventEmitter {
-    constructor(args) {
+    constructor(index, args) {
         super();
 
+        this._index = index;
         let {
             ObjectType = objectTypes.VAR,
             ObjFlags = 0,
@@ -203,7 +339,7 @@ class DataObject extends EventEmitter {
                     });
 
                     /* Store array size at index 0. */
-                    this._subObjects[0] = new DataObject({
+                    this._subObjects[0] = new DataObject(0, {
                         ParameterName:      'Max sub-index',
                         ObjectType:         objectTypes.VAR,
                         DataType:           dataTypes.UNSIGNED8,
@@ -260,7 +396,7 @@ class DataObject extends EventEmitter {
 
         /* Create raw data buffer. */
         if(DefaultValue !== undefined) {
-            this._raw = DataObject.typeToRaw(DefaultValue, DataType);
+            this._raw = typeToRaw(DefaultValue, DataType);
             Object.defineProperty(this, '_raw', {
                 enumerable: false,
             });
@@ -268,6 +404,15 @@ class DataObject extends EventEmitter {
 
         /* Store args. */
         Object.assign(this, args);
+
+        /* Hide internal variables. */
+        Object.defineProperty(this, '_index', { enumerable: false });
+        Object.defineProperty(this, '_eventsCount', { enumerable: false });
+        Object.defineProperty(this, '_maxListeners', { enumerable: false });
+    }
+
+    get index() {
+        return this._index;
     }
 
     get parameterName() {
@@ -328,7 +473,7 @@ class DataObject extends EventEmitter {
     }
 
     get value() {
-        return DataObject.rawToType(this._raw, this.dataType);
+        return rawToType(this._raw, this.dataType);
     }
 
     set value(value) {
@@ -336,7 +481,7 @@ class DataObject extends EventEmitter {
             throw TypeError(`Object is not writable (${this.accessType}).`);
 
         if(value != this.value) {
-            this._raw = DataObject.typeToRaw(value, this.dataType);
+            this._raw = typeToRaw(value, this.dataType);
             this.emit("update", this);
         }
     }
@@ -345,142 +490,7 @@ class DataObject extends EventEmitter {
         if(subIndex > this.subNumber)
             throw TypeError(`'subIndex' must be less than ${this.subNumber+1}`);
 
-        this._subObjects[subIndex] = new DataObject(args);
-    }
-
-    /** Convert a Buffer object to a value based on type.
-     * @param {Buffer} raw - data to convert.
-     * @param {dataTypes} dataType - type of the data.
-     * @return {number | string}
-     */
-    static rawToType(raw, dataType) {
-        switch(dataType) {
-            case dataTypes.BOOLEAN:
-                return !!raw.readUInt8();
-            case dataTypes.INTEGER8:
-                return raw.readInt8();
-            case dataTypes.INTEGER16:
-                return raw.readInt16LE();
-            case dataTypes.INTEGER32:
-                return raw.readInt32LE();
-            case dataTypes.UNSIGNED8:
-                return raw.readUInt8();
-            case dataTypes.UNSIGNED16:
-                return raw.readUInt16LE();
-            case dataTypes.UNSIGNED32:
-                return raw.readUInt32LE();
-            case dataTypes.REAL32:
-                return raw.readFloatLE();
-            case dataTypes.REAL64:
-                return raw.readDoubleLE();
-            case dataTypes.VISIBLE_STRING:
-            case dataTypes.OCTET_STRING:
-            case dataTypes.UNICODE_STRING:
-                return raw.toString();
-            case dataTypes.TIME_OF_DAY:
-            case dataTypes.TIME_DIFFERENCE:
-                const ms = raw.readUInt32LE();
-                const days = raw.readUInt16LE(4);
-                return new Date(days*8.64e7 + ms);
-            default:
-                return raw;
-        }
-    }
-
-    /** Convert a value to a Buffer object based on type.
-     * @param {number | string | Date} value - data to convert.
-     * @param {number} dataType - type of the data.
-     * @return {Buffer}
-     */
-    static typeToRaw(value, dataType) {
-        if(value === null)
-            value = 0;
-
-        let raw;
-        switch(parseInt(dataType)) {
-            case dataTypes.BOOLEAN:
-                raw = Buffer.from(value ? [1] : [0] );
-                break;
-            case dataTypes.INTEGER8:
-            case dataTypes.UNSIGNED8:
-                raw = Buffer.from([value & 0xFF]);
-                break;
-            case dataTypes.INTEGER16:
-            case dataTypes.UNSIGNED16:
-                raw = Buffer.from([
-                    (value >>> 0) & 0xFF,
-                    (value >>> 8) & 0xFF,
-                ]);
-                break;
-            case dataTypes.INTEGER24:
-            case dataTypes.UNSIGNED24:
-                raw = Buffer.alloc(3);
-                for(let i = 0; i < 3; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.INTEGER32:
-            case dataTypes.UNSIGNED32:
-                raw = Buffer.alloc(4);
-                for(let i = 0; i < 4; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.INTEGER40:
-            case dataTypes.UNSIGNED40:
-                raw = Buffer.alloc(5);
-                for(let i = 0; i < 5; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.INTEGER48:
-            case dataTypes.UNSIGNED48:
-                raw = Buffer.alloc(6);
-                for(let i = 0; i < 6; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.INTEGER56:
-            case dataTypes.UNSIGNED56:
-                raw = Buffer.alloc(7);
-                for(let i = 0; i < 7; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.INTEGER64:
-            case dataTypes.UNSIGNED64:
-                raw = Buffer.alloc(8);
-                for(let i = 0; i < 8; i++)
-                    raw[i] = ((value >>> i*8) & 0xFF);
-                break;
-            case dataTypes.REAL32:
-                raw = Buffer.alloc(4);
-                raw.writeFloatLE(value);
-                break;
-            case dataTypes.REAL64:
-                raw = Buffer.alloc(8);
-                raw.writeDoubleLE(value);
-                break;
-            case dataTypes.VISIBLE_STRING:
-            case dataTypes.OCTET_STRING:
-            case dataTypes.UNICODE_STRING:
-                raw = (value) ? Buffer.from(value) : Buffer.alloc(0);
-                break;
-            case dataTypes.TIME_OF_DAY:
-            case dataTypes.TIME_DIFFERENCE:
-                raw = Buffer.alloc(6);
-                if(util.types.isDate(value)) {
-                    const midnight = new Date(
-                        value.getFullYear(), value.getMonth(), value.getDate());
-
-                    /* Milliseconds since midnight. */
-                    const ms = value.getTime() - midnight.getTime();
-
-                    /* Days since epoch. */
-                    const days = Math.floor(value/8.64e7);
-
-                    raw.writeUInt32LE(ms);
-                    raw.writeUInt16LE(days, 4);
-                }
-                break;
-        }
-
-        return raw;
+        this._subObjects[subIndex] = new DataObject(subIndex, args);
     }
 };
 
@@ -492,15 +502,16 @@ class DataObject extends EventEmitter {
  */
 class EDS {
     constructor() {
-        this.fileInfo = {};
-        this.deviceInfo = {};
-        this.dummyUsage = {};
-        this.dataObjects = {};
-        this.comments = [];
+        this._fileInfo = {};
+        this._deviceInfo = {};
+        this._dummyUsage = {};
+        this._dataObjects = {};
+        this._comments = [];
+        this._nameLookup = {};
 
         /* Add default data types. */
         for(const [name, index] of Object.entries(dataTypes)) {
-            this.dataObjects[index] = new DataObject({
+            this.addEntry(index, {
                 ParameterName:  name,
                 ObjectType:     objectTypes.DEFTYPE,
                 DataType:       dataTypes[name],
@@ -509,27 +520,27 @@ class EDS {
         }
 
         /* Add mandatory objects. */
-        this.dataObjects[0x1000] = new DataObject({
+        this.addEntry(0x1000, {
             ParameterName:      'Device type',
             ObjectType:         objectTypes.VAR,
             DataType:           dataTypes.UNSIGNED32,
             AccessType:         accessTypes.READ_ONLY,
         });
 
-        this.dataObjects[0x1001] = new DataObject({
+        this.addEntry(0x1001, {
             ParameterName:      'Error register',
             ObjectType:         objectTypes.VAR,
             DataType:           dataTypes.UNSIGNED8,
             AccessType:         accessTypes.READ_ONLY,
         });
 
-        this.dataObjects[0x1018] = new DataObject({
+        this.addEntry(0x1018, {
             ParameterName:      'Identity object',
             ObjectType:         objectTypes.RECORD,
             SubNumber:          1,
         });
 
-        this.dataObjects[0x1018][1] = new DataObject({
+        this.addSubEntry(0x1018, 1, {
             ParameterName:      'Vendor-ID',
             ObjectType:         objectTypes.VAR,
             DataType:           dataTypes.UNSIGNED32,
@@ -544,11 +555,15 @@ class EDS {
         /* Parse EDS file. */
         const file = ini.parse(fs.readFileSync(path, 'utf-8'));
 
+        /* Clear existing entries. */
+        this._dataObjects = {};
+        this._nameLookup = {};
+
         /* Extract header fields. */
-        this.fileInfo = file['FileInfo'];
-        this.deviceInfo = file['DeviceInfo'];
-        this.dummyUsage = file['DummyUsage'];
-        this.comments = file['Comments'];
+        this._fileInfo = file['FileInfo'];
+        this._deviceInfo = file['DeviceInfo'];
+        this._dummyUsage = file['DummyUsage'];
+        this._comments = file['Comments'];
 
         /* Construct data objects. */
         const entries = Object.entries(file);
@@ -559,7 +574,7 @@ class EDS {
             .filter(([key, ]) => { return indexMatch.test(key); })
             .forEach(([key, value]) => {
                 const index = parseInt(key, 16);
-                this.dataObjects[index] = new DataObject(value);
+                this.addEntry(index, value);
             });
 
         entries
@@ -568,8 +583,7 @@ class EDS {
                 let [index, subIndex] = key.split('sub');
                 index = parseInt(index, 16);
                 subIndex = parseInt(subIndex, 16);
-
-                this.dataObjects[index][subIndex] = new DataObject(value);
+                this.addSubEntry(index, subIndex, value);
             });
     }
 
@@ -579,10 +593,10 @@ class EDS {
     save(path) {
         const fd = fs.openSync(path, 'w');
 
-        this._write(fd, ini.encode(this.fileInfo, { section: 'FileInfo' }));
-        this._write(fd, ini.encode(this.deviceInfo, { section: 'DeviceInfo' }));
-        this._write(fd, ini.encode(this.dummyUsage, { section: 'DummyUsage' }));
-        this._write(fd, ini.encode(this.comments, { section: 'Comments' }));
+        this._write(fd, ini.encode(this._fileInfo, { section: 'FileInfo' }));
+        this._write(fd, ini.encode(this._deviceInfo, { section: 'DeviceInfo' }));
+        this._write(fd, ini.encode(this._dummyUsage, { section: 'DummyUsage' }));
+        this._write(fd, ini.encode(this._comments, { section: 'Comments' }));
 
         let mandObjects = {};
         let mandCount = 0;
@@ -593,7 +607,7 @@ class EDS {
         let mfrObjects = {};
         let mfrCount = 0;
 
-        for(const key of Object.keys(this.dataObjects)) {
+        for(const key of Object.keys(this._dataObjects)) {
             let index = parseInt(key);
 
             if([0x1000, 0x1001, 0x1018].includes(index)) {
@@ -635,6 +649,112 @@ class EDS {
         fs.closeSync(fd);
     }
 
+    /** Get a DataObject.
+     * @param {number | string} index - index or name of the DataObject.
+     */
+    getEntry(index) {
+        if(typeof index == 'string') {
+            // Name lookup
+            let entry = this._nameLookup[index];
+            if(entry && entry.length == 1)
+                entry = entry[0];
+
+            return entry;
+        }
+        else {
+            // Index lookup
+            return this._dataObjects[index];
+        }
+    }
+
+    /** Create a new DataObject.
+     * @param {number} index - index of the DataObject.
+     */
+    addEntry(index, args) {
+        let entry = this._dataObjects[index];
+        if(entry !== undefined) {
+            throw TypeError(
+                `A DataObject already exists at 0x${index.toString(16)}.`);
+        }
+
+        entry = new DataObject(index, args);
+        this._dataObjects[index] = entry;
+
+        try {
+            this._nameLookup[entry.parameterName].push(entry);
+        }
+        catch(TypeError) {
+            this._nameLookup[entry.parameterName] = [ entry ];
+        }
+
+        return entry;
+    }
+
+    /** Remove a DataObject.
+     * @param {number} index - index of the DataObject.
+     */
+    removeEntry(index) {
+        const entry = this._dataObjects[index];
+        if(!entry)
+            throw ReferenceError("Index does not exist");
+
+        this._nameLookup[entry.parameterName].splice(
+            this._nameLookup[entry.parameterName].indexOf(entry), 1);
+
+        if(this._nameLookup[entry.parameterName].length == 0)
+            delete this._nameLookup[entry.parameterName];
+
+        delete this._dataObjects[entry.index];
+    }
+
+    /** Get a DataObject.
+     * @param {number | string} index - index or name of the DataObject.
+     * @param {number} subIndex - subIndex of the DataObject.
+     */
+    getSubEntry(index, subIndex) {
+        const entry = this._dataObjects[index];
+        if(!entry)
+            throw ReferenceError("Index does not exist");
+        else if(entry.SubNumber === undefined)
+            throw ReferenceError("Index does not support sub-objects");
+        else if(entry.SubNumber < subIndex)
+            throw RangeError("subIndex out of range.");
+
+        return entry[subIndex];
+    }
+
+    /** Create a new DataObject.
+     * @param {number} index - index of the DataObject.
+     * @param {number} subIndex - subIndex of the DataObject.
+     */
+    addSubEntry(index, subIndex, args) {
+        const entry = this._dataObjects[index];
+        if(!entry)
+            throw ReferenceError("Index does not exist");
+        else if(entry.SubNumber === undefined)
+            throw ReferenceError("Index does not support sub-objects");
+        else if(entry.SubNumber < subIndex)
+            throw RangeError("subIndex out of range.");
+
+        entry[subIndex] = new DataObject(subIndex, args);
+    }
+
+    /** Remove a DataObject.
+     * @param {number} index - index of the DataObject.
+     * @param {number} subIndex - subIndex of the DataObject.
+     */
+    removeSubEntry(index, subIndex) {
+        const entry = this._dataObjects[index];
+        if(!entry)
+            throw ReferenceError("Index does not exist");
+        else if(entry.SubNumber === undefined)
+            throw ReferenceError("Index does not support sub-objects");
+        else if(entry.SubNumber < subIndex)
+            throw RangeError("subIndex out of range.");
+
+        delete entry[subIndex];
+    }
+
     static get objectTypes() {
         return objectTypes;
     }
@@ -647,139 +767,143 @@ class EDS {
         return dataTypes;
     }
 
+    get dataObjects() {
+        return this._dataObjects;
+    }
+
     get fileName() {
-        return this.fileInfo['FileName'];
+        return this._fileInfo['FileName'];
     }
 
     get fileVersion() {
-        return this.fileInfo['FileVersion'];
+        return this._fileInfo['FileVersion'];
     }
 
     get fileRevision() {
-        return this.fileInfo['FileRevision'];
+        return this._fileInfo['FileRevision'];
     }
 
     get EDSVersion() {
-        return this.fileInfo['EDSVersion'];
+        return this._fileInfo['EDSVersion'];
     }
 
     get description() {
-        return this.fileInfo['Description'];
+        return this._fileInfo['Description'];
     }
 
     get creationDate() {
-        const time = this.fileInfo['CreationTime'];
-        const date = this.fileInfo['CreationDate'];
+        const time = this._fileInfo['CreationTime'];
+        const date = this._fileInfo['CreationDate'];
         return this._parseDate(time, date);
     }
 
     get createdBy() {
-        return this.fileInfo['CreatedBy'];
+        return this._fileInfo['CreatedBy'];
     }
 
     get modificationDate() {
-        const time = this.fileInfo['ModificationTime'];
-        const date = this.fileInfo['ModificationDate'];
+        const time = this._fileInfo['ModificationTime'];
+        const date = this._fileInfo['ModificationDate'];
         return this._parseDate(time, date);
     }
 
     get modifiedBy() {
-        return this.fileInfo['CreatedBy'];
+        return this._fileInfo['CreatedBy'];
     }
 
     get vendorName() {
-        return this.deviceInfo['VendorName'];
+        return this._deviceInfo['VendorName'];
     }
 
     get vendorNumber() {
-        return this.deviceInfo['VendorNumber'];
+        return this._deviceInfo['VendorNumber'];
     }
 
     get productName() {
-        return this.deviceInfo['ProductName'];
+        return this._deviceInfo['ProductName'];
     }
 
     get productNumber() {
-        return this.deviceInfo['ProductNumber'];
+        return this._deviceInfo['ProductNumber'];
     }
 
     get revisionNumber() {
-        return this.deviceInfo['RevisionNumber'];
+        return this._deviceInfo['RevisionNumber'];
     }
 
     get orderCode() {
-        return this.deviceInfo['OrderCode'];
+        return this._deviceInfo['OrderCode'];
     }
 
     get baudRates() {
         let rates = [];
 
-        if(this.deviceInfo['BaudRate_10'] == '1')
+        if(this._deviceInfo['BaudRate_10'] == '1')
             rates.push(10000);
-        if(this.deviceInfo['BaudRate_20'] == '1')
+        if(this._deviceInfo['BaudRate_20'] == '1')
             rates.push(20000);
-        if(this.deviceInfo['BaudRate_50'] == '1')
+        if(this._deviceInfo['BaudRate_50'] == '1')
             rates.push(50000);
-        if(this.deviceInfo['BaudRate_125'] == '1')
+        if(this._deviceInfo['BaudRate_125'] == '1')
             rates.push(125000);
-        if(this.deviceInfo['BaudRate_250'] == '1')
+        if(this._deviceInfo['BaudRate_250'] == '1')
             rates.push(250000);
-        if(this.deviceInfo['BaudRate_500'] == '1')
+        if(this._deviceInfo['BaudRate_500'] == '1')
             rates.push(500000);
-        if(this.deviceInfo['BaudRate_800'] == '1')
+        if(this._deviceInfo['BaudRate_800'] == '1')
             rates.push(800000);
-        if(this.deviceInfo['BaudRate_1000'] == '1')
+        if(this._deviceInfo['BaudRate_1000'] == '1')
             rates.push(1000000);
 
         return rates;
     }
 
     get simpleBootUpMaster() {
-        return this.deviceInfo['SimpleBootUpMaster'];
+        return this._deviceInfo['SimpleBootUpMaster'];
     }
 
     get simpleBootUpSlave() {
-        return this.deviceInfo['SimpleBootUpSlave'];
+        return this._deviceInfo['SimpleBootUpSlave'];
     }
 
     get granularity() {
-        return this.deviceInfo['Granularity'];
+        return this._deviceInfo['Granularity'];
     }
 
     get dynamicChannelsSupported() {
-        return this.deviceInfo['DynamicChannelsSupported'];
+        return this._deviceInfo['DynamicChannelsSupported'];
     }
 
     get nrOfRXPDO() {
-        return this.deviceInfo['NrOfRXPDO'];
+        return this._deviceInfo['NrOfRXPDO'];
     }
 
     get nrOfTXPDO() {
-        return this.deviceInfo['NrOfTXPDO'];
+        return this._deviceInfo['NrOfTXPDO'];
     }
 
     get LSS_Supported() {
-        return this.deviceInfo['LSS_Supported'];
+        return this._deviceInfo['LSS_Supported'];
     }
 
     set fileName(value) {
-        this.fileInfo['FileName'] = value;
+        this._fileInfo['FileName'] = value;
     }
 
     set fileVersion(value) {
-        this.fileInfo['FileVersion'] = value;
+        this._fileInfo['FileVersion'] = value;
     }
 
     set fileRevision(value) {
-        this.fileInfo['FileRevision'] = value;
+        this._fileInfo['FileRevision'] = value;
     }
 
     set EDSVersion(value) {
-        this.fileInfo['EDSVersion'] = value;
+        this._fileInfo['EDSVersion'] = value;
     }
 
     set description(value) {
-        this.fileInfo['Description'] = value;
+        this._fileInfo['Description'] = value;
     }
 
     set creationDate(value) {
@@ -792,12 +916,12 @@ class EDS {
         const year = value.getFullYear().toString();
         const date = month + '-' + day + '-' + year;
 
-        this.fileInfo['CreationTime'] = time;
-        this.fileInfo['CreationDate'] = date;
+        this._fileInfo['CreationTime'] = time;
+        this._fileInfo['CreationDate'] = date;
     }
 
     set createdBy(value) {
-        this.fileInfo['CreatedBy'] = value;
+        this._fileInfo['CreatedBy'] = value;
     }
 
     set modificationDate(value) {
@@ -810,75 +934,75 @@ class EDS {
         const year = value.getFullYear().toString();
         const date = month + '-' + day + '-' + year;
 
-        this.fileInfo['ModificationTime'] = time;
-        this.fileInfo['ModificationDate'] = date;
+        this._fileInfo['ModificationTime'] = time;
+        this._fileInfo['ModificationDate'] = date;
     }
 
     set modifiedBy(value) {
-        this.fileInfo['CreatedBy'] = value;
+        this._fileInfo['CreatedBy'] = value;
     }
 
     set vendorName(value) {
-        this.deviceInfo['VendorName'] = value;
+        this._deviceInfo['VendorName'] = value;
     }
 
     set vendorNumber(value) {
-        this.deviceInfo['VendorNumber'] = value;
+        this._deviceInfo['VendorNumber'] = value;
     }
 
     set productName(value) {
-        this.deviceInfo['ProductName'] = value;
+        this._deviceInfo['ProductName'] = value;
     }
 
     set productNumber(value) {
-        this.deviceInfo['ProductNumber'] = value;
+        this._deviceInfo['ProductNumber'] = value;
     }
 
     set revisionNumber(value) {
-        this.deviceInfo['RevisionNumber'] = value;
+        this._deviceInfo['RevisionNumber'] = value;
     }
 
     set orderCode(value) {
-        this.deviceInfo['OrderCode'] = value;
+        this._deviceInfo['OrderCode'] = value;
     }
 
     set baudRates(rates) {
-        this.deviceInfo['BaudRate_10'] = rates.includes(10000) ? '1' : '0';
-        this.deviceInfo['BaudRate_20'] = rates.includes(20000) ? '1' : '0';
-        this.deviceInfo['BaudRate_50'] = rates.includes(50000) ? '1' : '0';
-        this.deviceInfo['BaudRate_125'] = rates.includes(125000) ? '1' : '0';
-        this.deviceInfo['BaudRate_250'] = rates.includes(250000) ? '1' : '0';
-        this.deviceInfo['BaudRate_500'] = rates.includes(500000) ? '1' : '0';
-        this.deviceInfo['BaudRate_800'] = rates.includes(800000) ? '1' : '0';
-        this.deviceInfo['BaudRate_1000'] = rates.includes(1e6) ? '1' : '0';
+        this._deviceInfo['BaudRate_10'] = rates.includes(10000) ? '1' : '0';
+        this._deviceInfo['BaudRate_20'] = rates.includes(20000) ? '1' : '0';
+        this._deviceInfo['BaudRate_50'] = rates.includes(50000) ? '1' : '0';
+        this._deviceInfo['BaudRate_125'] = rates.includes(125000) ? '1' : '0';
+        this._deviceInfo['BaudRate_250'] = rates.includes(250000) ? '1' : '0';
+        this._deviceInfo['BaudRate_500'] = rates.includes(500000) ? '1' : '0';
+        this._deviceInfo['BaudRate_800'] = rates.includes(800000) ? '1' : '0';
+        this._deviceInfo['BaudRate_1000'] = rates.includes(1e6) ? '1' : '0';
     }
 
     set simpleBootUpMaster(value) {
-        this.deviceInfo['SimpleBootUpMaster'] = value;
+        this._deviceInfo['SimpleBootUpMaster'] = value;
     }
 
     set simpleBootUpSlave(value) {
-        this.deviceInfo['SimpleBootUpSlave'] = value;
+        this._deviceInfo['SimpleBootUpSlave'] = value;
     }
 
     set granularity(value) {
-        this.deviceInfo['Granularity'] = value;
+        this._deviceInfo['Granularity'] = value;
     }
 
     set dynamicChannelsSupported(value) {
-        this.deviceInfo['DynamicChannelsSupported'] = value;
+        this._deviceInfo['DynamicChannelsSupported'] = value;
     }
 
     set nrOfRXPDO(value) {
-        this.deviceInfo['NrOfRXPDO'] = value;
+        this._deviceInfo['NrOfRXPDO'] = value;
     }
 
     set nrOfTXPDO(value) {
-        this.deviceInfo['NrOfTXPDO'] = value;
+        this._deviceInfo['NrOfTXPDO'] = value;
     }
 
     set LSS_Supported(value) {
-        this.deviceInfo['LSS_Supported'] = value;
+        this._deviceInfo['LSS_Supported'] = value;
     }
 
     /** Parse EDS date and time.
@@ -943,7 +1067,9 @@ class EDS {
      */
     _write(fd, data) {
         const nullMatch = new RegExp('=null', 'g');
-        fs.writeSync(fd, data.replace(nullMatch, '=') + EOL);
+        data = data.replace(nullMatch, '=');
+        if(data.length > 0)
+            fs.writeSync(fd, data + EOL);
     }
 
     /** Helper method to write objects to an EDS file.
@@ -961,7 +1087,7 @@ class EDS {
 
             /* Separate enumerable properties (skip sub-indices) */
             let dataObject = {};
-            Object.assign(dataObject, this.dataObjects[index]);
+            Object.assign(dataObject, this._dataObjects[index]);
 
             /* Write top level object. */
             const section = index.toString(16);
@@ -969,10 +1095,10 @@ class EDS {
 
             /* Write sub-objects. */
             for(let i = 0; i < dataObject.SubNumber; i++) {
-                if(this.dataObjects[index][i]) {
+                if(this._dataObjects[index][i]) {
                     const sub = section + 'sub' + i;
                     this._write(fd, ini.encode(
-                        this.dataObjects[index][i], { section: sub }));
+                        this._dataObjects[index][i], { section: sub }));
                 }
             }
         }
@@ -983,6 +1109,7 @@ module.exports=exports={
     objectTypes:    objectTypes,
     accessTypes:    accessTypes,
     dataTypes:      dataTypes,
-    DataObject:     DataObject,
+    rawToType:      rawToType,
+    typeToRaw:      typeToRaw,
     EDS:            EDS,
 }

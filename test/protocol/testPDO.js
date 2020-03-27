@@ -10,82 +10,90 @@ describe('PDO', function() {
 
     beforeEach(function() {
         node = new Device({ id: 0xA, loopback: true });
-        node.EDS.dataObjects[0x1400] = new EDS.DataObject({
-            ParameterName:      'TPDO communication parameter',
+
+        /* RPDO communication parameter. */
+        node.EDS.addEntry(0x1400, {
+            ParameterName:      'RPDO communication parameter',
             ObjectType:         EDS.objectTypes.RECORD,
             SubNumber:          6,
         });
-        node.EDS.dataObjects[0x1400][1] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1400, 1, {
             ParameterName:      'COB-ID RPDO',
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1400][2] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1400, 2, {
             ParameterName:      'transmission type',
             DataType:           EDS.dataTypes.UNSIGNED8,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1400][3] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1400, 3, {
             ParameterName:      'inhibit time',
             DataType:           EDS.dataTypes.UNSIGNED16,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1400][5] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1400, 5, {
             ParameterName:      'event timer',
             DataType:           EDS.dataTypes.UNSIGNED16,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1400][6] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1400, 6, {
             ParameterName:      'SYNC start value',
             DataType:           EDS.dataTypes.UNSIGNED8,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1600] = new EDS.DataObject({
-            ParameterName:      'TPDO mapping parameter',
+
+        /* RPDO mapping parameter. */
+        node.EDS.addEntry(0x1600, {
+            ParameterName:      'RPDO mapping parameter',
             ObjectType:         EDS.objectTypes.RECORD,
             SubNumber:          1,
         });
-        node.EDS.dataObjects[0x1600][1] = new EDS.DataObject({
-            ParameterName:      'TPDO mapped object 1',
+        node.EDS.addSubEntry(0x1600, 1, {
+            ParameterName:      'RPDO mapped object 1',
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1800] = new EDS.DataObject({
+
+        /* TPDO communication parameter. */
+        node.EDS.addEntry(0x1800, {
             ParameterName:      'TPDO communication parameter',
             ObjectType:         EDS.objectTypes.RECORD,
             SubNumber:          6,
         });
-        node.EDS.dataObjects[0x1800][1] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1800, 1, {
             ParameterName:      'COB-ID TPDO',
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1800][2] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1800, 2, {
             ParameterName:      'transmission type',
             DataType:           EDS.dataTypes.UNSIGNED8,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1800][3] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1800, 3, {
             ParameterName:      'inhibit time',
             DataType:           EDS.dataTypes.UNSIGNED16,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1800][5] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1800, 5, {
             ParameterName:      'event timer',
             DataType:           EDS.dataTypes.UNSIGNED16,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1800][6] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1800, 6, {
             ParameterName:      'SYNC start value',
             DataType:           EDS.dataTypes.UNSIGNED8,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-        node.EDS.dataObjects[0x1A00] = new EDS.DataObject({
+
+        /* TPDO mapping parameter. */
+        node.EDS.addEntry(0x1A00, {
             ParameterName:      'TPDO mapping parameter',
             ObjectType:         EDS.objectTypes.RECORD,
             SubNumber:          1,
         });
-        node.EDS.dataObjects[0x1A00][1] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1A00, 1, {
             ParameterName:      'TPDO mapped object 1',
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,

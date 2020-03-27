@@ -55,7 +55,6 @@ class Device extends EventEmitter {
             throw RangeError("ID must be in range 1-127");
 
         this.id = id;
-        this.nameLookup = {};
 
         this._EDS = (eds) ? eds : new EDS();
         this._EMCY = new EMCY(this);
@@ -64,19 +63,6 @@ class Device extends EventEmitter {
         this._SDO = new SDO(this);
         this._SYNC = new SYNC(this);
         this._TIME = new TIME(this);
-
-        /* Create name lookup. */
-        for(const entry of Object.values(this.dataObjects)) {
-            if(!entry || !entry.parameterName)
-                continue;
-
-            try {
-                this.nameLookup[entry.parameterName].push(entry);
-            }
-            catch(TypeError) {
-                this.nameLookup[entry.parameterName] = [ entry ];
-            }
-        }
     }
 
     get dataObjects() {
@@ -125,14 +111,7 @@ class Device extends EventEmitter {
      * @param {number | string} index - index or name of the DataObject.
      */
     getEntry(index) {
-        let entry = this.EDS.dataObjects[index];
-        if(entry == undefined) {
-            entry = this.nameLookup[index];
-            if(entry && entry.length == 1)
-                entry = entry[0];
-        }
-
-        return entry;
+        return this.EDS.getEntry(index);
     }
 
     /** Get the value of a DataObject.

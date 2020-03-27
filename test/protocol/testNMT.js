@@ -10,20 +10,23 @@ describe('NMT', function() {
 
     beforeEach(function() {
         node = new Device({ id: 0xA, loopback: true });
-        node.EDS.dataObjects[0x1016] = new EDS.DataObject({
+        /* Consumer heartbeat time. */
+        node.EDS.addEntry(0x1016, {
             ParameterName:      'Consumer heartbeat time',
             ObjectType:         EDS.objectTypes.ARRAY,
             SubNumber:          1,
         });
-        node.EDS.dataObjects[0x1016][1] = new EDS.DataObject({
+        node.EDS.addSubEntry(0x1016, 1, {
             ParameterName:      'Consumer 1',
             ObjectType:         EDS.objectTypes.VAR,
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
             DefaultValue:       (node.id << 16) | 10,
         });
-        node.EDS.dataObjects[0x1017] = new EDS.DataObject({
-            ParameterName:      'Producer heartbeat timer',
+
+        /* Producer heartbeat time. */
+        node.EDS.addEntry(0x1017, {
+            ParameterName:      'Producer heartbeat time',
             ObjectType:         EDS.objectTypes.VAR,
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
@@ -43,7 +46,7 @@ describe('NMT', function() {
 
     describe('Heartbeat', function() {
         it('should require 0x1017', function() {
-            delete node.dataObjects[0x1017];
+            node.EDS.removeEntry(0x1017);
             expect(() => { node.NMT.start(); }).to.throw(ReferenceError);
         });
 
