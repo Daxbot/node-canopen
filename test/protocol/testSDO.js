@@ -1,7 +1,7 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const chaiBytes = require('chai-bytes');
-const {EDS, Device} = require('../../index.js');
+const {EDS, Device, SDOError} = require('../../index.js');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
@@ -137,5 +137,15 @@ describe('SDO', function() {
                     });
             });
         }
+    });
+
+    describe('Error handling', function() {
+        it('should abort if timeout is exceeded', function() {
+            // Set server to non-existant COB-ID
+            node.setValueArray(0x1280, 3, 0x1);
+            node.init();
+
+            return expect(node.SDO.upload(0x1, 0x1000, 1)).to.be.rejectedWith(SDOError);
+        });
     });
 });
