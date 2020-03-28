@@ -6,7 +6,6 @@ const fs = require('fs');
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-
 describe('EDS', function() {
     it('should be constructable', function() {
         new EDS.EDS();
@@ -45,9 +44,11 @@ describe('EDS', function() {
             saveFile.save(testFile);
 
             loadFile.load(testFile);
-            expect(loadFile.fileName).to.equal('Test file');
-            expect(loadFile.baudRates).to.include(500000);
-            expect(loadFile.creationDate.getTime()).to.equal(date.getTime());
+            return Promise.all([
+                expect(loadFile.fileName).to.equal('Test file'),
+                expect(loadFile.baudRates).to.include(500000),
+                expect(loadFile.creationDate.getTime()).to.equal(date.getTime()),
+            ])
         });
     });
 
@@ -63,7 +64,7 @@ describe('EDS', function() {
         });
 
         it('should require ParameterName', function() {
-            expect(() => {
+            return expect(() => {
                 eds.addEntry(0x2000, {
                     'ParameterName':    '',
                     'DataType':         EDS.dataTypes.UNSIGNED8,
@@ -73,7 +74,7 @@ describe('EDS', function() {
         });
 
         it('should not allow an unknown ObjectType', function() {
-            expect(() => {
+            return expect(() => {
                 eds.addEntry(0x2000, {
                     'ParameterName':    'DataObject',
                     'ObjectType':       -1,
@@ -84,16 +85,8 @@ describe('EDS', function() {
         });
 
         describe('ObjectType is DEFTYPE or VAR', function() {
-            it('should be constructable', function() {
-                eds.addEntry(0x2000, {
-                    'ParameterName':    'VAR',
-                    'ObjectType':       EDS.objectTypes.VAR,
-                    'DataType':         EDS.dataTypes.UNSIGNED8,
-                    'AccessType':       EDS.accessTypes.READ_WRITE,
-                });
-            });
             it('should require DataType', function() {
-                expect(() => {
+                return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'VAR',
                         'ObjectType':       EDS.objectTypes.VAR,
@@ -102,7 +95,7 @@ describe('EDS', function() {
                 }).to.throw(TypeError);
             });
             it('should require AccessType', function() {
-                expect(() => {
+                return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'VAR',
                         'ObjectType':       EDS.objectTypes.VAR,
@@ -111,7 +104,7 @@ describe('EDS', function() {
                 }).to.throw(TypeError);
             });
             it('should not allow SubNumber', function() {
-                expect(() => {
+                return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'VAR',
                         'ObjectType':       EDS.objectTypes.VAR,
@@ -122,7 +115,7 @@ describe('EDS', function() {
                 })
             });
             it('should not allow CompactSubObj', function() {
-                expect(() => {
+                return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'VAR',
                         'ObjectType':       EDS.objectTypes.VAR,
@@ -147,15 +140,8 @@ describe('EDS', function() {
 
         describe('ObjectType is DEFSTRUCT, ARRAY, or RECORD', function() {
             describe('CompactSubObj is false', function() {
-                it('should be constructable', function() {
-                    eds.addEntry(0x2000, {
-                        'ParameterName':    'ARRAY',
-                        'ObjectType':       EDS.objectTypes.ARRAY,
-                        'SubNumber':        1,
-                    });
-                });
                 it('should require SubNumber', function() {
-                    expect(() => {
+                    return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
                             'ObjectType':       EDS.objectTypes.ARRAY,
@@ -163,7 +149,7 @@ describe('EDS', function() {
                     }).to.throw(TypeError);
                 });
                 it('should not allow DataType', function() {
-                    expect(() => {
+                    return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
                             'ObjectType':       EDS.objectTypes.ARRAY,
@@ -173,7 +159,7 @@ describe('EDS', function() {
                     })
                 });
                 it('should not allow AccessType', function() {
-                    expect(() => {
+                    return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
                             'ObjectType':       EDS.objectTypes.ARRAY,
@@ -183,7 +169,7 @@ describe('EDS', function() {
                     })
                 });
                 it('should not allow DefaultValue', function() {
-                    expect(() => {
+                    return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
                             'ObjectType':       EDS.objectTypes.ARRAY,
@@ -193,7 +179,7 @@ describe('EDS', function() {
                     })
                 });
                 it('should not allow PDOMapping', function() {
-                    expect(() => {
+                    return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
                             'ObjectType':       EDS.objectTypes.ARRAY,
@@ -203,7 +189,7 @@ describe('EDS', function() {
                     })
                 });
                 it('should not allow LowLimit', function() {
-                    expect(() => {
+                    return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
                             'ObjectType':       EDS.objectTypes.ARRAY,
@@ -213,7 +199,7 @@ describe('EDS', function() {
                     })
                 });
                 it('should not allow HighLimit', function() {
-                    expect(() => {
+                    return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
                             'ObjectType':       EDS.objectTypes.ARRAY,
@@ -224,17 +210,8 @@ describe('EDS', function() {
                 });
             });
             describe('CompactSubObj is true', function() {
-                it('should be constructable', function() {
-                    eds.addEntry(0x2000, {
-                        'ParameterName':    'ARRAY',
-                        'ObjectType':       EDS.objectTypes.ARRAY,
-                        'DataType':         EDS.dataTypes.UNSIGNED8,
-                        'AccessType':       EDS.accessTypes.READ_WRITE,
-                        'CompactSubObj':    true,
-                    });
-                });
                 it('should require DataType', function() {
-                    expect(() => {
+                    return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
                             'ObjectType':       EDS.objectTypes.ARRAY,
@@ -244,7 +221,7 @@ describe('EDS', function() {
                     }).to.throw(TypeError);
                 });
                 it('should require AccessType', function() {
-                    expect(() => {
+                    return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
                             'ObjectType':       EDS.objectTypes.ARRAY,
@@ -254,7 +231,7 @@ describe('EDS', function() {
                     }).to.throw(TypeError);
                 });
                 it('should not allow SubNumber', function() {
-                    expect(() => {
+                    return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
                             'ObjectType':       EDS.objectTypes.ARRAY,
@@ -269,14 +246,8 @@ describe('EDS', function() {
         });
 
         describe('ObjectType is DOMAIN', function() {
-            it('should be constructable', function() {
-                eds.addEntry(0x2000, {
-                    'ParameterName':    'DOMAIN',
-                    'ObjectType':       EDS.objectTypes.DOMAIN,
-                });
-            });
             it('should not allow PDOMapping', function() {
-                expect(() => {
+                return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'ARRAY',
                         'ObjectType':       EDS.objectTypes.ARRAY,
@@ -285,7 +256,7 @@ describe('EDS', function() {
                 })
             });
             it('should not allow LowLimit', function() {
-                expect(() => {
+                return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'DOMAIN',
                         'ObjectType':       EDS.objectTypes.DOMAIN,
@@ -294,7 +265,7 @@ describe('EDS', function() {
                 })
             });
             it('should not allow HighLimit', function() {
-                expect(() => {
+                return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'DOMAIN',
                         'ObjectType':       EDS.objectTypes.DOMAIN,
@@ -303,7 +274,7 @@ describe('EDS', function() {
                 })
             });
             it('should not allow SubNumber', function() {
-                expect(() => {
+                return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'DOMAIN',
                         'ObjectType':       EDS.objectTypes.DOMAIN,
@@ -312,7 +283,7 @@ describe('EDS', function() {
                 })
             });
             it('should not allow CompactSubObj', function() {
-                expect(() => {
+                return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'DOMAIN',
                         'ObjectType':       EDS.objectTypes.DOMAIN,
@@ -329,13 +300,19 @@ describe('EDS', function() {
         beforeEach(function() {
             eds = new EDS.EDS();
             eds.addEntry(0x2000, {
-                'ParameterName':    'Test entry 1',
+                'ParameterName':    'Test entry',
                 'ObjectType':       EDS.objectTypes.VAR,
                 'DataType':         EDS.dataTypes.UNSIGNED8,
                 'AccessType':       EDS.accessTypes.READ_WRITE,
             });
             eds.addEntry(0x2001, {
-                'ParameterName':    'Test entry 2',
+                'ParameterName':    'Test entry',
+                'ObjectType':       EDS.objectTypes.VAR,
+                'DataType':         EDS.dataTypes.UNSIGNED8,
+                'AccessType':       EDS.accessTypes.READ_WRITE,
+            });
+            eds.addEntry(0x2002, {
+                'ParameterName':    'Test entry',
                 'ObjectType':       EDS.objectTypes.VAR,
                 'DataType':         EDS.dataTypes.UNSIGNED8,
                 'AccessType':       EDS.accessTypes.READ_WRITE,
@@ -348,12 +325,19 @@ describe('EDS', function() {
 
         it('should remove an entry', function() {
             eds.removeEntry(0x2000);
+            return expect(eds.getEntry(0x2000)).to.equal(undefined);
+        });
 
-            /* Index lookup. */
-            expect(eds.getEntry(0x2000)).to.equal(undefined);
+        it('should remove exactly one entry from the name lookup', function() {
+            expect(eds.getEntry('Test entry').length).to.equal(3);
+            eds.removeEntry(0x2000);
 
-            /* Name lookup. */
-            expect(eds.getEntry('Test entry 1')).to.equal(undefined);
+            const entries = eds.getEntry('Test entry');
+            return Promise.all([
+                expect(entries.length).to.equal(2),
+                expect(entries[0].index).to.equal(0x2001),
+                expect(entries[1].index).to.equal(0x2002),
+            ]);
         });
 
         it('should throw if an entry does not exist', function() {
