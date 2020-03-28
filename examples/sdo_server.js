@@ -2,11 +2,6 @@
  *
  * This example shows how to create a CANopen device that serves values from its
  * Object Dictionary using the SDO protocol.
- *
- * To launch a vcan interface run the following:
- *   sudo modprobe vcan
- *   sudo ip link add dev vcan0 type vcan
- *   sudo ip link set up vcan0
  */
 
 const {EDS, Device} = require('../index.js');
@@ -16,7 +11,7 @@ const can = require('socketcan');
 const channel = can.createRawChannel('vcan0');
 
 /** Step 2: Create a new Device. */
-node = new Device({ id: 0xA, channel: channel });
+node = new Device({ id: 0xD, channel: channel });
 
 /** Step 3: Configure the SDO server parameters. */
 node.EDS.addEntry(0x1200, {
