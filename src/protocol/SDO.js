@@ -832,4 +832,7 @@ class SDO {
     }
 }
 
-module.exports=exports=SDO;
+module.exports=exports={
+    SDOError:   SDOError,
+    SDO:        SDO,
+};
