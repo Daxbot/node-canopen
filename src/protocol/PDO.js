@@ -128,12 +128,12 @@ class PDO {
         if(!pdo)
             throw new DeviceError(`TPDO 0x${cobId.toString(16)} not mapped.`);
 
-        const data = Buffer.alloc(pdo.size);
+        const data = Buffer.alloc(pdo.dataSize);
         let dataOffset = 0;
         let dataUpdated = false;
 
         for(let i = 0; i < pdo.dataObjects.length; i++) {
-            let entry = this.device.getEntry(pdo.dataObjects[i].index);
+            let entry = this.device.EDS.getEntry(pdo.dataObjects[i].index);
             if(entry.subNumber > 0)
                 entry = entry[pdo.subIndex];
 
@@ -239,7 +239,7 @@ class PDO {
         };
 
         const mapIndex = index + 0x200;
-        const mapEntry = this.device.getEntry(mapIndex);
+        const mapEntry = this.device.EDS.getEntry(mapIndex);
         if(!mapEntry) {
             throw new DeviceError(
                 `Missing TPDO mapping parameter 0x${mapIndex.toString(16)}`);
@@ -279,7 +279,7 @@ class PDO {
                 lastValue:  undefined,
             };
 
-            pdo.size += dataLength / 8;
+            pdo.dataSize += dataLength / 8;
         }
 
         return pdo;

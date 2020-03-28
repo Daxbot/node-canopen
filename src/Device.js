@@ -107,27 +107,13 @@ class Device extends EventEmitter {
         this.TIME.init();
     }
 
-    /** Get a DataObject.
-     * @param {number | string} index - index or name of the DataObject.
-     */
-    getEntry(index) {
-        return this.EDS.getEntry(index);
-    }
-
     /** Get the value of a DataObject.
      * @param {number | string} index - index or name of the DataObject.
      */
     getValue(index) {
-        const entry = this.getEntry(index);
-
+        const entry = this.EDS.getEntry(index);
         if(!entry)
-            return undefined;
-
-        if(Array.isArray(entry))
-            throw TypeError(`Ambiguous name (${index}).`);
-
-        if(entry.SubNumber !== undefined)
-            throw ReferenceError(`${index} is an array. Try getValueArray().`);
+            throw ReferenceError("Entry does not exist");
 
         return entry.value;
     }
@@ -137,36 +123,20 @@ class Device extends EventEmitter {
      * @param {number} subIndex - sub-object index.
      */
     getValueArray(index, subIndex) {
-        const entry = this.getEntry(index);
-
+        const entry = this.EDS.getSubEntry(index, subIndex);
         if(!entry)
-            return undefined;
+            throw ReferenceError("Entry does not exist");
 
-        if(Array.isArray(entry))
-            throw TypeError(`Ambiguous name (${index}).`);
-
-        if(entry.SubNumber === undefined) {
-            throw ReferenceError(
-                `${index} does not have sub-objects. Try getValue().`);
-        }
-
-        return entry[subIndex].value;
+        return entry.value;
     }
 
     /** Get the raw value of a DataObject.
      * @param {number | string} index - index or name of the DataObject.
      */
     getRaw(index) {
-        const entry = this.getEntry(index);
-
+        const entry = this.EDS.getEntry(index);
         if(!entry)
-            return undefined;
-
-        if(Array.isArray(entry))
-            throw TypeError(`Ambiguous name (${index}).`);
-
-        if(entry.SubNumber !== undefined)
-            throw ReferenceError(`${index} is an array. Try getRawArray().`);
+            throw ReferenceError("Entry does not exist");
 
         return entry.raw;
     }
@@ -176,20 +146,11 @@ class Device extends EventEmitter {
      * @param {number} subIndex - sub-object index.
      */
     getRawArray(index, subIndex) {
-        const entry = this.getEntry(index);
-
+        const entry = this.EDS.getSubEntry(index, subIndex);
         if(!entry)
-            return undefined;
+            throw ReferenceError("Entry does not exist");
 
-        if(Array.isArray(entry))
-            throw TypeError(`Ambiguous name (${index}).`);
-
-        if(entry.SubNumber === undefined) {
-            throw ReferenceError(
-                `${index} does not have sub-objects. Try getRaw().`);
-        }
-
-        return entry[subIndex].raw;
+        return entry.raw;
     }
 
     /** Set the value of a DataObject.
@@ -197,16 +158,9 @@ class Device extends EventEmitter {
      * @param value - value to set.
      */
     setValue(index, value) {
-        const entry = this.getEntry(index);
-
+        const entry = this.EDS.getEntry(index);
         if(!entry)
-            throw ReferenceError(`Index not found (${index})`);
-
-        if(Array.isArray(entry))
-            throw ReferenceError(`Ambiguous index (${index})`);
-
-        if(entry.SubNumber !== undefined)
-            throw ReferenceError(`${index} is an array. Try setValueArray().`);
+            throw ReferenceError("Entry does not exist");
 
         entry.value = value;
     }
@@ -217,20 +171,11 @@ class Device extends EventEmitter {
      * @param value - value to set.
      */
     setValueArray(index, subIndex, value) {
-        const entry = this.getEntry(index);
-
+        const entry = this.EDS.getSubEntry(index, subIndex);
         if(!entry)
-            throw ReferenceError(`Index not found (${index})`);
+            throw ReferenceError("Entry does not exist");
 
-        if(Array.isArray(entry))
-            throw TypeError(`Ambiguous name (${index}).`);
-
-        if(entry.SubNumber === undefined) {
-            throw ReferenceError(
-                `${index} does not have sub-objects. Try setValue().`);
-        }
-
-        entry[subIndex].value = value;
+        entry.value = value;
     }
 
     /** Set the raw value of a DataObject.
@@ -238,16 +183,9 @@ class Device extends EventEmitter {
      * @param {Buffer} raw - raw Buffer to set.
      */
     setRaw(index, raw) {
-        const entry = this.getEntry(index);
-
+        const entry = this.EDS.getEntry(index);
         if(!entry)
-            throw ReferenceError(`Index not found (${index})`);
-
-        if(Array.isArray(entry))
-            throw TypeError(`Ambiguous name (${index}).`);
-
-        if(entry.SubNumber !== undefined)
-            throw ReferenceError(`${index} is an array. Try setRawArray().`);
+            throw ReferenceError("Entry does not exist");
 
         entry.raw = raw;
     }
@@ -258,20 +196,11 @@ class Device extends EventEmitter {
      * @param {Buffer} raw - raw Buffer to set.
      */
     setRawArray(index, subIndex, raw) {
-        const entry = this.getEntry(index);
-
+        const entry = this.EDS.getSubEntry(index, subIndex);
         if(!entry)
-            throw ReferenceError(`Index not found (${index})`);
+            throw ReferenceError("Entry does not exist");
 
-        if(Array.isArray(entry))
-            throw TypeError(`Ambiguous name (${index}).`);
-
-        if(entry.SubNumber === undefined) {
-            throw ReferenceError(
-                `${index} does not have sub-objects. Try setRaw().`);
-        }
-
-        entry[subIndex].raw = raw;
+        entry.raw = raw;
     }
 }
 

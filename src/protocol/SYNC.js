@@ -23,7 +23,7 @@ class SYNC {
          *   bit 29         Frame type.
          *   bit 30         Produce sync objects.
          */
-        const obj1005 = this.device.getEntry(0x1005);
+        const obj1005 = this.device.EDS.getEntry(0x1005);
         if(obj1005) {
             const cobId = obj1005.value;
             if(((cobId >> 29) & 0x1) == 0x1)
@@ -43,7 +43,7 @@ class SYNC {
     /** Begin producing synchronization objects. */
     start() {
         /* Object 0x1005 - COB-ID SYNC. */
-        const obj1005 = this.device.getEntry(0x1005);
+        const obj1005 = this.device.EDS.getEntry(0x1005);
         if(!obj1005)
             throw ReferenceError('0x1006 is required for SYNC protocol.');
 
@@ -51,7 +51,7 @@ class SYNC {
             throw TypeError('SYNC production is disabled by 0x1005.');
 
         /* Object 0x1006 - Communication cycle period. */
-        const obj1006 = this.device.getEntry(0x1006);
+        const obj1006 = this.device.EDS.getEntry(0x1006);
         if(!obj1006)
             throw ReferenceError('0x1006 is required for SYNC protocol.');
 
@@ -60,7 +60,7 @@ class SYNC {
             throw TypeError('SYNC production is disabled by 0x1006.')
 
         /* Object 0x1019 - Synchronous counter overflow value. */
-        const obj1019 = this.device.getEntry(0x1019);
+        const obj1019 = this.device.EDS.getEntry(0x1019);
         if(obj1019) {
             const overflow = obj1019.value;
             this.syncTimer = setInterval(() => {

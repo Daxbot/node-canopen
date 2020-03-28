@@ -562,7 +562,7 @@ class SDO {
         transfer.index = data.readUInt16LE(1);
         transfer.subIndex = data.readUInt8(3);
 
-        let entry = transfer.device.getEntry(transfer.index);
+        let entry = transfer.device.EDS.getEntry(transfer.index);
         if(!entry)
             return _serverAbort(transfer, 0x06020000);
 
@@ -619,7 +619,7 @@ class SDO {
         transfer.index = data.readUInt16LE(1);
         transfer.subIndex = data.readUInt8(3);
 
-        let entry = transfer.device.getEntry(transfer.index);
+        let entry = transfer.device.EDS.getEntry(transfer.index);
         if(!entry)
             return _serverAbort(transfer, 0x06020000);
 
@@ -721,7 +721,7 @@ class SDO {
         transfer.data = Buffer.concat([transfer.data, payload], size);
 
         if(data[0] & 1) {
-            let entry = transfer.device.getEntry(transfer.index);
+            let entry = transfer.device.EDS.getEntry(transfer.index);
             if(!entry)
                 return _serverAbort(transfer, 0x06020000);
 

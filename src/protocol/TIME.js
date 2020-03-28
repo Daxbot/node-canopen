@@ -25,7 +25,7 @@ class TIME {
          *   bit 30         Produce time objects.
          *   bit 31         Consume time objects.
          */
-        const obj1012 = this.device.getEntry(0x1012);
+        const obj1012 = this.device.EDS.getEntry(0x1012);
         if(obj1012) {
             const cobId = obj1012.value;
             if(((cobId >> 29) & 0x1) == 0x1)
@@ -45,7 +45,7 @@ class TIME {
      */
     write(date=new Date()) {
         /* Object 0x1012 - COB-ID TIME. */
-        const obj1012 = this.device.getEntry(0x1012);
+        const obj1012 = this.device.EDS.getEntry(0x1012);
         if(!obj1012)
             throw ReferenceError('0x1012 is required for TIME protocol.');
 

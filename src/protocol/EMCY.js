@@ -109,7 +109,7 @@ class EMCY {
     /** Begin emergency monitoring. */
     init() {
         /* Object 0x1001 - Error register. */
-        const obj1001 = this.device.getEntry(0x1001);
+        const obj1001 = this.device.EDS.getEntry(0x1001);
         if(!obj1001)
             throw ReferenceError("0x1001 is required for EMCY protocol.");
 
@@ -120,7 +120,7 @@ class EMCY {
          *   bit 30         Reserved (0x00).
          *   bit 31         EMCY valid.
          */
-        const obj1014 = this.device.getEntry(0x1014);
+        const obj1014 = this.device.EDS.getEntry(0x1014);
         if(obj1014) {
             const cobId = obj1014.value;
             if(((cobId >> 29) & 0x1) == 0x1)
@@ -145,14 +145,14 @@ class EMCY {
     */
     write(code, info=null) {
         /* Object 0x1001 - Error register. */
-        const obj1001 = this.device.getEntry(0x1001);
+        const obj1001 = this.device.EDS.getEntry(0x1001);
         if(!obj1001)
             throw ReferenceError("0x1001 is required for EMCY protocol.");
 
         const register = obj1001.value;
 
         /* Object 0x1014 - COB-ID EMCY. */
-        const obj1014 = this.device.getEntry(0x1014);
+        const obj1014 = this.device.EDS.getEntry(0x1014);
         if(!obj1014)
             throw ReferenceError('0x1014 is required for EMCY protocol.');
 
@@ -171,7 +171,7 @@ class EMCY {
             cobId |= this.device.id;
 
         /* Object 0x1015 - Inhibit time EMCY. */
-        const obj1015 = this.device.getEntry(0x1015);
+        const obj1015 = this.device.EDS.getEntry(0x1015);
         const inhibitTime = (obj1015) ? obj1015.value / 10 : 0;
 
         this.pending = this.pending.then(() => {
@@ -205,7 +205,7 @@ class EMCY {
             const em = new EmergencyMessage(code, reg, message.data.slice(5));
 
             /* Object 0x1001 - Error register. */
-            const obj1001 = this.device.getEntry(0x1001);
+            const obj1001 = this.device.EDS.getEntry(0x1001);
             obj1001.raw.writeUInt8(reg);
 
             /* Object 0x1003 - Pre-defined error field.
@@ -216,7 +216,7 @@ class EMCY {
              *     bit 0..15    Error code.
              *     bit 16..31   Manufacturer info.
              */
-            const obj1003 = this.device.getEntry(0x1003);
+            const obj1003 = this.device.EDS.getEntry(0x1003);
             if(obj1003) {
                 /* Shift out oldest value. */
                 for(let i = obj1003.subNumber; i > 1; --i)

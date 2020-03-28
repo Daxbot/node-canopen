@@ -53,7 +53,7 @@ class NMT {
          *     bit 16..23   Node-ID of producer.
          *     bit 24..31   Reserved (0x00);
          */
-        const obj1016 = this.device.getEntry(0x1016);
+        const obj1016 = this.device.EDS.getEntry(0x1016);
         if(obj1016) {
             for(let i = 1; i < obj1016.SubNumber + 1; ++i) {
                 const heartbeatTime = obj1016[i].raw.readUInt16LE(0);
@@ -73,7 +73,7 @@ class NMT {
     /** Begin heartbeat generation. */
     start() {
         /* Object 0x1017 - Producer heartbeat time. */
-        const obj1017 = this.device.getEntry(0x1017);
+        const obj1017 = this.device.EDS.getEntry(0x1017);
         if(!obj1017)
             throw ReferenceError('0x1017 is required for heartbeat generation.');
 

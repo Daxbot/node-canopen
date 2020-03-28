@@ -667,18 +667,19 @@ class EDS {
      * @param {number | string} index - index or name of the DataObject.
      */
     getEntry(index) {
+        let entry;
         if(typeof index == 'string') {
             // Name lookup
-            let entry = this._nameLookup[index];
+            entry = this._nameLookup[index];
             if(entry && entry.length == 1)
                 entry = entry[0];
-
-            return entry;
         }
         else {
             // Index lookup
-            return this._dataObjects[index];
+            entry = this._dataObjects[index];
         }
+
+        return entry;
     }
 
     /** Create a new DataObject.
