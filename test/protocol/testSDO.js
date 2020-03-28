@@ -12,6 +12,7 @@ describe('SDO', function() {
 
     beforeEach(function() {
         node = new Device({ id: 0xA, loopback: true });
+
         /* SDO server parameters. */
         node.EDS.addEntry(0x1200, {
             ParameterName:      'SDO server parameter',

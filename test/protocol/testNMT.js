@@ -47,7 +47,7 @@ describe('NMT', function() {
     describe('Heartbeat', function() {
         it('should require 0x1017', function() {
             node.EDS.removeEntry(0x1017);
-            expect(() => { node.NMT.start(); }).to.throw(ReferenceError);
+            return expect(() => { node.NMT.start(); }).to.throw(ReferenceError);
         });
 
         it('should produce a heartbeat object', function(done) {

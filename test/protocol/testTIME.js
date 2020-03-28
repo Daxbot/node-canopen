@@ -27,7 +27,7 @@ describe('TIME', function() {
 
     it('should require 0x1012', function() {
         node.EDS.removeEntry(0x1012);
-        expect(() => { node.TIME.write(); }).to.throw(ReferenceError);
+        return expect(() => { node.TIME.write(); }).to.throw(ReferenceError);
     });
 
     it('should produce a time object', function(done) {

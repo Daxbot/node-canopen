@@ -39,12 +39,12 @@ describe('EMCY', function() {
 
     it('should require 0x1001', function() {
         node.EDS.removeEntry(0x1001);
-        expect(() => { node.init(); }).to.throw(ReferenceError);
+        return expect(() => { node.init(); }).to.throw(ReferenceError);
     });
 
     it('should require 0x1014', function() {
         node.EDS.removeEntry(0x1014);
-        expect(() => { node.EMCY.write(0x1000); }).to.throw(ReferenceError);
+        return expect(() => { node.EMCY.write(0x1000); }).to.throw(ReferenceError);
     });
 
     it('should produce an emergency object', function(done) {
@@ -61,8 +61,8 @@ describe('EMCY', function() {
 
     it('should track error history', function() {
         node.init();
-        node.EMCY.write(0x1234).then(() => {
-            expect(node.EDS.getSubEntry(0x1003, 1).value).to.equal(0x1234);
+        return node.EMCY.write(0x1234).then(() => {
+            return expect(node.EDS.getSubEntry(0x1003, 1).value).to.equal(0x1234);
         });
     });
 });
