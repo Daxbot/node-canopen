@@ -38,7 +38,7 @@ node.EDS.addSubEntry(0x1280, 3, {
     DefaultValue:       0xD,
 });
 
-/** Step 4: Initialize the client. */
+/** Step 4: Initialize the node. */
 node.init();
 channel.start();
 

@@ -30,7 +30,7 @@ node.EDS.addEntry(0x1006, {
     DefaultValue:       1e6, // 1 second
 });
 
-/** Step 4: Initialize the client. */
+/** Step 4: Initialize the node. */
 node.init();
 channel.start();
 

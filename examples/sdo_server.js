@@ -44,7 +44,7 @@ node.EDS.addEntry(0x2000, {
 const obj2000 = node.getEntry(0x2000);
 obj2000.addListener('update', (data) => { console.log(data.value); });
 
-/** Step 6: Initialize the server. */
+/** Step 6: Initialize the node. */
 node.init();
 channel.start();
 

@@ -21,7 +21,7 @@ node.EDS.addEntry(0x1014, {
     DefaultValue:       0x80 + node.id,
 });
 
-/** Step 4: Initialize the client. */
+/** Step 4: Initialize the node. */
 node.init();
 channel.start();
 
