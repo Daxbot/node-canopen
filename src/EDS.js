@@ -204,18 +204,6 @@ function typeToRaw(value, dataType) {
     return raw;
 }
 
-/** EDS creation error.
- * @param {string} msg - error message.
- */
-class EDSError extends Error {
-    constructor(index, subIndex, msg) {
-        super();
-        this.index = index;
-        this.name = this.constructor.name;
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
-
 /** A Canopen Data Object.
  * @emits 'update' on value change.
  * @see CiA306 "Object descriptions" (§4.6.3)
@@ -1170,6 +1158,5 @@ module.exports=exports={
     dataTypes:      dataTypes,
     rawToType:      rawToType,
     typeToRaw:      typeToRaw,
-    EDSError:       EDSError,
     EDS:            EDS,
 }
