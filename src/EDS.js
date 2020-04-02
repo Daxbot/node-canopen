@@ -3,6 +3,7 @@ const ini = require('ini');
 const util = require('util');
 const { EOL } = require('os');
 const EventEmitter = require('events');
+const COError = require('./COError');
 
 /** CANopen object types.
  * @const {number}
@@ -208,7 +209,7 @@ function typeToRaw(value, dataType) {
  */
 class EDSError extends Error {
     constructor(index, subIndex, msg) {
-        super(`${msg} [0x${index.toString(16)}.${subIndex.toString()}]`);
+        super();
         this.index = index;
         this.name = this.constructor.name;
         Error.captureStackTrace(this, this.constructor);
@@ -240,28 +241,28 @@ class DataObject extends EventEmitter {
         } = args;
 
         if(ParameterName === undefined)
-            this._throw('ParameterName is mandatory for all objects');
+            throw TypeError('ParameterName is mandatory for all objects');
 
         switch(parseInt(ObjectType)) {
             case objectTypes.DEFTYPE:
             case objectTypes.VAR:
                 /* Mandatory args. */
                 if(DataType === undefined) {
-                    this._throw(
+                    throw TypeError(
                         `DataType is mandatory for type ${ObjectType}`);
                 }
                 if(AccessType === undefined) {
-                    this._throw(
+                    throw TypeError(
                         `AccessType is mandatory for type ${ObjectType}`);
                 }
 
                 /* Not supported args. */
                 if(SubNumber !== undefined) {
-                    this._throw(
+                    throw TypeError(
                         `SubNumber is not supported for type ${ObjectType}`);
                 }
                 if(CompactSubObj !== undefined) {
-                    this._throw(
+                    throw TypeError(
                         `CompactSubObj is not supported for type ${ObjectType}`);
                 }
 
@@ -285,17 +286,17 @@ class DataObject extends EventEmitter {
                 if(CompactSubObj) {
                     /* Mandatory args. */
                     if(DataType === undefined) {
-                        this._throw(
+                        throw TypeError(
                             `DataType is mandatory for compact type ${ObjectType}`);
                     }
                     if(AccessType === undefined) {
-                        this._throw(
+                        throw TypeError(
                             `AccessType is mandatory for compact type ${ObjectType}`);
                     }
 
                     /* Not supported args (Optionally may be zero). */
                     if(SubNumber) {
-                        this._throw(
+                        throw TypeError(
                             `SubNumber must be zero for compact type ${ObjectType}`);
                     }
 
@@ -315,33 +316,33 @@ class DataObject extends EventEmitter {
                 else {
                     /* Mandatory args. */
                     if(SubNumber === undefined) {
-                        this._throw(
+                        throw TypeError(
                             `SubNumber is mandatory for type ${ObjectType}`);
                     }
 
                     /* Not supported args. */
                     if(DataType !== undefined) {
-                        this._throw(
+                        throw TypeError(
                             `DataType is not supported for type ${ObjectType}`);
                     }
                     if(AccessType !== undefined) {
-                        this._throw(
+                        throw TypeError(
                             `AccessType is not supported for type ${ObjectType}`);
                     }
                     if(DefaultValue !== undefined) {
-                        this._throw(
+                        throw TypeError(
                             `DefaultValue is not supported for type ${ObjectType}`);
                     }
                     if(PDOMapping !== undefined) {
-                        this._throw(
+                        throw TypeError(
                             `PDOMapping is not supported for type ${ObjectType}`);
                     }
                     if(LowLimit !== undefined) {
-                        this._throw(
+                        throw TypeError(
                             `LowLimit is not supported for type ${ObjectType}`);
                     }
                     if(HighLimit !== undefined) {
-                        this._throw(
+                        throw TypeError(
                             `HighLimit is not supported for type ${ObjectType}`);
                     }
 
@@ -372,23 +373,23 @@ class DataObject extends EventEmitter {
             case objectTypes.DOMAIN:
                 /* Not supported args. */
                 if(PDOMapping !== undefined) {
-                    this._throw(
+                    throw TypeError(
                         `PDOMapping is not supported for type ${ObjectType}`);
                 }
                 if(LowLimit !== undefined) {
-                    this._throw(
+                    throw TypeError(
                         `LowLimit is not supported for type ${ObjectType}`);
                 }
                 if(HighLimit !== undefined) {
-                    this._throw(
+                    throw TypeError(
                         `HighLimit is not supported for type ${ObjectType}`);
                 }
                 if(SubNumber !== undefined) {
-                    this._throw(
+                    throw TypeError(
                         `SubNumber is not supported for type ${ObjectType}`);
                 }
                 if(CompactSubObj !== undefined) {
-                    this._throw(
+                    throw TypeError(
                         `CompactSubObj is not supported for type ${ObjectType}`);
                 }
 
@@ -404,8 +405,13 @@ class DataObject extends EventEmitter {
 
                 break;
             default:
-                this._throw(`ObjectType not supported (${ObjectType})`);
+                throw TypeError(`ObjectType not supported (${ObjectType})`);
         };
+
+        if(HighLimit !== undefined && LowLimit !== undefined) {
+            if(HighLimit < LowLimit)
+                throw new COError(0x06090036, index, subIndex);
+        }
 
         /* Create raw data buffer. */
         if(DefaultValue !== undefined) {
@@ -490,38 +496,45 @@ class DataObject extends EventEmitter {
     }
 
     get value() {
-        return rawToType(this._raw, this.dataType);
+        return rawToType(this.raw, this.dataType);
     }
 
     set raw(raw) {
-        if(!this.accessType.includes('w'))
-            this._throw(`Object is not writable (${this.accessType})`);
-
-        if(Buffer.compare(raw, this.raw) != 0) {
-            this._raw = raw;
-            this.emit("update", this);
-        }
+        this._update({ raw: raw });
     }
 
     set value(value) {
-        if(!this.accessType.includes('w'))
-            this._throw(`Object is not writable (${this.accessType})`);
+        this._update({ value: value });
+    }
 
-        if(value != this.value) {
-            this._raw = typeToRaw(value, this.dataType);
-            this.emit("update", this);
-        }
+    _update({ raw, value }) {
+        if(raw === undefined)
+            raw = typeToRaw(value, this.dataType);
+
+        if(Buffer.compare(raw, this.raw) == 0)
+            return;
+
+        if(!this.accessType.includes('w'))
+            throw new COError(0x06010002, this.index, this.subIndex);
+
+        if(value === undefined)
+            value = rawToType(raw, this.dataType);
+
+        if(this.highLimit !== undefined && value > this.highLimit)
+            throw new COError(0x06090031, this.index, this.subIndex);
+
+        if(this.lowLimit !== undefined && value < this.lowLimit)
+            throw new COError(0x06090032, this.index, this.subIndex);
+
+        this._raw = raw;
+        this.emit("update", this);
     }
 
     _setSubObject(subIndex, args) {
         if(subIndex > this.subNumber)
-            this._throw(`'subIndex' must be less than ${this.subNumber+1}`);
+            throw new COError(0x06090011, this.index, subIndex);
 
         this._subObjects[subIndex] = new DataObject(this.index, subIndex, args);
-    }
-
-    _throw(msg) {
-        throw new EDSError(this.index, this.subIndex, msg);
     }
 };
 
@@ -605,7 +618,14 @@ class EDS {
             .filter(([key, ]) => { return indexMatch.test(key); })
             .forEach(([key, value]) => {
                 const index = parseInt(key, 16);
-                this.addEntry(index, value);
+                try {
+                    this.addEntry(index, value);
+                }
+                catch(error) {
+                    const load_error = new COError(0x08000023, index);
+                    load_error.stack = error.stack;
+                    throw load_error;
+                }
             });
 
         entries
@@ -614,7 +634,14 @@ class EDS {
                 let [index, subIndex] = key.split('sub');
                 index = parseInt(index, 16);
                 subIndex = parseInt(subIndex, 16);
-                this.addSubEntry(index, subIndex, value);
+                try {
+                    this.addSubEntry(index, subIndex, value);
+                }
+                catch(error) {
+                    const load_error = COError(0x08000023, index, subIndex);
+                    load_error.stack = error.stack;
+                    throw load_error;
+                }
             });
     }
 
@@ -728,7 +755,7 @@ class EDS {
     removeEntry(index) {
         const entry = this._dataObjects[index];
         if(!entry)
-            throw ReferenceError("Index does not exist");
+            throw new COError(0x06020000, index);
 
         this._nameLookup[entry.parameterName].splice(
             this._nameLookup[entry.parameterName].indexOf(entry), 1);
@@ -746,11 +773,11 @@ class EDS {
     getSubEntry(index, subIndex) {
         const entry = this._dataObjects[index];
         if(!entry)
-            throw ReferenceError("Index does not exist");
+            throw new COError(0x06020000, index, subIndex);
         else if(entry.SubNumber === undefined)
-            throw ReferenceError("Index does not support sub-objects");
+            throw new COError(0x06010000, index, subIndex);
         else if(entry.SubNumber < subIndex)
-            throw RangeError("subIndex out of range");
+            throw new COError(0x06090011, index, subIndex);
 
         return entry[subIndex];
     }
@@ -762,11 +789,11 @@ class EDS {
     addSubEntry(index, subIndex, args) {
         const entry = this._dataObjects[index];
         if(!entry)
-            throw ReferenceError("Index does not exist");
+            throw new COError(0x06020000, index, subIndex);
         else if(entry.SubNumber === undefined)
-            throw ReferenceError("Index does not support sub-objects");
+            throw new COError(0x06010000, index, subIndex);
         else if(entry.SubNumber < subIndex)
-            throw RangeError("subIndex out of range");
+            throw new COError(0x06090011, index, subIndex);
 
         entry[subIndex] = new DataObject(index, subIndex, args);
     }
@@ -778,11 +805,11 @@ class EDS {
     removeSubEntry(index, subIndex) {
         const entry = this._dataObjects[index];
         if(!entry)
-            throw ReferenceError("Index does not exist");
+            throw new COError(0x06020000, index, subIndex);
         else if(entry.SubNumber === undefined)
-            throw ReferenceError("Index does not support sub-objects");
+            throw new COError(0x06010000, index, subIndex);
         else if(entry.SubNumber < subIndex)
-            throw RangeError("subIndex out of range");
+            throw new COError(0x06090011, index, subIndex);
 
         delete entry[subIndex];
     }
