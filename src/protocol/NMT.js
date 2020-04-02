@@ -33,6 +33,7 @@ const commands = {
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Network management" (§7.2.8)
+ * @memberof Device
  */
 class NMT {
     constructor(device) {
@@ -40,6 +41,18 @@ class NMT {
         this._state = states.INITIALIZING;
         this.heartbeatTimer = null;
         this.heartbeats = {};
+    }
+
+    get state() {
+        return this._state;
+    }
+
+    set state(newState) {
+        const oldState = this._state;
+        this._state = newState;
+
+        if(newState != oldState)
+            this.device.emit('nmtChangeState', newState, oldState);
     }
 
     /** Begin heartbeat monitoring. */
@@ -89,20 +102,6 @@ class NMT {
     /** Stop heartbeat generation. */
     stop() {
         clearInterval(this.heartbeatTimer);
-    }
-
-    /** Returns the device's NMT operational state. */
-    get state() {
-        return this._state;
-    }
-
-    /** Sets the device's NMT operational state. */
-    set state(newState) {
-        const oldState = this._state;
-        this._state = newState;
-
-        if(newState != oldState)
-            this.device.emit('nmtChangeState', newState, oldState);
     }
 
     /** Service: start remote node.

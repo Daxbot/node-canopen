@@ -9,6 +9,7 @@ const TIME_OF_DAY = EDS.dataTypes.TIME_OF_DAY;
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Time stamp object (TIME)" (§7.2.6)
+ * @memberof Device
  */
 class TIME {
     constructor(device) {

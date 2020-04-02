@@ -4,7 +4,6 @@ const COError = require('../COError');
  /** CANopen SDO 'Client Command Specifier' codes.
   * @private
   * @const {number}
-  * @memberof SDO
   * @see CiA301 'SDO protocols' (§7.2.4.3)
   */
  const CCS = {
@@ -18,7 +17,6 @@ const COError = require('../COError');
  /** CANopen SDO 'Server Command Specifier' codes.
   * @private
   * @const {number}
-  * @memberof SDO
   * @see CiA301 'SDO protocols' (§7.2.4.3)
   */
 const SCS = {
@@ -31,7 +29,6 @@ const SCS = {
 
 /** Represents a SDO transfer.
  * @private
- * @memberof SDO
  */
 class Transfer {
     constructor(args) {
@@ -126,6 +123,7 @@ class Transfer {
  *
  * @param {Device} device - parent device.
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
+ * @memberof Device
  */
 class SDO {
     constructor(device) {

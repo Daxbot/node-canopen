@@ -12,11 +12,11 @@ const {EDS} = require('./EDS');
  * This class represents a single addressable device (or node) on the bus and
  * provides methods for manipulating the object dictionary.
  *
- * @param {Object} $0
- * @param {RawChannel} $0.channel - socketcan RawChannel object.
- * @param {number} $0.id - device identifier.
- * @param {EDS} $0.eds - the device's electronic data sheet.
- * @param {boolean} $0.loopback - enable loopback mode.
+ * @param {Object} args
+ * @param {RawChannel} args.channel - socketcan RawChannel object.
+ * @param {number} args.id - device identifier.
+ * @param {EDS} args.eds - the device's electronic data sheet.
+ * @param {boolean} args.loopback - enable loopback mode.
  *
  * @emits 'emergency' on consuming an emergency object.
  * @emits 'nmtTimeout' on missing a tracked heartbeat.
@@ -97,7 +97,7 @@ class Device extends EventEmitter {
         return this._TIME;
     }
 
-    /* Initialize the device and audit the object dictionary. */
+    /** Initialize the device and audit the object dictionary. */
     init() {
         this.EMCY.init();
         this.NMT.init();

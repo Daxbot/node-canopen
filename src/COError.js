@@ -1,8 +1,9 @@
 /** CANopen abort codes.
-  * @const {string}
-  * @see CiA301 'Protocol SDO abort transfer' (§7.2.4.3.17)
-  */
- const abortCodes = {
+ * @private
+ * @const {string}
+ * @see CiA301 'Protocol SDO abort transfer' (§7.2.4.3.17)
+ */
+const abortCodes = {
     0x05030000: 'Toggle bit not altered',
     0x05040000: 'SDO protocol timed out',
     0x05040001: 'Command specifier not valid or unknown',

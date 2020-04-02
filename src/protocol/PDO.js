@@ -9,6 +9,7 @@ const {DeviceError} = require('../Device');
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Process data objects (PDO)" (§7.2.2)
+ * @memberof Device
  */
 class PDO {
     constructor(device) {

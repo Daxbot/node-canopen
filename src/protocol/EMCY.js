@@ -49,6 +49,7 @@ const errorCodes = {
 };
 
 /** Structure for storing and parsing CANopen emergency objects.
+ * @private
  * @param {number} code - error code.
  * @param {number} register - error register.
  * @param {Buffer} info - error info.
@@ -98,6 +99,7 @@ class EmergencyMessage {
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Emergency object" (§7.2.7)
+ * @memberof Device
  */
 class EMCY {
     constructor(device) {

@@ -7,8 +7,8 @@ const COError = require('./COError');
 
 /** CANopen object types.
  * @const {number}
- * @memberof EDS
  * @see CiA301 "Object code usage" (§7.4.3)
+ * @memberof EDS
  */
 const objectTypes = {
     NULL: 0,
@@ -22,8 +22,8 @@ const objectTypes = {
 
 /** CANopen access types.
  * @const {string}
- * @memberof EDS
  * @see CiA301 "Access usage" (§7.4.5)
+ * @memberof EDS
  */
 const accessTypes = {
     READ_WRITE: 'rw',
@@ -34,8 +34,8 @@ const accessTypes = {
 
 /** CANopen data types.
  * @const {number}
- * @memberof EDS
  * @see CiA301 "Data type entry usage" (§7.4.7)
+ * @memberof EDS
  */
 const dataTypes = {
     BOOLEAN: 1,
@@ -73,6 +73,7 @@ const dataTypes = {
  * @param {Buffer} raw - data to convert.
  * @param {dataTypes} dataType - type of the data.
  * @return {number | string}
+ * @memberof EDS
  */
 function rawToType(raw, dataType) {
     switch(dataType) {
@@ -112,6 +113,7 @@ function rawToType(raw, dataType) {
  * @param {number | string | Date} value - data to convert.
  * @param {number} dataType - type of the data.
  * @return {Buffer}
+ * @memberof EDS
  */
 function typeToRaw(value, dataType) {
     if(value === null)
@@ -205,7 +207,24 @@ function typeToRaw(value, dataType) {
 }
 
 /** A Canopen Data Object.
+ *
+ * @param {number} index - index of the data object.
+ * @param {number | null} subIndex - subIndex of the data object.
+ * @param {Object} args
+ * @param {string} args.ParameterName - name of the data object.
+ * @param {objectTypes} args.ObjectType - object type.
+ * @param {dataTypes} args.DataType - data type.
+ * @param {accessTypes} args.AccessType - access restrictions.
+ * @param {number} args.LowLimit - minimum value.
+ * @param {number} args.HighLimit - maximum value.
+ * @param {number} args.SubNumber - number of sub-objects.
+ * @param {boolean} args.PDOMapping - enable PDO mapping.
+ * @param {boolean} args.CompactSubObj - use the compact sub-object format.
+ * @param {number | string | Date} args.DefaultValue - default value.
+ *
  * @emits 'update' on value change.
+ *
+ * @protected
  * @see CiA306 "Object descriptions" (§4.6.3)
  */
 class DataObject extends EventEmitter {
@@ -695,8 +714,9 @@ class EDS {
         fs.closeSync(fd);
     }
 
-    /** Get a DataObject.
-     * @param {number | string} index - index or name of the DataObject.
+    /** Get a data object.
+     * @param {number | string} index - index or name of the data object.
+     * @return {DataObject | Array} - entry (or entries) matching index.
      */
     getEntry(index) {
         let entry;
@@ -714,17 +734,19 @@ class EDS {
         return entry;
     }
 
-    /** Create a new DataObject.
-     * @param {number} index - index of the DataObject.
+    /** Create a new data object.
+     * @param {number} index - index of the data object.
+     * @param {DataObject} args - args passed to the DataObject constructor.
+     * @return {DataObject} - the newly created entry.
      */
     addEntry(index, args) {
         let entry = this._dataObjects[index];
         if(entry !== undefined) {
             throw TypeError(
-                `A DataObject already exists at 0x${index.toString(16)}`);
+                `An entry already exists at 0x${index.toString(16)}`);
         }
 
-        entry = new DataObject(index, 0, args);
+        entry = new DataObject(index, null, args);
         this._dataObjects[index] = entry;
 
         try {
@@ -737,8 +759,8 @@ class EDS {
         return entry;
     }
 
-    /** Remove a DataObject.
-     * @param {number} index - index of the DataObject.
+    /** Remove a data object.
+     * @param {number} index - index of the data object.
      */
     removeEntry(index) {
         const entry = this._dataObjects[index];
@@ -754,9 +776,10 @@ class EDS {
         delete this._dataObjects[entry.index];
     }
 
-    /** Get a DataObject.
-     * @param {number | string} index - index or name of the DataObject.
-     * @param {number} subIndex - subIndex of the DataObject.
+    /** Get a data object.
+     * @param {number | string} index - index or name of the data object.
+     * @param {number} subIndex - subIndex of the data object.
+     * @return {DataObject} - the sub-entry at index.
      */
     getSubEntry(index, subIndex) {
         const entry = this._dataObjects[index];
@@ -770,9 +793,11 @@ class EDS {
         return entry[subIndex];
     }
 
-    /** Create a new DataObject.
-     * @param {number} index - index of the DataObject.
-     * @param {number} subIndex - subIndex of the DataObject.
+    /** Create a new data object.
+     * @param {number} index - index of the data object.
+     * @param {number} subIndex - subIndex of the data object.
+     * @param {DataObject} args - args passed to the DataObject constructor.
+     * @return {DataObject} - the newly created sub-entry.
      */
     addSubEntry(index, subIndex, args) {
         const entry = this._dataObjects[index];
@@ -783,12 +808,15 @@ class EDS {
         else if(entry.SubNumber < subIndex)
             throw new COError(0x06090011, index, subIndex);
 
-        entry[subIndex] = new DataObject(index, subIndex, args);
+        const subEntry = new DataObject(index, subIndex, args);
+        entry[subIndex] = subEntry;
+
+        return subEntry;
     }
 
-    /** Remove a DataObject.
-     * @param {number} index - index of the DataObject.
-     * @param {number} subIndex - subIndex of the DataObject.
+    /** Remove a data object.
+     * @param {number} index - index of the data object.
+     * @param {number} subIndex - subIndex of the data object.
      */
     removeSubEntry(index, subIndex) {
         const entry = this._dataObjects[index];
