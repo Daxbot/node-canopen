@@ -23,7 +23,7 @@ node.EDS.addEntry(0x1012, {
 
 /** Step 4: Initialize the node. */
 node.init();
-channel.start();
+node.start();
 
 /** Step 5: Begin producing TIME objects. */
 setInterval(() => { node.TIME.write(); }, 1000);

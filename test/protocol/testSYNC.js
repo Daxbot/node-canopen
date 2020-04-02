@@ -36,12 +36,12 @@ describe('SYNC', function() {
 
     it('should require 0x1005', function() {
         node.EDS.removeEntry(0x1005);
-        return expect(() => { node.SYNC.start(); }).to.throw(ReferenceError);
+        return expect(() => { node.start(); }).to.throw(ReferenceError);
     });
 
     it('should require 0x1006', function() {
         node.EDS.removeEntry(0x1006);
-        return expect(() => { node.SYNC.start(); }).to.throw(ReferenceError);
+        return expect(() => { node.start(); }).to.throw(ReferenceError);
     });
 
     it('should produce a sync object', function(done) {

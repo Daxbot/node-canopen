@@ -23,7 +23,7 @@ node.EDS.addEntry(0x1014, {
 
 /** Step 4: Initialize the node. */
 node.init();
-channel.start();
+node.start();
 
 /** Step 5: Produce an EMCY object. */
 node.EMCY.write(0x1000);

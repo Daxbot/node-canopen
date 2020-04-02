@@ -32,9 +32,6 @@ node.EDS.addEntry(0x1006, {
 
 /** Step 4: Initialize the node. */
 node.init();
-channel.start();
-
-/** Step 5: Begin producing SYNC objects. */
-node.SYNC.start();
+node.start();
 
 console.log("Press Ctrl-C to quit");

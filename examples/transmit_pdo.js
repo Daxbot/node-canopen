@@ -71,7 +71,7 @@ node.setValueArray(0x1A00, 0, 1);
 
 /** Step 6: Initialize the node. */
 node.init();
-channel.start();
+node.start();
 
 /** Step 7: Trigger the TPDO. */
 node.PDO.write(0x180 + node.id);

@@ -107,6 +107,16 @@ class Device extends EventEmitter {
         this.TIME.init();
     }
 
+    /** Starts the channel and any configured services. */
+    start() {
+        try { this.NMT.start(); } finally {};
+        try { this.PDO.start(); } finally {};
+        try { this.SYNC.start(); } finally {};
+
+        this.channel.start();
+        this.NMT.startNode(this.id);
+    }
+
     /** Get the value of a DataObject.
      * @param {number | string} index - index or name of the DataObject.
      */

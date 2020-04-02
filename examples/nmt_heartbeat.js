@@ -23,12 +23,9 @@ node.EDS.addEntry(0x1017, {
 
 /** Step 4: Initialize the node. */
 node.init();
-channel.start();
+node.start();
 
-/** Step 5: Begin heartbeat generation. */
-node.NMT.start();
-
-/** Step 6: Start and stop the node using NMT commands. */
+/** Step 5: Start and stop the node using NMT commands. */
 setTimeout(() => {
     node.NMT.startNode(node.id);
     setTimeout(() => {

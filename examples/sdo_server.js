@@ -46,6 +46,6 @@ obj2000.addListener('update', (data) => { console.log(data.value); });
 
 /** Step 6: Initialize the node. */
 node.init();
-channel.start();
+node.start();
 
 console.log("Press Ctrl-C to quit");

@@ -40,7 +40,7 @@ node.EDS.addSubEntry(0x1280, 3, {
 
 /** Step 4: Initialize the node. */
 node.init();
-channel.start();
+node.start();
 
 /** Step 5: Write data to the server then read it back. */
 const date = new Date();
