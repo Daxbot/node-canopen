@@ -207,8 +207,8 @@ function typeToRaw(value, dataType) {
  * @param {string} msg - error message.
  */
 class EDSError extends Error {
-    constructor(index, msg) {
-        super(`${msg} [0x${index.toString(16)}]`);
+    constructor(index, subIndex, msg) {
+        super(`${msg} [0x${index.toString(16)}.${subIndex.toString()}]`);
         this.index = index;
         this.name = this.constructor.name;
         Error.captureStackTrace(this, this.constructor);
@@ -220,10 +220,11 @@ class EDSError extends Error {
  * @see CiA306 "Object descriptions" (§4.6.3)
  */
 class DataObject extends EventEmitter {
-    constructor(index, args) {
+    constructor(index, subIndex, args) {
         super();
 
         this._index = index;
+        this._subIndex = subIndex;
         let {
             ObjectType = objectTypes.VAR,
             ObjFlags = 0,
@@ -238,10 +239,8 @@ class DataObject extends EventEmitter {
             CompactSubObj,
         } = args;
 
-        if(!ParameterName) {
-            const hex = '0x' + index.toString(16);
+        if(!ParameterName)
             this._throw('ParameterName is mandatory for all objects');
-        }
 
         switch(parseInt(ObjectType)) {
             case objectTypes.DEFTYPE:
@@ -353,7 +352,7 @@ class DataObject extends EventEmitter {
                     });
 
                     /* Store max sub index at index 0. */
-                    this._subObjects[0] = new DataObject(0, {
+                    this._subObjects[0] = new DataObject(index, 0, {
                         ParameterName:      'Max sub-index',
                         ObjectType:         objectTypes.VAR,
                         DataType:           dataTypes.UNSIGNED8,
@@ -427,6 +426,10 @@ class DataObject extends EventEmitter {
 
     get index() {
         return this._index;
+    }
+
+    get subIndex() {
+        return this._subIndex;
     }
 
     get parameterName() {
@@ -514,11 +517,11 @@ class DataObject extends EventEmitter {
         if(subIndex > this.subNumber)
             this._throw(`'subIndex' must be less than ${this.subNumber+1}`);
 
-        this._subObjects[subIndex] = new DataObject(subIndex, args);
+        this._subObjects[subIndex] = new DataObject(this.index, subIndex, args);
     }
 
     _throw(msg) {
-        throw new EDSError(this.index, msg);
+        throw new EDSError(this.index, this.subIndex, msg);
     }
 };
 
@@ -706,7 +709,7 @@ class EDS {
                 `A DataObject already exists at 0x${index.toString(16)}`);
         }
 
-        entry = new DataObject(index, args);
+        entry = new DataObject(index, 0, args);
         this._dataObjects[index] = entry;
 
         try {
@@ -765,7 +768,7 @@ class EDS {
         else if(entry.SubNumber < subIndex)
             throw RangeError("subIndex out of range");
 
-        entry[subIndex] = new DataObject(subIndex, args);
+        entry[subIndex] = new DataObject(index, subIndex, args);
     }
 
     /** Remove a DataObject.
