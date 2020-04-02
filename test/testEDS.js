@@ -70,7 +70,7 @@ describe('EDS', function() {
                     'DataType':         EDS.dataTypes.UNSIGNED8,
                     'AccessType':       EDS.accessTypes.READ_WRITE,
                 });
-            }).to.throw(TypeError);
+            }).to.throw(EDS.EDSError);
         });
 
         it('should not allow an unknown ObjectType', function() {
@@ -81,7 +81,7 @@ describe('EDS', function() {
                     'DataType':         EDS.dataTypes.UNSIGNED8,
                     'AccessType':       EDS.accessTypes.READ_WRITE,
                 });
-            }).to.throw(TypeError);
+            }).to.throw(EDS.EDSError);
         });
 
         describe('ObjectType is DEFTYPE or VAR', function() {
@@ -92,7 +92,7 @@ describe('EDS', function() {
                         'ObjectType':       EDS.objectTypes.VAR,
                         'AccessType':       EDS.accessTypes.READ_WRITE,
                     });
-                }).to.throw(TypeError);
+                }).to.throw(EDS.EDSError);
             });
             it('should require AccessType', function() {
                 return expect(() => {
@@ -101,7 +101,7 @@ describe('EDS', function() {
                         'ObjectType':       EDS.objectTypes.VAR,
                         'DataType':         EDS.dataTypes.UNSIGNED8,
                     });
-                }).to.throw(TypeError);
+                }).to.throw(EDS.EDSError);
             });
             it('should not allow SubNumber', function() {
                 return expect(() => {
@@ -111,7 +111,7 @@ describe('EDS', function() {
                         'DataType':         EDS.dataTypes.UNSIGNED8,
                         'AccessType':       EDS.accessTypes.READ_WRITE,
                         'SubNumber':        1,
-                    }).to.throw(TypeError);
+                    }).to.throw(EDS.EDSError);
                 })
             });
             it('should not allow CompactSubObj', function() {
@@ -122,7 +122,7 @@ describe('EDS', function() {
                         'DataType':         EDS.dataTypes.UNSIGNED8,
                         'AccessType':       EDS.accessTypes.READ_WRITE,
                         'CompactSubObj':    true, // Not allowed
-                    }).to.throw(TypeError);
+                    }).to.throw(EDS.EDSError);
                 })
             });
             it('should emit on value update', function(done) {
@@ -146,7 +146,7 @@ describe('EDS', function() {
                             'ParameterName':    'ARRAY',
                             'ObjectType':       EDS.objectTypes.ARRAY,
                         });
-                    }).to.throw(TypeError);
+                    }).to.throw(EDS.EDSError);
                 });
                 it('should not allow DataType', function() {
                     return expect(() => {
@@ -155,7 +155,7 @@ describe('EDS', function() {
                             'ObjectType':       EDS.objectTypes.ARRAY,
                             'DataType':         EDS.dataTypes.UNSIGNED8,
                             'SubNumber':        1,
-                        }).to.throw(TypeError);
+                        }).to.throw(EDS.EDSError);
                     })
                 });
                 it('should not allow AccessType', function() {
@@ -165,7 +165,7 @@ describe('EDS', function() {
                             'ObjectType':       EDS.objectTypes.ARRAY,
                             'AccessType':       EDS.accessTypes.READ_WRITE,
                             'SubNumber':        1,
-                        }).to.throw(TypeError);
+                        }).to.throw(EDS.EDSError);
                     })
                 });
                 it('should not allow DefaultValue', function() {
@@ -175,7 +175,7 @@ describe('EDS', function() {
                             'ObjectType':       EDS.objectTypes.ARRAY,
                             'DefaultValue':     0,
                             'SubNumber':        1,
-                        }).to.throw(TypeError);
+                        }).to.throw(EDS.EDSError);
                     })
                 });
                 it('should not allow PDOMapping', function() {
@@ -185,7 +185,7 @@ describe('EDS', function() {
                             'ObjectType':       EDS.objectTypes.ARRAY,
                             'PDOMapping':       false,
                             'SubNumber':        1,
-                        }).to.throw(TypeError);
+                        }).to.throw(EDS.EDSError);
                     })
                 });
                 it('should not allow LowLimit', function() {
@@ -195,7 +195,7 @@ describe('EDS', function() {
                             'ObjectType':       EDS.objectTypes.ARRAY,
                             'LowLimit':         null,
                             'SubNumber':        1,
-                        }).to.throw(TypeError);
+                        }).to.throw(EDS.EDSError);
                     })
                 });
                 it('should not allow HighLimit', function() {
@@ -205,7 +205,7 @@ describe('EDS', function() {
                             'ObjectType':       EDS.objectTypes.ARRAY,
                             'HighLimit':        null,
                             'SubNumber':        1,
-                        }).to.throw(TypeError);
+                        }).to.throw(EDS.EDSError);
                     })
                 });
             });
@@ -218,7 +218,7 @@ describe('EDS', function() {
                             'AccessType':       EDS.accessTypes.READ_WRITE,
                             'CompactSubObj':    true,
                         });
-                    }).to.throw(TypeError);
+                    }).to.throw(EDS.EDSError);
                 });
                 it('should require AccessType', function() {
                     return expect(() => {
@@ -228,7 +228,7 @@ describe('EDS', function() {
                             'DataType':         EDS.dataTypes.UNSIGNED8,
                             'CompactSubObj':    true,
                         });
-                    }).to.throw(TypeError);
+                    }).to.throw(EDS.EDSError);
                 });
                 it('should not allow SubNumber', function() {
                     return expect(() => {
@@ -239,7 +239,7 @@ describe('EDS', function() {
                             'AccessType':       EDS.accessTypes.READ_WRITE,
                             'SubNumber':        1,
                             'CompactSubObj':    true,
-                        }).to.throw(TypeError);
+                        }).to.throw(EDS.EDSError);
                     });
                 });
             });
@@ -252,7 +252,7 @@ describe('EDS', function() {
                         'ParameterName':    'ARRAY',
                         'ObjectType':       EDS.objectTypes.ARRAY,
                         'PDOMapping':       false,
-                    }).to.throw(TypeError);
+                    }).to.throw(EDS.EDSError);
                 })
             });
             it('should not allow LowLimit', function() {
@@ -261,7 +261,7 @@ describe('EDS', function() {
                         'ParameterName':    'DOMAIN',
                         'ObjectType':       EDS.objectTypes.DOMAIN,
                         'LowLimit':         null,
-                    }).to.throw(TypeError);
+                    }).to.throw(EDS.EDSError);
                 })
             });
             it('should not allow HighLimit', function() {
@@ -270,7 +270,7 @@ describe('EDS', function() {
                         'ParameterName':    'DOMAIN',
                         'ObjectType':       EDS.objectTypes.DOMAIN,
                         'HighLimit':        null,
-                    }).to.throw(TypeError);
+                    }).to.throw(EDS.EDSError);
                 })
             });
             it('should not allow SubNumber', function() {
@@ -279,7 +279,7 @@ describe('EDS', function() {
                         'ParameterName':    'DOMAIN',
                         'ObjectType':       EDS.objectTypes.DOMAIN,
                         'SubNumber':        1,
-                    }).to.throw(TypeError);
+                    }).to.throw(EDS.EDSError);
                 })
             });
             it('should not allow CompactSubObj', function() {
@@ -288,7 +288,7 @@ describe('EDS', function() {
                         'ParameterName':    'DOMAIN',
                         'ObjectType':       EDS.objectTypes.DOMAIN,
                         'CompactSubObj':    false,
-                    }).to.throw(TypeError);
+                    }).to.throw(EDS.EDSError);
                 })
             });
         });
