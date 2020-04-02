@@ -67,6 +67,7 @@ node.EDS.addEntry(0x2000, {
 /** Step 5: Map entry 0x2000 to TPDO (0x180 + node.id). */
 node.setValueArray(0x1800, 1, 0x180);
 node.setValueArray(0x1A00, 1, (0x2000 << 16) | 32);
+node.setValueArray(0x1A00, 0, 1);
 
 /** Step 6: Initialize the node. */
 node.init();

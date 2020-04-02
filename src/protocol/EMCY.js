@@ -219,15 +219,15 @@ class EMCY {
             const obj1003 = this.device.EDS.getEntry(0x1003);
             if(obj1003) {
                 /* Shift out oldest value. */
-                for(let i = obj1003.subNumber; i > 1; --i)
+                const errorCount = obj1003[0].value;
+                for(let i = errorCount; i > 1; --i)
                     obj1003[i-1].raw.copy(obj1003[i].raw);
 
                 /* Set new code at sub-index 1. */
                 obj1003[1].raw.writeUInt16LE(code);
 
                 /* Update error count. */
-                const errorCount = obj1003[0].value;
-                if(errorCount < obj1003.subNumber)
+                if(errorCount < (obj1003.subNumber - 1))
                     obj1003.raw.writeUInt8(errorCount + 1);
             }
 

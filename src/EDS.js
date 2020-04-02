@@ -338,13 +338,13 @@ class DataObject extends EventEmitter {
                         enumerable: false
                     });
 
-                    /* Store array size at index 0. */
+                    /* Store max sub index at index 0. */
                     this._subObjects[0] = new DataObject(0, {
                         ParameterName:      'Max sub-index',
                         ObjectType:         objectTypes.VAR,
                         DataType:           dataTypes.UNSIGNED8,
-                        AccessType:         accessTypes.READ_ONLY,
-                        DefaultValue:       SubNumber,
+                        AccessType:         accessTypes.READ_WRITE,
+                        DefaultValue:       SubNumber-1,
                     });
 
                     /* Allow access to sub-objects using bracket notation */

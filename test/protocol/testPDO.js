@@ -108,6 +108,7 @@ describe('PDO', function() {
         /* Map 0x05 to TPDO 0x18A. */
         node.setValueArray(0x1800, 1, 0x180);
         node.setValueArray(0x1A00, 1, (0x05 << 16) | 8);
+        node.setValueArray(0x1A00, 0, 1);
 
         node.init();
         node.channel.addListener('onMessage', () => { done(); });
@@ -118,10 +119,12 @@ describe('PDO', function() {
         /* Map 0x05 to TPDO 0x20A. */
         node.setValueArray(0x1800, 1, 0x200);
         node.setValueArray(0x1A00, 1, (0x05 << 16) | 8);
+        node.setValueArray(0x1A00, 0, 1);
 
         /* Map 0x05 to RPDO 0x20A. */
         node.setValueArray(0x1400, 1, 0x200);
         node.setValueArray(0x1600, 1, (0x05 << 16) | 8);
+        node.setValueArray(0x1600, 0, 1);
 
         /* Change the value of 0x05. */
         node.setValue(0x05, 1);
