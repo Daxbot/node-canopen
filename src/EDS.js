@@ -239,7 +239,7 @@ class DataObject extends EventEmitter {
             CompactSubObj,
         } = args;
 
-        if(!ParameterName)
+        if(ParameterName === undefined)
             this._throw('ParameterName is mandatory for all objects');
 
         switch(parseInt(ObjectType)) {

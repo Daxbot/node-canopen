@@ -66,7 +66,6 @@ describe('EDS', function() {
         it('should require ParameterName', function() {
             return expect(() => {
                 eds.addEntry(0x2000, {
-                    'ParameterName':    '',
                     'DataType':         EDS.dataTypes.UNSIGNED8,
                     'AccessType':       EDS.accessTypes.READ_WRITE,
                 });
