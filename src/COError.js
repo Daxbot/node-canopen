@@ -42,13 +42,13 @@
  * @param {number} subIndex - object subIndex.
  */
 class COError extends Error {
-    constructor(code, index, subIndex) {
+    constructor(code, index, subIndex=null) {
         let message = abortCodes[code];
         if(message === undefined)
             message = "Unknown error"
 
         let tag = `0x${index.toString(16)}`;
-        if(subIndex !== undefined)
+        if(subIndex !== null)
             tag += `.${subIndex.toString()}`;
 
         super(`${message} [${tag}]`);

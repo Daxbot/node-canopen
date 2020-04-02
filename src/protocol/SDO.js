@@ -253,7 +253,7 @@ class SDO {
      * @param {number} subIndex - data subIndex to upload.
      * @param {number} timeout - time before transfer is aborted.
      */
-    upload(serverId, index, subIndex=0, timeout=30) {
+    upload(serverId, index, subIndex=null, timeout=30) {
         let server = this.servers[serverId];
         if(server === undefined) {
             if(this.servers[0] === undefined)
@@ -305,7 +305,7 @@ class SDO {
      * @param {number} subIndex - data subIndex to download to.
      * @param {number} timeout - time before transfer is aborted.
      */
-    download(serverId, data, index, subIndex=0, timeout=30) {
+    download(serverId, data, index, subIndex=null, timeout=30) {
         let server = this.servers[serverId];
         if(server === undefined) {
             if(this.servers[0] === undefined)
