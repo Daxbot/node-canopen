@@ -42,6 +42,9 @@ class Device extends EventEmitter {
                     if(event == 'onMessage')
                         this.callbacks.push(callback.bind(instance));
                 },
+                start: function() {
+                    return;
+                },
             }
         }
         else {
@@ -109,9 +112,9 @@ class Device extends EventEmitter {
 
     /** Starts the channel and any configured services. */
     start() {
-        try { this.NMT.start(); } finally {};
-        try { this.PDO.start(); } finally {};
-        try { this.SYNC.start(); } finally {};
+        try { this.NMT.start(); } catch(e) {};
+        try { this.PDO.start(); } catch(e) {};
+        try { this.SYNC.start(); } catch(e) {};
 
         this.channel.start();
         this.NMT.startNode(this.id);
