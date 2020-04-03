@@ -19,35 +19,21 @@ describe('SYNC', function() {
     describe('Module initialization', function() {
         it('should throw if cobId is 0', function() {
             node.SYNC.cobId = 0;
-            return expect(() => { node.SYNC.init(); }).to.throw(TypeError);
-        });
-
-        it('should throw if enable is false', function() {
-            node.SYNC.cobId = 0x80;
-            node.SYNC.enable = false;
             node.SYNC.cyclePeriod = 1000;
-            node.init();
-
-            return Promise.all([
-                expect(() => { node.SYNC.write(); }).to.throw(TypeError),
-                expect(() => { node.SYNC.start(); }).to.throw(TypeError),
-            ]);
+            return expect(() => { node.SYNC.init(); }).to.throw(TypeError);
         });
 
         it('should throw if cyclePeriod is 0', function() {
             node.SYNC.cobId = 0x80;
-            node.SYNC.enable = true;
             node.SYNC.cyclePeriod = 0;
-            node.init();
-
-            return expect(() => { node.SYNC.start(); }).to.throw(TypeError);
+            return expect(() => { node.SYNC.init(); }).to.throw(TypeError);
         });
     });
 
     describe('Object dictionary updates', function() {
         beforeEach(function() {
             node.SYNC.cobId = 0x80;
-            node.SYNC.enable = true;
+            node.SYNC.generate = true;
             node.SYNC.cyclePeriod = 100;
             node.SYNC.overflow = 10;
             node.init();
@@ -58,7 +44,7 @@ describe('SYNC', function() {
             obj1005.addListener('update', () => {
                 setImmediate(() => {
                     expect(node.SYNC.cobId).to.equal(0x90);
-                    expect(node.SYNC.enable).to.equal(false);
+                    expect(node.SYNC.generate).to.equal(false);
                     done();
                 });
             });
@@ -92,9 +78,21 @@ describe('SYNC', function() {
     });
 
     describe('Producer', function() {
+        it('should throw if generate is false', function() {
+            node.SYNC.cobId = 0x80;
+            node.SYNC.generate = false;
+            node.SYNC.cyclePeriod = 1000;
+            node.init();
+
+            return Promise.all([
+                expect(() => { node.SYNC.write(); }).to.throw(TypeError),
+                expect(() => { node.SYNC.start(); }).to.throw(TypeError),
+            ]);
+        });
+
         it('should produce a sync object', function(done) {
             node.SYNC.cobId = 0x80;
-            node.SYNC.enable = true;
+            node.SYNC.generate = true;
             node.SYNC.cyclePeriod = 100;
             node.init();
 
@@ -104,7 +102,7 @@ describe('SYNC', function() {
 
         it('should increment the counter', function(done) {
             node.SYNC.cobId = 0x80;
-            node.SYNC.enable = true;
+            node.SYNC.generate = true;
             node.SYNC.cyclePeriod = 100;
             node.SYNC.overflow = 255;
             node.init();
@@ -121,7 +119,7 @@ describe('SYNC', function() {
 
     describe('Consumer', function() {
         it('should emit on consuming a sync object', function(done) {
-            node.SYNC.enable = true;
+            node.SYNC.generate = true;
             node.SYNC.cobId = 0x80;
             node.init();
 
