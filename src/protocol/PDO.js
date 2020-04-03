@@ -38,7 +38,7 @@ class PDO {
             }
         }
 
-        this.device.channel.addListener("onMessage", this._onMessage, this);
+        this.device.channel.addListener("onMessage", this._onMessage.bind(this));
     }
 
     /** Begin TPDO generation. */

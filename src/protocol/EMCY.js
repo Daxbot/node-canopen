@@ -134,9 +134,9 @@ class EMCY {
                     this.cobId |= this.device.id;
 
                 this.device.channel.addListener(
-                    "onMessage", this._onMessage, this);
+                    "onMessage", this._onMessage.bind(this));
             }
-            obj1014.addListener('update', this._update1014);
+            obj1014.addListener('update', this._update1014.bind(this));
         }
     }
 

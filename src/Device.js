@@ -38,9 +38,9 @@ class Device extends EventEmitter {
                     for(let i = 0; i < this.callbacks.length; i++)
                         this.callbacks[i](message);
                 },
-                addListener: function(event, callback, instance) {
+                addListener: function(event, callback) {
                     if(event == 'onMessage')
-                        this.callbacks.push(callback.bind(instance));
+                        this.callbacks.push(callback);
                 },
                 start: function() {
                     return;

@@ -242,7 +242,7 @@ class SDO {
             }
         }
 
-        this.device.channel.addListener('onMessage', this._onMessage, this);
+        this.device.channel.addListener('onMessage', this._onMessage.bind(this));
     }
 
     /** Service: SDO upload

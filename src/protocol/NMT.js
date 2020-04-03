@@ -77,10 +77,10 @@ class NMT {
                     last:       null,
                     timer:      null,
                 }
-                obj1016[i].addListener('update', this._update1016);
+                obj1016[i].addListener('update', this._update1016.bind(this));
             }
         }
-        this.device.channel.addListener('onMessage', this._onMessage, this);
+        this.device.channel.addListener('onMessage', this._onMessage.bind(this));
     }
 
     /** Begin heartbeat generation. */
