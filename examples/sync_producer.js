@@ -14,21 +14,9 @@ const channel = can.createRawChannel('vcan0');
 node = new Device({ id: 0xE, channel: channel });
 
 /** Step 3: Configure the COB-ID and cycle period. */
-node.EDS.addEntry(0x1005, {
-    ParameterName:      'COB-ID SYNC',
-    ObjectType:         EDS.objectTypes.VAR,
-    DataType:           EDS.dataTypes.UNSIGNED32,
-    AccessType:         EDS.accessTypes.READ_WRITE,
-    DefaultValue:       0x80,
-});
-
-node.EDS.addEntry(0x1006, {
-    ParameterName:      'Communication cycle period',
-    ObjectType:         EDS.objectTypes.VAR,
-    DataType:           EDS.dataTypes.UNSIGNED32,
-    AccessType:         EDS.accessTypes.READ_WRITE,
-    DefaultValue:       1e6, // 1 second
-});
+node.SYNC.cobId = 0x80;
+node.SYNC.cyclePeriod = 1e6; // 1 second
+node.SYNC.enable = true;
 
 /** Step 4: Initialize the node. */
 node.init();
