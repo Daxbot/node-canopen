@@ -10,35 +10,72 @@ describe('TIME', function() {
 
     beforeEach(function() {
         node = new Device({ id: 0xA, loopback: true });
-
-        /* COB-ID TIME. */
-        node.EDS.addEntry(0x1012, {
-            ParameterName:      'COB-ID TIME',
-            ObjectType:         EDS.objectTypes.VAR,
-            DataType:           EDS.dataTypes.UNSIGNED32,
-            AccessType:         EDS.accessTypes.READ_WRITE,
-            DefaultValue:       0x80,
-        });
     });
 
     afterEach(function() {
         delete node;
     });
 
-    it('should require 0x1012', function() {
-        node.EDS.removeEntry(0x1012);
-        return expect(() => { node.TIME.write(); }).to.throw(ReferenceError);
+    describe('Module initialization', function() {
+        it('should throw if cobId is 0', function() {
+            node.TIME.cobId = 0;
+            return expect(() => { node.TIME.init(); }).to.throw(TypeError);
+        });
     });
 
-    it('should produce a time object', function(done) {
-        node.init();
-        node.channel.addListener('onMessage', () => { done(); });
-        node.TIME.write();
+    describe('Object dictionary updates', function() {
+        beforeEach(function() {
+            node.TIME.cobId = 0x80;
+            node.TIME.produce = true;
+            node.TIME.consume = true;
+            node.init();
+        });
+
+        it('should listen for updates to 0x1012', function(done) {
+            const obj1012 = node.EDS.getEntry(0x1012);
+            obj1012.addListener('update', () => {
+                setImmediate(() => {
+                    expect(node.TIME.cobId).to.equal(0x90);
+                    expect(node.TIME.produce).to.equal(false);
+                    expect(node.TIME.consume).to.equal(false);
+                    done();
+                });
+            });
+
+            obj1012.value = 0x90;
+        });
     });
 
-    it('should emit on consuming a time object', function(done) {
-        node.init();
-        node.on('time', () => { done(); });
-        node.TIME.write();
+    describe('Producer', function() {
+        it('should throw if produce is false', function() {
+            node.TIME.cobId = 0x80;
+            node.TIME.produce = false;
+            node.TIME.consume = true;
+            node.init();
+
+            return expect(() => { node.TIME.write(); }).to.throw(TypeError);
+        });
+
+        it('should produce a time object', function(done) {
+            node.TIME.cobId = 0x80;
+            node.TIME.produce = true;
+            node.TIME.consume = true;
+            node.init();
+
+            node.channel.addListener('onMessage', () => { done(); });
+            node.TIME.write();
+        });
+    });
+
+    describe('Consumer', function() {
+        it('should emit on consuming a time object', function(done) {
+            node.TIME.cobId = 0x80;
+            node.TIME.produce = true;
+            node.TIME.consume = true;
+            node.init();
+
+            node.on('time', () => { done(); });
+            node.TIME.write();
+        });
     });
 });
