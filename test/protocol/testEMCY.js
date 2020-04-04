@@ -9,12 +9,13 @@ describe('EMCY', function() {
     let node = null;
 
     beforeEach(function() {
-        /* Pre-defined error field. */
         node = new Device({ id: 0xA, loopback: true });
+
+        /* Pre-defined error field. */
         node.EDS.addEntry(0x1003, {
             ParameterName:      'Pre-defined error field',
             ObjectType:         EDS.objectTypes.ARRAY,
-            SubNumber:          1,
+            SubNumber:          2,
         });
         node.EDS.addSubEntry(0x1003, 1, {
             ParameterName:      'Standard error field',
@@ -22,47 +23,83 @@ describe('EMCY', function() {
             DataType:           EDS.dataTypes.UNSIGNED32,
             AccessType:         EDS.accessTypes.READ_WRITE,
         });
-
-        /* COB-ID EMCY. */
-        node.EDS.addEntry(0x1014, {
-            ParameterName:      'COB-ID EMCY',
-            ObjectType:         EDS.objectTypes.VAR,
-            DataType:           EDS.dataTypes.UNSIGNED32,
-            AccessType:         EDS.accessTypes.READ_WRITE,
-            DefaultValue:       0x80,
-        });
     });
 
     afterEach(function() {
         delete node;
     });
 
-    it('should require 0x1001', function() {
-        node.EDS.removeEntry(0x1001);
-        return expect(() => { node.init(); }).to.throw(ReferenceError);
+    describe('Module initialization', function() {
+        it('should require 0x1001', function() {
+            node.EDS.removeEntry(0x1001);
+            return expect(() => { node.EMCY.init(); }).to.throw(ReferenceError);
+        });
+
+        it('should throw if cobId is 0', function() {
+            node.EMCY.cobId = 0;
+            return expect(() => { node.EMCY.init(); }).to.throw(TypeError);
+        });
     });
 
-    it('should require 0x1014', function() {
-        node.EDS.removeEntry(0x1014);
-        return expect(() => { node.EMCY.write(0x1000); }).to.throw(ReferenceError);
+    describe('Object dictionary updates', function() {
+        beforeEach(function() {
+            node.EMCY.cobId = 0x80;
+            node.EMCY.inhibitTime = 100;
+            node.init();
+        });
+
+        it('should listen for updates to 0x1014', function(done) {
+            const obj1014 = node.EDS.getEntry(0x1014);
+            obj1014.addListener('update', () => {
+                setImmediate(() => {
+                    expect(node.EMCY.cobId).to.equal(0x90);
+                    done();
+                });
+            });
+
+            obj1014.value = 0x90;
+        });
+
+        it('should listen for updates to 0x1015', function(done) {
+            const obj1015 = node.EDS.getEntry(0x1015);
+            obj1015.addListener('update', () => {
+                setImmediate(() => {
+                    expect(node.EMCY.inhibitTime).to.equal(200);
+                    done();
+                });
+            });
+
+            obj1015.value = 200;
+        });
     });
 
-    it('should produce an emergency object', function(done) {
-        node.init();
-        node.channel.addListener('onMessage', () => { done(); });
-        node.EMCY.write(0x1000);
+    describe('Producer', function() {
+        beforeEach(function() {
+            node.EMCY.cobId = 0x80;
+            node.init();
+        });
+
+        it('should produce an emergency object', function(done) {
+            node.channel.addListener('onMessage', () => { done(); });
+            node.EMCY.write(0x1000);
+        });
     });
 
-    it('should emit on consuming an emergency object', function(done) {
-        node.init();
-        node.on('emergency', () => { done(); });
-        node.EMCY.write(0x1000);
-    });
+    describe('Consumer', function() {
+        beforeEach(function() {
+            node.EMCY.cobId = 0x80;
+            node.init();
+        });
 
-    it('should track error history', function() {
-        node.init();
-        return node.EMCY.write(0x1234).then(() => {
-            return expect(node.EDS.getSubEntry(0x1003, 1).value).to.equal(0x1234);
+        it('should emit on consuming an emergency object', function(done) {
+            node.on('emergency', () => { done(); });
+            node.EMCY.write(0x1000);
+        });
+
+        it('should track error history', function() {
+            return node.EMCY.write(0x1234).then(() => {
+                return expect(node.EDS.getSubEntry(0x1003, 1).value).to.equal(0x1234);
+            });
         });
     });
 });
