@@ -169,7 +169,7 @@ class EMCY {
     }
 
     /** Set the inhibit time.
-     * @param {number} period - inhibit time (100 μs).
+     * @param {number} time - inhibit time (100 μs).
      */
     set inhibitTime(time) {
         let obj1015 = this._device.EDS.getEntry(0x1015);
@@ -193,7 +193,7 @@ class EMCY {
         return this._inhibitTime;
     }
 
-    /** Begin emergency monitoring. */
+    /** Initialize members and begin emergency monitoring. */
     init() {
         /* Object 0x1001 - Error register. */
         const obj1001 = this._device.EDS.getEntry(0x1001);

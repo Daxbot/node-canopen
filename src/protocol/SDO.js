@@ -1,4 +1,4 @@
-const {accessTypes, rawToType} = require('../EDS');
+const {accessTypes} = require('../EDS');
 const COError = require('../COError');
 
  /** CANopen SDO 'Client Command Specifier' codes.
@@ -127,16 +127,16 @@ class Transfer {
  */
 class SDO {
     constructor(device) {
-        this.device = device;
-        this.clients = {};
+        this._device = device;
+        this._clients = {};
         this._clientTransfers = {};
-        this.servers = {}
+        this._servers = {}
         this._serverTransfers = {};
     }
 
-    /** Begin serving SDO transfers. */
+    /** Initialize members and begin serving SDO transfers. */
     init() {
-        for(let [index, entry] of Object.entries(this.device.dataObjects)) {
+        for(let [index, entry] of Object.entries(this._device.dataObjects)) {
             index = parseInt(index);
             if(0x1200 <= index && index < 0x1280) {
                 /* Object 0x1200..0x127F - SDO server parameter.
@@ -164,7 +164,7 @@ class SDO {
 
                 cobIdRx &= 0x7FF;
                 if((cobIdRx & 0xF) == 0x0)
-                    cobIdRx |= this.device.id;
+                    cobIdRx |= this._device.id;
 
                 let cobIdTx = entry[2].value;
                 if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
@@ -178,15 +178,15 @@ class SDO {
 
                 cobIdTx &= 0x7FF;
                 if((cobIdTx & 0xF) == 0x0)
-                    cobIdTx |= this.device.id;
+                    cobIdTx |= this._device.id;
 
-                this.clients[clientId] = {
+                this._clients[clientId] = {
                     cobIdRx:    cobIdRx,
                     cobIdTx:    cobIdTx,
                 };
 
                 this._clientTransfers[cobIdRx] = new Transfer({
-                    device:     this.device,
+                    device:     this._device,
                     cobId:      cobIdTx
                 });
             }
@@ -234,7 +234,7 @@ class SDO {
                 if((cobIdRx & 0xF) == 0x0)
                     cobIdRx |= serverId;
 
-                this.servers[serverId] = {
+                this._servers[serverId] = {
                     cobIdTx:    cobIdTx,
                     cobIdRx:    cobIdRx,
                     pending:    Promise.resolve(),
@@ -242,7 +242,7 @@ class SDO {
             }
         }
 
-        this.device.channel.addListener('onMessage', this._onMessage.bind(this));
+        this._device.channel.addListener('onMessage', this._onMessage.bind(this));
     }
 
     /** Service: SDO upload
@@ -252,14 +252,14 @@ class SDO {
      * @param {number} timeout - time before transfer is aborted.
      */
     upload(serverId, index, subIndex=null, timeout=30) {
-        let server = this.servers[serverId];
+        let server = this._servers[serverId];
         if(server === undefined) {
-            if(this.servers[0] === undefined)
+            if(this._servers[0] === undefined)
                 throw new ReferenceError('0x1280 is required for upload.');
 
-            server = this.servers[serverId] = {
-                cobIdRx:    this.servers[0].cobIdRx,
-                cobIdTx:    this.servers[0].cobIdTx,
+            server = this._servers[serverId] = {
+                cobIdRx:    this._servers[0].cobIdRx,
+                cobIdTx:    this._servers[0].cobIdTx,
                 pending:    Promise.resolve(),
             };
         }
@@ -270,7 +270,7 @@ class SDO {
         server.pending = server.pending.then(() => {
             return new Promise((resolve, reject) => {
                 this._serverTransfers[server.cobIdRx] = new Transfer({
-                    device:     this.device,
+                    device:     this._device,
                     resolve:    resolve,
                     reject:     reject,
                     index:      index,
@@ -284,7 +284,7 @@ class SDO {
                 sendBuffer.writeUInt16LE(index, 1);
                 sendBuffer.writeUInt8(subIndex, 3);
 
-                this.device.channel.send({
+                this._device.channel.send({
                     id:     server.cobIdTx,
                     data:   sendBuffer
                 });
@@ -304,14 +304,14 @@ class SDO {
      * @param {number} timeout - time before transfer is aborted.
      */
     download(serverId, data, index, subIndex=null, timeout=30) {
-        let server = this.servers[serverId];
+        let server = this._servers[serverId];
         if(server === undefined) {
-            if(this.servers[0] === undefined)
+            if(this._servers[0] === undefined)
                 throw new ReferenceError('0x1280 is required for download.');
 
-            server = this.servers[serverId] = {
-                cobIdRx:    this.servers[0].cobIdRx,
-                cobIdTx:    this.servers[0].cobIdTx,
+            server = this._servers[serverId] = {
+                cobIdRx:    this._servers[0].cobIdRx,
+                cobIdTx:    this._servers[0].cobIdTx,
                 pending:    Promise.resolve(),
             };
         }
@@ -325,7 +325,7 @@ class SDO {
         server.pending = server.pending.then(() => {
             return new Promise((resolve, reject) => {
                 this._serverTransfers[server.cobIdRx] = new Transfer({
-                    device:     this.device,
+                    device:     this._device,
                     resolve:    resolve,
                     reject:     reject,
                     index:      index,
@@ -356,7 +356,7 @@ class SDO {
                     data.copy(sendBuffer, 4);
                 }
 
-                this.device.channel.send({
+                this._device.channel.send({
                     id:     server.cobIdTx,
                     data:   sendBuffer
                 });
@@ -558,7 +558,7 @@ class SDO {
             sendBuffer.writeUInt16LE(transfer.index, 1);
             sendBuffer.writeUInt8(transfer.subIndex, 3);
 
-            this.device.channel.send({
+            this._device.channel.send({
                 id:     transfer.cobId,
                 data:   sendBuffer,
             });
@@ -657,7 +657,7 @@ class SDO {
         transfer.toggle ^= 1;
         transfer.size += count;
 
-        this.device.channel.send({
+        this._device.channel.send({
             id:     transfer.cobId,
             data:   sendBuffer,
         });

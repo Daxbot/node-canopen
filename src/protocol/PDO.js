@@ -1,5 +1,3 @@
-const {DeviceError} = require('../Device');
-
 /** CANopen PDO protocol handler.
  *
  * The process data object (PDO) protocol follows a producer-consumer structure
@@ -13,37 +11,37 @@ const {DeviceError} = require('../Device');
  */
 class PDO {
     constructor(device) {
-        this.device = device;
-        this.receiveMap = {};
-        this.writeMap = {};
-        this.eventTimers = {};
-        this.events = [];
+        this._device = device;
+        this._receiveMap = {};
+        this._writeMap = {};
+        this._eventTimers = {};
+        this._events = [];
     }
 
-    /** Begin RPDO monitoring. */
+    /** Initialize members and begin RPDO monitoring. */
     init() {
-        for(let [index, entry] of Object.entries(this.device.EDS.dataObjects)) {
+        for(let [index, entry] of Object.entries(this._device.EDS.dataObjects)) {
             index = parseInt(index);
             if((index & 0xFF00) == 0x1400 || (index & 0xFF00) == 0x1500) {
                 /* Object 0x1400..0x15FF - RPDO communication parameter. */
                 const pdo = this._parsePDO(index, entry);
                 if(pdo)
-                    this.receiveMap[pdo.cobId] = pdo;
+                    this._receiveMap[pdo.cobId] = pdo;
             }
             else if((index & 0xFF00) == 0x1800 || (index & 0xFF00) == 0x1900) {
                 /* Object 0x1800..0x19FF - TPDO communication parameter. */
                 const pdo = this._parsePDO(index, entry);
                 if(pdo)
-                    this.writeMap[pdo.cobId] = pdo;
+                    this._writeMap[pdo.cobId] = pdo;
             }
         }
 
-        this.device.channel.addListener("onMessage", this._onMessage.bind(this));
+        this._device.channel.addListener("onMessage", this._onMessage.bind(this));
     }
 
     /** Begin TPDO generation. */
     start() {
-        for(const [cobId, pdo] of Object.entries(this.writeMap)) {
+        for(const [cobId, pdo] of Object.entries(this._writeMap)) {
             if(pdo.type < 0xF1) {
                 const listener = function(counter) {
                     if(pdo.started) {
@@ -63,8 +61,8 @@ class PDO {
                     }
                 }
 
-                this.events.push([this.device, 'sync', listener]);
-                this.device.on('sync', listener);
+                this._events.push([this._device, 'sync', listener]);
+                this._device.on('sync', listener);
             }
             else if(pdo.type == 0xFE) {
                 if(pdo.eventTime > 0) {
@@ -73,23 +71,23 @@ class PDO {
                         this.write(cobId);
                     }, pdo.eventTime);
 
-                    this.eventTimers[cobId] = timer;
+                    this._eventTimers[cobId] = timer;
                 }
                 else if(pdo.inhibitTime > 0) {
                     /* Send on value change, but no faster than inhibit time. */
                     for(const dataObject of pdo.dataObjects) {
                         const listener = function() {
-                            if(!this.eventTimers[cobId]) {
+                            if(!this._eventTimers[cobId]) {
                                 const timer = setTimeout(() => {
-                                    this.eventTimers[cobId] = null;
+                                    this._eventTimers[cobId] = null;
                                     this.write(cobId);
                                 }, pdo.inhibitTime);
 
-                                this.eventTimers[cobId] = timer;
+                                this._eventTimers[cobId] = timer;
                             }
                         }
 
-                        this.events.push([dataObject, 'update', listener]);
+                        this._events.push([dataObject, 'update', listener]);
                         dataObject.on('update', listener);
                     }
                 }
@@ -100,23 +98,23 @@ class PDO {
                             this.write(cobId);
                         }
 
-                        this.events.push([dataObject, 'update', listener]);
+                        this._events.push([dataObject, 'update', listener]);
                         dataObject.on('update', listener);
                     }
                 }
             }
             else {
-                throw new DeviceError(`Unsupported TPDO type (${pdo.type}).`);
+                throw TypeError(`Unsupported TPDO type (${pdo.type}).`);
             }
         }
     }
 
     /** Stop TPDO generation. */
     stop() {
-        for(const [emitter, eventName, listener] in this.events)
+        for(const [emitter, eventName, listener] in this._events)
             emitter.removeListener(eventName, listener);
 
-        for(const timer in Object.values(this.eventTimers))
+        for(const timer in Object.values(this._eventTimers))
             clearInterval(timer);
     }
 
@@ -125,16 +123,16 @@ class PDO {
      * @param {bool} update - only write if data has changed.
      */
     write(cobId, update=false) {
-        const pdo = this.writeMap[cobId];
+        const pdo = this._writeMap[cobId];
         if(!pdo)
-            throw new DeviceError(`TPDO 0x${cobId.toString(16)} not mapped.`);
+            throw ReferenceError(`TPDO 0x${cobId.toString(16)} not mapped.`);
 
         const data = Buffer.alloc(pdo.dataSize);
         let dataOffset = 0;
         let dataUpdated = false;
 
         for(let i = 0; i < pdo.dataObjects.length; i++) {
-            let entry = this.device.EDS.getEntry(pdo.dataObjects[i].index);
+            let entry = this._device.EDS.getEntry(pdo.dataObjects[i].index);
             if(entry.subNumber > 0)
                 entry = entry[pdo.subIndex];
 
@@ -149,7 +147,7 @@ class PDO {
         }
 
         if(!update || dataUpdated)
-            this.device.channel.send({ id: cobId, data: data });
+            this._device.channel.send({ id: cobId, data: data });
     }
 
     /** socketcan 'onMessage' listener.
@@ -161,13 +159,13 @@ class PDO {
             return;
 
         const updated = [];
-        if(message.id in this.receiveMap) {
-            const pdo = this.receiveMap[message.id];
+        if(message.id in this._receiveMap) {
+            const pdo = this._receiveMap[message.id];
             let dataOffset = 0;
 
             for(let i = 0; i < pdo.dataObjects.length; ++i) {
                 const index = pdo.dataObjects[i].index;
-                const entry = this.device.dataObjects[index];
+                const entry = this._device.dataObjects[index];
                 const size = entry.raw.length;
 
                 message.data.copy(entry.raw, 0, dataOffset, dataOffset + size);
@@ -182,7 +180,7 @@ class PDO {
         }
 
         if(updated.length > 0)
-            this.device.emit('pdo', updated);
+            this._device.emit('pdo', updated);
     }
 
     /** Parse a PDO communication/mapping parameter.
@@ -207,7 +205,7 @@ class PDO {
 
         cobId &= 0x7FF;
         if((cobId & 0xF) == 0x0)
-            cobId |= this.device.id;
+            cobId |= this._device.id;
 
         /* sub-index 2:
          *   bit 0..7       Transmission type.
@@ -240,20 +238,20 @@ class PDO {
         };
 
         const mapIndex = index + 0x200;
-        const mapEntry = this.device.EDS.getEntry(mapIndex);
+        const mapEntry = this._device.EDS.getEntry(mapIndex);
         if(!mapEntry) {
-            throw new DeviceError(
+            throw ReferenceError(
                 `Missing TPDO mapping parameter 0x${mapIndex.toString(16)}`);
         }
 
         if(mapEntry[0].value == 0xFE)
-            throw new DeviceError('SAM-MPDO not supported.');
+            throw TypeError('SAM-MPDO not supported.');
 
         if(mapEntry[0].value == 0xFF)
-            throw new DeviceError('DAM-MPDO not supported.');
+            throw TypeError('DAM-MPDO not supported.');
 
         if(mapEntry[0].value > 0x40) {
-            throw new DeviceError(
+            throw TypeError(
                 `Invalid TPDO mapping value (${mapEntry[0].value}).`);
         }
 
@@ -270,7 +268,7 @@ class PDO {
             const dataSubIndex = mapEntry[i].raw.readUInt8(1);
             const dataIndex = mapEntry[i].raw.readUInt16LE(2);
 
-            if(!(dataIndex in this.device.dataObjects))
+            if(!(dataIndex in this._device.dataObjects))
                 continue;
 
             pdo.dataObjects[i-1] = {
