@@ -163,7 +163,7 @@ class EMCY {
     get cobId() {
         let cobId = this._cobId;
         if(cobId | 0xF == 0x0)
-            cobId |= this._device.deviceId;
+            cobId |= this._device.id;
 
         return cobId;
     }

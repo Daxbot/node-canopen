@@ -69,7 +69,7 @@ node.setValueArray(0x1800, 1, 0x180);
 node.setValueArray(0x1A00, 1, (0x2000 << 16) | 32);
 node.setValueArray(0x1A00, 0, 1);
 
-/** Step 6: Initialize the node. */
+/** Step 6: Initialize and start the node. */
 node.init();
 node.start();
 

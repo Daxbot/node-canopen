@@ -13,25 +13,16 @@ const channel = can.createRawChannel('vcan0');
 node = new Device({ id: 0xB, channel: channel });
 
 /** Step 3: Configure the producer heartbeat time. */
-node.EDS.addEntry(0x1017, {
-    ParameterName:      'Producer heartbeat time',
-    ObjectType:         EDS.objectTypes.VAR,
-    DataType:           EDS.dataTypes.UNSIGNED32,
-    AccessType:         EDS.accessTypes.READ_WRITE,
-    DefaultValue:       500,
-});
+node.NMT.producerTime = 500;
 
-/** Step 4: Initialize the node. */
+/** Step 4: Initialize and start the node. */
 node.init();
 node.start();
 
-/** Step 5: Start and stop the node using NMT commands. */
+/** Step 5: Stop the node using NMT commands. */
 setTimeout(() => {
-    node.NMT.startNode(node.id);
+    node.NMT.stopNode(node.id);
     setTimeout(() => {
-        node.NMT.stopNode(node.id);
-        setTimeout(() => {
-            process.exit()
-        }, 2000);
+        process.exit()
     }, 2000);
 }, 2000);

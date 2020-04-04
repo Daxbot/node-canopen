@@ -16,9 +16,10 @@ node = new Device({ id: 0xE, channel: channel });
 /** Step 3: Configure the COB-ID and cycle period. */
 node.SYNC.cobId = 0x80;
 node.SYNC.cyclePeriod = 1e6; // 1 second
-node.SYNC.enable = true;
+node.SYNC.overflow = 10;
+node.SYNC.generate = true;
 
-/** Step 4: Initialize the node. */
+/** Step 4: Initialize and start the node. */
 node.init();
 node.start();
 

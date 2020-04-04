@@ -13,15 +13,9 @@ const channel = can.createRawChannel('vcan0');
 node = new Device({ id: 0xA, channel: channel });
 
 /** Step 3: Configure the COB-ID. */
-node.EDS.addEntry(0x1014, {
-    ParameterName:      'COB-ID EMCY',
-    ObjectType:         EDS.objectTypes.VAR,
-    DataType:           EDS.dataTypes.UNSIGNED32,
-    AccessType:         EDS.accessTypes.READ_WRITE,
-    DefaultValue:       0x80 + node.id,
-});
+node.EMCY.cobId = 0x80;
 
-/** Step 4: Initialize the node. */
+/** Step 4: Initialize and start the node. */
 node.init();
 node.start();
 

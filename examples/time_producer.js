@@ -12,16 +12,11 @@ const channel = can.createRawChannel('vcan0');
 /** Step 2: Create a new Device. */
 node = new Device({ id: 0xF, channel: channel });
 
-/** Step 3: Configure the COB-ID. */
-node.EDS.addEntry(0x1012, {
-    ParameterName:      'COB-ID TIME',
-    ObjectType:         EDS.objectTypes.VAR,
-    DataType:           EDS.dataTypes.UNSIGNED32,
-    AccessType:         EDS.accessTypes.READ_WRITE,
-    DefaultValue:       0x80 + node.id,
-});
+/** Step 3: Configure the COB-ID and set the production enable. */
+node.TIME.cobId = 0x80 + node.id;
+node.TIME.produce = true;
 
-/** Step 4: Initialize the node. */
+/** Step 4: Initialize and start the node. */
 node.init();
 node.start();
 
