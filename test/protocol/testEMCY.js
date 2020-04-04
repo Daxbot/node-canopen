@@ -52,12 +52,12 @@ describe('EMCY', function() {
             const obj1014 = node.EDS.getEntry(0x1014);
             obj1014.addListener('update', () => {
                 setImmediate(() => {
-                    expect(node.EMCY.cobId).to.equal(0x90);
+                    expect(node.EMCY.cobId).to.equal(0x9A);
                     done();
                 });
             });
 
-            obj1014.value = 0x90;
+            obj1014.value = 0x9A;
         });
 
         it('should listen for updates to 0x1015', function(done) {
