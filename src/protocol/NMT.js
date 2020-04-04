@@ -1,3 +1,5 @@
+const {EDS} = require('../EDS');
+
 /** NMT internal states.
  * @private
  * @const {number}
@@ -37,71 +39,94 @@ const commands = {
  */
 class NMT {
     constructor(device) {
-        this.device = device;
+        this._device = device;
+        this._producerTime = 0;
         this._state = states.INITIALIZING;
-        this.heartbeatTimer = null;
-        this.heartbeats = {};
+        this._heartbeatTimer = null;
+        this._heartbeats = {};
     }
 
+    /** Set the NMT state.
+     * @param {number} newState - NMT state.
+     */
+    set state(newState) {
+        const oldState = this.state;
+        if(newState != oldState) {
+            this._state = newState;
+            this._device.emit('nmtChangeState', newState, oldState);
+        }
+    }
+
+    /** Get the NMT state.
+     * @return {number} - NMT state.
+     */
     get state() {
         return this._state;
     }
 
-    set state(newState) {
-        const oldState = this._state;
-        this._state = newState;
+    /** Set producer heartbeat time.
+     * @param {number} time - heartbeat time (ms).
+     */
+    set producerTime(time) {
+        let obj1017 = this._device.EDS.getEntry(0x1017);
+        if(obj1017 === undefined) {
+            obj1017 = this._device.EDS.addEntry(0x1017, {
+                ParameterName:      'Producer heartbeat time',
+                ObjectType:         EDS.objectTypes.VAR,
+                DataType:           EDS.dataTypes.UNSIGNED32,
+                AccessType:         EDS.accessTypes.READ_WRITE,
+            });
+        }
 
-        if(newState != oldState)
-            this.device.emit('nmtChangeState', newState, oldState);
+        obj1017.value = time;
     }
 
-    /** Begin heartbeat monitoring. */
+    /** Get producer heartbeat time.
+     * @return {number} - heartbeat time (ms).
+     */
+    get producerTime() {
+        return this._producerTime;
+    }
+
+    /** Initialize members and begin heartbeat monitoring. */
     init() {
-        /* Object 0x1016 - Consumer heartbeat time.
-         *   sub-index 0:
-         *     bit 0..7     Highest sub-index supported.
-         *
-         *   sub-index 1+:
-         *     bit 0..15    Heartbeat time in ms.
-         *     bit 16..23   Node-ID of producer.
-         *     bit 24..31   Reserved (0x00);
-         */
-        const obj1016 = this.device.EDS.getEntry(0x1016);
+        /* Object 0x1016 - Consumer heartbeat time. */
+        const obj1016 = this._device.EDS.getEntry(0x1016);
         if(obj1016) {
-            for(let i = 1; i < obj1016.SubNumber + 1; ++i) {
-                const heartbeatTime = obj1016[i].raw.readUInt16LE(0);
-                const deviceId = obj1016[i].raw.readUInt8(2);
-                this.heartbeats[deviceId] = {
-                    state:      states.INITIALIZING,
-                    interval:   heartbeatTime,
-                    last:       null,
-                    timer:      null,
-                }
-                obj1016[i].addListener('update', this._update1016.bind(this));
+            for(let i = 1; i <= obj1016[0].value; ++i) {
+                const entry = obj1016[i];
+                if(entry === undefined)
+                    continue;
+
+                this._parse1016(entry);
+                entry.addListener('update', this._parse1016.bind(this));
             }
         }
-        this.device.channel.addListener('onMessage', this._onMessage.bind(this));
+
+        /* Object 0x1017 - Producer heartbeat time. */
+        const obj1017 = this._device.EDS.getEntry(0x1017);
+        if(obj1017) {
+            this._parse1017(obj1017);
+            obj1017.addListener('update', this._parse1017.bind(this));
+        }
+
+        this._device.channel.addListener(
+            'onMessage', this._onMessage.bind(this));
     }
 
     /** Begin heartbeat generation. */
     start() {
-        /* Object 0x1017 - Producer heartbeat time. */
-        const obj1017 = this.device.EDS.getEntry(0x1017);
-        if(!obj1017)
-            throw ReferenceError('0x1017 is required for heartbeat generation.');
+        if(this.producerTime == 0)
+            throw TypeError('Producer heartbeat time can not be 0.')
 
-        const heartbeatTime = obj1017.value;
-        if(heartbeatTime == 0)
-            throw TypeError('Heartbeat generation is disabled by 0x1017.')
-
-        this.heartbeatTimer = setInterval(() => {
+        this._heartbeatTimer = setInterval(() => {
             this._sendHeartbeat();
-        }, heartbeatTime);
+        }, this.producerTime);
     }
 
     /** Stop heartbeat generation. */
     stop() {
-        clearInterval(this.heartbeatTimer);
+        clearInterval(this._heartbeatTimer);
     }
 
     /** Service: start remote node.
@@ -159,10 +184,10 @@ class NMT {
      * @param {number} command - NMT command to serve.
      */
     _sendNMT(nodeId, command) {
-        if(nodeId == this.device.id)
+        if(nodeId == this._device.id)
             this._handleNMT(command);
 
-        this.device.channel.send({
+        this._device.channel.send({
             id:     0x0,
             data:   Buffer.from([nodeId, command]),
         });
@@ -172,8 +197,8 @@ class NMT {
      * @private
      */
     _sendHeartbeat() {
-        this.device.channel.send({
-            id: 0x700 + this.device.id,
+        this._device.channel.send({
+            id: 0x700 + this._device.id,
             data: Buffer.from([this.state])
         });
     }
@@ -210,26 +235,26 @@ class NMT {
             return;
 
         if((message.id & 0x7FF) == 0x0) {
-            if(message.data[1] != this.device.id)
+            if(message.data[1] != this._device.id)
                 this._handleNMT(message.data[0]);
         }
         else if((message.id & 0x700) == 0x700) {
             const deviceId = message.id & 0x7F;
-            if(deviceId in this.heartbeats) {
-                this.heartbeats[deviceId]['state'] = message.data[0];
-                this.heartbeats[deviceId]['last'] = Date.now();
+            if(deviceId in this._heartbeats) {
+                this._heartbeats[deviceId]['state'] = message.data[0];
+                this._heartbeats[deviceId]['last'] = Date.now();
 
-                if(this.heartbeats[deviceId]['timer'] === null) {
+                if(!this._heartbeats[deviceId]['timer']) {
                     /* First heartbeat - start timer. */
-                    const interval = this.heartbeats[deviceId]['interval'];
-                    this.heartbeats[deviceId]['timer'] = setTimeout(() => {
-                        this.device.emit("nmtTimeout",
-                            deviceId, this.heartbeats[deviceId]);
-                        this.heartbeats[deviceId]['timer'] = null;
+                    const interval = this._heartbeats[deviceId]['interval'];
+                    this._heartbeats[deviceId]['timer'] = setTimeout(() => {
+                        this._device.emit("nmtTimeout",
+                            deviceId, this._heartbeats[deviceId]);
+                        this._heartbeats[deviceId]['timer'] = null;
                     }, interval);
                 }
                 else {
-                    this.heartbeats[deviceId]['timer'].refresh();
+                    this._heartbeats[deviceId]['timer'].refresh();
                 }
             }
         }
@@ -239,12 +264,35 @@ class NMT {
      * @private
      * @param {DataObject} data - updated DataObject.
      */
-    _update1016(data) {
+    _parse1016(data) {
+        /* Object 0x1016 - Consumer heartbeat time.
+         *   sub-index 1+:
+         *     bit 0..15    Heartbeat time in ms.
+         *     bit 16..23   Node-ID of producer.
+         *     bit 24..31   Reserved (0x00);
+         */
         const heartbeatTime = data.raw.readUInt16LE(0);
         const deviceId = data.raw.readUInt8(2);
 
-        this.heartbeats[deviceId]['interval'] = heartbeatTime;
-        clearTimeout(this.heartbeats[deviceId]['timer']);
+        const heartbeat = this._heartbeats[deviceId];
+        if(heartbeat !== undefined) {
+            heartbeat['interval'] = heartbeatTime;
+            clearTimeout(heartbeat['timer']);
+        }
+        else {
+            this._heartbeats[deviceId] = {
+                state:      states.INITIALIZING,
+                interval:   heartbeatTime,
+            }
+        }
+    }
+
+    /** Called when 0x1017 (Producer heartbeat time) is updated.
+     * @private
+     * @param {DataObject} data - updated DataObject.
+     */
+    _parse1017(data) {
+        this._producerTime = data.value;
     }
 }
 

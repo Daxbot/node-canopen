@@ -237,7 +237,7 @@ class SYNC {
     _parse1006(data) {
         const cyclePeriod = data.value;
         if(cyclePeriod == 0)
-            throw TypeError('SYNC cyclePeriod can not be 0.')
+            throw TypeError('Communication cycle period can not be 0.')
 
         this._cyclePeriod = cyclePeriod;
     }
