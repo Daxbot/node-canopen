@@ -17,7 +17,7 @@ node = new Device({ id: 0xD, channel: channel });
 node.EDS.addEntry(0x1200, {
     ParameterName:      'SDO server parameter',
     ObjectType:         EDS.objectTypes.RECORD,
-    SubNumber:          2,
+    SubNumber:          3,
 });
 node.EDS.addSubEntry(0x1200, 1, {
     ParameterName:      'COB-ID client to server',
@@ -41,7 +41,7 @@ node.EDS.addEntry(0x2000, {
 });
 
 /** Step 5: Register a callback to print changes to 0x2000. */
-const obj2000 = node.getEntry(0x2000);
+const obj2000 = node.EDS.getEntry(0x2000);
 obj2000.addListener('update', (data) => { console.log(data.value); });
 
 /** Step 6: Initialize and start the node. */

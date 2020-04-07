@@ -250,6 +250,7 @@ class SDO {
      * @param {number} index - data index to upload.
      * @param {number} subIndex - data subIndex to upload.
      * @param {number} timeout - time before transfer is aborted.
+     * @returns {Promise<Buffer>}
      */
     upload(serverId, index, subIndex=null, timeout=30) {
         let server = this._servers[serverId];
@@ -302,12 +303,14 @@ class SDO {
      * @param {number} index - index or name to download to.
      * @param {number} subIndex - data subIndex to download to.
      * @param {number} timeout - time before transfer is aborted.
+     * @return {Promise}
      */
     download(serverId, data, index, subIndex=null, timeout=30) {
         let server = this._servers[serverId];
         if(server === undefined) {
+            // Attempt to use default server
             if(this._servers[0] === undefined)
-                throw new ReferenceError('0x1280 is required for download.');
+                throw new ReferenceError('SDO server not found.');
 
             server = this._servers[serverId] = {
                 cobIdRx:    this._servers[0].cobIdRx,
@@ -776,7 +779,6 @@ class SDO {
                     this._serverDownloadSegment(clientTransfer, message.data);
                     break;
                 default:
-                    console.log(message.data);
                     clientTransfer.abort(0x05040001);
                     break;
             }

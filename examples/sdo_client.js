@@ -17,7 +17,7 @@ node = new Device({ id: 0xC, channel: channel });
 node.EDS.addEntry(0x1280, {
     ParameterName:      'SDO client parameter',
     ObjectType:         EDS.objectTypes.RECORD,
-    SubNumber:          3,
+    SubNumber:          4,
 });
 node.EDS.addSubEntry(0x1280, 1, {
     ParameterName:      'COB-ID client to server',
@@ -44,11 +44,14 @@ node.start();
 
 /** Step 5: Write data to the server then read it back. */
 const date = new Date();
-const buffer = Buffer.from(date.toString(), 'utf8');
 
-node.SDO.download(0xA, buffer, 0x2000).then(() => {
-    node.SDO.upload(0xA, 0x2000).then((data) => {
-        console.log(data.toString());
+const VISIBLE_STRING = EDS.dataTypes.VISIBLE_STRING;
+const data = EDS.typeToRaw(date.toString(), VISIBLE_STRING);
+
+node.SDO.download(0xD, data, 0x2000).then(() => {
+    node.SDO.upload(0xD, 0x2000).then((data) => {
+        const value = EDS.rawToType(data, VISIBLE_STRING);
+        console.log(value);
         process.exit()
     });
 })

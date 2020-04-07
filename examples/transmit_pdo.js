@@ -16,7 +16,7 @@ node = new Device({ id: 0x9, channel: channel });
 node.EDS.addEntry(0x1800, {
     ParameterName:      'TPDO communication parameter',
     ObjectType:         EDS.objectTypes.RECORD,
-    SubNumber:          6,
+    SubNumber:          7,
 });
 node.EDS.addSubEntry(0x1800, 1, {
     ParameterName:      'COB-ID TPDO',

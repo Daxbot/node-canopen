@@ -20,7 +20,7 @@ class PDO {
 
     /** Initialize members and begin RPDO monitoring. */
     init() {
-        for(let [index, entry] of Object.entries(this._device.EDS.dataObjects)) {
+        for(let [index, entry] of Object.entries(this._device.dataObjects)) {
             index = parseInt(index);
             if((index & 0xFF00) == 0x1400 || (index & 0xFF00) == 0x1500) {
                 /* Object 0x1400..0x15FF - RPDO communication parameter. */

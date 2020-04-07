@@ -17,7 +17,7 @@ describe('SDO', function() {
         node.EDS.addEntry(0x1200, {
             ParameterName:      'SDO server parameter',
             ObjectType:         EDS.objectTypes.RECORD,
-            SubNumber:          2,
+            SubNumber:          3,
         });
         node.EDS.addSubEntry(0x1200, 1, {
             ParameterName:      'COB-ID client to server',
@@ -36,7 +36,7 @@ describe('SDO', function() {
         node.EDS.addEntry(0x1280, {
             ParameterName:      'SDO client parameter',
             ObjectType:         EDS.objectTypes.RECORD,
-            SubNumber:          3,
+            SubNumber:          4,
         });
         node.EDS.addSubEntry(0x1280, 1, {
             ParameterName:      'COB-ID client to server',

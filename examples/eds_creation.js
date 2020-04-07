@@ -23,7 +23,7 @@ eds.createdBy = os.userInfo().username;
 eds.addEntry(0x1016, {
     ParameterName:      'Consumer heartbeat time',
     ObjectType:         EDS.objectTypes.ARRAY,
-    SubNumber:          1,
+    SubNumber:          2,
 });
 
 eds.addSubEntry(0x1016, 1, {
