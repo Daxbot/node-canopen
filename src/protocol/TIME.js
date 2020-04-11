@@ -60,10 +60,13 @@ class TIME {
             });
         }
 
+        let raw = obj1012.raw;
         if(consume)
-            obj1012.value |= (1 << 31);
+            raw[3] |= (1 << 7); // bit 31
         else
-            obj1012.value &= ~(1 << 31);
+            raw[3] &= ~(1 << 7); // bit 31
+
+        obj1012.raw = raw;
     }
 
     /** Get the time stamp consumer enable bit.
