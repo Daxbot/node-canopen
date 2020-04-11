@@ -1,11 +1,9 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const chaiBytes = require('chai-bytes');
 const {EDS, Device, COError} = require('../../index.js');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
-chai.use(chaiBytes);
 
 describe('SDO', function() {
     let node = null;
@@ -64,77 +62,84 @@ describe('SDO', function() {
 
     describe('Expediated transfer', function() {
         const testValues = {
-            BOOLEAN: Buffer.from([1]),
-            INTEGER8: Buffer.from([0x1]),
-            INTEGER16: Buffer.from([0x1, 0x2]),
-            INTEGER24: Buffer.from([0x1, 0x2, 0x3]),
-            INTEGER32: Buffer.from([0x1, 0x2, 0x3, 0x4]),
-            UNSIGNED8: Buffer.from([0x1]),
-            UNSIGNED16: Buffer.from([0x1, 0x2]),
-            UNSIGNED24: Buffer.from([0x1, 0x2, 0x3]),
-            UNSIGNED32: Buffer.from([0x1, 0x2, 0x3, 0x4]),
-            VISIBLE_STRING: Buffer.from('test'),
-            OCTET_STRING: Buffer.from('1234'),
-            UNICODE_STRING: Buffer.from('\u03b1'),
-            REAL32: Buffer.alloc(4),
+            BOOLEAN: true,
+            INTEGER8: -0x12,
+            INTEGER16: -0x1234,
+            INTEGER24: -0x123456,
+            INTEGER32: -0x12345678,
+            UNSIGNED8: 0x12,
+            UNSIGNED16: 0x1234,
+            UNSIGNED24: 0x123456,
+            UNSIGNED32: 0x12345678,
+            VISIBLE_STRING: 'test',
+            OCTET_STRING: '1234',
+            UNICODE_STRING: '\u03b1',
+            REAL32: 1.0,
         };
-
-        testValues["REAL32"].writeFloatLE(Math.PI);
 
         for(const key of Object.keys(testValues)) {
             it("should transfer " + key, function() {
                 node.init();
 
                 const index = EDS.dataTypes[key];
-                return node.SDO.download(node.id, testValues[key], index)
-                    .then(() => {
-                        return node.SDO.upload(node.id, index);
-                    })
-                    .then((value) => {
-                        expect(value).to.equalBytes(testValues[key]);
+                return node.SDO.download({
+                    serverId: node.id,
+                    data: testValues[key],
+                    dataType: key,
+                    index: index
+                })
+                .then(() => {
+                    return node.SDO.upload({
+                        serverId: node.id,
+                        index: index,
+                        dataType: key
                     });
+                })
+                .then((value) => {
+                    expect(value).to.equal(testValues[key]);
+                });
             });
         }
     });
 
     describe('Segmented transfer', function() {
         const testValues = {
-            INTEGER40: Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]),
-            INTEGER48: Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5, 0x6]),
-            INTEGER56: Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7]),
-            INTEGER64: Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8]),
-            UNSIGNED40: Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]),
-            UNSIGNED48: Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5, 0x6]),
-            UNSIGNED56: Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7]),
-            UNSIGNED64: Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8]),
-            VISIBLE_STRING: Buffer.from('long visible string'),
-            OCTET_STRING: Buffer.from('12345678'),
-            UNICODE_STRING: Buffer.from('\u03b1\u03b2\u03b3\u03b4\u03b5\u03b6'),
-            REAL64: Buffer.alloc(8),
-            TIME_OF_DAY: null,
-            TIME_DIFFERENCE: null,
+            INTEGER40: -0x1234567890,
+            INTEGER48: -0x1234567890AB,
+            UNSIGNED40: 0x1234567890,
+            UNSIGNED48: 0x1234567890AB,
+            VISIBLE_STRING: 'long visible string',
+            OCTET_STRING: '12345678',
+            UNICODE_STRING: '\u03b1\u03b2\u03b3\u03b4\u03b5\u03b6',
+            REAL64: Math.PI,
+            TIME_OF_DAY: new Date(),
+            TIME_DIFFERENCE: new Date(),
         };
-
-        testValues["REAL64"].writeDoubleLE(Math.PI);
-
-        testValues["TIME_OF_DAY"] = EDS.typeToRaw(
-            Date.now(), EDS.dataTypes.TIME_OF_DAY);
-
-        testValues["TIME_DIFFERENCE"] = EDS.typeToRaw(
-            Date.now(), EDS.dataTypes.TIME_DIFFERENCE);
 
         for(const key of Object.keys(testValues)) {
             it("should transfer " + key, function() {
                 node.init();
 
                 const index = EDS.dataTypes[key];
-                return node.SDO.download(node.id, testValues[key], index)
-                    .then(() => {
-                        return node.SDO.upload(node.id, index);
-                    })
-                    .then((value) => {
-                        expect(value).to.equalBytes(testValues[key]);
+                return node.SDO.download({
+                    serverId: node.id,
+                    data: testValues[key],
+                    dataType: key,
+                    index: index
+                })
+                .then(() => {
+                    return node.SDO.upload({
+                        serverId: node.id,
+                        index: index,
+                        dataType: key
                     });
+                })
+                .then((value) => {
+                    if(value instanceof Date)
+                        expect(value.getTime()).to.equal(testValues[key].getTime());
+                    else
+                        expect(value).to.equal(testValues[key]);
+                });
             });
         }
     });
@@ -145,7 +150,11 @@ describe('SDO', function() {
             node.setValueArray(0x1280, 3, 0x1);
             node.init();
 
-            return expect(node.SDO.upload(0x1, 0x1000, 1)).to.be.rejectedWith(COError);
+            return expect(node.SDO.upload({
+                serverId: 0x1,
+                index: 0x1000,
+                subIndex: 1
+            })).to.be.rejectedWith(COError);
         });
     });
 });

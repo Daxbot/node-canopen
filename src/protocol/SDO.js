@@ -1,4 +1,4 @@
-const {accessTypes} = require('../EDS');
+const {accessTypes, rawToType, typeToRaw} = require('../EDS');
 const COError = require('../COError');
 
  /** CANopen SDO 'Client Command Specifier' codes.
@@ -246,13 +246,16 @@ class SDO {
     }
 
     /** Service: SDO upload
-     * @param {number} serverId - SDO server.
-     * @param {number} index - data index to upload.
-     * @param {number} subIndex - data subIndex to upload.
-     * @param {number} timeout - time before transfer is aborted.
-     * @returns {Promise<Buffer>}
+     *
+     * @param {Object} args
+     * @param {number} args.serverId - SDO server.
+     * @param {number} args.index - data index to upload.
+     * @param {number} args.subIndex - data subIndex to upload.
+     * @param {number} args.timeout - time before transfer is aborted.
+     * @param {dataTypes} args.dataType - expected data type.
+     * @returns {Promise<Object>}
      */
-    upload(serverId, index, subIndex=null, timeout=30) {
+    upload({serverId, index, subIndex=null, timeout=30, dataType=null}) {
         let server = this._servers[serverId];
         if(server === undefined) {
             if(this._servers[0] === undefined)
@@ -294,18 +297,27 @@ class SDO {
             });
         });
 
+        if(dataType) {
+            server.pending = server.pending.then((data) => {
+                return rawToType(data, dataType);
+            });
+        }
+
         return server.pending;
     }
 
     /** Service: SDO download.
-     * @param {number} serverId - SDO server.
-     * @param {Buffer} data - data to download.
-     * @param {number} index - index or name to download to.
-     * @param {number} subIndex - data subIndex to download to.
-     * @param {number} timeout - time before transfer is aborted.
+     *
+     * @param {Object} args
+     * @param {number} args.serverId - SDO server.
+     * @param {Object} args.data - data to download.
+     * @param {number} args.index - index or name to download to.
+     * @param {number} args.subIndex - data subIndex to download to.
+     * @param {number} args.timeout - time before transfer is aborted.
+     * @param {dataTypes} args.dataType - type of data to download.
      * @return {Promise}
      */
-    download(serverId, data, index, subIndex=null, timeout=30) {
+    download({serverId, data, index, subIndex=null, timeout=30, dataType=null}) {
         let server = this._servers[serverId];
         if(server === undefined) {
             // Attempt to use default server
@@ -322,8 +334,14 @@ class SDO {
         if(index === undefined)
             throw ReferenceError("Must provide an index.");
 
-        if(!Buffer.isBuffer(data))
-            throw ReferenceError("Must provide a Buffer.");
+        if(!Buffer.isBuffer(data)) {
+            if(!dataType)
+                throw ReferenceError("Must provide dataType.");
+
+            data = typeToRaw(data, dataType);
+            if(data === undefined)
+                throw TypeError(`Failed to convert data to type ${dataType}`);
+        }
 
         server.pending = server.pending.then(() => {
             return new Promise((resolve, reject) => {
@@ -706,7 +724,10 @@ class SDO {
                 entry.raw = raw;
             }
             catch(error) {
-                return transfer.abort(error.code);
+                if(error instanceof COError)
+                    return transfer.abort(error.code);
+
+                throw error;
             }
 
             transfer.resolve();

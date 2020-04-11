@@ -44,14 +44,19 @@ node.start();
 
 /** Step 5: Write data to the server then read it back. */
 const date = new Date();
-
 const VISIBLE_STRING = EDS.dataTypes.VISIBLE_STRING;
-const data = EDS.typeToRaw(date.toString(), VISIBLE_STRING);
 
-node.SDO.download(0xD, data, 0x2000).then(() => {
-    node.SDO.upload(0xD, 0x2000).then((data) => {
-        const value = EDS.rawToType(data, VISIBLE_STRING);
-        console.log(value);
-        process.exit()
-    });
+node.SDO.download({
+    serverId: 0xD,
+    data: date.toString(),
+    dataType: VISIBLE_STRING,
+    index: 0x2000
 })
+.then(() => {
+    node.SDO.upload({serverId: 0xD, index: 0x2000})
+        .then((data) => {
+            const value = EDS.rawToType(data, VISIBLE_STRING);
+            console.log(value);
+            process.exit()
+        });
+});

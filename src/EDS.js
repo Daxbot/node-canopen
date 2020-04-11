@@ -76,6 +76,9 @@ const dataTypes = {
  * @memberof EDS
  */
 function rawToType(raw, dataType) {
+    if(typeof dataType === 'string')
+        dataType = dataTypes[dataType];
+
     switch(dataType) {
         case dataTypes.BOOLEAN:
             return !!raw.readUInt8();
@@ -83,14 +86,26 @@ function rawToType(raw, dataType) {
             return raw.readInt8();
         case dataTypes.INTEGER16:
             return raw.readInt16LE();
+        case dataTypes.INTEGER24:
+            return raw.readIntLE(0, 3);
         case dataTypes.INTEGER32:
             return raw.readInt32LE();
+        case dataTypes.INTEGER40:
+            return raw.readIntLE(0, 5);
+        case dataTypes.INTEGER48:
+            return raw.readIntLE(0, 6);
         case dataTypes.UNSIGNED8:
             return raw.readUInt8();
         case dataTypes.UNSIGNED16:
             return raw.readUInt16LE();
+        case dataTypes.UNSIGNED24:
+            return raw.readUIntLE(0, 3);
         case dataTypes.UNSIGNED32:
             return raw.readUInt32LE();
+        case dataTypes.UNSIGNED40:
+            return raw.readUIntLE(0, 5);
+        case dataTypes.UNSIGNED48:
+            return raw.readUIntLE(0, 6);
         case dataTypes.REAL32:
             return raw.readFloatLE();
         case dataTypes.REAL64:
@@ -101,9 +116,9 @@ function rawToType(raw, dataType) {
             return raw.toString();
         case dataTypes.TIME_OF_DAY:
         case dataTypes.TIME_DIFFERENCE:
-            const ms = raw.readUInt32LE();
+            const ms = raw.readUInt32LE(0);
             const days = raw.readUInt16LE(4);
-            return new Date(days*8.64e7 + ms);
+            return new Date(days * 8.64e7 + ms);
         default:
             return raw;
     }
@@ -119,45 +134,61 @@ function typeToRaw(value, dataType) {
     if(value === null)
         value = 0;
 
+    if(typeof dataType === 'string')
+        dataType = dataTypes[dataType];
+
     let raw;
-    switch(parseInt(dataType)) {
+    switch(dataType) {
         case dataTypes.BOOLEAN:
             raw = Buffer.from(value ? [1] : [0] );
             break;
         case dataTypes.INTEGER8:
+            raw = Buffer.alloc(1);
+            raw.writeInt8(value)
+            break;
         case dataTypes.UNSIGNED8:
-            raw = Buffer.from([value & 0xFF]);
+            raw = Buffer.alloc(1);
+            raw.writeUInt8(value)
             break;
         case dataTypes.INTEGER16:
+            raw = Buffer.alloc(2);
+            raw.writeInt16LE(value);
+            break;
         case dataTypes.UNSIGNED16:
-            raw = Buffer.from([
-                (value >>> 0) & 0xFF,
-                (value >>> 8) & 0xFF,
-            ]);
+            raw = Buffer.alloc(2);
+            raw.writeUInt16LE(value);
             break;
         case dataTypes.INTEGER24:
+            raw = Buffer.alloc(3);
+            raw.writeIntLE(value, 0, 3);
+            break;
         case dataTypes.UNSIGNED24:
             raw = Buffer.alloc(3);
-            for(let i = 0; i < 3; i++)
-                raw[i] = ((value >>> i*8) & 0xFF);
+            raw.writeUIntLE(value, 0, 3);
             break;
         case dataTypes.INTEGER32:
+            raw = Buffer.alloc(4);
+            raw.writeInt32LE(value);
+            break;
         case dataTypes.UNSIGNED32:
             raw = Buffer.alloc(4);
-            for(let i = 0; i < 4; i++)
-                raw[i] = ((value >>> i*8) & 0xFF);
+            raw.writeUInt32LE(value);
             break;
         case dataTypes.INTEGER40:
+            raw = Buffer.alloc(5);
+            raw.writeIntLE(value, 0, 5);
+            break;
         case dataTypes.UNSIGNED40:
             raw = Buffer.alloc(5);
-            for(let i = 0; i < 5; i++)
-                raw[i] = ((value >>> i*8) & 0xFF);
+            raw.writeUIntLE(value, 0, 5);
             break;
         case dataTypes.INTEGER48:
+            raw = Buffer.alloc(6);
+            raw.writeIntLE(value, 0, 6);
+            break;
         case dataTypes.UNSIGNED48:
             raw = Buffer.alloc(6);
-            for(let i = 0; i < 6; i++)
-                raw[i] = ((value >>> i*8) & 0xFF);
+            raw.writeUIntLE(value, 0, 6);
             break;
         case dataTypes.INTEGER56:
         case dataTypes.UNSIGNED56:
@@ -188,16 +219,13 @@ function typeToRaw(value, dataType) {
         case dataTypes.TIME_DIFFERENCE:
             raw = Buffer.alloc(6);
             if(util.types.isDate(value)) {
-                const midnight = new Date(
-                    value.getFullYear(), value.getMonth(), value.getDate());
+                /* Days since epoch. */
+                const days = Math.floor(value.getTime() / 8.64e7);
 
                 /* Milliseconds since midnight. */
-                const ms = value.getTime() - midnight.getTime();
+                const ms = value.getTime() - (days * 8.64e7);
 
-                /* Days since epoch. */
-                const days = Math.floor(value/8.64e7);
-
-                raw.writeUInt32LE(ms);
+                raw.writeUInt32LE(ms, 0);
                 raw.writeUInt16LE(days, 4);
             }
             break;
