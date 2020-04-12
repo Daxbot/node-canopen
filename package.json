@@ -1,6 +1,6 @@
 {
   "name": "canopen",
-  "version": "2.1.7-beta",
+  "version": "2.2.0-beta",
   "description": "CANopen implementation for Javascript",
   "main": "index.js",
   "scripts": {
@@ -19,8 +19,7 @@
     "socketcan"
   ],
   "dependencies": {
-    "ini": "^1.3.5",
-    "socketcan": "^2.7.0"
+    "ini": "^1.3.5"
   },
   "devDependencies": {
     "chai": "^4.2.0",
