@@ -13,11 +13,11 @@ const {EDS} = require('./EDS');
  * provides methods for manipulating the object dictionary.
  *
  * @param {Object} args
- * @param {RawChannel} args.channel - socketcan RawChannel object.
  * @param {number} args.id - device identifier.
  * @param {EDS} args.eds - the device's electronic data sheet.
  * @param {boolean} args.loopback - enable loopback mode.
  *
+ * @emits 'message' on receiving a CAN message.
  * @emits 'emergency' on consuming an emergency object.
  * @emits 'nmtTimeout' on missing a tracked heartbeat.
  * @emits 'nmtChangeState' on change of NMT state.
@@ -28,36 +28,20 @@ const {EDS} = require('./EDS');
  * @emits 'pdo' on updating a mapped pdo object.
  */
 class Device extends EventEmitter {
-    constructor({channel, id, eds, loopback=false}) {
+    constructor({ id, eds, loopback=false }) {
         super();
-        if(loopback) {
-            this.channel = {
-                callbacks: [],
-                send: function(message) {
-                    //console.log("\t", message.id.toString(16), message.data);
-                    for(let i = 0; i < this.callbacks.length; i++)
-                        this.callbacks[i](message);
-                },
-                addListener: function(event, callback) {
-                    if(event == 'onMessage')
-                        this.callbacks.push(callback);
-                },
-                start: function() {
-                    return;
-                },
-            }
-        }
-        else {
-            if(!channel)
-                throw TypeError("Must provide channel (or use loopback mode)");
-
-            this.channel = channel;
-        }
 
         if(!id || id > 0x7F)
             throw RangeError("ID must be in range 1-127");
 
-        this.id = id;
+        this._id = id;
+        this._send = undefined;
+
+        if(loopback) {
+            this._send = function(message) {
+                this.receive(message);
+            }
+        }
 
         this._EDS = (eds) ? eds : new EDS();
         this._EMCY = new EMCY(this);
@@ -66,6 +50,10 @@ class Device extends EventEmitter {
         this._SDO = new SDO(this);
         this._SYNC = new SYNC(this);
         this._TIME = new TIME(this);
+    }
+
+    get id() {
+        return this._id;
     }
 
     get dataObjects() {
@@ -100,6 +88,13 @@ class Device extends EventEmitter {
         return this._TIME;
     }
 
+    /** Set the send function.
+     * @param {Function} send - send function.
+     */
+    transmit(send) {
+        this._send = send;
+    }
+
     /** Initialize the device and audit the object dictionary. */
     init() {
         this.EMCY.init();
@@ -116,8 +111,33 @@ class Device extends EventEmitter {
         try { this.PDO.start(); } catch(e) {};
         try { this.SYNC.start(); } catch(e) {};
 
-        this.channel.start();
         this.NMT.startNode(this.id);
+    }
+
+    /** Called with each outgoing CAN message.
+     *
+     * @param {Object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
+     */
+    send(message) {
+        if(this._send === undefined)
+            throw ReferenceError("Must provide a send method!");
+
+        this._send(message);
+    }
+
+    /** Call with each incoming CAN message.
+     *
+     * @param {Object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
+     */
+    receive(message) {
+        if(message)
+            this.emit('message', message);
     }
 
     /** Get the value of a DataObject.

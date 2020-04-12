@@ -7,11 +7,11 @@
 const {EDS, Device} = require('../index.js');
 const can = require('socketcan');
 
-/** Step 1: Create a new socketcan RawChannel object. */
-const channel = can.createRawChannel('vcan0');
+/** Step 1: Create a new Device. */
+node = new Device({ id: 0xD });
 
-/** Step 2: Create a new Device. */
-node = new Device({ id: 0xD, channel: channel });
+/** Step 2: Create a new socketcan RawChannel object. */
+const channel = can.createRawChannel('vcan0');
 
 /** Step 3: Configure the SDO server parameters. */
 node.EDS.addEntry(0x1200, {
@@ -45,7 +45,11 @@ const obj2000 = node.EDS.getEntry(0x2000);
 obj2000.addListener('update', (data) => { console.log(data.value); });
 
 /** Step 6: Initialize and start the node. */
+channel.addListener('onMessage', (message) => { node.receive(message); });
+node.transmit((message) => { channel.send(message); });
+
 node.init();
 node.start();
+channel.start();
 
 console.log("Press Ctrl-C to quit");

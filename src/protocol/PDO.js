@@ -36,7 +36,7 @@ class PDO {
             }
         }
 
-        this._device.channel.addListener("onMessage", this._onMessage.bind(this));
+        this._device.addListener('message', this._onMessage.bind(this));
     }
 
     /** Begin TPDO generation. */
@@ -147,15 +147,15 @@ class PDO {
         }
 
         if(!update || dataUpdated)
-            this._device.channel.send({ id: cobId, data: data });
+            this._device.send({ id: cobId, data: data });
     }
 
-    /** socketcan 'onMessage' listener.
+    /** Called when a new CAN message is received.
      * @private
      * @param {Object} message - CAN frame.
      */
     _onMessage(message) {
-        if(!message || message.id < 0x180 || message.id >= 0x580)
+        if(message.id < 0x180 || message.id >= 0x580)
             return;
 
         const updated = [];

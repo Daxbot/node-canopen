@@ -10,12 +10,6 @@ describe('Device', function() {
         new Device({ id: 0xA, loopback: true });
     });
 
-    it('should require channel if not in loopback', function() {
-        expect(() => {
-            new Device({ channel: null, id: 0xA});
-        }).to.throw(TypeError);
-    });
-
     it('should require id be in range 1-127', function() {
         expect(() => {
             new Device({id: null, loopback: true });

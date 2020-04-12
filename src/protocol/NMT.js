@@ -110,8 +110,7 @@ class NMT {
             obj1017.addListener('update', this._parse1017.bind(this));
         }
 
-        this._device.channel.addListener(
-            'onMessage', this._onMessage.bind(this));
+        this._device.addListener('message', this._onMessage.bind(this));
     }
 
     /** Begin heartbeat generation. */
@@ -179,7 +178,7 @@ class NMT {
         this._sendNMT(nodeId, commands.RESET_COMMUNICATION);
     }
 
-    /** Serve an NMT command object to the channel.
+    /** Serve an NMT command object.
      * @private
      * @param {number} command - NMT command to serve.
      */
@@ -187,17 +186,17 @@ class NMT {
         if(nodeId == this._device.id)
             this._handleNMT(command);
 
-        this._device.channel.send({
+        this._device.send({
             id:     0x0,
             data:   Buffer.from([nodeId, command]),
         });
     }
 
-    /** Serve a Heartbeat object to the channel.
+    /** Serve a Heartbeat object.
      * @private
      */
     _sendHeartbeat() {
-        this._device.channel.send({
+        this._device.send({
             id: 0x700 + this._device.id,
             data: Buffer.from([this.state])
         });
@@ -226,14 +225,11 @@ class NMT {
         }
     }
 
-    /** socketcan 'onMessage' listener.
+    /** Called when a new CAN message is received.
      * @private
      * @param {Object} message - CAN frame.
      */
     _onMessage(message) {
-        if(!message)
-            return;
-
         if((message.id & 0x7FF) == 0x0) {
             if(message.data[1] != this._device.id)
                 this._handleNMT(message.data[0]);

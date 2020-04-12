@@ -130,8 +130,7 @@ class SYNC {
             this._parse1005(obj1005);
             obj1005.addListener('update', this._parse1005.bind(this));
 
-            this._device.channel.addListener(
-                "onMessage", this._onMessage.bind(this));
+            this._device.addListener('message', this._onMessage.bind(this));
         }
 
         /* Object 0x1006 - Communication cycle period. */
@@ -185,23 +184,24 @@ class SYNC {
             throw TypeError('SYNC generation is disabled.');
 
         const data = (counter) ? Buffer.from([counter]) : Buffer.alloc(0);
-        this._device.channel.send({
+        this._device.send({
             id:     this.cobId,
             data:   data,
         });
     }
 
-    /** socketcan 'onMessage' listener.
+    /** Called when a new CAN message is received.
      * @private
      * @param {Object} message - CAN frame.
      */
     _onMessage(message) {
-        if(message && (message.id & 0x7FF) == this._cobId) {
-            if(message.data)
-                this._device.emit('sync', message.data[1]);
-            else
-                this._device.emit('sync');
-        }
+        if((message.id & 0x7FF) != this._cobId)
+            return;
+
+        if(message.data)
+            this._device.emit('sync', message.data[1]);
+        else
+            this._device.emit('sync');
     }
 
     /** Called when 0x1005 (COB-ID SYNC) is updated.

@@ -47,7 +47,7 @@ describe('NMT', function() {
             node.NMT.producerTime = 10;
             node.init();
 
-            node.channel.addListener('onMessage', () => { done(); });
+            node.addListener('message', () => { done(); });
             node.NMT._sendHeartbeat();
         });
     });

@@ -111,7 +111,7 @@ describe('PDO', function() {
         node.setValueArray(0x1A00, 0, 1);
 
         node.init();
-        node.channel.addListener('onMessage', () => { done(); });
+        node.addListener('message', () => { done(); });
         node.PDO.write(0x18A);
     });
 

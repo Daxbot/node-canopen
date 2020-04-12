@@ -105,7 +105,7 @@ class Transfer {
         sendBuffer.writeUInt8(this.subIndex, 3);
         sendBuffer.writeUInt32LE(code, 4);
 
-        this.device.channel.send({
+        this.device.send({
             id:     this.cobId,
             data:   sendBuffer,
         });
@@ -242,7 +242,7 @@ class SDO {
             }
         }
 
-        this._device.channel.addListener('onMessage', this._onMessage.bind(this));
+        this._device.addListener('message', this._onMessage.bind(this));
     }
 
     /** Service: SDO upload
@@ -288,7 +288,7 @@ class SDO {
                 sendBuffer.writeUInt16LE(index, 1);
                 sendBuffer.writeUInt8(subIndex, 3);
 
-                this._device.channel.send({
+                this._device.send({
                     id:     server.cobIdTx,
                     data:   sendBuffer
                 });
@@ -377,7 +377,7 @@ class SDO {
                     data.copy(sendBuffer, 4);
                 }
 
-                this._device.channel.send({
+                this._device.send({
                     id:     server.cobIdTx,
                     data:   sendBuffer
                 });
@@ -408,7 +408,7 @@ class SDO {
             if(data[0] & 0x1)
                 transfer.size = data.readUInt32LE(4);
 
-            transfer.device.channel.send({
+            transfer.device.send({
                 id: transfer.cobId,
                 data: sendBuffer
             });
@@ -445,7 +445,7 @@ class SDO {
             const header = (CCS.UPLOAD_SEGMENT << 5) | (transfer.toggle << 4);
             sendBuffer.writeUInt8(header);
 
-            transfer.device.channel.send({
+            transfer.device.send({
                 id:     transfer.cobId,
                 data:   sendBuffer
             });
@@ -475,7 +475,7 @@ class SDO {
 
         sendBuffer.writeUInt8(header);
 
-        transfer.device.channel.send({
+        transfer.device.send({
             id:     transfer.cobId,
             data:   sendBuffer,
         });
@@ -513,7 +513,7 @@ class SDO {
 
         sendBuffer.writeUInt8(header);
 
-        transfer.device.channel.send({
+        transfer.device.send({
             id:     transfer.cobId,
             data:   sendBuffer,
         });
@@ -563,7 +563,7 @@ class SDO {
             sendBuffer.writeUInt16LE(transfer.index, 1);
             sendBuffer.writeUInt8(transfer.subIndex, 3);
 
-            transfer.device.channel.send({
+            transfer.device.send({
                 id:     transfer.cobId,
                 data:   sendBuffer,
             });
@@ -579,7 +579,7 @@ class SDO {
             sendBuffer.writeUInt16LE(transfer.index, 1);
             sendBuffer.writeUInt8(transfer.subIndex, 3);
 
-            this._device.channel.send({
+            this._device.send({
                 id:     transfer.cobId,
                 data:   sendBuffer,
             });
@@ -626,7 +626,7 @@ class SDO {
             if(entry.size < 4)
                 sendBuffer[0] |= ((4 - entry.size) << 2) | 0x1;
 
-            transfer.device.channel.send({
+            transfer.device.send({
                 id:     transfer.cobId,
                 data:   sendBuffer,
             });
@@ -645,7 +645,7 @@ class SDO {
             sendBuffer.writeUInt8(transfer.subIndex, 3);
             sendBuffer.writeUInt32LE(transfer.data.length, 4);
 
-            transfer.device.channel.send({
+            transfer.device.send({
                 id:     transfer.cobId,
                 data:   sendBuffer,
             });
@@ -678,7 +678,7 @@ class SDO {
         transfer.toggle ^= 1;
         transfer.size += count;
 
-        this._device.channel.send({
+        this._device.send({
             id:     transfer.cobId,
             data:   sendBuffer,
         });
@@ -739,7 +739,7 @@ class SDO {
         sendBuffer.writeUInt8(header);
         transfer.toggle ^= 1;
 
-        transfer.device.channel.send({
+        transfer.device.send({
             id:     transfer.cobId,
             data:   sendBuffer,
         });
@@ -747,14 +747,11 @@ class SDO {
         transfer.refresh();
     }
 
-    /** socketcan 'onMessage' listener.
+    /** Called when a new CAN message is received.
      * @private
      * @param {Object} message - CAN frame.
      */
     _onMessage(message) {
-        if(!message)
-            return;
-
         /* Handle transfers as a client (remote object dictionary). */
         const serverTransfer = this._serverTransfers[message.id];
         if(serverTransfer) {

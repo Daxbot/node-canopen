@@ -6,11 +6,11 @@
 const {EDS, Device} = require('../index.js');
 const can = require('socketcan');
 
-/** Step 1: Create a new socketcan RawChannel object. */
-const channel = can.createRawChannel('vcan0');
+/** Step 1: Create a new Device. */
+node = new Device({ id: 0x9 });
 
-/** Step 2: Create a new Device. */
-node = new Device({ id: 0x9, channel: channel });
+/** Step 2: Create a new socketcan RawChannel object. */
+const channel = can.createRawChannel('vcan0');
 
 /** Step 3: Configure the TPDO communication and mapping parameters. */
 node.EDS.addEntry(0x1800, {
@@ -70,8 +70,12 @@ node.setValueArray(0x1A00, 1, (0x2000 << 16) | 32);
 node.setValueArray(0x1A00, 0, 1);
 
 /** Step 6: Initialize and start the node. */
+channel.addListener('onMessage', (message) => { node.receive(message); });
+node.transmit((message) => { channel.send(message); });
+
 node.init();
 node.start();
+channel.start();
 
 /** Step 7: Trigger the TPDO. */
 node.PDO.write(0x180 + node.id);

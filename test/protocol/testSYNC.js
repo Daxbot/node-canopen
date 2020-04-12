@@ -96,7 +96,7 @@ describe('SYNC', function() {
             node.SYNC.cyclePeriod = 100;
             node.init();
 
-            node.channel.addListener('onMessage', () => { done(); });
+            node.addListener('message', () => { done(); });
             node.SYNC.write();
         });
 
@@ -107,7 +107,7 @@ describe('SYNC', function() {
             node.SYNC.overflow = 255;
             node.init();
 
-            node.channel.addListener('onMessage', (msg) => {
+            node.addListener('message', (msg) => {
                 if(msg.data[0] > 10) {
                     node.SYNC.stop();
                     done();

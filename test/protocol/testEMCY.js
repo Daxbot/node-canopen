@@ -80,7 +80,7 @@ describe('EMCY', function() {
         });
 
         it('should produce an emergency object', function(done) {
-            node.channel.addListener('onMessage', () => { done(); });
+            node.addListener('message', () => { done(); });
             node.EMCY.write(0x1000);
         });
     });

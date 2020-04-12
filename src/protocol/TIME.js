@@ -109,8 +109,7 @@ class TIME {
             this._parse1012(obj1012);
             obj1012.addListener('update', this._parse1012.bind(this));
 
-            this._device.channel.addListener(
-                "onMessage", this._onMessage.bind(this));
+            this._device.addListener('message', this._onMessage.bind(this));
         }
     }
 
@@ -122,24 +121,22 @@ class TIME {
             throw TypeError('TIME production is disabled.');
 
         const data = EDS.typeToRaw(date, TIME_OF_DAY);
-        this._device.channel.send({
+        this._device.send({
             id:     this.cobId,
             data:   data,
         });
     }
 
-    /** socketcan 'onMessage' listener.
+    /** Called when a new CAN message is received.
      * @private
      * @param {Object} message - CAN frame.
      */
     _onMessage(message) {
-        if(!this.consume)
+        if(!this.consume || (message.id & 0x7FF) != this.cobId)
             return;
 
-        if(message && (message.id & 0x7FF) == this.cobId) {
-            const date = EDS.rawToType(message.data, TIME_OF_DAY);
-            this._device.emit('time', date);
-        }
+        const date = EDS.rawToType(message.data, TIME_OF_DAY);
+        this._device.emit('time', date);
     }
 
     /** Called when 0x1012 (COB-ID TIME) is updated.

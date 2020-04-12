@@ -62,7 +62,7 @@ describe('TIME', function() {
             node.TIME.consume = true;
             node.init();
 
-            node.channel.addListener('onMessage', () => { done(); });
+            node.addListener('message', () => { done(); });
             node.TIME.write();
         });
     });
