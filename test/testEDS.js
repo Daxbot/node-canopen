@@ -50,6 +50,14 @@ describe('EDS', function() {
                 expect(loadFile.creationDate.getTime()).to.equal(date.getTime()),
             ])
         });
+
+        it('should create a raw entry if there is a DefaultValue', function() {
+            const loadFile = new EDS.EDS();
+            loadFile.load('test/sample.eds');
+
+            const entry = loadFile.getSubEntry('DeviceInfo', 0)
+            expect(entry.raw).to.not.be.undefined
+        });
     });
 
     describe('Add entry', function() {

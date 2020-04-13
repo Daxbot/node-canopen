@@ -25,7 +25,8 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "documentation": "^8.1.2",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "socketcan": "^2.7.1"
   },
   "engines": {
     "node": ">=10"

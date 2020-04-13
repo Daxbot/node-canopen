@@ -537,7 +537,7 @@ class SDO {
                 return transfer.abort(0x06020000);
 
             if(entry.subNumber > 0) {
-                entry = entry[subIndex];
+                entry = entry[transfer.subIndex];
                 if(!entry)
                     return transfer.abort(0x06090011);
             }
@@ -602,7 +602,7 @@ class SDO {
             return transfer.abort(0x06020000);
 
         if(entry.subNumber > 0) {
-            entry = entry[subIndex];
+            entry = entry[transfer.subIndex];
             if(!entry)
                 return transfer.abort(0x06090011);
         }
@@ -707,7 +707,7 @@ class SDO {
                 return transfer.abort(0x06020000);
 
             if(entry.subNumber > 0) {
-                entry = entry[subIndex];
+                entry = entry[transfer.subIndex];
                 if(!entry)
                     return transfer.abort(0x06090011);
             }
