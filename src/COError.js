@@ -48,7 +48,9 @@ class COError extends Error {
         if(message === undefined)
             message = "Unknown error"
 
-        let tag = `0x${index.toString(16)}`;
+        let tag = index
+        if (typeof index === 'number')
+            tag = `0x${index.toString(16)}`;
         if(subIndex !== null)
             tag += `.${subIndex.toString()}`;
 

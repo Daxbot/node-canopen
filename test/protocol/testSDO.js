@@ -142,6 +142,39 @@ describe('SDO', function() {
                 });
             });
         }
+
+        it('should be able to transfer with subindexes >= 1', async function() {
+            const testString = 'I am a quite a long string that will take multiple messages to transfer'
+            node.init();
+            node.EDS.addEntry(0x1234, {
+                ParameterName:    'Test entry',
+                ObjectType:       6,
+                SubNumber:        1
+            });
+            node.EDS.addSubEntry(0x1234, 0, {
+                ParameterName:      'A long name',
+                DataType:           EDS.dataTypes.VISIBLE_STRING,
+                AccessType:         EDS.accessTypes.READ_WRITE,
+                DefaultValue:       testString,
+            })
+
+            const result = await node.SDO.upload({
+                serverId: node.id,
+                index: 0x1234,
+                subIndex: 0,
+                dataType: EDS.dataTypes.VISIBLE_STRING
+            });
+
+            expect(result).to.equal(testString)
+
+            return node.SDO.download({
+                serverId: node.id,
+                data: result,
+                dataType: EDS.dataTypes.VISIBLE_STRING,
+                index: 0x1234,
+                subIndex: 0
+            })
+        })
     });
 
     describe('Error handling', function() {
@@ -154,7 +187,7 @@ describe('SDO', function() {
                 serverId: 0x1,
                 index: 0x1000,
                 subIndex: 1
-            })).to.be.rejectedWith(COError);
+            })).to.be.rejectedWith("SDO protocol timed out");
         });
     });
 });

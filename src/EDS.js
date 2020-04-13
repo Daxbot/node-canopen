@@ -450,7 +450,7 @@ class DataObject extends EventEmitter {
 
         /* Create raw data buffer. */
         if(DefaultValue !== undefined) {
-            this._raw = typeToRaw(DefaultValue, DataType);
+            this._raw = typeToRaw(DefaultValue, parseInt(DataType));
             Object.defineProperty(this, '_raw', {
                 enumerable: false,
             });
@@ -810,7 +810,7 @@ class EDS {
      * @return {DataObject} - the sub-entry at index.
      */
     getSubEntry(index, subIndex) {
-        const entry = this._dataObjects[index];
+        const entry = this.getEntry(index);
         if(!entry)
             throw new COError(0x06020000, index, subIndex);
         else if(entry.SubNumber === undefined)
