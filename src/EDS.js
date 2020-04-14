@@ -546,7 +546,7 @@ class DataObject extends EventEmitter {
         if(raw === undefined)
             raw = typeToRaw(value, this.dataType);
 
-        if(Buffer.compare(raw, this.raw) == 0)
+        if(this.raw !== undefined && Buffer.compare(raw, this.raw) == 0)
             return;
 
         if(!this.accessType.includes('w'))
@@ -673,7 +673,7 @@ class EDS {
                     this.addSubEntry(index, subIndex, value);
                 }
                 catch(error) {
-                    const load_error = COError(0x08000023, index, subIndex);
+                    const load_error = new COError(0x08000023, index, subIndex);
                     load_error.stack = error.stack;
                     throw load_error;
                 }
