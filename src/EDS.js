@@ -211,6 +211,11 @@ function typeToRaw(value, dataType) {
             raw.writeDoubleLE(value);
             break;
         case dataTypes.VISIBLE_STRING:
+            raw = (value) ? Buffer.from(value) : Buffer.alloc(0);
+            const end = raw.indexOf('\0');
+            if(end != -1)
+                raw = raw.substring(0, end);
+            break;
         case dataTypes.OCTET_STRING:
         case dataTypes.UNICODE_STRING:
             raw = (value) ? Buffer.from(value) : Buffer.alloc(0);
