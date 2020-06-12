@@ -161,11 +161,7 @@ class EMCY {
      * @return {number} - COB-ID.
      */
     get cobId() {
-        let cobId = this._cobId;
-        if(cobId | 0xF == 0x0)
-            cobId |= this._device.id;
-
-        return cobId;
+        return this._cobId;
     }
 
     /** Set the inhibit time.
@@ -233,9 +229,13 @@ class EMCY {
                     const register = this._device.getValue(0x1001);
                     const em = new EmergencyMessage(code, register, info);
 
+                    let cobId = this.cobId;
+                    if((cobId & 0xF) == 0)
+                        cobId |= this._device.id;
+
                     /* Send object. */
                     this._device.send({
-                        id:     this.cobId,
+                        id:     cobId,
                         data:   em.toBuffer(),
                     });
 
@@ -252,34 +252,38 @@ class EMCY {
      * @param {Object} message - CAN frame.
      */
     _onMessage(message) {
-        if((message.id & 0x7FF) != this.cobId)
+        const mask = (this.cobId & 0xF) ? 0x7FF : 0x7F0;
+        if((message.id & mask) != this.cobId)
             return;
 
+        const deviceId = message.id & 0xF;
         const code = message.data.readUInt16LE(0);
         const reg = message.data.readUInt8(2);
         const em = new EmergencyMessage(code, reg, message.data.slice(5));
 
-        /* Object 0x1001 - Error register. */
-        const obj1001 = this._device.EDS.getEntry(0x1001);
-        obj1001.raw.writeUInt8(reg);
+        if(deviceId == this._device.id) {
+            /* Object 0x1001 - Error register. */
+            const obj1001 = this._device.EDS.getEntry(0x1001);
+            obj1001.raw.writeUInt8(reg);
 
-        /* Object 0x1003 - Pre-defined error field. */
-        const obj1003 = this._device.EDS.getEntry(0x1003);
-        if(obj1003) {
-            /* Shift out oldest value. */
-            const errorCount = obj1003[0].value;
-            for(let i = errorCount; i > 1; --i)
-                obj1003[i-1].raw.copy(obj1003[i].raw);
+            /* Object 0x1003 - Pre-defined error field. */
+            const obj1003 = this._device.EDS.getEntry(0x1003);
+            if(obj1003) {
+                /* Shift out oldest value. */
+                const errorCount = obj1003[0].value;
+                for(let i = errorCount; i > 1; --i)
+                    obj1003[i-1].raw.copy(obj1003[i].raw);
 
-            /* Set new code at sub-index 1. */
-            obj1003[1].raw.writeUInt16LE(code);
+                /* Set new code at sub-index 1. */
+                obj1003[1].raw.writeUInt16LE(code);
 
-            /* Update error count. */
-            if(errorCount < (obj1003.subNumber - 1))
-                obj1003.raw.writeUInt8(errorCount + 1);
+                /* Update error count. */
+                if(errorCount < (obj1003.subNumber - 1))
+                    obj1003.raw.writeUInt8(errorCount + 1);
+            }
         }
 
-        this._device.emit('emergency', this._deviceId, em);
+        this._device.emit('emergency', deviceId, em);
     }
 
     /** Called when 0x1014 (COB-ID EMCY) is updated.
