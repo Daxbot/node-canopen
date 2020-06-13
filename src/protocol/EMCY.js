@@ -259,7 +259,7 @@ class EMCY {
         const deviceId = message.id & 0xF;
         const code = message.data.readUInt16LE(0);
         const reg = message.data.readUInt8(2);
-        const em = new EmergencyMessage(code, reg, message.data.slice(5));
+        const em = new EmergencyMessage(code, reg, message.data.slice(3));
 
         if(deviceId == this._device.id) {
             /* Object 0x1001 - Error register. */
