@@ -1,6 +1,6 @@
 {
   "name": "canopen",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "description": "CANopen implementation for Javascript",
   "main": "index.js",
   "scripts": {
@@ -30,6 +30,11 @@
     "chai-as-promised": "^7.1.1",
     "chai-bytes": "^0.1.2",
     "documentation": "^8.1.2",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "acorn": ">=5.7.4",
+    "websocket-extensions": ">=0.1.4",
+    "lodash": ">=4.17.20",
+    "minimist": ">=0.2.1",
+    "kind-of": ">=6.0.3"
   }
 }
