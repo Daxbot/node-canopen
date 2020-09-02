@@ -92,7 +92,8 @@ class Network extends EventEmitter {
         }
         else if((message.id & 0x7F0) == 0x80) {
             const deviceId = (message.id & 0x00F);
-            this.emit('Emergency', deviceId, EMCY.receive(message));
+            if(deviceId > 0)
+                this.emit('Emergency', deviceId, EMCY.receive(message));
         }
     }
 }
