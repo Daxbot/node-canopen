@@ -183,12 +183,12 @@ class NMT {
      * @param {number} command - NMT command to serve.
      */
     _sendNMT(nodeId, command) {
-        if(nodeId == this._device.id)
+        if(nodeId == 0 || nodeId == this._device.id)
             this._handleNMT(command);
 
         this._device.send({
             id:     0x0,
-            data:   Buffer.from([nodeId, command]),
+            data:   Buffer.from([command, nodeId]),
         });
     }
 
@@ -231,7 +231,8 @@ class NMT {
      */
     _onMessage(message) {
         if((message.id & 0x7FF) == 0x0) {
-            if(message.data[1] != this._device.id)
+            const nodeId = message.data[1];
+            if(nodeId == 0 || nodeId == this._device.id)
                 this._handleNMT(message.data[0]);
         }
         else if((message.id & 0x700) == 0x700) {
