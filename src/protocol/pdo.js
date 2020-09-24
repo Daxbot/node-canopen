@@ -168,6 +168,9 @@ class PDO {
                 const entry = this._device.dataObjects[index];
                 const size = entry.raw.length;
 
+                if(message.data.length < dataOffset + size)
+                    continue;
+
                 message.data.copy(entry.raw, 0, dataOffset, dataOffset + size);
                 dataOffset += size;
 
