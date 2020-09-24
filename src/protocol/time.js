@@ -1,4 +1,4 @@
-const EDS = require('../EDS');
+const EDS = require('../eds.js');
 const TIME_OF_DAY = EDS.dataTypes.TIME_OF_DAY;
 
 /** CANopen TIME protocol handler.

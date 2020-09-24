@@ -3,7 +3,7 @@ const ini = require('ini');
 const util = require('util');
 const { EOL } = require('os');
 const EventEmitter = require('events');
-const COError = require('./COError');
+const COError = require('./error');
 
 /** CANopen object types.
  * @const {number}

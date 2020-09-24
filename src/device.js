@@ -1,11 +1,11 @@
 const EventEmitter = require('events');
-const EMCY = require('./protocol/EMCY');
-const NMT = require ('./protocol/NMT');
-const PDO = require('./protocol/PDO');
-const SDO = require('./protocol/SDO');
-const SYNC = require('./protocol/SYNC');
-const TIME = require('./protocol/TIME');
-const {EDS} = require('./EDS');
+const EMCY = require('./protocol/emcy');
+const NMT = require ('./protocol/nmt');
+const PDO = require('./protocol/pdo');
+const SDO = require('./protocol/sdo');
+const SYNC = require('./protocol/sync');
+const TIME = require('./protocol/time');
+const {EDS} = require('./eds');
 
 /** A CANopen device.
  *

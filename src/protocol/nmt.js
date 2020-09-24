@@ -1,4 +1,4 @@
-const {EDS} = require('../EDS');
+const {EDS} = require('../eds');
 
 /** NMT internal states.
  * @private

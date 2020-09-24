@@ -1,5 +1,5 @@
-const {accessTypes, rawToType, typeToRaw} = require('../EDS');
-const COError = require('../COError');
+const {accessTypes, rawToType, typeToRaw} = require('../eds');
+const COError = require('../error');
 
  /** CANopen SDO 'Client Command Specifier' codes.
   * @private
