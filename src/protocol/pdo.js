@@ -183,7 +183,7 @@ class PDO {
         }
 
         if(updated.length > 0)
-            this._device.emit('pdo', updated);
+            this._device.emit('pdo', updated, message.id);
     }
 
     /** Parse a PDO communication/mapping parameter.
