@@ -329,12 +329,9 @@ class SDO {
                 if(ctx.size <= 4) {
                     // Expedited transfer
                     sendBuffer[0] = (CCS.DOWNLOAD_INITIATE << 5);
-                    sendBuffer[0] |= ((4-ctx.size) << 2) | 0x2;
+                    sendBuffer[0] |= ((4-ctx.size) << 2) | 0x3;
                     for(let i = 0; i < ctx.size; i++)
                         sendBuffer[4+i] = ctx.entry.data[ctx.subIndex].raw[i];
-
-                    if(ctx.size < 4)
-                        sendBuffer[0] |= ((4 - ctx.size) << 2) | 0x1;
                 }
                 else {
                     // Segmented transfer
@@ -390,7 +387,7 @@ class SDO {
                     this._clientUploadSegment(data);
                     break;
                 case SCS.DOWNLOAD_INITIATE:
-                    this._clientDownloadInitiate(data);
+                    this._clientDownloadInitiate();
                     break;
                 case SCS.DOWNLOAD_SEGMENT:
                     this._clientDownloadSegment(data);
@@ -524,7 +521,7 @@ class SDO {
      * @private
      * @param {Buffer} data - message data.
      */
-    _clientDownloadInitiate(data) {
+    _clientDownloadInitiate() {
         if(this.transfer.size <= 4) {
             // Expedited transfer
             this._clientResolve();
