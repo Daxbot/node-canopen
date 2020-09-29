@@ -111,7 +111,6 @@ function rawToType(raw, dataType) {
         case dataTypes.REAL64:
             return raw.readDoubleLE();
         case dataTypes.VISIBLE_STRING:
-        case dataTypes.OCTET_STRING:
         case dataTypes.UNICODE_STRING:
             return raw.toString();
         case dataTypes.TIME_OF_DAY:
