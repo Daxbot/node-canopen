@@ -422,9 +422,7 @@ class SDO {
                 }
                 else {
                     /* Expedited transfer. */
-                    header |= ((4-data.length) << 2) | 0x2;
-                    if(data.length < 4)
-                        header |= ((4 - data.length) << 2) | 0x1;
+                    header |= ((4-data.length) << 2) | 0x3;
 
                     sendBuffer.writeUInt8(header);
                     data.copy(sendBuffer, 4);
