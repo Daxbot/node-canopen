@@ -72,7 +72,7 @@ describe('SDO', function() {
             UNSIGNED24: 0x123456,
             UNSIGNED32: 0x12345678,
             VISIBLE_STRING: 'test',
-            OCTET_STRING: '1234',
+            OCTET_STRING: Buffer.from([1, 2, 3, 4]),
             UNICODE_STRING: '\u03b1',
             REAL32: 1.0,
         };
@@ -96,7 +96,10 @@ describe('SDO', function() {
                     });
                 })
                 .then((value) => {
-                    expect(value).to.equal(testValues[key]);
+                    if(Buffer.isBuffer(value))
+                        expect(Buffer.compare(value, testValues[key])).to.equal(0);
+                    else
+                        expect(value).to.equal(testValues[key]);
                 });
             });
         }
@@ -109,7 +112,7 @@ describe('SDO', function() {
             UNSIGNED40: 0x1234567890,
             UNSIGNED48: 0x1234567890AB,
             VISIBLE_STRING: 'long visible string',
-            OCTET_STRING: '12345678',
+            OCTET_STRING: Buffer.from([1, 2, 3, 4, 5, 6, 7, 8]),
             UNICODE_STRING: '\u03b1\u03b2\u03b3\u03b4\u03b5\u03b6',
             REAL64: Math.PI,
             TIME_OF_DAY: new Date(),
@@ -137,6 +140,8 @@ describe('SDO', function() {
                 .then((value) => {
                     if(value instanceof Date)
                         expect(value.getTime()).to.equal(testValues[key].getTime());
+                    else if(Buffer.isBuffer(value))
+                        expect(Buffer.compare(value, testValues[key])).to.equal(0);
                     else
                         expect(value).to.equal(testValues[key]);
                 });
