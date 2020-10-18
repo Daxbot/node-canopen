@@ -1,20 +1,21 @@
 const EventEmitter = require('events');
-const EMCY = require('./protocol/emcy');
-const NMT = require ('./protocol/nmt');
-const PDO = require('./protocol/pdo');
-const SDO = require('./protocol/sdo');
-const SYNC = require('./protocol/sync');
-const TIME = require('./protocol/time');
-const {EDS} = require('./eds');
+const { Emcy } = require('./protocol/emcy');
+const { Nmt } = require ('./protocol/nmt');
+const { Pdo } = require('./protocol/pdo');
+const { Sdo } = require('./protocol/sdo');
+const { Sync } = require('./protocol/sync');
+const { Time } = require('./protocol/time');
+const { Eds } = require('./eds');
 
-/** A CANopen device.
+/**
+ * A CANopen device.
  *
  * This class represents a single addressable device (or node) on the bus and
  * provides methods for manipulating the object dictionary.
  *
  * @param {Object} args
  * @param {number} args.id - device identifier.
- * @param {EDS} args.eds - the device's electronic data sheet.
+ * @param {Eds} args.eds - the device's electronic data sheet.
  * @param {boolean} args.loopback - enable loopback mode.
  *
  * @emits 'message' on receiving a CAN message.
@@ -34,7 +35,7 @@ class Device extends EventEmitter {
         if(!id || id > 0x7F)
             throw RangeError("ID must be in range 1-127");
 
-        this._id = id;
+        this.id = id;
         this._send = undefined;
 
         if(loopback) {
@@ -43,52 +44,21 @@ class Device extends EventEmitter {
             }
         }
 
-        this._EDS = (eds) ? eds : new EDS();
-        this._EMCY = new EMCY(this);
-        this._NMT = new NMT(this);
-        this._PDO = new PDO(this);
-        this._SDO = new SDO(this);
-        this._SYNC = new SYNC(this);
-        this._TIME = new TIME(this);
-    }
-
-    get id() {
-        return this._id;
+        this.eds = (eds) ? eds : new Eds();
+        this.emcy = new Emcy(this);
+        this.nmt = new Nmt(this);
+        this.pdo = new Pdo(this);
+        this.sdo = new Sdo(this);
+        this.sync = new Sync(this);
+        this.time = new Time(this);
     }
 
     get dataObjects() {
-        return this.EDS.dataObjects;
+        return this.eds.dataObjects;
     }
 
-    get EDS() {
-        return this._EDS;
-    }
-
-    get SDO() {
-        return this._SDO;
-    }
-
-    get PDO() {
-        return this._PDO;
-    }
-
-    get EMCY() {
-        return this._EMCY;
-    }
-
-    get NMT() {
-        return this._NMT;
-    }
-
-    get SYNC() {
-        return this._SYNC;
-    }
-
-    get TIME() {
-        return this._TIME;
-    }
-
-    /** Set the send function.
+    /**
+     * Set the send function.
      * @param {Function} send - send function.
      */
     transmit(send) {
@@ -97,25 +67,16 @@ class Device extends EventEmitter {
 
     /** Initialize the device and audit the object dictionary. */
     init() {
-        this.EMCY.init();
-        this.NMT.init();
-        this.PDO.init();
-        this.SDO.init();
-        this.SYNC.init();
-        this.TIME.init();
+        this.emcy.init();
+        this.nmt.init();
+        this.pdo.init();
+        this.sdo.init();
+        this.sync.init();
+        this.time.init();
     }
 
-    /** Starts the channel and any configured services. */
-    start() {
-        try { this.NMT.start(); } catch(e) {};
-        try { this.PDO.start(); } catch(e) {};
-        try { this.SYNC.start(); } catch(e) {};
-
-        this.NMT.startNode(this.id);
-    }
-
-    /** Called with each outgoing CAN message.
-     *
+    /**
+     * Called with each outgoing CAN message.
      * @param {Object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
@@ -128,8 +89,8 @@ class Device extends EventEmitter {
         this._send(message);
     }
 
-    /** Call with each incoming CAN message.
-     *
+    /**
+     * Call with each incoming CAN message.
      * @param {Object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
@@ -140,96 +101,104 @@ class Device extends EventEmitter {
             this.emit('message', message);
     }
 
-    /** Get the value of a DataObject.
+    /**
+     * Get the value of a DataObject.
      * @param {number | string} index - index or name of the DataObject.
      */
     getValue(index) {
-        const entry = this.EDS.getEntry(index);
+        const entry = this.eds.getEntry(index);
         if(!entry)
             throw ReferenceError("Entry does not exist");
 
         return entry.value;
     }
 
-    /** Get the value of a DataObject's sub-index.
+    /**
+     * Get the value of a DataObject's sub-index.
      * @param {number | string} index - index or name of the DataObject.
      * @param {number} subIndex - sub-object index.
      */
     getValueArray(index, subIndex) {
-        const entry = this.EDS.getSubEntry(index, subIndex);
+        const entry = this.eds.getSubEntry(index, subIndex);
         if(!entry)
             throw ReferenceError("Entry does not exist");
 
         return entry.value;
     }
 
-    /** Get the raw value of a DataObject.
+    /**
+     * Get the raw value of a DataObject.
      * @param {number | string} index - index or name of the DataObject.
      */
     getRaw(index) {
-        const entry = this.EDS.getEntry(index);
+        const entry = this.eds.getEntry(index);
         if(!entry)
             throw ReferenceError("Entry does not exist");
 
         return entry.raw;
     }
 
-    /** Get the raw value of a DataObject's sub-index.
+    /**
+     * Get the raw value of a DataObject's sub-index.
      * @param {number | string} index - index or name of the DataObject.
      * @param {number} subIndex - sub-object index.
      */
     getRawArray(index, subIndex) {
-        const entry = this.EDS.getSubEntry(index, subIndex);
+        const entry = this.eds.getSubEntry(index, subIndex);
         if(!entry)
             throw ReferenceError("Entry does not exist");
 
         return entry.raw;
     }
 
-    /** Set the value of a DataObject.
+    /**
+     * Set the value of a DataObject.
      * @param {number | string} index - index or name of the DataObject.
      * @param value - value to set.
      */
     setValue(index, value) {
-        const entry = this.EDS.getEntry(index);
+        const entry = this.eds.getEntry(index);
         if(!entry)
             throw ReferenceError("Entry does not exist");
 
         entry.value = value;
     }
 
-    /** Set the value of a DataObject's sub-index.
+    /**
+     * Set the value of a DataObject's sub-index.
      * @param {number | string} index - index or name of the DataObject.
      * @param {number} subIndex - array sub-index to set;
      * @param value - value to set.
      */
     setValueArray(index, subIndex, value) {
-        const entry = this.EDS.getSubEntry(index, subIndex);
+        const entry = this.eds.getSubEntry(index, subIndex);
         if(!entry)
             throw ReferenceError("Entry does not exist");
 
         entry.value = value;
     }
 
-    /** Set the raw value of a DataObject.
+    /**
+     * Set the raw value of a DataObject.
      * @param {number | string} index - index or name of the DataObject.
      * @param {Buffer} raw - raw Buffer to set.
      */
     setRaw(index, raw) {
-        const entry = this.EDS.getEntry(index);
+        const entry = this.eds.getEntry(index);
         if(!entry)
             throw ReferenceError("Entry does not exist");
 
         entry.raw = raw;
     }
 
-    /** Set the raw value of a DataObject's sub-index.
+    /**
+     * Set the raw value of a DataObject's sub-index.
      * @param {number | string} index - index or name of the DataObject.
      * @param {number} subIndex - sub-object index.
      * @param {Buffer} raw - raw Buffer to set.
      */
     setRawArray(index, subIndex, raw) {
-        const entry = this.EDS.getSubEntry(index, subIndex);
+        const entry = this.eds.getSubEntry(index, subIndex);
         if(!entry)
             throw ReferenceError("Entry does not exist");
 

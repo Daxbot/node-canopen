@@ -1,6 +1,6 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const { EDS, COError } = require('../index');
+const { Eds, DataType, AccessType, ObjectType } = require('../index');
 const fs = require('fs');
 
 const expect = chai.expect;
@@ -8,7 +8,7 @@ chai.use(chaiAsPromised);
 
 describe('EDS', function() {
     it('should be constructable', function() {
-        new EDS.EDS();
+        new Eds();
     });
 
     describe('File IO', function() {
@@ -34,8 +34,8 @@ describe('EDS', function() {
         });
 
         it('should save to and load from a file', function() {
-            const saveFile = new EDS.EDS();
-            const loadFile = new EDS.EDS();
+            const saveFile = new Eds();
+            const loadFile = new Eds();
             const date = new Date(0);
 
             saveFile.fileName = 'Test file';
@@ -52,7 +52,7 @@ describe('EDS', function() {
         });
 
         it('should create a raw entry if there is a DefaultValue', function() {
-            const loadFile = new EDS.EDS();
+            const loadFile = new Eds();
             loadFile.load('test/sample.eds');
 
             const entry = loadFile.getSubEntry('DeviceInfo', 0)
@@ -64,7 +64,7 @@ describe('EDS', function() {
         let eds;
 
         beforeEach(function() {
-            eds = new EDS.EDS();
+            eds = new Eds();
         });
 
         afterEach(function() {
@@ -74,8 +74,8 @@ describe('EDS', function() {
         it('should require ParameterName', function() {
             return expect(() => {
                 eds.addEntry(0x2000, {
-                    'DataType':         EDS.dataTypes.UNSIGNED8,
-                    'AccessType':       EDS.accessTypes.READ_WRITE,
+                    'DataType':         DataType.UNSIGNED8,
+                    'AccessType':       AccessType.READ_WRITE,
                 });
             }).to.throw(TypeError);
         });
@@ -85,8 +85,8 @@ describe('EDS', function() {
                 eds.addEntry(0x2000, {
                     'ParameterName':    'DataObject',
                     'ObjectType':       -1,
-                    'DataType':         EDS.dataTypes.UNSIGNED8,
-                    'AccessType':       EDS.accessTypes.READ_WRITE,
+                    'DataType':         DataType.UNSIGNED8,
+                    'AccessType':       AccessType.READ_WRITE,
                 });
             }).to.throw(TypeError);
         });
@@ -96,8 +96,8 @@ describe('EDS', function() {
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'VAR',
-                        'ObjectType':       EDS.objectTypes.VAR,
-                        'AccessType':       EDS.accessTypes.READ_WRITE,
+                        'ObjectType':       ObjectType.VAR,
+                        'AccessType':       AccessType.READ_WRITE,
                     });
                 }).to.throw(TypeError);
             });
@@ -105,8 +105,8 @@ describe('EDS', function() {
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'VAR',
-                        'ObjectType':       EDS.objectTypes.VAR,
-                        'DataType':         EDS.dataTypes.UNSIGNED8,
+                        'ObjectType':       ObjectType.VAR,
+                        'DataType':         DataType.UNSIGNED8,
                     });
                 }).to.throw(TypeError);
             });
@@ -114,9 +114,9 @@ describe('EDS', function() {
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'VAR',
-                        'ObjectType':       EDS.objectTypes.VAR,
-                        'DataType':         EDS.dataTypes.UNSIGNED8,
-                        'AccessType':       EDS.accessTypes.READ_WRITE,
+                        'ObjectType':       ObjectType.VAR,
+                        'DataType':         DataType.UNSIGNED8,
+                        'AccessType':       AccessType.READ_WRITE,
                         'SubNumber':        1,
                     }).to.throw(TypeError);
                 })
@@ -125,9 +125,9 @@ describe('EDS', function() {
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'VAR',
-                        'ObjectType':       EDS.objectTypes.VAR,
-                        'DataType':         EDS.dataTypes.UNSIGNED8,
-                        'AccessType':       EDS.accessTypes.READ_WRITE,
+                        'ObjectType':       ObjectType.VAR,
+                        'DataType':         DataType.UNSIGNED8,
+                        'AccessType':       AccessType.READ_WRITE,
                         'CompactSubObj':    true, // Not allowed
                     }).to.throw(TypeError);
                 })
@@ -135,9 +135,9 @@ describe('EDS', function() {
             it('should emit on value update', function(done) {
                 const obj = eds.addEntry(0x2000, {
                     'ParameterName':    'VAR',
-                    'ObjectType':       EDS.objectTypes.VAR,
-                    'DataType':         EDS.dataTypes.UNSIGNED8,
-                    'AccessType':       EDS.accessTypes.READ_WRITE,
+                    'ObjectType':       ObjectType.VAR,
+                    'DataType':         DataType.UNSIGNED8,
+                    'AccessType':       AccessType.READ_WRITE,
                 });
 
                 obj.addListener('update', () => { done(); });
@@ -151,7 +151,7 @@ describe('EDS', function() {
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
-                            'ObjectType':       EDS.objectTypes.ARRAY,
+                            'ObjectType':       ObjectType.ARRAY,
                         });
                     }).to.throw(TypeError);
                 });
@@ -159,8 +159,8 @@ describe('EDS', function() {
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
-                            'ObjectType':       EDS.objectTypes.ARRAY,
-                            'DataType':         EDS.dataTypes.UNSIGNED8,
+                            'ObjectType':       ObjectType.ARRAY,
+                            'DataType':         DataType.UNSIGNED8,
                             'SubNumber':        1,
                         }).to.throw(TypeError);
                     })
@@ -169,8 +169,8 @@ describe('EDS', function() {
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
-                            'ObjectType':       EDS.objectTypes.ARRAY,
-                            'AccessType':       EDS.accessTypes.READ_WRITE,
+                            'ObjectType':       ObjectType.ARRAY,
+                            'AccessType':       AccessType.READ_WRITE,
                             'SubNumber':        1,
                         }).to.throw(TypeError);
                     })
@@ -179,7 +179,7 @@ describe('EDS', function() {
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
-                            'ObjectType':       EDS.objectTypes.ARRAY,
+                            'ObjectType':       ObjectType.ARRAY,
                             'DefaultValue':     0,
                             'SubNumber':        1,
                         }).to.throw(TypeError);
@@ -189,7 +189,7 @@ describe('EDS', function() {
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
-                            'ObjectType':       EDS.objectTypes.ARRAY,
+                            'ObjectType':       ObjectType.ARRAY,
                             'PDOMapping':       false,
                             'SubNumber':        1,
                         }).to.throw(TypeError);
@@ -199,7 +199,7 @@ describe('EDS', function() {
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
-                            'ObjectType':       EDS.objectTypes.ARRAY,
+                            'ObjectType':       ObjectType.ARRAY,
                             'LowLimit':         null,
                             'SubNumber':        1,
                         }).to.throw(TypeError);
@@ -209,7 +209,7 @@ describe('EDS', function() {
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
-                            'ObjectType':       EDS.objectTypes.ARRAY,
+                            'ObjectType':       ObjectType.ARRAY,
                             'HighLimit':        null,
                             'SubNumber':        1,
                         }).to.throw(TypeError);
@@ -221,8 +221,8 @@ describe('EDS', function() {
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
-                            'ObjectType':       EDS.objectTypes.ARRAY,
-                            'AccessType':       EDS.accessTypes.READ_WRITE,
+                            'ObjectType':       ObjectType.ARRAY,
+                            'AccessType':       AccessType.READ_WRITE,
                             'CompactSubObj':    true,
                         });
                     }).to.throw(TypeError);
@@ -231,8 +231,8 @@ describe('EDS', function() {
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
-                            'ObjectType':       EDS.objectTypes.ARRAY,
-                            'DataType':         EDS.dataTypes.UNSIGNED8,
+                            'ObjectType':       ObjectType.ARRAY,
+                            'DataType':         DataType.UNSIGNED8,
                             'CompactSubObj':    true,
                         });
                     }).to.throw(TypeError);
@@ -241,9 +241,9 @@ describe('EDS', function() {
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             'ParameterName':    'ARRAY',
-                            'ObjectType':       EDS.objectTypes.ARRAY,
-                            'DataType':         EDS.dataTypes.UNSIGNED8,
-                            'AccessType':       EDS.accessTypes.READ_WRITE,
+                            'ObjectType':       ObjectType.ARRAY,
+                            'DataType':         DataType.UNSIGNED8,
+                            'AccessType':       AccessType.READ_WRITE,
                             'SubNumber':        1,
                             'CompactSubObj':    true,
                         }).to.throw(TypeError);
@@ -257,7 +257,7 @@ describe('EDS', function() {
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'ARRAY',
-                        'ObjectType':       EDS.objectTypes.ARRAY,
+                        'ObjectType':       ObjectType.ARRAY,
                         'PDOMapping':       false,
                     }).to.throw(TypeError);
                 })
@@ -266,7 +266,7 @@ describe('EDS', function() {
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'DOMAIN',
-                        'ObjectType':       EDS.objectTypes.DOMAIN,
+                        'ObjectType':       ObjectType.DOMAIN,
                         'LowLimit':         null,
                     }).to.throw(TypeError);
                 })
@@ -275,7 +275,7 @@ describe('EDS', function() {
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'DOMAIN',
-                        'ObjectType':       EDS.objectTypes.DOMAIN,
+                        'ObjectType':       ObjectType.DOMAIN,
                         'HighLimit':        null,
                     }).to.throw(TypeError);
                 })
@@ -284,7 +284,7 @@ describe('EDS', function() {
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'DOMAIN',
-                        'ObjectType':       EDS.objectTypes.DOMAIN,
+                        'ObjectType':       ObjectType.DOMAIN,
                         'SubNumber':        1,
                     }).to.throw(TypeError);
                 })
@@ -293,7 +293,7 @@ describe('EDS', function() {
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         'ParameterName':    'DOMAIN',
-                        'ObjectType':       EDS.objectTypes.DOMAIN,
+                        'ObjectType':       ObjectType.DOMAIN,
                         'CompactSubObj':    false,
                     }).to.throw(TypeError);
                 })
@@ -305,24 +305,24 @@ describe('EDS', function() {
         let eds;
 
         beforeEach(function() {
-            eds = new EDS.EDS();
+            eds = new Eds();
             eds.addEntry(0x2000, {
                 'ParameterName':    'Test entry',
-                'ObjectType':       EDS.objectTypes.VAR,
-                'DataType':         EDS.dataTypes.UNSIGNED8,
-                'AccessType':       EDS.accessTypes.READ_WRITE,
+                'ObjectType':       ObjectType.VAR,
+                'DataType':         DataType.UNSIGNED8,
+                'AccessType':       AccessType.READ_WRITE,
             });
             eds.addEntry(0x2001, {
                 'ParameterName':    'Test entry',
-                'ObjectType':       EDS.objectTypes.VAR,
-                'DataType':         EDS.dataTypes.UNSIGNED8,
-                'AccessType':       EDS.accessTypes.READ_WRITE,
+                'ObjectType':       ObjectType.VAR,
+                'DataType':         DataType.UNSIGNED8,
+                'AccessType':       AccessType.READ_WRITE,
             });
             eds.addEntry(0x2002, {
                 'ParameterName':    'Test entry',
-                'ObjectType':       EDS.objectTypes.VAR,
-                'DataType':         EDS.dataTypes.UNSIGNED8,
-                'AccessType':       EDS.accessTypes.READ_WRITE,
+                'ObjectType':       ObjectType.VAR,
+                'DataType':         DataType.UNSIGNED8,
+                'AccessType':       AccessType.READ_WRITE,
             });
         });
 
@@ -350,7 +350,7 @@ describe('EDS', function() {
         it('should throw if an entry does not exist', function() {
             expect(() => {
                 eds.removeEntry(0x2003);
-            }).to.throw(COError);
+            }).to.throw();
         });
     });
 });

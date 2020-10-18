@@ -1,12 +1,52 @@
-const {accessTypes, rawToType, typeToRaw} = require('../eds');
-const COError = require('../error');
+const { AccessType, rawToType, typeToRaw } = require('../eds');
 
- /** CANopen SDO 'Client Command Specifier' codes.
-  * @private
-  * @const {number}
+/**
+ * CANopen abort codes.
+ * @enum {string}
+ * @see CiA301 'Protocol SDO abort transfer' (§7.2.4.3.17)
+ * @private
+ */
+const AbortCode = {
+    TOGGLE_BIT: 0x05030000,
+    TIMEOUT: 0x05040000,
+    BAD_COMMAND: 0x05040001,
+    BAD_BLOCK_SIZE: 0x05040002,
+    BAD_BLOCK_SEQUENCE: 0x05040003,
+    BAD_BLOCK_CRC: 0x05040004,
+    OUT_OF_MEMORY: 0x05040005,
+    UNSUPPORTED_ACCESS: 0x06010000,
+    WRITE_ONLY: 0x06010001,
+    READ_ONLY: 0x06010002,
+    OBJECT_UNDEFINED: 0x06020000,
+    OBJECT_NOT_MAPPABLE: 0x06040041,
+    MAP_LENGTH: 0x06040042,
+    PARAMETER_INCOMPATIBILITY: 0x06040043,
+    DEVICE_INCOMPATIBILITY: 0x06040047,
+    HARDWARE_ERROR: 0x06060000,
+    BAD_LENGTH: 0x06070010,
+    DATA_LONG: 0x06070012,
+    DATA_SHORT: 0x06070012,
+    BAD_SUB_INDEX: 0x06090011,
+    BAD_VALUE: 0x06090030,
+    VALUE_HIGH: 0x06090031,
+    VALUE_LOW: 0x06090032,
+    RANGE_ERROR: 0x06090036,
+    SDO_NOT_AVAILBLE: 0x060A0023,
+    GENERAL_ERROR: 0x08000000,
+    DATA_TRANSFER: 0x08000020,
+    LOCAL_CONTROL: 0x08000021,
+    DEVICE_STATE: 0x08000022,
+    OD_ERROR: 0x08000023,
+    NO_DATA: 0x08000024,
+};
+
+ /**
+  * CANopen SDO 'Client Command Specifier' codes.
+  * @enum {number}
   * @see CiA301 'SDO protocols' (§7.2.4.3)
+  * @private
   */
- const CCS = {
+ const ClientCommand = {
     DOWNLOAD_SEGMENT: 0,
     DOWNLOAD_INITIATE: 1,
     UPLOAD_INITIATE: 2,
@@ -14,12 +54,13 @@ const COError = require('../error');
     ABORT: 4,
 };
 
- /** CANopen SDO 'Server Command Specifier' codes.
-  * @private
-  * @const {number}
+ /**
+  * CANopen SDO 'Server Command Specifier' codes.
+  * @enum {number}
   * @see CiA301 'SDO protocols' (§7.2.4.3)
+  * @private
   */
-const SCS = {
+const ServerCommand = {
     UPLOAD_SEGMENT: 0,
     DOWNLOAD_SEGMENT: 1,
     UPLOAD_INITIATE: 2,
@@ -27,7 +68,106 @@ const SCS = {
     ABORT: 4,
 };
 
-/** Represents a SDO transfer.
+/**
+ * Return the error message associated with an AbortCode.
+ * @param {AbortCode} code - message to lookup.
+ * @private
+ */
+function codeToString(code) {
+    switch(code) {
+        case AbortCode.TOGGLE_BIT:
+            return 'Toggle bit not altered';
+        case AbortCode.TIMEOUT:
+            return 'SDO protocol timed out';
+        case AbortCode.BAD_COMMAND:
+            return 'Command specifier not valid or unknown';
+        case AbortCode.BAD_BLOCK_SIZE:
+            return 'Invalid block size in block mode';
+        case AbortCode.BAD_BLOCK_SEQUENCE:
+            return 'Invalid sequence number in block mode';
+        case AbortCode.BAD_BLOCK_CRC:
+            return 'CRC error in block mode';
+        case AbortCode.OUT_OF_MEMORY:
+            return 'Out of memory';
+        case AbortCode.UNSUPPORTED_ACCESS:
+            return 'Unsupported access to an object';
+        case AbortCode.WRITE_ONLY:
+            return 'Attempt to read a write only object'
+        case AbortCode.READ_ONLY:
+            return 'Attempt to write a read only object';
+        case AbortCode.OBJECT_UNDEFINED:
+            return 'Object does not exist';
+        case AbortCode.OBJECT_NOT_MAPPABLE:
+            return 'Object cannot be mapped to the PDO';
+        case AbortCode.MAP_LENGTH:
+            return 'Number and length of object to be mapped exceeds PDO length';
+        case AbortCode.PARAMETER_INCOMPATIBILITY:
+            return 'General parameter incompatibility reasons';
+        case AbortCode.DEVICE_INCOMPATIBILITY:
+            return 'General internal incompatibility in device';
+        case AbortCode.HARDWARE_ERROR:
+            return 'Access failed due to hardware error';
+        case AbortCode.BAD_LENGTH:
+            return 'Data type does not match: length of service parameter does not match';
+        case AbortCode.DATA_LONG:
+            return 'Data type does not match: length of service parameter too high';
+        case AbortCode.DATA_SHORT:
+            return 'Data type does not match: length of service parameter too short';
+        case AbortCode.BAD_SUB_INDEX:
+            return 'Sub index does not exist';
+        case AbortCode.BAD_VALUE:
+            return 'Invalid value for download parameter';
+        case AbortCode.VALUE_HIGH:
+            return 'Value range of parameter written too high';
+        case AbortCode.VALUE_LOW:
+            return 'Value range of parameter written too low';
+        case AbortCode.RANGE_ERROR:
+            return 'Maximum value is less than minimum value';
+        case AbortCode.SDO_NOT_AVAILBLE:
+            return 'Resource not available: SDO connection';
+        case AbortCode.GENERAL_ERROR:
+            return 'General error';
+        case AbortCode.DATA_TRANSFER:
+            return 'Data cannot be transferred or stored to application';
+        case AbortCode.LOCAL_CONTROL:
+            return 'Data cannot be transferred or stored to application because of local control';
+        case AbortCode.DEVICE_STATE:
+            return 'Data cannot be transferred or stored to application because of present device state';
+        case AbortCode.OD_ERROR:
+            return 'Object dictionary not present or dynamic generation failed';
+        case AbortCode.NO_DATA:
+            return 'No data available';
+        default:
+            return 'Unknown error';
+    }
+}
+
+/**
+ * Represents an SDO transfer error.
+ * @param {AbortCode} code - error code.
+ * @param {number} index - object index.
+ * @param {number} subIndex - object subIndex.
+ */
+class SdoError extends Error {
+    constructor(code, index, subIndex=null) {
+        const message = codeToString(code);
+
+        let tag = index
+        if (typeof index === 'number')
+            tag = `0x${index.toString(16)}`;
+        if(subIndex !== null)
+            tag += `.${subIndex.toString()}`;
+
+        super(`${message} [${tag}]`);
+
+        this.code = code;
+        this.name = this.constructor.name;
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+
+/**
+ * Represents an SDO transfer.
  * @private
  */
 class Transfer {
@@ -64,7 +204,7 @@ class Transfer {
         this.active = true;
         if(this.timeout) {
             this.timer = setTimeout(() => {
-                this.abort(0x05040000);
+                this.abort(AbortCode.TIMEOUT);
             }, this.timeout);
         }
     }
@@ -83,7 +223,8 @@ class Transfer {
         });
     }
 
-    /** Complete the transfer and resolve its promise.
+    /**
+     * Complete the transfer and resolve its promise.
      * @param {Buffer | undefined} data - return data.
      */
     resolve(data) {
@@ -93,18 +234,20 @@ class Transfer {
             this._resolve(data);
     }
 
-    /** Complete the transfer and reject its promise.
-     * @param {number} code - SDO abort code.
+    /**
+     * Complete the transfer and reject its promise.
+     * @param {AbortCode} code - SDO abort code.
      */
     reject(code) {
         this.active = false;
         clearTimeout(this.timer);
         if(this._reject)
-            this._reject(new COError(code, this.index, this.subIndex));
+            this._reject(new SdoError(code, this.index, this.subIndex));
     }
 
-    /** Abort the transfer.
-     * @param {number} code - SDO abort code.
+    /**
+     * Abort the transfer.
+     * @param {AbortCode} code - SDO abort code.
      */
     abort(code) {
         const sendBuffer = Buffer.alloc(8);
@@ -118,50 +261,53 @@ class Transfer {
     }
 }
 
-/** Queue of pending transfers.
- * @private
+/**
+ * Queue of pending transfers.
  * @see https://medium.com/@karenmarkosyan/how-to-manage-promises-into-dynamic-queue-with-vanilla-javascript-9d0d1f8d4df5
+ * @private
  */
 class Queue {
     constructor() {
-        this._queue = [];
-        this._pending = false;
+        this.queue = [];
+        this.pending = false;
     }
 
-    /** Add a transfer to the queue.
+    /**
+     * Add a transfer to the queue.
      * @param {Function} start - start the transfer.
      */
     push(start) {
         return new Promise((resolve, reject) => {
-            this._queue.push({ start, resolve, reject });
+            this.queue.push({ start, resolve, reject });
             this.pop();
         });
     }
 
     /** Run the next transfer in queue. */
     pop() {
-        if(this._pending)
+        if(this.pending)
             return;
 
-        const transfer = this._queue.shift();
+        const transfer = this.queue.shift();
         if(!transfer)
             return;
 
-        this._pending = true;
+        this.pending = true;
         transfer.start().then((value) => {
-            this._pending = false;
+            this.pending = false;
             transfer.resolve(value);
             this.pop();
         })
         .catch((error) => {
-            this._pending = false;
+            this.pending = false;
             transfer.reject(error);
             this.pop();
         });
     }
 }
 
-/** CANopen SDO protocol handler.
+/**
+ * CANopen SDO protocol handler.
  *
  * The service data object (SDO) protocol uses a client-server structure where
  * a client can initiate the transfer of data from the server's object
@@ -172,28 +318,12 @@ class Queue {
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
  * @memberof Device
  */
-class SDO {
+class Sdo {
     constructor(device) {
-        this._device = device;
-        this._clients = {};
-        this._servers = {};
-        this._transfers = {};
-    }
-
-    get device() {
-        return this._device;
-    }
-
-    get clients() {
-        return this._clients;
-    }
-
-    get servers() {
-        return this._servers;
-    }
-
-    get transfers() {
-        return this._transfers;
+        this.device = device;
+        this.clients = {};
+        this.servers = {};
+        this.transfers = {};
     }
 
     /** Initialize members and begin serving SDO transfers. */
@@ -297,7 +427,10 @@ class SDO {
         this.device.addListener('message', this._onMessage.bind(this));
     }
 
-    /** Service: SDO upload
+    /**
+     * Service: SDO upload
+     *
+     * Read data from an SDO server.
      *
      * @param {Object} args
      * @param {number} args.serverId - SDO server.
@@ -340,7 +473,7 @@ class SDO {
                 });
 
                 const sendBuffer = Buffer.alloc(8);
-                sendBuffer.writeUInt8(CCS.UPLOAD_INITIATE << 5);
+                sendBuffer.writeUInt8(ClientCommand.UPLOAD_INITIATE << 5);
                 sendBuffer.writeUInt16LE(index, 1);
                 sendBuffer.writeUInt8(subIndex, 3);
 
@@ -357,7 +490,10 @@ class SDO {
         })
     }
 
-    /** Service: SDO download.
+    /**
+     * Service: SDO download.
+     *
+     * Write data to an SDO server.
      *
      * @param {Object} args
      * @param {number} args.serverId - SDO server.
@@ -410,18 +546,18 @@ class SDO {
                 });
 
                 const sendBuffer = Buffer.alloc(8);
-                let header = (CCS.DOWNLOAD_INITIATE << 5);
+                let header = (ClientCommand.DOWNLOAD_INITIATE << 5);
 
                 sendBuffer.writeUInt16LE(index, 1);
                 sendBuffer.writeUInt8(subIndex, 3);
 
                 if(data.length > 4) {
-                    /* Segmented transfer. */
+                    // Segmented transfer
                     sendBuffer.writeUInt8(header | 0x1);
                     sendBuffer.writeUInt32LE(data.length, 4);
                 }
                 else {
-                    /* Expedited transfer. */
+                    // Expedited transfer
                     header |= ((4-data.length) << 2) | 0x3;
 
                     sendBuffer.writeUInt8(header);
@@ -438,21 +574,22 @@ class SDO {
         });
     }
 
-    /** Handle SCS.UPLOAD_INITIATE.
-     * @private
+    /**
+     * Handle SCS.UPLOAD_INITIATE.
      * @param {Transfer} transfer - SDO context.
      * @param {Buffer} data - message data.
+     * @private
      */
     _clientUploadInitiate(transfer, data) {
         if(data[0] & 0x02) {
-            /* Expedited transfer. */
+            // Expedited transfer
             const size = (data[0] & 1) ? (4 - ((data[0] >> 2) & 3)) : 4;
             transfer.resolve(data.slice(4, 4 + size));
         }
         else {
-            /* Segmented transfer. */
+            // Segmented transfer
             const sendBuffer = Buffer.alloc(8);
-            sendBuffer.writeUInt8(CCS.UPLOAD_SEGMENT << 5);
+            sendBuffer.writeUInt8(ClientCommand.UPLOAD_SEGMENT << 5);
 
             if(data[0] & 0x1)
                 transfer.size = data.readUInt32LE(4);
@@ -462,14 +599,15 @@ class SDO {
         }
     }
 
-    /** Handle SCS.UPLOAD_SEGMENT.
-     * @private
+    /**
+     * Handle SCS.UPLOAD_SEGMENT.
      * @param {Transfer} transfer - SDO context.
      * @param {Buffer} data - message data.
+     * @private
      */
     _clientUploadSegment(transfer, data) {
         if((data[0] & 0x10) != (transfer.toggle << 4))
-            return transfer.abort(0x05030000);
+            return transfer.abort(AbortCode.TOGGLE_BIT);
 
         const count = (7 - ((data[0] >> 1) & 0x7));
         const payload = data.slice(1, count+1);
@@ -478,7 +616,7 @@ class SDO {
 
         if(data[0] & 1) {
             if(transfer.size != size)
-                return transfer.abort(0x06070010);
+                return transfer.abort(AbortCode.BAD_LENGTH);
 
             transfer.resolve(buffer);
         }
@@ -487,7 +625,7 @@ class SDO {
             transfer.data = buffer;
 
             const sendBuffer = Buffer.alloc(8);
-            const header = (CCS.UPLOAD_SEGMENT << 5) | (transfer.toggle << 4);
+            const header = (ClientCommand.UPLOAD_SEGMENT << 5) | (transfer.toggle << 4);
             sendBuffer.writeUInt8(header);
 
             transfer.send(sendBuffer);
@@ -495,9 +633,10 @@ class SDO {
         }
     }
 
-    /** Handle SCS.DOWNLOAD_INITIATE.
-     * @private
+    /**
+     * Handle SCS.DOWNLOAD_INITIATE.
      * @param {Transfer} transfer - SDO context.
+     * @private
      */
     _clientDownloadInitiate(transfer) {
         if(transfer.size <= 4) {
@@ -510,7 +649,7 @@ class SDO {
         transfer.size = Math.min(7, transfer.data.length);
         transfer.data.copy(sendBuffer, 1, 0, transfer.size);
 
-        let header = (CCS.DOWNLOAD_SEGMENT << 5) | ((7-transfer.size) << 1);
+        let header = (ClientCommand.DOWNLOAD_SEGMENT << 5) | ((7-transfer.size) << 1);
         if(transfer.data.length == transfer.size)
             header |= 1;
 
@@ -520,14 +659,15 @@ class SDO {
         transfer.refresh();
     }
 
-    /** Handle SCS.DOWNLOAD_SEGMENT.
-     * @private
+    /**
+     * Handle SCS.DOWNLOAD_SEGMENT.
      * @param {Transfer} transfer - SDO context.
      * @param {Buffer} data - message data.
+     * @private
      */
     _clientDownloadSegment(transfer, data) {
         if((data[0] & 0x10) != (transfer.toggle << 4))
-            return transfer.abort(0x05030000);
+            return transfer.abort(AbortCode.TOGGLE_BIT);
 
         if(transfer.size == transfer.data.length)
             return transfer.resolve();
@@ -541,7 +681,7 @@ class SDO {
         transfer.toggle ^= 1;
         transfer.size += count;
 
-        let header = (CCS.DOWNLOAD_SEGMENT << 5)
+        let header = (ClientCommand.DOWNLOAD_SEGMENT << 5)
                    | (transfer.toggle << 4)
                    | ((7-count) << 1);
 
@@ -554,10 +694,11 @@ class SDO {
         transfer.refresh();
     }
 
-    /** Handle CCS.DOWNLOAD_INITIATE.
-     * @private
+    /**
+     * Handle CCS.DOWNLOAD_INITIATE.
      * @param {Transfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @private
      */
     _serverDownloadInitiate(client, data) {
         client.index = data.readUInt16LE(1);
@@ -565,34 +706,36 @@ class SDO {
 
         if(data[0] & 0x02) {
             // Expedited client
-            let entry = this.device.EDS.getEntry(client.index);
-            if(!entry)
-                return client.abort(0x06020000);
+            let entry = this.device.eds.getEntry(client.index);
+            if(entry === undefined)
+                return client.abort(AbortCode.OBJECT_UNDEFINED);
 
             if(entry.subNumber > 0) {
                 entry = entry[client.subIndex];
-                if(!entry)
-                    return client.abort(0x06090011);
+                if(entry === undefined)
+                    return client.abort(AbortCode.BAD_SUB_INDEX);
             }
 
-            if(entry.accessType == accessTypes.CONSTANT
-            || entry.accessType == accessTypes.READ_ONLY) {
-                return client.abort(0x06010002);
+            if(entry.accessType == AccessType.CONSTANT
+                || entry.accessType == AccessType.READ_ONLY) {
+                return client.abort(AbortCode.READ_ONLY);
             }
 
             const count = (data[0] & 1) ? (4 - ((data[0] >> 2) & 3)) : 4;
             const raw = Buffer.alloc(count);
             data.copy(raw, 0, 4, count+4);
 
-            try {
-                entry.raw = raw;
-            }
-            catch(error) {
-                return client.abort(error.code);
-            }
+            const value = rawToType(raw, entry.dataType);
+            if(entry.highLimit !== undefined && value > entry.highLimit)
+                return client.abort(AbortCode.VALUE_HIGH);
+
+            if(entry.lowLimit !== undefined && value < entry.lowLimit)
+                return client.abort(AbortCode.VALUE_LOW);
+
+            entry.raw = raw;
 
             const sendBuffer = Buffer.alloc(8);
-            sendBuffer.writeUInt8(SCS.DOWNLOAD_INITIATE << 5);
+            sendBuffer.writeUInt8(ServerCommand.DOWNLOAD_INITIATE << 5);
             sendBuffer.writeUInt16LE(client.index, 1);
             sendBuffer.writeUInt8(client.subIndex, 3);
 
@@ -608,7 +751,7 @@ class SDO {
             client.toggle = 0;
 
             const sendBuffer = Buffer.alloc(8);
-            sendBuffer.writeUInt8(SCS.DOWNLOAD_INITIATE << 5);
+            sendBuffer.writeUInt8(ServerCommand.DOWNLOAD_INITIATE << 5);
             sendBuffer.writeUInt16LE(client.index, 1);
             sendBuffer.writeUInt8(client.subIndex, 3);
 
@@ -621,32 +764,33 @@ class SDO {
         }
     }
 
-    /** Handle CCS.UPLOAD_INITIATE.
-     * @private
+    /**
+     * Handle CCS.UPLOAD_INITIATE.
      * @param {Transfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @private
      */
     _serverUploadInitiate(client, data) {
         client.index = data.readUInt16LE(1);
         client.subIndex = data.readUInt8(3);
 
-        let entry = this.device.EDS.getEntry(client.index);
-        if(!entry)
-            return client.abort(0x06020000);
+        let entry = this.device.eds.getEntry(client.index);
+        if(entry === undefined)
+            return client.abort(AbortCode.OBJECT_UNDEFINED);
 
         if(entry.subNumber > 0) {
             entry = entry[client.subIndex];
-            if(!entry)
-                return client.abort(0x06090011);
+            if(entry === undefined)
+                return client.abort(AbortCode.BAD_SUB_INDEX);
         }
 
-        if(entry.accessType == accessTypes.WRITE_ONLY)
-            return client.abort(0x06010001);
+        if(entry.accessType == AccessType.WRITE_ONLY)
+            return client.abort(AbortCode.WRITE_ONLY);
 
         if(entry.size <= 4) {
             // Expedited client
             const sendBuffer = Buffer.alloc(8);
-            const header = (SCS.UPLOAD_INITIATE << 5)
+            const header = (ServerCommand.UPLOAD_INITIATE << 5)
                          | ((4-entry.size) << 2)
                          | 0x2;
 
@@ -671,7 +815,7 @@ class SDO {
             client.toggle = 0;
 
             const sendBuffer = Buffer.alloc(8);
-            const header = (SCS.UPLOAD_INITIATE << 5) | 0x1;
+            const header = (ServerCommand.UPLOAD_INITIATE << 5) | 0x1;
 
             sendBuffer.writeUInt8(header, 0);
             sendBuffer.writeUInt16LE(client.index, 1);
@@ -687,14 +831,15 @@ class SDO {
         }
     }
 
-    /** Handle CCS.UPLOAD_SEGMENT.
-     * @private
+    /**
+     * Handle CCS.UPLOAD_SEGMENT.
      * @param {Transfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @private
      */
     _serverUploadSegment(client, data) {
         if((data[0] & 0x10) != (client.toggle << 4))
-            return client.abort(0x05030000);
+            return client.abort(AbortCode.TOGGLE_BIT);
 
         const sendBuffer = Buffer.alloc(8);
         let count = Math.min(7, (client.data.length - client.size));
@@ -719,14 +864,15 @@ class SDO {
         client.refresh();;
     }
 
-    /** Handle CCS.DOWNLOAD_SEGMENT.
-     * @private
+    /**
+     * Handle CCS.DOWNLOAD_SEGMENT.
      * @param {Transfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @private
      */
     _serverDownloadSegment(client, data) {
         if((data[0] & 0x10) != (client.toggle << 4))
-            return client.abort(0x05030000);
+            return client.abort(AbortCode.TOGGLE_BIT);
 
         const count = (7 - ((data[0] >> 1) & 0x7));
         const payload = data.slice(1, count+1);
@@ -735,39 +881,38 @@ class SDO {
         client.data = Buffer.concat([client.data, payload], size);
 
         if(data[0] & 1) {
-            let entry = this.device.EDS.getEntry(client.index);
-            if(!entry)
-                return client.abort(0x06020000);
+            let entry = this.device.eds.getEntry(client.index);
+            if(entry === undefined)
+                return client.abort(AbortCode.OBJECT_UNDEFINED);
 
             if(entry.subNumber > 0) {
                 entry = entry[client.subIndex];
-                if(!entry)
-                    return client.abort(0x06090011);
+                if(entry === undefined)
+                    return client.abort(AbortCode.BAD_SUB_INDEX);
             }
 
-            if(entry.accessType == accessTypes.CONSTANT
-            || entry.accessType == accessTypes.READ_ONLY) {
-                return client.abort(0x06010002);
+            if(entry.accessType == AccessType.CONSTANT
+                || entry.accessType == AccessType.READ_ONLY) {
+                return client.abort(AbortCode.READ_ONLY);
             }
 
             const raw = Buffer.alloc(size);
             client.data.copy(raw);
 
-            try {
-                entry.raw = raw;
-            }
-            catch(error) {
-                if(error instanceof COError)
-                    return client.abort(error.code);
+            const value = rawToType(raw, entry.dataType);
+            if(entry.highLimit !== undefined && value > entry.highLimit)
+                return client.abort(AbortCode.VALUE_HIGH);
 
-                throw error;
-            }
+            if(entry.lowLimit !== undefined && value < entry.lowLimit)
+                return client.abort(AbortCode.VALUE_LOW);
+
+            entry.raw = raw;
 
             client.resolve();
         }
 
         const sendBuffer = Buffer.alloc(8);
-        const header = (SCS.DOWNLOAD_SEGMENT << 5) | (client.toggle << 4);
+        const header = (ServerCommand.DOWNLOAD_SEGMENT << 5) | (client.toggle << 4);
 
         sendBuffer.writeUInt8(header);
         client.toggle ^= 1;
@@ -780,61 +925,62 @@ class SDO {
         client.refresh();
     }
 
-    /** Called when a new CAN message is received.
-     * @private
+    /**
+     * Called when a new CAN message is received.
      * @param {Object} message - CAN frame.
+     * @private
      */
     _onMessage(message) {
-        /* Handle transfers as a client (remote object dictionary). */
+        // Handle transfers as a client (remote object dictionary)
         const serverTransfer = this.transfers[message.id];
         if(serverTransfer) {
             switch(message.data[0] >> 5) {
-                case SCS.ABORT:
+                case ServerCommand.ABORT:
                     serverTransfer.abort(message.data.readUInt32LE(4));
                     break;
-                case SCS.UPLOAD_INITIATE:
+                case ServerCommand.UPLOAD_INITIATE:
                     this._clientUploadInitiate(serverTransfer, message.data);
                     break;
-                case SCS.UPLOAD_SEGMENT:
+                case ServerCommand.UPLOAD_SEGMENT:
                     this._clientUploadSegment(serverTransfer, message.data);
                     break;
-                case SCS.DOWNLOAD_INITIATE:
+                case ServerCommand.DOWNLOAD_INITIATE:
                     this._clientDownloadInitiate(serverTransfer);
                     break;
-                case SCS.DOWNLOAD_SEGMENT:
+                case ServerCommand.DOWNLOAD_SEGMENT:
                     this._clientDownloadSegment(serverTransfer, message.data);
                     break;
                 default:
-                    serverTransfer.abort(0x05040001);
+                    serverTransfer.abort(AbortCode.BAD_COMMAND);
                     break;
             }
         }
 
-        /* Handle transfers as a server (local object dictionary). */
+        // Handle transfers as a server (local object dictionary)
         const client = this.clients[message.id];
         if(client) {
             switch(message.data[0] >> 5) {
-                case CCS.ABORT:
+                case ClientCommand.ABORT:
                     client.reject();
                     break;
-                case CCS.DOWNLOAD_INITIATE:
+                case ClientCommand.DOWNLOAD_INITIATE:
                     this._serverDownloadInitiate(client, message.data);
                     break;
-                case CCS.UPLOAD_INITIATE:
+                case ClientCommand.UPLOAD_INITIATE:
                     this._serverUploadInitiate(client, message.data);
                     break;
-                case CCS.UPLOAD_SEGMENT:
+                case ClientCommand.UPLOAD_SEGMENT:
                     this._serverUploadSegment(client, message.data);
                     break;
-                case CCS.DOWNLOAD_SEGMENT:
+                case ClientCommand.DOWNLOAD_SEGMENT:
                     this._serverDownloadSegment(client, message.data);
                     break;
                 default:
-                    client.abort(0x05040001);
+                    client.abort(AbortCode.BAD_COMMAND);
                     break;
             }
         }
     }
 }
 
-module.exports=exports=SDO;
+module.exports=exports={ AbortCode, SdoError, Sdo };

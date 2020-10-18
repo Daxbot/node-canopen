@@ -1,6 +1,6 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const {Device} = require('../index');
+const { Device } = require('../index');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);

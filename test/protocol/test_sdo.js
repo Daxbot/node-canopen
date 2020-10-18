@@ -1,63 +1,63 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const {EDS, Device, COError} = require('../../index.js');
+const { Device, ObjectType, AccessType, DataType } = require('../../index.js');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('SDO', function() {
-    let node = null;
+    let device = null;
 
     beforeEach(function() {
-        node = new Device({ id: 0xA, loopback: true });
+        device = new Device({ id: 0xA, loopback: true });
 
         /* SDO server parameters. */
-        node.EDS.addEntry(0x1200, {
-            ParameterName:      'SDO server parameter',
-            ObjectType:         EDS.objectTypes.RECORD,
-            SubNumber:          3,
+        device.eds.addEntry(0x1200, {
+            'ParameterName':    'SDO server parameter',
+            'ObjectType':       ObjectType.RECORD,
+            'SubNumber':        3,
         });
-        node.EDS.addSubEntry(0x1200, 1, {
-            ParameterName:      'COB-ID client to server',
-            DataType:           EDS.dataTypes.UNSIGNED32,
-            AccessType:         EDS.accessTypes.READ_WRITE,
-            DefaultValue:       0x600,
+        device.eds.addSubEntry(0x1200, 1, {
+            'ParameterName':    'COB-ID client to server',
+            'DataType':         DataType.UNSIGNED32,
+            'AccessType':       AccessType.READ_WRITE,
+            'DefaultValue':     0x600,
         });
-        node.EDS.addSubEntry(0x1200, 2, {
-            ParameterName:      'COB-ID server to client',
-            DataType:           EDS.dataTypes.UNSIGNED32,
-            AccessType:         EDS.accessTypes.READ_WRITE,
-            DefaultValue:       0x580,
+        device.eds.addSubEntry(0x1200, 2, {
+            'ParameterName':  'COB-ID server to client',
+            'DataType':       DataType.UNSIGNED32,
+            'AccessType':     AccessType.READ_WRITE,
+            'DefaultValue':   0x580,
         });
 
         /* SDO client parameters. */
-        node.EDS.addEntry(0x1280, {
-            ParameterName:      'SDO client parameter',
-            ObjectType:         EDS.objectTypes.RECORD,
-            SubNumber:          4,
+        device.eds.addEntry(0x1280, {
+            'ParameterName':    'SDO client parameter',
+            'ObjectType':       ObjectType.RECORD,
+            'SubNumber':        4,
         });
-        node.EDS.addSubEntry(0x1280, 1, {
-            ParameterName:      'COB-ID client to server',
-            DataType:           EDS.dataTypes.UNSIGNED32,
-            AccessType:         EDS.accessTypes.READ_WRITE,
-            DefaultValue:       0x600,
+        device.eds.addSubEntry(0x1280, 1, {
+            'ParameterName':    'COB-ID client to server',
+            'DataType':         DataType.UNSIGNED32,
+            'AccessType':       AccessType.READ_WRITE,
+            'DefaultValue':     0x600,
         });
-        node.EDS.addSubEntry(0x1280, 2, {
-            ParameterName:      'COB-ID server to client',
-            DataType:           EDS.dataTypes.UNSIGNED32,
-            AccessType:         EDS.accessTypes.READ_WRITE,
-            DefaultValue:       0x580,
+        device.eds.addSubEntry(0x1280, 2, {
+            'ParameterName':    'COB-ID server to client',
+            'DataType':         DataType.UNSIGNED32,
+            'AccessType':       AccessType.READ_WRITE,
+            'DefaultValue':     0x580,
         });
-        node.EDS.addSubEntry(0x1280, 3, {
-            ParameterName:      'Node-ID of the SDO server',
-            DataType:           EDS.dataTypes.UNSIGNED8,
-            AccessType:         EDS.accessTypes.READ_WRITE,
-            DefaultValue:       node.id,
+        device.eds.addSubEntry(0x1280, 3, {
+            'ParameterName':    'Node-ID of the SDO server',
+            'DataType':         DataType.UNSIGNED8,
+            'AccessType':       AccessType.READ_WRITE,
+            'DefaultValue':     device.id,
         });
     });
 
     afterEach(function() {
-        delete node;
+        delete device;
     });
 
     describe('Expediated transfer', function() {
@@ -79,18 +79,18 @@ describe('SDO', function() {
 
         for(const key of Object.keys(testValues)) {
             it("should transfer " + key, function() {
-                node.init();
+                device.init();
 
-                const index = EDS.dataTypes[key];
-                return node.SDO.download({
-                    serverId: node.id,
+                const index = DataType[key];
+                return device.sdo.download({
+                    serverId: device.id,
                     data: testValues[key],
                     dataType: key,
                     index: index
                 })
                 .then(() => {
-                    return node.SDO.upload({
-                        serverId: node.id,
+                    return device.sdo.upload({
+                        serverId: device.id,
                         index: index,
                         dataType: key
                     });
@@ -121,18 +121,18 @@ describe('SDO', function() {
 
         for(const key of Object.keys(testValues)) {
             it("should transfer " + key, function() {
-                node.init();
+                device.init();
 
-                const index = EDS.dataTypes[key];
-                return node.SDO.download({
-                    serverId: node.id,
+                const index = DataType[key];
+                return device.sdo.download({
+                    serverId: device.id,
                     data: testValues[key],
                     dataType: key,
                     index: index
                 })
                 .then(() => {
-                    return node.SDO.upload({
-                        serverId: node.id,
+                    return device.sdo.upload({
+                        serverId: device.id,
                         index: index,
                         dataType: key
                     });
@@ -150,32 +150,32 @@ describe('SDO', function() {
 
         it('should be able to transfer with subindexes >= 1', async function() {
             const testString = 'I am a quite a long string that will take multiple messages to transfer'
-            node.init();
-            node.EDS.addEntry(0x1234, {
-                ParameterName:    'Test entry',
-                ObjectType:       6,
-                SubNumber:        1
+            device.init();
+            device.eds.addEntry(0x1234, {
+                'ParameterName':    'Test entry',
+                'ObjectType':       6,
+                'SubNumber':        1
             });
-            node.EDS.addSubEntry(0x1234, 0, {
-                ParameterName:      'A long name',
-                DataType:           EDS.dataTypes.VISIBLE_STRING,
-                AccessType:         EDS.accessTypes.READ_WRITE,
-                DefaultValue:       testString,
+            device.eds.addSubEntry(0x1234, 0, {
+                'ParameterName':    'A long name',
+                'DataType':         DataType.VISIBLE_STRING,
+                'AccessType':       AccessType.READ_WRITE,
+                'DefaultValue':     testString,
             })
 
-            const result = await node.SDO.upload({
-                serverId: node.id,
+            const result = await device.sdo.upload({
+                serverId: device.id,
                 index: 0x1234,
                 subIndex: 0,
-                dataType: EDS.dataTypes.VISIBLE_STRING
+                dataType: DataType.VISIBLE_STRING
             });
 
             expect(result).to.equal(testString)
 
-            return node.SDO.download({
-                serverId: node.id,
+            return device.sdo.download({
+                serverId: device.id,
                 data: result,
-                dataType: EDS.dataTypes.VISIBLE_STRING,
+                dataType: DataType.VISIBLE_STRING,
                 index: 0x1234,
                 subIndex: 0
             })
@@ -185,10 +185,10 @@ describe('SDO', function() {
     describe('Error handling', function() {
         it('should abort if timeout is exceeded', function() {
             // Set server to non-existant COB-ID
-            node.setValueArray(0x1280, 3, 0x1);
-            node.init();
+            device.setValueArray(0x1280, 3, 0x1);
+            device.init();
 
-            return expect(node.SDO.upload({
+            return expect(device.sdo.upload({
                 serverId: 0x1,
                 index: 0x1000,
                 subIndex: 1

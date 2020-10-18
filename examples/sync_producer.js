@@ -4,27 +4,27 @@
  * synchronization objects.
  */
 
-const {Device} = require('../index.js');
+const { Device } = require('../index.js');
 const can = require('socketcan');
 
 /** Step 1: Create a new Device. */
-node = new Device({ id: 0xE });
+const device = new Device({ id: 0xE });
 
 /** Step 2: Create a new socketcan RawChannel object. */
-const channel = can.createRawChannel('vcan0');
+const channel = can.createRawChannel('can0');
 
 /** Step 3: Configure the COB-ID and cycle period. */
-node.SYNC.cobId = 0x80;
-node.SYNC.cyclePeriod = 1e6; // 1 second
-node.SYNC.overflow = 10;
-node.SYNC.generate = true;
+device.sync.cobId = 0x80;
+device.sync.cyclePeriod = 1e6; // 1 second
+device.sync.overflow = 10;
+device.sync.generate = true;
 
 /** Step 4: Initialize and start the node. */
-channel.addListener('onMessage', (message) => { node.receive(message); });
-node.transmit((message) => { channel.send(message); });
+channel.addListener('onMessage', (message) => { device.receive(message); });
+device.transmit((message) => { channel.send(message); });
 
-node.init();
-node.start();
+device.init();
+device.sync.start();
 channel.start();
 
 console.log("Press Ctrl-C to quit");

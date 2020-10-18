@@ -1,143 +1,31 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset='utf-8' />
-  <title>canopen 2.2.3-beta | Documentation</title>
-  <meta name='viewport' content='width=device-width,initial-scale=1'>
-  <link href='assets/bass.css' type='text/css' rel='stylesheet' />
-  <link href='assets/style.css' type='text/css' rel='stylesheet' />
-  <link href='assets/github.css' type='text/css' rel='stylesheet' />
-  <link href='assets/split.css' type='text/css' rel='stylesheet' />
+  <meta charset='utf-8'>
+  <title>canopen 2.4.0-beta | Documentation</title>
   <meta name='description' content='CANopen implementation for Javascript'>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <link href='assets/bass.css' rel='stylesheet'>
+  <link href='assets/style.css' rel='stylesheet'>
+  <link href='assets/github.css' rel='stylesheet'>
+  <link href='assets/split.css' rel='stylesheet'>
 </head>
 <body class='documentation m0'>
     <div class='flex'>
       <div id='split-left' class='overflow-auto fs0 height-viewport-100'>
         <div class='py1 px2'>
           <h3 class='mb0 no-anchor'>canopen</h3>
-          <div class='mb1'><code>2.2.3-beta</code></div>
+          <div class='mb1'><code>2.4.0-beta</code></div>
           <input
             placeholder='Filter'
             id='filter-input'
             class='col12 block input'
+            spellcheck='false'
+            autocapitalize='off'
+            autocorrect='off'
             type='text' />
           <div id='toc'>
             <ul class='list-reset h5 py1-ul'>
-              
-                
-                <li><a
-                  href='#eds'
-                  class=" toggle-sibling">
-                  EDS
-                  <span class='icon'>▸</span>
-                </a>
-                
-                <div class='toggle-target display-none'>
-                  
-                  <ul class='list-reset py1-ul pl1'>
-                    <li class='h5'><span>Static members</span></li>
-                    
-                      <li><a
-                        href='#edsobjecttypes'
-                        class='regular pre-open'>
-                        .objectTypes
-                      </a></li>
-                    
-                      <li><a
-                        href='#edsaccesstypes'
-                        class='regular pre-open'>
-                        .accessTypes
-                      </a></li>
-                    
-                      <li><a
-                        href='#edsdatatypes'
-                        class='regular pre-open'>
-                        .dataTypes
-                      </a></li>
-                    
-                      <li><a
-                        href='#edsrawtotype'
-                        class='regular pre-open'>
-                        .rawToType
-                      </a></li>
-                    
-                      <li><a
-                        href='#edstypetoraw'
-                        class='regular pre-open'>
-                        .typeToRaw
-                      </a></li>
-                    
-                    </ul>
-                  
-                  
-                    <ul class='list-reset py1-ul pl1'>
-                      <li class='h5'><span>Instance members</span></li>
-                      
-                      <li><a
-                        href='#edsload'
-                        class='regular pre-open'>
-                        #load
-                      </a></li>
-                      
-                      <li><a
-                        href='#edssave'
-                        class='regular pre-open'>
-                        #save
-                      </a></li>
-                      
-                      <li><a
-                        href='#edsgetentry'
-                        class='regular pre-open'>
-                        #getEntry
-                      </a></li>
-                      
-                      <li><a
-                        href='#edsaddentry'
-                        class='regular pre-open'>
-                        #addEntry
-                      </a></li>
-                      
-                      <li><a
-                        href='#edsremoveentry'
-                        class='regular pre-open'>
-                        #removeEntry
-                      </a></li>
-                      
-                      <li><a
-                        href='#edsgetsubentry'
-                        class='regular pre-open'>
-                        #getSubEntry
-                      </a></li>
-                      
-                      <li><a
-                        href='#edsaddsubentry'
-                        class='regular pre-open'>
-                        #addSubEntry
-                      </a></li>
-                      
-                      <li><a
-                        href='#edsremovesubentry'
-                        class='regular pre-open'>
-                        #removeSubEntry
-                      </a></li>
-                      
-                    </ul>
-                  
-                  
-                  
-                </div>
-                
-                </li>
-              
-                
-                <li><a
-                  href='#dataobject'
-                  class="">
-                  DataObject
-                  
-                </a>
-                
-                </li>
               
                 
                 <li><a
@@ -153,39 +41,39 @@
                     <li class='h5'><span>Static members</span></li>
                     
                       <li><a
-                        href='#deviceemcy'
-                        class='regular pre-open'>
-                        .EMCY
-                      </a></li>
-                    
-                      <li><a
-                        href='#devicenmt'
-                        class='regular pre-open'>
-                        .NMT
-                      </a></li>
-                    
-                      <li><a
                         href='#devicepdo'
                         class='regular pre-open'>
-                        .PDO
+                        .Pdo
                       </a></li>
                     
                       <li><a
                         href='#devicesdo'
                         class='regular pre-open'>
-                        .SDO
+                        .Sdo
                       </a></li>
                     
                       <li><a
                         href='#devicesync'
                         class='regular pre-open'>
-                        .SYNC
+                        .Sync
                       </a></li>
                     
                       <li><a
                         href='#devicetime'
                         class='regular pre-open'>
-                        .TIME
+                        .Time
+                      </a></li>
+                    
+                      <li><a
+                        href='#deviceemcy'
+                        class='regular pre-open'>
+                        .Emcy
+                      </a></li>
+                    
+                      <li><a
+                        href='#devicenmt'
+                        class='regular pre-open'>
+                        .Nmt
                       </a></li>
                     
                     </ul>
@@ -204,12 +92,6 @@
                         href='#deviceinit'
                         class='regular pre-open'>
                         #init
-                      </a></li>
-                      
-                      <li><a
-                        href='#devicestart'
-                        class='regular pre-open'>
-                        #start
                       </a></li>
                       
                       <li><a
@@ -282,6 +164,194 @@
               
                 
                 <li><a
+                  href='#objecttype'
+                  class="">
+                  ObjectType
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#accesstype'
+                  class="">
+                  AccessType
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#datatype'
+                  class="">
+                  DataType
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#rawtotype'
+                  class="">
+                  rawToType
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#typetoraw'
+                  class="">
+                  typeToRaw
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#dataobject'
+                  class=" toggle-sibling">
+                  DataObject
+                  <span class='icon'>▸</span>
+                </a>
+                
+                <div class='toggle-target display-none'>
+                  
+                  
+                    <ul class='list-reset py1-ul pl1'>
+                      <li class='h5'><span>Instance members</span></li>
+                      
+                      <li><a
+                        href='#dataobjectserialize'
+                        class='regular pre-open'>
+                        #serialize
+                      </a></li>
+                      
+                    </ul>
+                  
+                  
+                  
+                </div>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#eds'
+                  class=" toggle-sibling">
+                  Eds
+                  <span class='icon'>▸</span>
+                </a>
+                
+                <div class='toggle-target display-none'>
+                  
+                  
+                    <ul class='list-reset py1-ul pl1'>
+                      <li class='h5'><span>Instance members</span></li>
+                      
+                      <li><a
+                        href='#edsload'
+                        class='regular pre-open'>
+                        #load
+                      </a></li>
+                      
+                      <li><a
+                        href='#edssave'
+                        class='regular pre-open'>
+                        #save
+                      </a></li>
+                      
+                      <li><a
+                        href='#edsgetentry'
+                        class='regular pre-open'>
+                        #getEntry
+                      </a></li>
+                      
+                      <li><a
+                        href='#edsaddentry'
+                        class='regular pre-open'>
+                        #addEntry
+                      </a></li>
+                      
+                      <li><a
+                        href='#edsremoveentry'
+                        class='regular pre-open'>
+                        #removeEntry
+                      </a></li>
+                      
+                      <li><a
+                        href='#edsgetsubentry'
+                        class='regular pre-open'>
+                        #getSubEntry
+                      </a></li>
+                      
+                      <li><a
+                        href='#edsaddsubentry'
+                        class='regular pre-open'>
+                        #addSubEntry
+                      </a></li>
+                      
+                      <li><a
+                        href='#edsremovesubentry'
+                        class='regular pre-open'>
+                        #removeSubEntry
+                      </a></li>
+                      
+                    </ul>
+                  
+                  
+                  
+                </div>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#emcyclass'
+                  class="">
+                  EmcyClass
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#emcycode'
+                  class="">
+                  EmcyCode
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#nmtstate'
+                  class="">
+                  NmtState
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#nmtcommand'
+                  class="">
+                  NmtCommand
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
                   href='#coerror'
                   class="">
                   COError
@@ -293,1154 +363,11 @@
             </ul>
           </div>
           <div class='mt1 h6 quiet'>
-            <a href='http://documentation.js.org/reading-documentation.html'>Need help reading this?</a>
+            <a href='https://documentation.js.org/reading-documentation.html'>Need help reading this?</a>
           </div>
         </div>
       </div>
       <div id='split-right' class='relative overflow-auto height-viewport-100'>
-        
-          
-          <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-  <div class='clearfix'>
-    
-    <h3 class='fl m0' id='eds'>
-      EDS
-    </h3>
-    
-    
-  </div>
-  
-
-  <p>A CANopen Electronic Data Sheet.</p>
-<p>This class provides methods for loading and saving CANopen EDS v4.0 files.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>new EDS()</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Static Members</div>
-    <div class="clearfix">
-  
-    <div class='border-bottom' id='edsobjecttypes'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>objectTypes</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>CANopen object types.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>objectTypes</div>
-   
-  
-    <p>
-      Type:
-      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>
-    </p>
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='edsaccesstypes'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>accessTypes</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>CANopen access types.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>accessTypes</div>
-   
-  
-    <p>
-      Type:
-      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>
-    </p>
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='edsdatatypes'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>dataTypes</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>CANopen data types.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>dataTypes</div>
-   
-  
-    <p>
-      Type:
-      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>
-    </p>
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='edsrawtotype'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>rawToType(raw, dataType)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Convert a Buffer object to a value based on type.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>rawToType(raw: <a href="https://nodejs.org/api/buffer.html">Buffer</a>, dataType: dataTypes): (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>raw</span> <code class='quiet'>(<a href="https://nodejs.org/api/buffer.html">Buffer</a>)</code>
-	    data to convert.
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>dataType</span> <code class='quiet'>(dataTypes)</code>
-	    type of the data.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>:
-        
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='edstypetoraw'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>typeToRaw(value, dataType)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Convert a value to a Buffer object based on type.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>typeToRaw(value: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</a>), dataType: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>): <a href="https://nodejs.org/api/buffer.html">Buffer</a></div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>value</span> <code class='quiet'>((<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</a>))</code>
-	    data to convert.
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>dataType</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    type of the data.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="https://nodejs.org/api/buffer.html">Buffer</a></code>:
-        
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-</div>
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
-    <div class="clearfix">
-  
-    <div class='border-bottom' id='edsload'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>load(path)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Read and parse an EDS file.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>load(path: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>path</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-	    path to file.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='edssave'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>save(path)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Write an EDS file.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>save(path: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>path</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
-	    path to file.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='edsgetentry'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>getEntry(index)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Get a data object.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>getEntry(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)): (<a href="#dataobject">DataObject</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>index</span> <code class='quiet'>((<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>))</code>
-	    index or name of the data object.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code>(<a href="#dataobject">DataObject</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>)</code>:
-        entry (or entries) matching index.
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='edsaddentry'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>addEntry(index, args)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Create a new data object.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>addEntry(index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, args: <a href="#dataobject">DataObject</a>): <a href="#dataobject">DataObject</a></div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>index</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    index of the data object.
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>args</span> <code class='quiet'>(<a href="#dataobject">DataObject</a>)</code>
-	    args passed to the DataObject constructor.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="#dataobject">DataObject</a></code>:
-        the newly created entry.
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='edsremoveentry'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>removeEntry(index)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Remove a data object.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>removeEntry(index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>index</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    index of the data object.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='edsgetsubentry'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>getSubEntry(index, subIndex)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Get a data object.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>getSubEntry(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>), subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>): <a href="#dataobject">DataObject</a></div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>index</span> <code class='quiet'>((<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>))</code>
-	    index or name of the data object.
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>subIndex</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    subIndex of the data object.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="#dataobject">DataObject</a></code>:
-        the sub-entry at index.
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='edsaddsubentry'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>addSubEntry(index, subIndex, args)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Create a new data object.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>addSubEntry(index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, args: <a href="#dataobject">DataObject</a>): <a href="#dataobject">DataObject</a></div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>index</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    index of the data object.
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>subIndex</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    subIndex of the data object.
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>args</span> <code class='quiet'>(<a href="#dataobject">DataObject</a>)</code>
-	    args passed to the DataObject constructor.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="#dataobject">DataObject</a></code>:
-        the newly created sub-entry.
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='edsremovesubentry'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>removeSubEntry(index, subIndex)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Remove a data object.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>removeSubEntry(index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>index</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    index of the data object.
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>subIndex</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    subIndex of the data object.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-</div>
-
-  
-
-  
-</section>
-
-        
-          
-          <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-  <div class='clearfix'>
-    
-    <h3 class='fl m0' id='dataobject'>
-      DataObject
-    </h3>
-    
-    
-  </div>
-  
-
-  <p>A Canopen Data Object.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>new DataObject(index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, subIndex: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | null), args: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
-   
-  
-  
-    <p>
-      Extends
-      
-        EventEmitter
-      
-    </p>
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>index</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    index of the data object.
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>subIndex</span> <code class='quiet'>((<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | null))</code>
-	    subIndex of the data object.
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>args</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
-	    
-          </div>
-          
-          <table class='mt1 mb2 fixed-table h5 col-12'>
-            <colgroup>
-              <col width='30%' />
-              <col width='70%' />
-            </colgroup>
-            <thead>
-              <tr class='bold fill-light'>
-                <th>Name</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody class='mt1'>
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>args.ParameterName</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
-  </td>
-  <td class='break-word'><span>name of the data object.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>args.ObjectType</span> <code class='quiet'>objectTypes</code>
-  </td>
-  <td class='break-word'><span>object type.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>args.DataType</span> <code class='quiet'>dataTypes</code>
-  </td>
-  <td class='break-word'><span>data type.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>args.AccessType</span> <code class='quiet'>accessTypes</code>
-  </td>
-  <td class='break-word'><span>access restrictions.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>args.LowLimit</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>
-  </td>
-  <td class='break-word'><span>minimum value.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>args.HighLimit</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>
-  </td>
-  <td class='break-word'><span>maximum value.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>args.SubNumber</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>
-  </td>
-  <td class='break-word'><span>number of sub-objects.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>args.PDOMapping</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></code>
-  </td>
-  <td class='break-word'><span>enable PDO mapping.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>args.CompactSubObj</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></code>
-  </td>
-  <td class='break-word'><span>use the compact sub-object format.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>args.DefaultValue</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</a>)</code>
-  </td>
-  <td class='break-word'><span>default value.
-</span></td>
-</tr>
-
-
-              
-            </tbody>
-          </table>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
         
           
           <section class='p2 mb2 clearfix bg-white minishadow'>
@@ -1460,10 +387,7 @@
 <p>This class represents a single addressable device (or node) on the bus and
 provides methods for manipulating the object dictionary.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>new Device(args: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
-   
   
   
     <p>
@@ -1514,7 +438,7 @@ provides methods for manipulating the object dictionary.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>args.eds</span> <code class='quiet'><a href="#eds">EDS</a></code>
+  <td class='break-word'><span class='code bold'>args.eds</span> <code class='quiet'><a href="#eds">Eds</a></code>
   </td>
   <td class='break-word'><span>the device's electronic data sheet.
 </span></td>
@@ -1550,1337 +474,16 @@ provides methods for manipulating the object dictionary.</p>
   
 
   
+
+  
     <div class='py1 quiet mt1 prose-big'>Static Members</div>
     <div class="clearfix">
-  
-    <div class='border-bottom' id='deviceemcy'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>new EMCY(device)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>CANopen EMCY protocol handler.</p>
-<p>The emergency (EMCY) protocol follows a producer-consumer structure where
-emergency objects are used to indicate CANopen device errors. An emergency
-object should be transmitted only once per error event.</p>
-<p>This class implements the EMCY write service for producing emergency objects.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>new EMCY(device: <a href="#device">Device</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>device</span> <code class='quiet'>(<a href="#device">Device</a>)</code>
-	    parent device.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
-    <div class="clearfix">
-  
-    <div class='border-bottom' id='deviceemcyvalid'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>valid</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Set the emcy valid bit.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>valid</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>valid</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>)</code>
-	    valid flag.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='deviceemcyvalid'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>valid</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Get the emcy valid bit.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>valid</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></code>:
-        valid flag.
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='deviceemcycobid'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>cobId</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Set the COB-ID.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>cobId</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>cobId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    COB-ID.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='deviceemcycobid'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>cobId</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Get the COB-ID.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>cobId</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>:
-        COB-ID.
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='deviceemcyinhibittime'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>inhibitTime</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Set the inhibit time.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>inhibitTime</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>time</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    inhibit time (100 μs).
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='deviceemcyinhibittime'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>inhibitTime</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Get the inhibit time.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>inhibitTime</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>:
-        inhibit time (100 μs).
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='deviceemcyinit'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>init()</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Initialize members and begin emergency monitoring.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>init()</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='deviceemcywrite'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>write(code, info)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Service: EMCY write.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>write(code: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, info: <a href="https://nodejs.org/api/buffer.html">Buffer</a>): <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a></div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>code</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    error code.
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://nodejs.org/api/buffer.html">Buffer</a>
-            = <code>null</code>)</code>
-	    error info.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a></code>:
-        
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-</div>
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmt'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>new NMT(device)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>CANopen NMT protocol handler.</p>
-<p>The network management (NMT) protocol follows a master-slave structure where
-NMT objects are used to initialze, start, monitor, reset, or stop nodes. All
-CANopen devices are considered NMT slaves with one device fulfilling the
-role of NMT master.</p>
-<p>This class implements the NMT node control services and tracks the device's
-current NMT slave state.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>new NMT(device: <a href="#device">Device</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>device</span> <code class='quiet'>(<a href="#device">Device</a>)</code>
-	    parent device.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
-    <div class="clearfix">
-  
-    <div class='border-bottom' id='devicenmtstate'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>state</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Set the NMT state.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>state</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>newState</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    NMT state.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmtstate'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>state</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Get the NMT state.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>state</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>:
-        NMT state.
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmtproducertime'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>producerTime</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Set producer heartbeat time.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>producerTime</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>time</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    heartbeat time (ms).
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmtproducertime'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>producerTime</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Get producer heartbeat time.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>producerTime</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-    
-      <div class='py1 quiet mt1 prose-big'>Returns</div>
-      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>:
-        heartbeat time (ms).
-
-      
-    
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmtinit'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>init()</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Initialize members and begin heartbeat monitoring.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>init()</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmtstart'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>start()</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Begin heartbeat generation.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>start()</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmtstop'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>stop()</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Stop heartbeat generation.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>stop()</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmtstartnode'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>startNode(nodeId)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Service: start remote node.</p>
-<p>Change the state of NMT slave(s) to NMT state operational.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>startNode(nodeId: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>nodeId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    id of node or 0 for all.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmtstopnode'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>stopNode(nodeId)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Service: stop remote node.</p>
-<p>Change the state of NMT slave(s) to NMT state stopped.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>stopNode(nodeId: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>nodeId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    id of node or 0 for all.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmtenterpreoperational'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>enterPreOperational(nodeId)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Service: enter pre-operational.</p>
-<p>Change the state of NMT slave(s) to NMT state pre-operational.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>enterPreOperational(nodeId: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>nodeId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    id of node or 0 for all.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmtresetnode'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>resetNode(nodeId)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Service: reset node.</p>
-<p>Reset the application of NMT slave(s).</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>resetNode(nodeId: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>nodeId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    id of node or 0 for all.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicenmtresetcommunication'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>resetCommunication(nodeId)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Service: reset communication.</p>
-<p>Reset communication of NMT slave(s).</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>resetCommunication(nodeId: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>nodeId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
-	    id of node or 0 for all.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-</div>
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
   
     <div class='border-bottom' id='devicepdo'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>new PDO(device)</span>
+            <span class='code strong strong truncate'>new Pdo(device)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -2894,10 +497,7 @@ where one device broadcasts data that can be consumed by any device on the
 network. Unlike the SDO protocol, PDO transfers are performed with no
 protocol overhead.</p>
 
- 
-  
-    <div class='pre p1 fill-light mt0'>new PDO(device: <a href="#device">Device</a>)</div>
-   
+    <div class='pre p1 fill-light mt0'>new Pdo(device: <a href="#device">Device</a>)</div>
   
   
 
@@ -2926,6 +526,16 @@ protocol overhead.</p>
 
   
 
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Process data objects (PDO)" (§7.2.2)
+
+      
+    
   
 
   
@@ -2952,10 +562,7 @@ protocol overhead.</p>
 
   <p>Initialize members and begin RPDO monitoring.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>init()</div>
-   
   
   
 
@@ -2964,6 +571,10 @@ protocol overhead.</p>
   
   
   
+  
+
+  
+
   
 
   
@@ -3000,10 +611,7 @@ protocol overhead.</p>
 
   <p>Begin TPDO generation.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>start()</div>
-   
   
   
 
@@ -3012,6 +620,10 @@ protocol overhead.</p>
   
   
   
+  
+
+  
+
   
 
   
@@ -3048,10 +660,7 @@ protocol overhead.</p>
 
   <p>Stop TPDO generation.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>stop()</div>
-   
   
   
 
@@ -3060,6 +669,10 @@ protocol overhead.</p>
   
   
   
+  
+
+  
+
   
 
   
@@ -3096,10 +709,7 @@ protocol overhead.</p>
 
   <p>Service: PDO write</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>write(cobId: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, update: bool)</div>
-   
   
   
 
@@ -3149,12 +759,18 @@ protocol overhead.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
     </div>
   
 </div>
+
+  
 
   
 
@@ -3168,7 +784,7 @@ protocol overhead.</p>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>new SDO(device)</span>
+            <span class='code strong strong truncate'>new Sdo(device)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -3182,10 +798,7 @@ a client can initiate the transfer of data from the server's object
 dictionary. An SDO is transfered as a sequence of segments with basic
 error checking.</p>
 
- 
-  
-    <div class='pre p1 fill-light mt0'>new SDO(device: <a href="#device">Device</a>)</div>
-   
+    <div class='pre p1 fill-light mt0'>new Sdo(device: <a href="#device">Device</a>)</div>
   
   
 
@@ -3217,6 +830,16 @@ error checking.</p>
   
 
   
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 'Service data object (SDO)' (§7.2.4)
+
+      
+    
+  
+
+  
 
   
 
@@ -3240,10 +863,7 @@ error checking.</p>
 
   <p>Initialize members and begin serving SDO transfers.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>init()</div>
-   
   
   
 
@@ -3252,6 +872,10 @@ error checking.</p>
   
   
   
+  
+
+  
+
   
 
   
@@ -3288,10 +912,7 @@ error checking.</p>
 
   <p>Service: SDO upload</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>upload(args: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>): <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a>&#x3C;<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>></div>
-   
   
   
 
@@ -3405,6 +1026,10 @@ error checking.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -3424,10 +1049,7 @@ error checking.</p>
 
   <p>Service: SDO download.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>download(args: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>): <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a></div>
-   
   
   
 
@@ -3550,12 +1172,18 @@ error checking.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
     </div>
   
 </div>
+
+  
 
   
 
@@ -3569,7 +1197,7 @@ error checking.</p>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>new SYNC(device)</span>
+            <span class='code strong strong truncate'>new Sync(device)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -3582,10 +1210,7 @@ error checking.</p>
 that provides a basic network synchronization mechanism. There should be
 at most one sync producer on the network at a time.</p>
 
- 
-  
-    <div class='pre p1 fill-light mt0'>new SYNC(device: <a href="#device">Device</a>)</div>
-   
+    <div class='pre p1 fill-light mt0'>new Sync(device: <a href="#device">Device</a>)</div>
   
   
 
@@ -3617,6 +1242,16 @@ at most one sync producer on the network at a time.</p>
   
 
   
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Synchronization object (SYNC)" (§7.2.5)
+
+      
+    
+  
+
+  
 
   
 
@@ -3640,10 +1275,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Set the sync generation enable bit.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>generate</div>
-   
   
   
 
@@ -3683,6 +1315,10 @@ at most one sync producer on the network at a time.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -3702,10 +1338,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Get the sync generation enable bit.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>generate</div>
-   
   
   
 
@@ -3739,6 +1372,10 @@ at most one sync producer on the network at a time.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -3758,10 +1395,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Set the COB-ID.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>cobId</div>
-   
   
   
 
@@ -3801,6 +1435,10 @@ at most one sync producer on the network at a time.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -3820,10 +1458,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Get the COB-ID.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>cobId</div>
-   
   
   
 
@@ -3857,6 +1492,10 @@ at most one sync producer on the network at a time.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -3876,10 +1515,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Set the sync interval.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>cyclePeriod</div>
-   
   
   
 
@@ -3919,6 +1555,10 @@ at most one sync producer on the network at a time.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -3938,10 +1578,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Get the sync interval.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>cyclePeriod</div>
-   
   
   
 
@@ -3975,6 +1612,10 @@ at most one sync producer on the network at a time.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -3994,10 +1635,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Set the sync counter overflow value.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>overflow</div>
-   
   
   
 
@@ -4037,6 +1675,10 @@ at most one sync producer on the network at a time.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -4056,10 +1698,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Get the sync counter overflow value.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>overflow</div>
-   
   
   
 
@@ -4093,6 +1732,10 @@ at most one sync producer on the network at a time.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -4112,10 +1755,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Initialize members and begin consuming sync objects.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>init()</div>
-   
   
   
 
@@ -4124,6 +1764,10 @@ at most one sync producer on the network at a time.</p>
   
   
   
+  
+
+  
+
   
 
   
@@ -4160,10 +1804,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Begin producing sync objects.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>start()</div>
-   
   
   
 
@@ -4172,6 +1813,10 @@ at most one sync producer on the network at a time.</p>
   
   
   
+  
+
+  
+
   
 
   
@@ -4208,10 +1853,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Stop producing sync objects.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>stop()</div>
-   
   
   
 
@@ -4220,6 +1862,10 @@ at most one sync producer on the network at a time.</p>
   
   
   
+  
+
+  
+
   
 
   
@@ -4256,10 +1902,7 @@ at most one sync producer on the network at a time.</p>
 
   <p>Service: SYNC write.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>write(counter: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | null))</div>
-   
   
   
 
@@ -4300,12 +1943,18 @@ at most one sync producer on the network at a time.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
     </div>
   
 </div>
+
+  
 
   
 
@@ -4319,7 +1968,7 @@ at most one sync producer on the network at a time.</p>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>new TIME(device)</span>
+            <span class='code strong strong truncate'>new Time(device)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -4332,10 +1981,7 @@ at most one sync producer on the network at a time.</p>
 provides a simple network clock. There should be at most one time stamp
 producer on the network.</p>
 
- 
-  
-    <div class='pre p1 fill-light mt0'>new TIME(device: <a href="#device">Device</a>)</div>
-   
+    <div class='pre p1 fill-light mt0'>new Time(device: <a href="#device">Device</a>)</div>
   
   
 
@@ -4367,6 +2013,16 @@ producer on the network.</p>
   
 
   
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Time stamp object (TIME)" (§7.2.6)
+
+      
+    
+  
+
+  
 
   
 
@@ -4390,10 +2046,7 @@ producer on the network.</p>
 
   <p>Set the time stamp producer enable bit.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>produce</div>
-   
   
   
 
@@ -4433,6 +2086,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -4452,10 +2109,7 @@ producer on the network.</p>
 
   <p>Get the time stamp producer enable bit.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>produce</div>
-   
   
   
 
@@ -4489,6 +2143,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -4508,10 +2166,7 @@ producer on the network.</p>
 
   <p>Set the time stamp consumer enable bit.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>consume</div>
-   
   
   
 
@@ -4551,6 +2206,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -4570,10 +2229,7 @@ producer on the network.</p>
 
   <p>Get the time stamp consumer enable bit.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>consume</div>
-   
   
   
 
@@ -4607,6 +2263,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -4626,10 +2286,7 @@ producer on the network.</p>
 
   <p>Set the COB-ID.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>cobId</div>
-   
   
   
 
@@ -4669,6 +2326,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -4688,10 +2349,7 @@ producer on the network.</p>
 
   <p>Get the COB-ID.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>cobId</div>
-   
   
   
 
@@ -4725,6 +2383,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -4744,10 +2406,7 @@ producer on the network.</p>
 
   <p>Initialize members and begin consuming time stamp objects.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>init()</div>
-   
   
   
 
@@ -4756,6 +2415,10 @@ producer on the network.</p>
   
   
   
+  
+
+  
+
   
 
   
@@ -4792,10 +2455,7 @@ producer on the network.</p>
 
   <p>Service: TIME write.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>write(date: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</a>)</div>
-   
   
   
 
@@ -4836,12 +2496,1419 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
     </div>
   
 </div>
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='deviceemcy'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>new Emcy(device)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>CANopen EMCY protocol handler.</p>
+<p>The emergency (EMCY) protocol follows a producer-consumer structure where
+emergency objects are used to indicate CANopen device errors. An emergency
+object should be transmitted only once per error event.</p>
+<p>This class implements the EMCY write service for producing emergency objects.</p>
+
+    <div class='pre p1 fill-light mt0'>new Emcy(device: <a href="#device">Device</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>device</span> <code class='quiet'>(<a href="#device">Device</a>)</code>
+	    parent device.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Emergency object" (§7.2.7)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='deviceemcyvalid'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>valid</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Set the emcy valid bit.</p>
+
+    <div class='pre p1 fill-light mt0'>valid</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>valid</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>)</code>
+	    valid flag.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='deviceemcyvalid'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>valid</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Get the emcy valid bit.</p>
+
+    <div class='pre p1 fill-light mt0'>valid</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></code>:
+        valid flag.
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='deviceemcycobid'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>cobId</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Set the COB-ID.</p>
+
+    <div class='pre p1 fill-light mt0'>cobId</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>cobId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    COB-ID.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='deviceemcycobid'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>cobId</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Get the COB-ID.</p>
+
+    <div class='pre p1 fill-light mt0'>cobId</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>:
+        COB-ID.
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='deviceemcyinhibittime'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>inhibitTime</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Set the inhibit time.</p>
+
+    <div class='pre p1 fill-light mt0'>inhibitTime</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>time</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    inhibit time (100 μs).
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='deviceemcyinhibittime'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>inhibitTime</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Get the inhibit time.</p>
+
+    <div class='pre p1 fill-light mt0'>inhibitTime</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>:
+        inhibit time (100 μs).
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='deviceemcyinit'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>init()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Initialize members and begin emergency monitoring.</p>
+
+    <div class='pre p1 fill-light mt0'>init()</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='deviceemcywrite'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>write(code, info)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Service: EMCY write.</p>
+
+    <div class='pre p1 fill-light mt0'>write(code: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, info: <a href="https://nodejs.org/api/buffer.html">Buffer</a>): <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a></div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>code</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    error code.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://nodejs.org/api/buffer.html">Buffer</a>
+            = <code>null</code>)</code>
+	    error info.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a></code>:
+        
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmt'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>new Nmt(device)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>CANopen NMT protocol handler.</p>
+<p>The network management (NMT) protocol follows a master-slave structure where
+NMT objects are used to initialze, start, monitor, reset, or stop nodes. All
+CANopen devices are considered NMT slaves with one device fulfilling the
+role of NMT master.</p>
+<p>This class implements the NMT node control services and tracks the device's
+current NMT slave state.</p>
+
+    <div class='pre p1 fill-light mt0'>new Nmt(device: <a href="#device">Device</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>device</span> <code class='quiet'>(<a href="#device">Device</a>)</code>
+	    parent device.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Network management" (§7.2.8)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='devicenmtstate'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>state</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Set the NMT state.</p>
+
+    <div class='pre p1 fill-light mt0'>state</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>newState</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    NMT state.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmtstate'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>state</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Get the NMT state.</p>
+
+    <div class='pre p1 fill-light mt0'>state</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>:
+        NMT state.
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmtproducertime'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>producerTime</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Set producer heartbeat time.</p>
+
+    <div class='pre p1 fill-light mt0'>producerTime</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>time</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    heartbeat time (ms).
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmtproducertime'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>producerTime</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Get producer heartbeat time.</p>
+
+    <div class='pre p1 fill-light mt0'>producerTime</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>:
+        heartbeat time (ms).
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmtinit'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>init()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Initialize members and begin heartbeat monitoring.</p>
+
+    <div class='pre p1 fill-light mt0'>init()</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmtstart'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>start()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Begin heartbeat generation.</p>
+
+    <div class='pre p1 fill-light mt0'>start()</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmtstop'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>stop()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Stop heartbeat generation.</p>
+
+    <div class='pre p1 fill-light mt0'>stop()</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmtstartnode'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>startNode(nodeId)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Service: start remote node.</p>
+<p>Change the state of NMT slave(s) to NMT state operational.</p>
+
+    <div class='pre p1 fill-light mt0'>startNode(nodeId: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>nodeId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    id of node or 0 for all.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Service start remote node" (§7.2.8.2.1.2)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmtstopnode'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>stopNode(nodeId)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Service: stop remote node.</p>
+<p>Change the state of NMT slave(s) to NMT state stopped.</p>
+
+    <div class='pre p1 fill-light mt0'>stopNode(nodeId: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>nodeId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    id of node or 0 for all.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Service stop remote node" (§7.2.8.2.1.3)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmtenterpreoperational'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>enterPreOperational(nodeId)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Service: enter pre-operational.</p>
+<p>Change the state of NMT slave(s) to NMT state pre-operational.</p>
+
+    <div class='pre p1 fill-light mt0'>enterPreOperational(nodeId: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>nodeId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    id of node or 0 for all.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Service enter pre-operational" (§7.2.8.2.1.4)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmtresetnode'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>resetNode(nodeId)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Service: reset node.</p>
+<p>Reset the application of NMT slave(s).</p>
+
+    <div class='pre p1 fill-light mt0'>resetNode(nodeId: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>nodeId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    id of node or 0 for all.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Service reset node" (§7.2.8.2.1.5)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='devicenmtresetcommunication'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>resetCommunication(nodeId)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Service: reset communication.</p>
+<p>Reset communication of NMT slave(s).</p>
+
+    <div class='pre p1 fill-light mt0'>resetCommunication(nodeId: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>nodeId</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    id of node or 0 for all.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Service reset communication" (§7.2.8.2.1.6)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
 
   
 
@@ -4873,10 +3940,7 @@ producer on the network.</p>
 
   <p>Set the send function.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>transmit(send: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>)</div>
-   
   
   
 
@@ -4916,6 +3980,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -4935,10 +4003,7 @@ producer on the network.</p>
 
   <p>Initialize the device and audit the object dictionary.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>init()</div>
-   
   
   
 
@@ -4951,50 +4016,6 @@ producer on the network.</p>
 
   
 
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='devicestart'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>start()</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Starts the channel and any configured services.</p>
-
- 
-  
-    <div class='pre p1 fill-light mt0'>start()</div>
-   
-  
-  
-
-  
-  
-  
-  
-  
   
 
   
@@ -5031,10 +4052,7 @@ producer on the network.</p>
 
   <p>Called with each outgoing CAN message.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>send(message: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
-   
   
   
 
@@ -5102,6 +4120,10 @@ producer on the network.</p>
         </div>
       
     </div>
+  
+
+  
+
   
 
   
@@ -5136,10 +4158,7 @@ producer on the network.</p>
 
   <p>Call with each incoming CAN message.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>receive(message: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
-   
   
   
 
@@ -5222,6 +4241,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -5241,10 +4264,7 @@ producer on the network.</p>
 
   <p>Get the value of a DataObject.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>getValue(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>))</div>
-   
   
   
 
@@ -5269,6 +4289,10 @@ producer on the network.</p>
         </div>
       
     </div>
+  
+
+  
+
   
 
   
@@ -5303,10 +4327,7 @@ producer on the network.</p>
 
   <p>Get the value of a DataObject's sub-index.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>getValueArray(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>), subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
-   
   
   
 
@@ -5340,6 +4361,10 @@ producer on the network.</p>
         </div>
       
     </div>
+  
+
+  
+
   
 
   
@@ -5374,10 +4399,7 @@ producer on the network.</p>
 
   <p>Get the raw value of a DataObject.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>getRaw(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>))</div>
-   
   
   
 
@@ -5417,6 +4439,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -5436,10 +4462,7 @@ producer on the network.</p>
 
   <p>Get the raw value of a DataObject's sub-index.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>getRawArray(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>), subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
-   
   
   
 
@@ -5488,6 +4511,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -5507,10 +4534,7 @@ producer on the network.</p>
 
   <p>Set the value of a DataObject.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>setValue(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>), value: any)</div>
-   
   
   
 
@@ -5559,6 +4583,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -5578,10 +4606,7 @@ producer on the network.</p>
 
   <p>Set the value of a DataObject's sub-index.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>setValueArray(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>), subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, value: any)</div>
-   
   
   
 
@@ -5639,6 +4664,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -5658,10 +4687,7 @@ producer on the network.</p>
 
   <p>Set the raw value of a DataObject.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>setRaw(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>), raw: <a href="https://nodejs.org/api/buffer.html">Buffer</a>)</div>
-   
   
   
 
@@ -5710,6 +4736,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -5729,10 +4759,7 @@ producer on the network.</p>
 
   <p>Set the raw value of a DataObject's sub-index.</p>
 
- 
-  
     <div class='pre p1 fill-light mt0'>setRawArray(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>), subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, raw: <a href="https://nodejs.org/api/buffer.html">Buffer</a>)</div>
-   
   
   
 
@@ -5790,6 +4817,10 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
       </div>
@@ -5800,8 +4831,1502 @@ producer on the network.</p>
   
 
   
+
+  
 </section>
 
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='objecttype'>
+      ObjectType
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>CANopen object types.</p>
+
+    <div class='pre p1 fill-light mt0'>ObjectType</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Object code usage" (§7.4.3)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='accesstype'>
+      AccessType
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>CANopen access types.</p>
+
+    <div class='pre p1 fill-light mt0'>AccessType</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Access usage" (§7.4.5)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='datatype'>
+      DataType
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>CANopen data types.</p>
+
+    <div class='pre p1 fill-light mt0'>DataType</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Data type entry usage" (§7.4.7)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='rawtotype'>
+      rawToType
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>Convert a Buffer object to a value based on type.</p>
+
+    <div class='pre p1 fill-light mt0'>rawToType(raw: <a href="https://nodejs.org/api/buffer.html">Buffer</a>, type: <a href="#datatype">DataType</a>): (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>raw</span> <code class='quiet'>(<a href="https://nodejs.org/api/buffer.html">Buffer</a>)</code>
+	    data to convert.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>type</span> <code class='quiet'>(<a href="#datatype">DataType</a>)</code>
+	    how to interpret the data.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>:
+        
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='typetoraw'>
+      typeToRaw
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>Convert a value to a Buffer object based on type.</p>
+
+    <div class='pre p1 fill-light mt0'>typeToRaw(value: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</a>), type: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>): <a href="https://nodejs.org/api/buffer.html">Buffer</a></div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>value</span> <code class='quiet'>((<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</a>))</code>
+	    data to convert.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>type</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    how to interpret the data.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="https://nodejs.org/api/buffer.html">Buffer</a></code>:
+        
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='dataobject'>
+      DataObject
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>A Canopen Data Object.</p>
+
+    <div class='pre p1 fill-light mt0'>new DataObject(index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, subIndex: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | null), args: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  
+  
+    <p>
+      Extends
+      
+        EventEmitter
+      
+    </p>
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>index</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    index of the data object.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>subIndex</span> <code class='quiet'>((<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | null))</code>
+	    subIndex of the data object.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>args</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    
+          </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>args.ParameterName</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  </td>
+  <td class='break-word'><span>name of the data object.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>args.ObjectType</span> <code class='quiet'><a href="#objecttype">ObjectType</a></code>
+  </td>
+  <td class='break-word'><span>object type.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>args.DataType</span> <code class='quiet'><a href="#datatype">DataType</a></code>
+  </td>
+  <td class='break-word'><span>data type.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>args.AccessType</span> <code class='quiet'><a href="#accesstype">AccessType</a></code>
+  </td>
+  <td class='break-word'><span>access restrictions.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>args.LowLimit</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>
+  </td>
+  <td class='break-word'><span>minimum value.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>args.HighLimit</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>
+  </td>
+  <td class='break-word'><span>maximum value.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>args.SubNumber</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>
+  </td>
+  <td class='break-word'><span>number of sub-objects.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>args.PDOMapping</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></code>
+  </td>
+  <td class='break-word'><span>enable PDO mapping.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>args.CompactSubObj</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></code>
+  </td>
+  <td class='break-word'><span>use the compact sub-object format.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>args.DefaultValue</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</a>)</code>
+  </td>
+  <td class='break-word'><span>default value.
+</span></td>
+</tr>
+
+
+              
+            </tbody>
+          </table>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA306 "Object descriptions" (§4.6.3)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='dataobjectserialize'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>serialize()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Converts internal data to a form appropriate for writing to an EDS
+file.</p>
+
+    <div class='pre p1 fill-light mt0'>serialize()</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='eds'>
+      Eds
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>A CANopen Electronic Data Sheet.</p>
+<p>This class provides methods for loading and saving CANopen EDS v4.0 files.</p>
+
+    <div class='pre p1 fill-light mt0'>new Eds()</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA306 "Electronic data sheet specification for CANopen"
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='edsload'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>load(path)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Read and parse an EDS file.</p>
+
+    <div class='pre p1 fill-light mt0'>load(path: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>path</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    path to file.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='edssave'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>save(path)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Write an EDS file.</p>
+
+    <div class='pre p1 fill-light mt0'>save(path: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>path</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    path to file.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='edsgetentry'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>getEntry(index)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Get a data object.</p>
+
+    <div class='pre p1 fill-light mt0'>getEntry(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)): (<a href="#dataobject">DataObject</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>index</span> <code class='quiet'>((<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>))</code>
+	    index or name of the data object.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code>(<a href="#dataobject">DataObject</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>)</code>:
+        entry (or entries) matching index.
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='edsaddentry'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>addEntry(index, args)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Create a new data object.</p>
+
+    <div class='pre p1 fill-light mt0'>addEntry(index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, args: <a href="#dataobject">DataObject</a>): <a href="#dataobject">DataObject</a></div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>index</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    index of the data object.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>args</span> <code class='quiet'>(<a href="#dataobject">DataObject</a>)</code>
+	    args passed to the DataObject constructor.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="#dataobject">DataObject</a></code>:
+        the newly created entry.
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='edsremoveentry'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>removeEntry(index)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Remove a data object.</p>
+
+    <div class='pre p1 fill-light mt0'>removeEntry(index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>index</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    index of the data object.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='edsgetsubentry'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>getSubEntry(index, subIndex)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Get a data object.</p>
+
+    <div class='pre p1 fill-light mt0'>getSubEntry(index: (<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>), subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>): <a href="#dataobject">DataObject</a></div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>index</span> <code class='quiet'>((<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>))</code>
+	    index or name of the data object.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>subIndex</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    subIndex of the data object.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="#dataobject">DataObject</a></code>:
+        the sub-entry at index.
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='edsaddsubentry'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>addSubEntry(index, subIndex, args)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Create a new data object.</p>
+
+    <div class='pre p1 fill-light mt0'>addSubEntry(index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, args: <a href="#dataobject">DataObject</a>): <a href="#dataobject">DataObject</a></div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>index</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    index of the data object.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>subIndex</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    subIndex of the data object.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>args</span> <code class='quiet'>(<a href="#dataobject">DataObject</a>)</code>
+	    args passed to the DataObject constructor.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code><a href="#dataobject">DataObject</a></code>:
+        the newly created sub-entry.
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='edsremovesubentry'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>removeSubEntry(index, subIndex)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Remove a data object.</p>
+
+    <div class='pre p1 fill-light mt0'>removeSubEntry(index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>index</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    index of the data object.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>subIndex</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+	    subIndex of the data object.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='emcyclass'>
+      EmcyClass
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>CANopen emergency error code classes.</p>
+
+    <div class='pre p1 fill-light mt0'>EmcyClass</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Emergency object (EMCY)" (§7.2.7)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='emcycode'>
+      EmcyCode
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>CANopen emergency error codes.</p>
+
+    <div class='pre p1 fill-light mt0'>EmcyCode</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Related</div>
+    
+      
+        CiA301 "Emergency object (EMCY)" (§7.2.7)
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='nmtstate'>
+      NmtState
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>NMT internal states.</p>
+
+    <div class='pre p1 fill-light mt0'>NmtState</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='nmtcommand'>
+      NmtCommand
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>NMT commands.</p>
+
+    <div class='pre p1 fill-light mt0'>NmtCommand</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
         
           
           <section class='p2 mb2 clearfix bg-white minishadow'>
@@ -5819,10 +6344,7 @@ producer on the network.</p>
 
   <p>CANopen error.</p>
 
- 
-  
-    <div class='pre p1 fill-light mt0'>new COError(code: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
-   
+    <div class='pre p1 fill-light mt0'>new COError(code: AbortCode, index: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>, subIndex: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</div>
   
   
     <p>
@@ -5846,7 +6368,7 @@ producer on the network.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>code</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a>)</code>
+            <span class='code bold'>code</span> <code class='quiet'>(AbortCode)</code>
 	    error code.
 
           </div>
@@ -5888,8 +6410,13 @@ producer on the network.</p>
   
 
   
+
+  
+
+  
 </section>
 
+          
         
       </div>
     </div>
