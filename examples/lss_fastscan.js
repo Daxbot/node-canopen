@@ -24,11 +24,12 @@ device.transmit((message) => { channel.send(message); });
 device.init();
 channel.start();
 
+/** Step 5: Select and configure one node at a time. */
 new Promise(async (resolve) => {
     let nodeId = 0x20;
 
     while(1) {
-        /** Step 5: Set exactly 1 node into configuration mode. */
+        /** Step 5a: Set exactly 1 node into configuration mode. */
         const result = await device.lss.fastscan();
         if(result === null) {
             console.log('All nodes configured!');
@@ -36,11 +37,11 @@ new Promise(async (resolve) => {
             break;
         }
 
-        /** Step 6:  Set the new node id. */
+        /** Step 5b:  Set the new node id. */
         console.log(`Setting node to id 0x${nodeId}`);
         await device.lss.configureNodeId(nodeId++);
 
-        /** Step 7: Switch selected node into operation mode. */
+        /** Step 5c: Switch selected node into operation mode. */
         device.lss.switchModeGlobal(LssMode.OPERATION);
     }
 })
