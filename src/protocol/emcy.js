@@ -57,9 +57,8 @@ const EmcyCode = {
  * @param {number} code - error code.
  * @param {number} register - error register.
  * @param {Buffer} info - error info.
- * @private
  */
-class EmergencyMessage {
+class EmcyMessage {
     constructor(code, register, info=null) {
         this.code = code;
         this.register = register;
@@ -307,7 +306,7 @@ class Emcy {
                 setTimeout(() => {
                     /* Create emergency object. */
                     const register = this.device.getValue(0x1001);
-                    const em = new EmergencyMessage(code, register, info);
+                    const em = new EmcyMessage(code, register, info);
 
                     let cobId = this.cobId;
                     if((cobId & 0xF) == 0)
@@ -343,7 +342,7 @@ class Emcy {
 
         const code = message.data.readUInt16LE(0);
         const reg = message.data.readUInt8(2);
-        const em = new EmergencyMessage(code, reg, message.data.slice(3));
+        const em = new EmcyMessage(code, reg, message.data.slice(3));
 
         if(deviceId == this.device.id) {
             /* Object 0x1001 - Error register. */

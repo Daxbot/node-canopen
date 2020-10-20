@@ -15,7 +15,7 @@ const LssMode = {
  * @param {number} info - error info code.
  */
 class LssError extends Error {
-    constructor(message, code, info=undefined) {
+    constructor(message, code, info) {
         super(message);
         this.code = code;
         this.info = info;
@@ -398,4 +398,4 @@ class Lss {
     }
 }
 
-module.exports=exports={ LssMode, Lss };
+module.exports=exports={ LssMode, LssError, Lss };
