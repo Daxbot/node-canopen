@@ -5,11 +5,14 @@
  * and uploads (reads) data from an SDO server.
  */
 
+const clientId = 0xa;
+const serverId = 0xb;
+
 const { Device, ObjectType, AccessType, DataType } = require('../index.js');
 const can = require('socketcan');
 
 /** Step 1: Create a new Device. */
-const device = new Device({ id: 0xC });
+const device = new Device({ id: clientId });
 
 /** Step 2: Create a new socketcan RawChannel object. */
 const channel = can.createRawChannel('can0');
@@ -36,7 +39,7 @@ device.eds.addSubEntry(0x1280, 3, {
     'ParameterName':    'Node-ID of the SDO server',
     'DataType':         DataType.UNSIGNED8,
     'AccessType':       AccessType.READ_WRITE,
-    'DefaultValue':     0xD,
+    'DefaultValue':     serverId,
 });
 
 /** Step 4: Initialize and start the device. */
@@ -50,14 +53,14 @@ channel.start();
 const date = new Date();
 
 device.sdo.download({
-    serverId: 0xD,
+    serverId: serverId,
     data: date.toString(),
     dataType: DataType.VISIBLE_STRING,
     index: 0x2000
 })
 .then(() => {
     device.sdo.upload({
-        serverId: 0xD,
+        serverId: serverId,
         index: 0x2000,
         dataType: DataType.VISIBLE_STRING
     })

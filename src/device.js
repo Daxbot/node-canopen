@@ -1,5 +1,6 @@
 const EventEmitter = require('events');
 const { Emcy } = require('./protocol/emcy');
+const { Lss } = require('./protocol/lss');
 const { Nmt } = require ('./protocol/nmt');
 const { Pdo } = require('./protocol/pdo');
 const { Sdo } = require('./protocol/sdo');
@@ -46,6 +47,7 @@ class Device extends EventEmitter {
 
         this.eds = (eds) ? eds : new Eds();
         this.emcy = new Emcy(this);
+        this.lss = new Lss(this);
         this.nmt = new Nmt(this);
         this.pdo = new Pdo(this);
         this.sdo = new Sdo(this);
@@ -68,6 +70,7 @@ class Device extends EventEmitter {
     /** Initialize the device and audit the object dictionary. */
     init() {
         this.emcy.init();
+        this.lss.init();
         this.nmt.init();
         this.pdo.init();
         this.sdo.init();

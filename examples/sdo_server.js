@@ -5,11 +5,13 @@
  * Object Dictionary using the SDO protocol.
  */
 
+const serverId = 0xb;
+
 const { Device, ObjectType, AccessType, DataType } = require('../index.js');
 const can = require('socketcan');
 
 /** Step 1: Create a new Device. */
-const device = new Device({ id: 0xD });
+const device = new Device({ id: serverId });
 
 /** Step 2: Create a new socketcan RawChannel object. */
 const channel = can.createRawChannel('can0');

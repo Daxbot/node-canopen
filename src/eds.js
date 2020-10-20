@@ -659,11 +659,32 @@ class Eds {
         this.addEntry(0x1018, {
             'ParameterName':    'Identity object',
             'ObjectType':       ObjectType.RECORD,
-            'SubNumber':        1,
+            'SubNumber':        4,
         });
 
         this.addSubEntry(0x1018, 1, {
             'ParameterName':    'Vendor-ID',
+            'ObjectType':       ObjectType.VAR,
+            'DataType':         DataType.UNSIGNED32,
+            'AccessType':       AccessType.READ_ONLY,
+        });
+
+        this.addSubEntry(0x1018, 2, {
+            'ParameterName':    'Product code',
+            'ObjectType':       ObjectType.VAR,
+            'DataType':         DataType.UNSIGNED32,
+            'AccessType':       AccessType.READ_ONLY,
+        });
+
+        this.addSubEntry(0x1018, 3, {
+            'ParameterName':    'Revision number',
+            'ObjectType':       ObjectType.VAR,
+            'DataType':         DataType.UNSIGNED32,
+            'AccessType':       AccessType.READ_ONLY,
+        });
+
+        this.addSubEntry(0x1018, 4, {
+            'ParameterName':    'Serial number',
             'ObjectType':       ObjectType.VAR,
             'DataType':         DataType.UNSIGNED32,
             'AccessType':       AccessType.READ_ONLY,

@@ -1,4 +1,5 @@
-/** TPDO example.
+/**
+ * TPDO example.
  *
  * This example shows how to map data objects to be transmitted via PDO.
  */
@@ -7,7 +8,7 @@ const { Device, ObjectType, AccessType, DataType } = require('../index.js');
 const can = require('socketcan');
 
 /** Step 1: Create a new Device. */
-const device = new Device({ id: 0x9 });
+const device = new Device({ id: 0xa });
 
 /** Step 2: Create a new socketcan RawChannel object. */
 const channel = can.createRawChannel('can0');

@@ -110,7 +110,7 @@ class Time {
     init() {
         // Object 0x1012 - COB-ID TIME
         const obj1012 = this.device.eds.getEntry(0x1012);
-        if(obj1012) {
+        if(obj1012 !== undefined) {
             this._parse1012(obj1012);
             obj1012.addListener('update', this._parse1012.bind(this));
 

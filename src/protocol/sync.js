@@ -135,7 +135,7 @@ class Sync {
     init() {
         // Object 0x1005 - COB-ID SYNC
         const obj1005 = this.device.eds.getEntry(0x1005);
-        if(obj1005) {
+        if(obj1005 !== undefined) {
             this._parse1005(obj1005);
             obj1005.addListener('update', this._parse1005.bind(this));
 
@@ -144,14 +144,14 @@ class Sync {
 
         // Object 0x1006 - Communication cycle period
         const obj1006 = this.device.eds.getEntry(0x1006);
-        if(obj1006) {
+        if(obj1006 !== undefined) {
             this._parse1006(obj1006);
             obj1006.addListener('update', this._parse1006.bind(this));
         }
 
         // Object 0x1019 - Synchronous counter overflow value
         const obj1019 = this.device.eds.getEntry(0x1019);
-        if(obj1019) {
+        if(obj1019 !== undefined) {
             this._parse1019(obj1019);
             obj1019.addListener('update', this._parse1019.bind(this));
         }

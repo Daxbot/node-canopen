@@ -1,4 +1,5 @@
-/** Time producer example.
+/**
+ * Time producer example.
  *
  * This example shows how to create a CANopen device that produces TIME objects.
  */
@@ -7,7 +8,7 @@ const { Device } = require('../index.js');
 const can = require('socketcan');
 
 /** Step 1: Create a new Device. */
-const device = new Device({ id: 0xF });
+const device = new Device({ id: 0xa });
 
 /** Step 2: Create a new socketcan RawChannel object. */
 const channel = can.createRawChannel('can0');

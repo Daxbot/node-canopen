@@ -272,19 +272,19 @@ class Emcy {
     init() {
         /* Object 0x1001 - Error register. */
         const obj1001 = this.device.eds.getEntry(0x1001);
-        if(!obj1001)
+        if(obj1001 === undefined)
             throw ReferenceError("0x1001 is required for EMCY protocol.");
 
         /* Object 0x1014 - COB-ID EMCY. */
         const obj1014 = this.device.eds.getEntry(0x1014);
-        if(obj1014) {
+        if(obj1014 !== undefined) {
             this._parse1014(obj1014);
             obj1014.addListener('update', this._parse1014.bind(this));
         }
 
         /* Object 0x1015 - Inhibit time EMCY. */
         const obj1015 = this.device.eds.getEntry(0x1015);
-        if(obj1015) {
+        if(obj1015 !== undefined) {
             this._parse1015(obj1015);
             obj1015.addListener('update', this._parse1015.bind(this));
         }

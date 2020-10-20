@@ -10,7 +10,7 @@ This library allows the manipulation of CANopen devices as defined in CiA 301.
 ## Protocols
 ### Emergency - EMCY
 The CANopen emergency protocol is used to indicate internal errors with a
-CANopen device. Call [EMCY.write][1] to produce an emergency object.
+CANopen device. Call [Emcy.write][1] to produce an emergency object.
 
  OD Entry | Description             | Notes
  -------- | ----------------------- | ------------------------
@@ -25,10 +25,24 @@ Supported Features:
 
 [1]: https://daxbot.github.io/node-canopen/#emcywrite
 
+### Layer Setting Services - LSS
+The CANopen layer setting services protocol allows the CAN-ID and bitrate of
+an LSS slave device to be modified. This allows for setting up a network of
+identical devices without relying on physical dip switches or non-volatile
+storage to distinguish between them.
+
+ OD Entry | Description             | Notes
+ -------- | ----------------------- | ------------------------
+  0x1018  | Identity object         | Required.
+
+Supported Features:
+ - LSS master :heavy_check_mark:
+ - LSS slave :x:
+
 ### Network Management - NMT
 The CANopen network management protocol is used to manipulate the state of
 NMT slave devices on the network and is responsible for the device heartbeat.
-Call [NMT.start][2] to begin heartbeat generation.
+Call [Nmt.start][2] to begin heartbeat generation.
 
  OD Entry | Description             | Notes
  -------- | ----------------------- | ------------------------
@@ -50,8 +64,8 @@ Supported Features:
 ### Process Data Object - PDO
 The CANopen process data object protocol is used for broadcasting data changes
 with minimal overhead, similar to a more traditional CAN network architecture.
-A mapped PDO can be sent with the [PDO.write][3] method. Calling
-[PDO.start][4] will begin producing mapped synchronous TPDOs.
+A mapped PDO can be sent with the [Pdo.write][3] method. Calling
+[Pdo.start][4] will begin producing mapped synchronous TPDOs.
 
  OD Entry        | Description                  | Notes
  --------------- | ---------------------------- | ------------------
@@ -74,7 +88,7 @@ Supported Features:
 
 ### Service Data Object - SDO
 The CANopen service data object protocol provides direct access to a device's
-object dictionary. Call the [SDO.upload][5] or [SDO.download][6] methods to
+object dictionary. Call the [Sdo.upload][5] or [Sdo.download][6] methods to
 initate a transfer.
 
  OD Entry        | Description          | Notes
@@ -92,7 +106,7 @@ Supported Features:
 
 ### Synchronization - SYNC
 The CANopen sync protocol is used to synchronize actions between devices on the
-network. Call [SYNC.start][7] to begin producing sync objects.
+network. Call [Sync.start][7] to begin producing sync objects.
 
  OD Entry | Description                 | Notes
  -------- | --------------------------- | -----------------------------
@@ -107,7 +121,7 @@ Supported Features:
 
 ###  Time stamp - TIME
 The CANopen time protocol is used to provide a simple network clock. Call
-[TIME.write][8] to produce a time stamp object.
+[Time.write][8] to produce a time stamp object.
 
  OD Entry | Description | Notes
  -------- | ----------- | ---------

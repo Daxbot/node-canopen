@@ -8,7 +8,7 @@ const { Device } = require('../index.js');
 const can = require('socketcan');
 
 /** Step 1: Create a new Device. */
-const device = new Device({ id: 0xA });
+const device = new Device({ id: 0xa });
 
 /** Step 2: Create a new socketcan RawChannel object. */
 const channel = can.createRawChannel('can0');

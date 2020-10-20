@@ -97,7 +97,7 @@ class Nmt {
     init() {
         // Object 0x1016 - Consumer heartbeat time
         const obj1016 = this.device.eds.getEntry(0x1016);
-        if(obj1016) {
+        if(obj1016 !== undefined) {
             for(let i = 1; i <= obj1016[0].value; ++i) {
                 const entry = obj1016[i];
                 if(entry === undefined)
@@ -110,7 +110,7 @@ class Nmt {
 
         // Object 0x1017 - Producer heartbeat time
         const obj1017 = this.device.eds.getEntry(0x1017);
-        if(obj1017) {
+        if(obj1017 !== undefined) {
             this._parse1017(obj1017);
             obj1017.addListener('update', this._parse1017.bind(this));
         }
@@ -141,7 +141,7 @@ class Nmt {
      * @see CiA301 "Service start remote node" (§7.2.8.2.1.2)
      */
     startNode(nodeId) {
-        this._sendNMT(nodeId, NmtCommand.ENTER_OPERATIONAL);
+        this._sendNmt(nodeId, NmtCommand.ENTER_OPERATIONAL);
     }
 
     /**
@@ -152,7 +152,7 @@ class Nmt {
      * @see CiA301 "Service stop remote node" (§7.2.8.2.1.3)
      */
     stopNode(nodeId) {
-        this._sendNMT(nodeId, NmtCommand.ENTER_STOPPED);
+        this._sendNmt(nodeId, NmtCommand.ENTER_STOPPED);
     }
 
     /**
@@ -163,7 +163,7 @@ class Nmt {
      * @see CiA301 "Service enter pre-operational" (§7.2.8.2.1.4)
      */
     enterPreOperational(nodeId) {
-        this._sendNMT(nodeId, NmtCommand.ENTER_PRE_OPERATIONAL);
+        this._sendNmt(nodeId, NmtCommand.ENTER_PRE_OPERATIONAL);
     }
 
     /**
@@ -174,7 +174,7 @@ class Nmt {
      * @see CiA301 "Service reset node" (§7.2.8.2.1.5)
      */
     resetNode(nodeId) {
-        this._sendNMT(nodeId, NmtCommand.RESET_NODE);
+        this._sendNmt(nodeId, NmtCommand.RESET_NODE);
     }
 
     /**
@@ -185,7 +185,7 @@ class Nmt {
      * @see CiA301 "Service reset communication" (§7.2.8.2.1.6)
      */
     resetCommunication(nodeId) {
-        this._sendNMT(nodeId, NmtCommand.RESET_COMMUNICATION);
+        this._sendNmt(nodeId, NmtCommand.RESET_COMMUNICATION);
     }
 
     /**
@@ -193,9 +193,9 @@ class Nmt {
      * @param {number} command - NMT command to serve.
      * @private
      */
-    _sendNMT(nodeId, command) {
+    _sendNmt(nodeId, command) {
         if(nodeId == 0 || nodeId == this.device.id)
-            this._handleNMT(command);
+            this._handleNmt(command);
 
         this.device.send({
             id:     0x0,
@@ -220,7 +220,7 @@ class Nmt {
      * @param {number} command - NMT command to handle.
      * @private
      */
-    _handleNMT(command) {
+    _handleNmt(command) {
         switch(command) {
             case NmtCommand.ENTER_OPERATIONAL:
                 this.state = NmtState.OPERATIONAL;
@@ -247,7 +247,7 @@ class Nmt {
         if((message.id & 0x7FF) == 0x0) {
             const nodeId = message.data[1];
             if(nodeId == 0 || nodeId == this.device.id)
-                this._handleNMT(message.data[0]);
+                this._handleNmt(message.data[0]);
         }
         else if((message.id & 0x700) == 0x700) {
             const deviceId = message.id & 0x7F;
