@@ -4,7 +4,7 @@ const { AccessType, rawToType, typeToRaw } = require('../eds');
  * CANopen abort codes.
  * @enum {string}
  * @see CiA301 'Protocol SDO abort transfer' (§7.2.4.3.17)
- * @private
+ * @memberof Sdo
  */
 const AbortCode = {
     TOGGLE_BIT: 0x05030000,
@@ -40,13 +40,13 @@ const AbortCode = {
     NO_DATA: 0x08000024,
 };
 
- /**
-  * CANopen SDO 'Client Command Specifier' codes.
-  * @enum {number}
-  * @see CiA301 'SDO protocols' (§7.2.4.3)
-  * @private
-  */
- const ClientCommand = {
+/**
+ * CANopen SDO 'Client Command Specifier' codes.
+ * @enum {number}
+ * @see CiA301 'SDO protocols' (§7.2.4.3)
+ * @private
+ */
+const ClientCommand = {
     DOWNLOAD_SEGMENT: 0,
     DOWNLOAD_INITIATE: 1,
     UPLOAD_INITIATE: 2,
@@ -147,6 +147,7 @@ function codeToString(code) {
  * @param {AbortCode} code - error code.
  * @param {number} index - object index.
  * @param {number} subIndex - object subIndex.
+ * @memberof Sdo
  */
 class SdoError extends Error {
     constructor(code, index, subIndex=null) {
@@ -316,7 +317,6 @@ class Queue {
  *
  * @param {Device} device - parent device.
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
- * @memberof Device
  */
 class Sdo {
     constructor(device) {

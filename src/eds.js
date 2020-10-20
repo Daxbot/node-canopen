@@ -8,6 +8,7 @@ const EventEmitter = require('events');
  * CANopen object types.
  * @enum {number}
  * @see CiA301 "Object code usage" (§7.4.3)
+ * @memberof Eds
  */
 const ObjectType = {
     NULL: 0,
@@ -23,6 +24,7 @@ const ObjectType = {
  * CANopen access types.
  * @enum {string}
  * @see CiA301 "Access usage" (§7.4.5)
+ * @memberof Eds
  */
 const AccessType = {
     READ_WRITE: 'rw',
@@ -35,6 +37,7 @@ const AccessType = {
  * CANopen data types.
  * @enum {number}
  * @see CiA301 "Data type entry usage" (§7.4.7)
+ * @memberof Eds
  */
 const DataType = {
     BOOLEAN: 1,
@@ -73,6 +76,7 @@ const DataType = {
  * @param {Buffer} raw - data to convert.
  * @param {DataType} type - how to interpret the data.
  * @return {number | string}
+ * @memberof Eds
  */
 function rawToType(raw, type) {
     if(typeof type === 'string')
@@ -127,6 +131,7 @@ function rawToType(raw, type) {
  * @param {number | string | Date} value - data to convert.
  * @param {number} type - how to interpret the data.
  * @return {Buffer}
+ * @memberof Eds
  */
 function typeToRaw(value, type) {
     if(value === undefined || value === null)
@@ -256,6 +261,7 @@ function typeToRaw(value, type) {
  * @emits 'update' on value change.
  *
  * @see CiA306 "Object descriptions" (§4.6.3)
+ * @memberof Eds
  * @protected
  */
 class DataObject extends EventEmitter {

@@ -4,8 +4,9 @@ const { ObjectType, AccessType, DataType } = require('../eds');
  * CANopen emergency error code classes.
  * @enum {number}
  * @see CiA301 "Emergency object (EMCY)" (§7.2.7)
+ * @memberof Emcy
  */
-const EmcyClass = {
+const EmcyType = {
     ERROR_RESET: 0x0000,
     GENERIC_ERROR: 0x1000,
     CURRENT_GENERAL: 0x2000,
@@ -37,19 +38,20 @@ const EmcyClass = {
  * CANopen emergency error codes.
  * @enum {number}
  * @see CiA301 "Emergency object (EMCY)" (§7.2.7)
+ * @memberof Emcy
  */
 const EmcyCode = {
-    CAN_OVERRUN: EmcyClass.COMMUNICATION | 0x10,
-    BUS_PASSIVE: EmcyClass.COMMUNICATION | 0x20,
-    HEARTBEAT: EmcyClass.COMMUNICATION | 0x30,
-    BUS_OFF_RECOVERED: EmcyClass.COMMUNICATION | 0x40,
-    CAN_ID_COLLISION: EmcyClass.COMMUNICATION | 0x50,
-    PDO_LENGTH: EmcyClass.PROTOCOL | 0x10,
-    PDO_LENGTH_EXCEEDED: EmcyClass.PROTOCOL | 0x20,
-    DAM_MPDO: EmcyClass.PROTOCOL | 0x30,
-    SYNC_LENGTH: EmcyClass.PROTOCOL | 0x40,
-    RPDO_TIMEOUT: EmcyClass.PROTOCOL | 0x50,
-    TIME_LENGTH: EmcyClass.PROTOCOL | 0x60,
+    CAN_OVERRUN: EmcyType.COMMUNICATION | 0x10,
+    BUS_PASSIVE: EmcyType.COMMUNICATION | 0x20,
+    HEARTBEAT: EmcyType.COMMUNICATION | 0x30,
+    BUS_OFF_RECOVERED: EmcyType.COMMUNICATION | 0x40,
+    CAN_ID_COLLISION: EmcyType.COMMUNICATION | 0x50,
+    PDO_LENGTH: EmcyType.PROTOCOL | 0x10,
+    PDO_LENGTH_EXCEEDED: EmcyType.PROTOCOL | 0x20,
+    DAM_MPDO: EmcyType.PROTOCOL | 0x30,
+    SYNC_LENGTH: EmcyType.PROTOCOL | 0x40,
+    RPDO_TIMEOUT: EmcyType.PROTOCOL | 0x50,
+    TIME_LENGTH: EmcyType.PROTOCOL | 0x60,
 }
 
 /**
@@ -57,6 +59,7 @@ const EmcyCode = {
  * @param {number} code - error code.
  * @param {number} register - error register.
  * @param {Buffer} info - error info.
+ * @memberof Emcy
  */
 class EmcyMessage {
     constructor(code, register, info=null) {
@@ -101,53 +104,53 @@ class EmcyMessage {
 
         // Check class
         switch(this.code & 0xff00) {
-            case EmcyClass.ERROR_RESET:
+            case EmcyType.ERROR_RESET:
                 return 'Error reset';
-            case EmcyClass.GENERIC_ERROR:
+            case EmcyType.GENERIC_ERROR:
                 return 'Generic error';
-            case EmcyClass.CURRENT_GENERAL:
+            case EmcyType.CURRENT_GENERAL:
                 return 'Current error';
-            case EmcyClass.CURRENT_INPUT:
+            case EmcyType.CURRENT_INPUT:
                 return 'Current, CANopen device input side';
-            case EmcyClass.CURRENT_INTERNAL:
+            case EmcyType.CURRENT_INTERNAL:
                 return 'Current inside the CANopen device';
-            case EmcyClass.CURRENT_OUTPUT:
+            case EmcyType.CURRENT_OUTPUT:
                 return 'Current, CANopen device output side';
-            case EmcyClass.VOLTAGE_GENERAL:
+            case EmcyType.VOLTAGE_GENERAL:
                 return 'Voltage error';
-            case EmcyClass.VOLTAGE_MAINS:
+            case EmcyType.VOLTAGE_MAINS:
                 return 'Voltage mains';
-            case EmcyClass.VOLTAGE_INTERNAL:
+            case EmcyType.VOLTAGE_INTERNAL:
                 return 'Voltage inside the CANopen device';
-            case EmcyClass.VOLTAGE_OUTPUT:
+            case EmcyType.VOLTAGE_OUTPUT:
                 return 'Voltage output';
-            case EmcyClass.TEMPERATURE_GENERAL:
+            case EmcyType.TEMPERATURE_GENERAL:
                 return 'Temperature error';
-            case EmcyClass.TEMPERATURE_AMBIENT:
+            case EmcyType.TEMPERATURE_AMBIENT:
                 return 'Ambient temperature';
-            case EmcyClass.HARDWARE:
+            case EmcyType.HARDWARE:
                 return 'CANopen device hardware';
-            case EmcyClass.SOFTWARE_GENERAL:
+            case EmcyType.SOFTWARE_GENERAL:
                 return 'CANopen device software';
-            case EmcyClass.SOFTWARE_INTERNAL:
+            case EmcyType.SOFTWARE_INTERNAL:
                 return 'Internal software';
-            case EmcyClass.SOFTWARE_USER:
+            case EmcyType.SOFTWARE_USER:
                 return 'User software';
-            case EmcyClass.SOFTWARE_DATA:
+            case EmcyType.SOFTWARE_DATA:
                 return 'Data set';
-            case EmcyClass.MODULES:
+            case EmcyType.MODULES:
                 return 'Additional modules';
-            case EmcyClass.MONITORING:
+            case EmcyType.MONITORING:
                 return 'Monitoring error';
-            case EmcyClass.COMMUNICATION:
+            case EmcyType.COMMUNICATION:
                 return 'Communication error';
-            case EmcyClass.PROTOCOL:
+            case EmcyType.PROTOCOL:
                 return 'Protocol error';
-            case EmcyClass.EXTERNAL:
+            case EmcyType.EXTERNAL:
                 return 'External error';
-            case EmcyClass.ADDITIONAL_FUNCTIONS:
+            case EmcyType.ADDITIONAL_FUNCTIONS:
                 return 'Additional functions';
-            case EmcyClass.DEVICE_SPECIFIC:
+            case EmcyType.DEVICE_SPECIFIC:
                 return 'CANopen device specific';
         }
     }
@@ -173,7 +176,6 @@ class EmcyMessage {
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Emergency object" (§7.2.7)
- * @memberof Device
  */
 class Emcy {
     constructor(device) {
@@ -407,4 +409,4 @@ class Emcy {
     }
 }
 
-module.exports=exports={ EmcyClass, EmcyCode, Emcy };
+module.exports=exports={ EmcyType, EmcyCode, EmcyMessage, Emcy };

@@ -8,7 +8,6 @@ const { ObjectType, AccessType, DataType, typeToRaw, rawToType } = require('../e
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Time stamp object (TIME)" (§7.2.6)
- * @memberof Device
  */
 class Time {
     constructor(device) {

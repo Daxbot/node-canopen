@@ -9,7 +9,6 @@ const { ObjectType, AccessType, DataType } = require('../eds');
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Synchronization object (SYNC)" (§7.2.5)
- * @memberof Device
  */
 class Sync {
     constructor(device) {

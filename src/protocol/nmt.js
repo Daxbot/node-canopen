@@ -3,6 +3,7 @@ const { ObjectType, AccessType, DataType } = require('../eds');
 /**
  * NMT internal states.
  * @enum {number}
+ * @memberof Nmt
  */
 const NmtState = {
     INITIALIZING: 0,
@@ -14,6 +15,7 @@ const NmtState = {
 /**
  * NMT commands.
  * @enum {number}
+ * @memberof Nmt
  */
 const NmtCommand = {
     ENTER_OPERATIONAL: 1,
@@ -36,7 +38,6 @@ const NmtCommand = {
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Network management" (§7.2.8)
- * @memberof Device
  */
 class Nmt {
     constructor(device) {
