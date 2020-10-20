@@ -2,6 +2,7 @@
  * CANopen LSS modes.
  * @enum {number}
  * @see CiA305 "Switch Mode Global" (§3.9.1)
+ * @memberof Lss
  */
 const LssMode = {
     OPERATION: 0,
@@ -13,6 +14,7 @@ const LssMode = {
  * @param {string} message - error message.
  * @param {number} code - error code.
  * @param {number} info - error info code.
+ * @memberof Lss
  */
 class LssError extends Error {
     constructor(message, code, info) {
@@ -30,13 +32,11 @@ class LssError extends Error {
  * @param {Device} device - parent device.
  *
  * @see CiA305 "Layer Settings Services and Protocol (LSS)"
- * @memberof Device
  */
 class Lss {
     constructor(device) {
         this.device = device;
         this.mode = LssMode.OPERATION;
-        this.nodes = [];
         this.pending = {};
     }
 
@@ -80,6 +80,200 @@ class Lss {
     }
 
     /**
+     * LSS Fastscan protocol.
+     *
+     * Identifies exactly one LSS slave device and switches it to configuration
+     * mode.
+     *
+     * @param {number} vendorId - vendor-id hint (optional).
+     * @param {number} productCode - product-code hint (optional).
+     * @param {number} revisionNumber - revision-number hint (optional).
+     * @param {number} serialNumber - serial-number hint (optional).
+     * @param {number} timeout - how long to wait for nodes to respond.
+     * @returns {Promise<null>} - if no devices found.
+     * @returns {Promise<Object>} - if a device was found.
+     *
+     * @see https://www.can-cia.org/fileadmin/resources/documents/proceedings/2008_pfeiffer.pdf
+     */
+    async fastscan(
+        vendorId=null,
+        productCode=null,
+        revisionNumber=null,
+        serialNumber=null,
+        timeout=20
+    ) {
+        let timeoutFlag = false;
+
+        // Initiate fastscan
+        await new Promise((resolve) => {
+            const timer = setTimeout(() => {
+                timeoutFlag = true;
+                resolve();
+            }, timeout);
+
+            this._sendLssRequest(81, Buffer.from([0, 0, 0, 0, 0x80]));
+            this.pending[0x4f] = {resolve, timer};
+        });
+
+        if(timeoutFlag)
+            return null; // No devices
+
+        // Find vendor-id
+        if(vendorId === null) {
+            vendorId = 0;
+            for(let i = 31; i >= 0; --i) {
+                await new Promise((resolve) => {
+                    const timer = setTimeout(() => {
+                        vendorId |= 1 << i;
+                        resolve();
+                    }, timeout);
+
+                    const data = Buffer.alloc(7);
+                    data.writeUInt32LE(vendorId >>> 0);
+                    data[4] = i; // Bit checked
+                    data[5] = 0; // LSS sub
+                    data[6] = (i > 0) ? 0 : 1; // LSS next
+                    this._sendLssRequest(81, data);
+
+                    this.pending[0x4f] = {resolve, timer};
+                });
+            }
+        }
+
+        // Verify vendor-id
+        await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject('Failed to verify vendorId');
+            }, timeout);
+
+            const data = Buffer.alloc(7);
+            data.writeUInt32LE(vendorId >>> 0);
+            data[4] = 0; // Bit checked
+            data[5] = 0; // LSS sub
+            data[6] = 1; // LSS next
+            this._sendLssRequest(81, data);
+
+            this.pending[0x4f] = {resolve, timer};
+        });
+
+        // Find product-code
+        if(productCode === null) {
+            productCode = 0;
+            for(let i = 31; i >= 0; --i) {
+                await new Promise((resolve) => {
+                    const timer = setTimeout(() => {
+                        productCode |= (1 << i);
+                        resolve();
+                    }, timeout);
+
+                    const data = Buffer.alloc(7);
+                    data.writeUInt32LE(productCode >>> 0);
+                    data[4] = i; // Bit checked
+                    data[5] = 1; // LSS sub
+                    data[6] = 1; // LSS next
+                    this._sendLssRequest(81, data);
+
+                    this.pending[0x4f] = {resolve, timer};
+                });
+            }
+        }
+
+        // Verify product-code
+        await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject('Failed to verify productCode');
+            }, timeout);
+
+            const data = Buffer.alloc(7);
+            data.writeUInt32LE(productCode >>> 0);
+            data[4] = 0; // Bit checked
+            data[5] = 1; // LSS sub
+            data[6] = 2; // LSS next
+            this._sendLssRequest(81, data);
+
+            this.pending[0x4f] = {resolve, timer};
+        });
+
+        // Find revision-number
+        if(revisionNumber === null) {
+            revisionNumber = 0;
+            for(let i = 31; i >= 0; --i) {
+                await new Promise((resolve) => {
+                    const timer = setTimeout(() => {
+                        revisionNumber |= 1 << i;
+                        resolve();
+                    }, timeout);
+
+                    const data = Buffer.alloc(7);
+                    data.writeUInt32LE(revisionNumber >>> 0);
+                    data[4] = i; // Bit checked
+                    data[5] = 2; // LSS sub
+                    data[6] = (i > 0) ? 2 : 3; // LSS next
+                    this._sendLssRequest(81, data);
+
+                    this.pending[0x4f] = {resolve, timer};
+                });
+            }
+        }
+
+        // Verify revision-number
+        await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject('Failed to verify revisionNumber');
+            }, timeout);
+
+            const data = Buffer.alloc(7);
+            data.writeUInt32LE(revisionNumber >>> 0);
+            data[4] = 0; // Bit checked
+            data[5] = 2; // LSS sub
+            data[6] = 3; // LSS next
+            this._sendLssRequest(81, data);
+
+            this.pending[0x4f] = {resolve, timer};
+        });
+
+        // Find serial-number
+        if(serialNumber === null) {
+            serialNumber = 0;
+            for(let i = 31; i >= 0; --i) {
+                await new Promise((resolve) => {
+                    const timer = setTimeout(() => {
+                        serialNumber |= 1 << i;
+                        resolve();
+                    }, timeout);
+
+                    const data = Buffer.alloc(7);
+                    data.writeUInt32LE(serialNumber >>> 0);
+                    data[4] = i; // Bit checked
+                    data[5] = 3; // LSS sub
+                    data[6] = 3; // LSS next
+                    this._sendLssRequest(81, data);
+
+                    this.pending[0x4f] = {resolve, timer};
+                });
+            }
+        }
+
+        // Verify serial-number
+        await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject('Failed to verify serialNumber');
+            }, timeout);
+
+            const data = Buffer.alloc(7);
+            data.writeUInt32LE(serialNumber >>> 0);
+            data[4] = 0; // Bit checked
+            data[5] = 3; // LSS sub
+            data[6] = 0; // LSS next
+            this._sendLssRequest(81, data);
+
+            this.pending[0x4f] = {resolve, timer};
+        });
+
+        return { vendorId, productCode, revisionNumber, serialNumber };
+    }
+
+    /**
      * Service: switch mode global.
      * @param {LssMode} mode - LSS mode to switch to.
      *
@@ -104,7 +298,7 @@ class Lss {
      * @see CiA305 "Switch Mode Selective" (§3.9.2)
      */
     switchModeSelective(
-        vendorId, productCode, revisionNumber, serialNumber, timeout=30) {
+        vendorId, productCode, revisionNumber, serialNumber, timeout=20) {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => reject('LSS timeout'), timeout);
             const data = Buffer.alloc(4);
@@ -126,10 +320,6 @@ class Lss {
             this._sendLssRequest(67, data);
 
             this.pending[68] = {resolve, timer};
-        })
-        .finally(() => {
-            clearTimeout(this.pending[68].timer);
-            this.pending[68] = undefined;
         });
     }
 
@@ -141,7 +331,7 @@ class Lss {
      *
      * @see CiA305 "Configure Node-ID Protocol" (§3.10.1)
      */
-    configureNodeId(nodeId, timeout=30) {
+    configureNodeId(nodeId, timeout=20) {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => reject('LSS timeout'), timeout);
             this._sendLssRequest(17, Buffer.from([nodeId]));
@@ -167,10 +357,6 @@ class Lss {
             }
 
             throw new LssError(message, code, result[1]);
-        })
-        .finally(() => {
-            clearTimeout(this.pending[17].timer);
-            this.pending[17] = undefined;
         });
     }
 
@@ -183,7 +369,7 @@ class Lss {
      *
      * @see CiA305 "Configure Bit Timing Parameters Protocol" (§3.10.2)
      */
-    configureBitTiming(tableSelect, tableIndex, timeout=30) {
+    configureBitTiming(tableSelect, tableIndex, timeout=20) {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => reject('LSS timeout'), timeout);
             this._sendLssRequest(19, Buffer.from([tableSelect, tableIndex]));
@@ -209,10 +395,6 @@ class Lss {
             }
 
             throw new LssError(message, code, result[1]);
-        })
-        .finally(() => {
-            clearTimeout(this.pending[19].timer);
-            this.pending[19] = undefined;
         });
     }
 
@@ -235,7 +417,7 @@ class Lss {
      *
      * @see CiA305 "Store Configuration Protocol" (§3.10.4)
      */
-    storeConfiguration(timeout=30) {
+    storeConfiguration(timeout=20) {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => reject('LSS timeout'), timeout);
             this._sendLssRequest(23);
@@ -264,10 +446,6 @@ class Lss {
             }
 
             throw new LssError(message, code, result[1]);
-        })
-        .finally(() => {
-            clearTimeout(this.pending[23].timer);
-            this.pending[23] = undefined;
         });
     }
 
@@ -278,7 +456,7 @@ class Lss {
      *
      * @see CiA305 "Inquire Identity Vendor-ID Protocol" (§3.11.1.1)
      */
-    inquireVendorId(timeout=30) {
+    inquireVendorId(timeout=20) {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => reject('LSS timeout'), timeout);
             this._sendLssRequest(90);
@@ -287,10 +465,6 @@ class Lss {
         })
         .then((result) => {
             return result.readUInt32LE();
-        })
-        .finally(() => {
-            clearTimeout(this.pending[90].timer);
-            this.pending[90] = undefined;
         });
     }
 
@@ -301,7 +475,7 @@ class Lss {
      *
      * @see CiA305 "Inquire Identity Product-Code Protocol" (§3.11.1.2)
      */
-    inquireProductCode(timeout=30) {
+    inquireProductCode(timeout=20) {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => reject('LSS timeout'), timeout);
             this._sendLssRequest(91);
@@ -310,10 +484,6 @@ class Lss {
         })
         .then((result) => {
             return result.readUInt32LE();
-        })
-        .finally(() => {
-            clearTimeout(this.pending[91].timer);
-            this.pending[91] = undefined;
         });
     }
 
@@ -324,7 +494,7 @@ class Lss {
      *
      * @see CiA305 "Inquire Identity Revision-Number Protocol" (§3.11.1.3)
      */
-    inquireRevisionNumber(timeout=30) {
+    inquireRevisionNumber(timeout=20) {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => reject('LSS timeout'), timeout);
             this._sendLssRequest(92);
@@ -333,10 +503,6 @@ class Lss {
         })
         .then((result) => {
             return result.readUInt32LE();
-        })
-        .finally(() => {
-            clearTimeout(this.pending[92].timer);
-            this.pending[92] = undefined;
         });
     }
 
@@ -347,7 +513,7 @@ class Lss {
      *
      * @see CiA305 "Inquire Identity Serial-Number Protocol" (§3.11.1.4)
      */
-    inquireSerialNumber(timeout=30) {
+    inquireSerialNumber(timeout=20) {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => reject('LSS timeout'), timeout);
             this._sendLssRequest(93);
@@ -356,10 +522,6 @@ class Lss {
         })
         .then((result) => {
             return result.readUInt32LE();
-        })
-        .finally(() => {
-            clearTimeout(this.pending[93].timer);
-            this.pending[93] = undefined;
         });
     }
 
@@ -393,6 +555,7 @@ class Lss {
 
         const cs = message.data[0];
         if(this.pending[cs]) {
+            clearTimeout(this.pending[cs].timer);
             this.pending[cs].resolve(message.data.slice(1));
         }
     }
