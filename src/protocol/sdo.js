@@ -385,7 +385,7 @@ class Sdo {
                  *     bit 0..7      Node-ID of the SDO server.
                  */
                 const serverId = entry[3].value;
-                if(!serverId)
+                if(serverId === undefined)
                     throw new ReferenceError('ID of the SDO server is required.');
 
                 let cobIdTx = entry[1].value;
@@ -449,9 +449,17 @@ class Sdo {
                 throw new ReferenceError(`SDO server 0x${id} not mapped.`);
             }
 
+            let cobIdRx = this.servers[0].cobIdRx;
+            if((cobIdRx & 0xF) == 0x0)
+                cobIdRx |= serverId
+
+            let cobIdTx = this.servers[0].cobIdTx;
+            if((cobIdTx & 0xF) == 0x0)
+                cobIdTx |= serverId
+
             server = this.servers[serverId] = {
-                cobIdRx:    this.servers[0].cobIdRx,
-                cobIdTx:    this.servers[0].cobIdTx,
+                cobIdRx:    cobIdRx,
+                cobIdTx:    cobIdTx,
                 pending:    {},
                 queue:      new Queue(),
             };
@@ -513,9 +521,17 @@ class Sdo {
                 throw new ReferenceError(`SDO server 0x${id} not mapped.`);
             }
 
+            let cobIdRx = this.servers[0].cobIdRx;
+            if((cobIdRx & 0xF) == 0x0)
+                cobIdRx |= serverId
+
+            let cobIdTx = this.servers[0].cobIdTx;
+            if((cobIdTx & 0xF) == 0x0)
+                cobIdTx |= serverId
+
             server = this.servers[serverId] = {
-                cobIdRx:    this.servers[0].cobIdRx,
-                cobIdTx:    this.servers[0].cobIdTx,
+                cobIdRx:    cobIdRx,
+                cobIdTx:    cobIdTx,
                 pending:    Promise.resolve(),
             };
         }
