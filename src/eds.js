@@ -271,6 +271,9 @@ class DataObject extends EventEmitter {
         this.index = index;
         this.subIndex = subIndex;
 
+        if(args instanceof DataObject)
+            args = args.objectify();
+
         this.parameterName = args['ParameterName'];
         if(this.parameterName === undefined) {
             throw TypeError('ParameterName is mandatory for DataObject');
@@ -614,10 +617,7 @@ class DataObject extends EventEmitter {
         if(subIndex > this.subNumber)
             throw RangeError(`SubIndex must be >= ${this.subNumber}`)
 
-        if(args instanceof DataObject)
-            this._subObjects[subIndex] = args;
-        else
-            this._subObjects[subIndex] = new DataObject(this.index, subIndex, args);
+        this._subObjects[subIndex] = new DataObject(this.index, subIndex, args);
     }
 };
 
