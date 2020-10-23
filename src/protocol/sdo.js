@@ -533,6 +533,7 @@ class Sdo {
                 cobIdRx:    cobIdRx,
                 cobIdTx:    cobIdTx,
                 pending:    Promise.resolve(),
+                queue:      new Queue(),
             };
         }
 
