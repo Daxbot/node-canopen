@@ -77,18 +77,25 @@ class Pdo {
                     // Send on value change, but no faster than inhibit time
                     for(const dataObject of pdo.dataObjects) {
                         const listener = function() {
-                            if(!this._eventTimers[cobId]) {
+                            // TODO - fix this, it should keep track of the last
+                            // send time and count off that rather than using
+                            // a naive timer.
+                            if(!this.eventTimers[cobId]) {
                                 const timer = setTimeout(() => {
-                                    this._eventTimers[cobId] = null;
+                                    this.eventTimers[cobId] = null;
                                     this.write(cobId);
                                 }, pdo.inhibitTime);
 
-                                this._eventTimers[cobId] = timer;
+                                this.eventTimers[cobId] = timer;
                             }
                         }
 
-                        this.events.push([dataObject, 'update', listener]);
-                        dataObject.on('update', listener);
+                        let entry = this.device.eds.getEntry(dataObject.index);
+                        if(entry.subNumber > 0)
+                            entry = entry[dataObject.subIndex];
+
+                        this.events.push([entry, 'update', listener]);
+                        entry.on('update', listener)
                     }
                 }
                 else {
@@ -98,8 +105,12 @@ class Pdo {
                             this.write(cobId);
                         }
 
-                        this.events.push([dataObject, 'update', listener]);
-                        dataObject.on('update', listener);
+                        let entry = this.device.eds.getEntry(dataObject.index);
+                        if(entry.subNumber > 0)
+                            entry = entry[dataObject.subIndex];
+
+                        this.events.push([entry, 'update', listener]);
+                        entry.on('update', listener);
                     }
                 }
             }
@@ -132,10 +143,10 @@ class Pdo {
         let dataOffset = 0;
         let dataUpdated = false;
 
-        for(let i = 0; i < pdo.dataObjects.length; i++) {
-            let entry = this.device.eds.getEntry(pdo.dataObjects[i].index);
+        for(const dataObject of pdo.dataObjects) {
+            let entry = this.device.eds.getEntry(dataObject.index);
             if(entry.subNumber > 0)
-                entry = entry[pdo.dataObjects[i].subIndex];
+                entry = entry[dataObject.subIndex];
 
             entry.raw.copy(data, dataOffset);
             dataOffset += entry.raw.length;
