@@ -135,7 +135,7 @@ class Pdo {
         for(let i = 0; i < pdo.dataObjects.length; i++) {
             let entry = this.device.eds.getEntry(pdo.dataObjects[i].index);
             if(entry.subNumber > 0)
-                entry = entry[pdo.subIndex];
+                entry = entry[pdo.dataObjects[i].subIndex];
 
             entry.raw.copy(data, dataOffset);
             dataOffset += entry.raw.length;
