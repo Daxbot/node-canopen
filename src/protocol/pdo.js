@@ -152,8 +152,8 @@ class Pdo {
             dataOffset += entry.raw.length;
 
             const newValue = entry.value;
-            if(pdo.lastValue != newValue) {
-                pdo.lastValue = newValue;
+            if(dataObject.lastValue != newValue) {
+                dataObject.lastValue = newValue;
                 dataUpdated = true;
             }
         }
@@ -176,8 +176,8 @@ class Pdo {
             const pdo = this.receiveMap[message.id];
             let dataOffset = 0;
 
-            for(let i = 0; i < pdo.dataObjects.length; ++i) {
-                const index = pdo.dataObjects[i].index;
+            for(const dataObject of pdo.dataObjects) {
+                const index = dataObject.index;
                 const entry = this.device.dataObjects[index];
                 const size = entry.raw.length;
 
@@ -188,8 +188,8 @@ class Pdo {
                 dataOffset += size;
 
                 const newValue = entry.value;
-                if(pdo.lastValue != newValue) {
-                    pdo.lastValue = newValue;
+                if(dataObject.lastValue != newValue) {
+                    dataObject.lastValue = newValue;
                     updated.push(entry);
                 }
             }
