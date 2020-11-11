@@ -43,7 +43,7 @@ class Pdo {
     start() {
         for(const [cobId, pdo] of Object.entries(this.writeMap)) {
             if(pdo.type < 0xF1) {
-                const listener = function(counter) {
+                const listener = (counter) => {
                     if(pdo.started) {
                         if(pdo.type == 0) {
                             // Acyclic - send only if data changed
@@ -76,7 +76,7 @@ class Pdo {
                 else if(pdo.inhibitTime > 0) {
                     // Send on value change, but no faster than inhibit time
                     for(const dataObject of pdo.dataObjects) {
-                        const listener = function() {
+                        const listener = () => {
                             // TODO - fix this, it should keep track of the last
                             // send time and count off that rather than using
                             // a naive timer.
@@ -101,7 +101,7 @@ class Pdo {
                 else {
                     // Send immediately on value change
                     for(const dataObject of pdo.dataObjects) {
-                        const listener = function() {
+                        const listener = () => {
                             this.write(cobId);
                         }
 
