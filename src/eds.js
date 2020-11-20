@@ -115,7 +115,11 @@ function rawToType(raw, type) {
             return raw.readDoubleLE();
         case DataType.VISIBLE_STRING:
         case DataType.UNICODE_STRING:
-            return raw.toString();
+            raw = raw.toString();
+            const end = raw.indexOf('\0');
+            if(end != -1)
+                raw = raw.substring(0, end);
+            return raw;
         case DataType.TIME_OF_DAY:
         case DataType.TIME_DIFFERENCE:
             const ms = raw.readUInt32LE(0);
@@ -217,7 +221,7 @@ function typeToRaw(value, type) {
             raw = (value) ? Buffer.from(value) : Buffer.alloc(0);
             const end = raw.indexOf('\0');
             if(end != -1)
-                raw = raw.substring(0, end);
+                raw = raw.subarray(0, end);
             break;
         case DataType.OCTET_STRING:
         case DataType.UNICODE_STRING:
