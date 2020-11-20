@@ -370,7 +370,10 @@ class Sdo {
                 if((cobIdTx & 0xF) == 0x0)
                     cobIdTx |= this.device.id;
 
-                this.clients[cobIdRx] = new Transfer({ cobId: cobIdTx });
+                this.clients[cobIdRx] = new Transfer({
+                    device: this.device,
+                    cobId: cobIdTx
+                });
             }
             else if(0x1280 <= index && index < 0x12FF) {
                 /* Object 0x1280..0x12FF - SDO client parameter.
