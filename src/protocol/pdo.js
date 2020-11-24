@@ -221,7 +221,9 @@ class Pdo {
             throw TypeError("CAN extended frames are not supported.")
 
         cobId &= 0x7FF;
-        if((cobId & 0xF) == 0x0)
+
+        // Add the device id iff the provided id is a base value, e.g. 0x180.
+        if((cobId % 0x80) == 0x0)
             cobId |= this.device.id;
 
         /* sub-index 2:
