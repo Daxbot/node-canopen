@@ -201,10 +201,11 @@ class Pdo {
             let dataOffset = 0;
 
             for(const dataObject of pdo.dataObjects) {
-                const index = dataObject.index;
-                const entry = this.device.dataObjects[index];
-                const size = entry.raw.length;
+                let entry = this.device.dataObjects[dataObject.index];
+                if(entry.subNumber > 0)
+                    entry = entry[dataObject.subIndex];
 
+                const size = entry.raw.length;
                 if(message.data.length < dataOffset + size)
                     continue;
 
