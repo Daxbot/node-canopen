@@ -24,12 +24,36 @@ class Pdo {
             index = parseInt(index);
             if((index & 0xFF00) == 0x1400 || (index & 0xFF00) == 0x1500) {
                 // Object 0x1400..0x15FF - RPDO communication parameter
+                if(entry[1] === undefined) {
+                    index = `0x${index.toString(16)}`;
+                    throw ReferenceError(
+                        `COB-ID is mandatory for RPDO (${index})`);
+                }
+
+                if(entry[2] === undefined) {
+                    index = `0x${index.toString(16)}`;
+                    throw ReferenceError(
+                        `transmission type is mandatory for RPDO (${index})`);
+                }
+
                 const pdo = this._parsePDO(index, entry);
                 if(pdo)
                     this.receiveMap[pdo.cobId] = pdo;
             }
             else if((index & 0xFF00) == 0x1800 || (index & 0xFF00) == 0x1900) {
                 // Object 0x1800..0x19FF - TPDO communication parameter
+                if(entry[1] === undefined) {
+                    index = `0x${index.toString(16)}`;
+                    throw ReferenceError(
+                        `COB-ID is mandatory for TPDO (${index})`);
+                }
+
+                if(entry[2] === undefined) {
+                    index = `0x${index.toString(16)}`;
+                    throw ReferenceError(
+                        `transmission type is mandatory for TPDO (${index})`);
+                }
+
                 const pdo = this._parsePDO(index, entry);
                 if(pdo)
                     this.writeMap[pdo.cobId] = pdo;
@@ -206,7 +230,7 @@ class Pdo {
      * @private
      */
     _parsePDO(index, entry) {
-        /* sub-index 1:
+        /* sub-index 1 (mandatory):
          *   bit 0..10      11-bit CAN base frame.
          *   bit 11..28     29-bit CAN extended frame.
          *   bit 29         Frame type.
@@ -226,25 +250,25 @@ class Pdo {
         if((cobId % 0x80) == 0x0)
             cobId |= this.device.id;
 
-        /* sub-index 2:
+        /* sub-index 2 (mandatory):
          *   bit 0..7       Transmission type.
          */
         const transmissionType = entry[2].value;
 
-        /* sub-index 3:
+        /* sub-index 3 (optional):
          *   bit 0..15      Inhibit time.
          */
-        const inhibitTime = entry[3].value;
+        const inhibitTime = (entry[3] !== undefined) ? entry[3].value : 0;
 
-        /* sub-index 5:
+        /* sub-index 5 (optional):
          *   bit 0..15      Event timer value.
          */
-        const eventTime = entry[5].value;
+        const eventTime = (entry[5] !== undefined) ? entry[5].value : 0;
 
-        /* sub-index 6:
+        /* sub-index 6 (optional):
          *   bit 0..7       SYNC start value.
          */
-        const syncStart = entry[6].value;
+        const syncStart = (entry[6] !== undefined) ? entry[6].value : 0;
 
         let pdo = {
             cobId:          cobId,
