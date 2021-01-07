@@ -97,6 +97,8 @@ function rawToType(raw, type) {
             return raw.readIntLE(0, 5);
         case DataType.INTEGER48:
             return raw.readIntLE(0, 6);
+        case DataType.INTEGER64:
+            return raw.readBigInt64LE()
         case DataType.UNSIGNED8:
             return raw.readUInt8();
         case DataType.UNSIGNED16:
@@ -109,6 +111,8 @@ function rawToType(raw, type) {
             return raw.readUIntLE(0, 5);
         case DataType.UNSIGNED48:
             return raw.readUIntLE(0, 6);
+        case DataType.UNSIGNED64:
+            return raw.readBigUInt64LE();
         case DataType.REAL32:
             return raw.readFloatLE();
         case DataType.REAL64:
@@ -125,6 +129,7 @@ function rawToType(raw, type) {
             const ms = raw.readUInt32LE(0);
             const days = raw.readUInt16LE(4);
             return new Date(days * 8.64e7 + ms);
+
         default:
             return raw;
     }
@@ -132,7 +137,7 @@ function rawToType(raw, type) {
 
 /**
  * Convert a value to a Buffer object based on type.
- * @param {number | string | Date} value - data to convert.
+ * @param {number | bigint | string | Date} value - data to convert.
  * @param {number} type - how to interpret the data.
  * @return {Buffer}
  * @memberof Eds
@@ -197,17 +202,19 @@ function typeToRaw(value, type) {
             raw = Buffer.alloc(6);
             raw.writeUIntLE(value, 0, 6);
             break;
-        case DataType.INTEGER56:
-        case DataType.UNSIGNED56:
-            raw = Buffer.alloc(7);
-            for(let i = 0; i < 7; i++)
-                raw[i] = ((value >>> i*8) & 0xFF);
-            break;
         case DataType.INTEGER64:
-        case DataType.UNSIGNED64:
+            if(typeof value != 'bigint')
+                value = BigInt(value);
+
             raw = Buffer.alloc(8);
-            for(let i = 0; i < 8; i++)
-                raw[i] = ((value >>> i*8) & 0xFF);
+            raw.writeBigInt64LE(value);
+            break;
+        case DataType.UNSIGNED64:
+            if(typeof value != 'bigint')
+                value = BigInt(value);
+
+            raw = Buffer.alloc(8);
+            raw.writeBigUInt64LE(value);
             break;
         case DataType.REAL32:
             raw = Buffer.alloc(4);

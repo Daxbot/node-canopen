@@ -109,8 +109,10 @@ describe('SDO', function() {
         const testValues = {
             INTEGER40: -0x1234567890,
             INTEGER48: -0x1234567890AB,
+            INTEGER64: -1n,
             UNSIGNED40: 0x1234567890,
             UNSIGNED48: 0x1234567890AB,
+            UNSIGNED64: 1n,
             VISIBLE_STRING: 'long visible string',
             OCTET_STRING: Buffer.from([1, 2, 3, 4, 5, 6, 7, 8]),
             UNICODE_STRING: '\u03b1\u03b2\u03b3\u03b4\u03b5\u03b6',
@@ -142,6 +144,8 @@ describe('SDO', function() {
                         expect(value.getTime()).to.equal(testValues[key].getTime());
                     else if(Buffer.isBuffer(value))
                         expect(Buffer.compare(value, testValues[key])).to.equal(0);
+                    else if(typeof value == 'bigint')
+                        expect(Number(value)).to.equal(Number(testValues[key]));
                     else
                         expect(value).to.equal(testValues[key]);
                 });
