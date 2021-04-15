@@ -20,6 +20,15 @@ class Pdo {
 
     /** Initialize members and begin RPDO monitoring. */
     init() {
+        this.load();
+        this.device.addListener('message', this._onMessage.bind(this));
+    }
+
+    /** Load PDO configuration.  */
+    load() {
+        this.receiveMap = {};
+        this.writeMap = {};
+
         for(let [index, entry] of Object.entries(this.device.dataObjects)) {
             index = parseInt(index);
             if((index & 0xFF00) == 0x1400 || (index & 0xFF00) == 0x1500) {
@@ -59,8 +68,6 @@ class Pdo {
                     this.writeMap[pdo.cobId] = pdo;
             }
         }
-
-        this.device.addListener('message', this._onMessage.bind(this));
     }
 
     /** Begin TPDO generation. */
@@ -151,6 +158,9 @@ class Pdo {
 
         for(const timer in Object.values(this.eventTimers))
             clearInterval(timer);
+
+        this.eventTimers = {};
+        this.events = [];
     }
 
     /**

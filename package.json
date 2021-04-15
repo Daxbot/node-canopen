@@ -1,6 +1,6 @@
 {
   "name": "canopen",
-  "version": "2.6.0-beta",
+  "version": "2.7.0-beta",
   "description": "CANopen implementation for Javascript",
   "main": "index.js",
   "scripts": {
