@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * EMCY message example.
  *
@@ -27,5 +29,5 @@ channel.start();
 device.emcy.write(0x1000);
 
 setTimeout(() => {
-    process.exit();
+    channel.stop();
 }, 1000);

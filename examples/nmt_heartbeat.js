@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * NMT example.
  *
@@ -28,6 +30,7 @@ channel.start();
 setTimeout(() => {
     device.nmt.stopNode(device.id);
     setTimeout(() => {
-        process.exit()
+        device.nmt.stop();
+        channel.stop();
     }, 2000);
 }, 2000);

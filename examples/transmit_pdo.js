@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * TPDO example.
  *
@@ -82,5 +84,6 @@ channel.start();
 device.pdo.write(0x180 + device.id);
 
 setTimeout(() => {
-    process.exit();
+    device.pdo.stop();
+    channel.stop();
 }, 1000);

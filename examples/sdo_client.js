@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * SDO client example.
  *
@@ -66,6 +68,6 @@ device.sdo.download({
     })
     .then((value) => {
         console.log(value);
-        process.exit()
+        channel.stop();
     });
 });

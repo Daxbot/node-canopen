@@ -153,10 +153,10 @@ class Pdo {
 
     /** Stop TPDO generation. */
     stop() {
-        for(const [emitter, eventName, listener] in this.events)
+        for(const [emitter, eventName, listener] of this.events)
             emitter.removeListener(eventName, listener);
 
-        for(const timer in Object.values(this.eventTimers))
+        for(const timer of Object.values(this.eventTimers))
             clearInterval(timer);
 
         this.eventTimers = {};

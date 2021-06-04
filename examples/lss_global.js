@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * LSS global example.
  *
@@ -34,4 +36,4 @@ device.lss.configureNodeId(0x7f)
     device.lss.switchModeGlobal(LssMode.OPERATION);
 })
 .catch((e) => console.log(e))
-.finally(() => process.exit());
+.finally(() => channel.stop());

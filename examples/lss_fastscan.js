@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * LSS fastscan example.
  *
@@ -45,4 +47,4 @@ new Promise(async (resolve) => {
         device.lss.switchModeGlobal(LssMode.OPERATION);
     }
 })
-.finally(() => process.exit());
+.finally(() => channel.stop());

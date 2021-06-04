@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * Time producer example.
  *
