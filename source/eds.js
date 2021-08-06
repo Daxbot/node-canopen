@@ -4,6 +4,9 @@ const util = require('util');
 const { EOL } = require('os');
 const EventEmitter = require('events');
 
+/** Time offset in milliseconds between January 1, 1970 and January 1, 1984. */
+const EPOCH_OFFSET = 441763200 * 1000;
+
 /**
  * CANopen object types.
  * @enum {number}
@@ -128,7 +131,7 @@ function rawToType(raw, type) {
         case DataType.TIME_DIFFERENCE:
             const ms = raw.readUInt32LE(0);
             const days = raw.readUInt16LE(4);
-            return new Date(days * 8.64e7 + ms);
+            return new Date((days * 8.64e7) + ms + EPOCH_OFFSET);
 
         default:
             return raw;
@@ -238,11 +241,14 @@ function typeToRaw(value, type) {
         case DataType.TIME_DIFFERENCE:
             raw = Buffer.alloc(6);
             if(util.types.isDate(value)) {
+                // Milliseconds since January 1, 1984
+                const time = value.getTime() - EPOCH_OFFSET;
+
                 // Days since epoch
-                const days = Math.floor(value.getTime() / 8.64e7);
+                const days = Math.floor(time / 8.64e7);
 
                 // Milliseconds since midnight
-                const ms = value.getTime() - (days * 8.64e7);
+                const ms = time - (days * 8.64e7);
 
                 raw.writeUInt32LE(ms, 0);
                 raw.writeUInt16LE(days, 4);
