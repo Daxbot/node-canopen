@@ -143,7 +143,7 @@ class Lss {
         // Verify vendor-id
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject('Failed to verify vendorId');
+                reject(new Error('Failed to verify vendorId'));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -181,7 +181,7 @@ class Lss {
         // Verify product-code
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject('Failed to verify productCode');
+                reject(new Error('Failed to verify productCode'));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -219,7 +219,7 @@ class Lss {
         // Verify revision-number
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject('Failed to verify revisionNumber');
+                reject(new Error('Failed to verify revisionNumber'));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -257,7 +257,7 @@ class Lss {
         // Verify serial-number
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject('Failed to verify serialNumber');
+                reject(new Error('Failed to verify serialNumber'));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -300,7 +300,9 @@ class Lss {
     switchModeSelective(
         vendorId, productCode, revisionNumber, serialNumber, timeout=20) {
         return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject('LSS timeout'), timeout);
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
             const data = Buffer.alloc(4);
 
             // Send vendor-id
@@ -333,7 +335,9 @@ class Lss {
      */
     configureNodeId(nodeId, timeout=20) {
         return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject('LSS timeout'), timeout);
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
             this._sendLssRequest(17, Buffer.from([nodeId]));
 
             this.pending[17] = {resolve, timer};
@@ -371,7 +375,9 @@ class Lss {
      */
     configureBitTiming(tableSelect, tableIndex, timeout=20) {
         return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject('LSS timeout'), timeout);
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
             this._sendLssRequest(19, Buffer.from([tableSelect, tableIndex]));
 
             this.pending[19] = {resolve, timer};
@@ -419,7 +425,9 @@ class Lss {
      */
     storeConfiguration(timeout=20) {
         return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject('LSS timeout'), timeout);
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
             this._sendLssRequest(23);
 
             this.pending[23] = {resolve, timer};
@@ -458,7 +466,9 @@ class Lss {
      */
     inquireVendorId(timeout=20) {
         return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject('LSS timeout'), timeout);
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
             this._sendLssRequest(90);
 
             this.pending[90] = {resolve, timer};
@@ -477,7 +487,9 @@ class Lss {
      */
     inquireProductCode(timeout=20) {
         return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject('LSS timeout'), timeout);
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
             this._sendLssRequest(91);
 
             this.pending[91] = {resolve, timer};
@@ -496,7 +508,9 @@ class Lss {
      */
     inquireRevisionNumber(timeout=20) {
         return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject('LSS timeout'), timeout);
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
             this._sendLssRequest(92);
 
             this.pending[92] = {resolve, timer};
@@ -515,7 +529,9 @@ class Lss {
      */
     inquireSerialNumber(timeout=20) {
         return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject('LSS timeout'), timeout);
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
             this._sendLssRequest(93);
 
             this.pending[93] = {resolve, timer};
