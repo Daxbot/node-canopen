@@ -132,7 +132,7 @@ class Lss {
                     data.writeUInt32LE(vendorId >>> 0);
                     data[4] = i; // Bit checked
                     data[5] = 0; // LSS sub
-                    data[6] = (i > 0) ? 0 : 1; // LSS next
+                    data[6] = 0; // LSS next
                     this._sendLssRequest(81, data);
 
                     this.pending[0x4f] = {resolve, timer};
@@ -208,7 +208,7 @@ class Lss {
                     data.writeUInt32LE(revisionNumber >>> 0);
                     data[4] = i; // Bit checked
                     data[5] = 2; // LSS sub
-                    data[6] = (i > 0) ? 2 : 3; // LSS next
+                    data[6] = 2; // LSS next
                     this._sendLssRequest(81, data);
 
                     this.pending[0x4f] = {resolve, timer};
@@ -570,7 +570,7 @@ class Lss {
             return;
 
         const cs = message.data[0];
-        if(this.pending[cs]) {
+        if(this.pending[cs] !== undefined) {
             clearTimeout(this.pending[cs].timer);
             this.pending[cs].resolve(message.data.slice(1));
         }
