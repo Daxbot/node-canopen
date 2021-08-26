@@ -953,7 +953,7 @@ class Sdo {
     _onMessage(message) {
         // Handle transfers as a client (remote object dictionary)
         const serverTransfer = this.transfers[message.id];
-        if(serverTransfer) {
+        if(serverTransfer !== undefined && serverTransfer.active) {
             switch(message.data[0] >> 5) {
                 case ServerCommand.ABORT:
                     serverTransfer.abort(message.data.readUInt32LE(4));
