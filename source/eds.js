@@ -282,11 +282,12 @@ function typeToRaw(value, type) {
  * @protected
  */
 class DataObject extends EventEmitter {
-    constructor(index, subIndex, args) {
+    constructor(index, subIndex, args, parent=null) {
         super();
 
         this.index = index;
         this.subIndex = subIndex;
+        this.parent = parent;
 
         if(args instanceof DataObject)
             args = args.objectify();
@@ -634,7 +635,13 @@ class DataObject extends EventEmitter {
         if(subIndex > this.subNumber)
             throw RangeError(`SubIndex must be >= ${this.subNumber}`)
 
-        this._subObjects[subIndex] = new DataObject(this.index, subIndex, args);
+        if(args instanceof DataObject) {
+            this._subObjects[subIndex] = args;
+        }
+        else {
+            this._subObjects[subIndex] = new DataObject(
+                this.index, subIndex, args, this);
+        }
     }
 };
 
@@ -925,7 +932,7 @@ class Eds {
         if(entry.subNumber < subIndex)
             throw ReferenceError(`0x${index.toString(16)}[${subIndex}] does not exist`);
 
-        const subEntry = new DataObject(index, subIndex, args);
+        const subEntry = new DataObject(index, subIndex, args, entry);
         entry[subIndex] = subEntry;
 
         return subEntry;
