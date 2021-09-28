@@ -54,7 +54,7 @@ const ClientCommand = {
     ABORT: 4,
 };
 
- /**
+/**
   * CANopen SDO 'Server Command Specifier' codes.
   * @enum {number}
   * @see CiA301 'SDO protocols' (§7.2.4.3)
@@ -212,8 +212,10 @@ class Transfer {
 
     /** Refresh the transfer timeout. */
     refresh() {
-        if(this.timeout)
-            this.timer.refresh();
+        if(!this.timeout)
+            return;
+
+        this.timer.refresh();
     }
 
     /** Send a data buffer. */
@@ -488,12 +490,12 @@ class Sdo {
                 sendBuffer.writeUInt16LE(index, 1);
                 sendBuffer.writeUInt8(subIndex, 3);
 
+                this.transfers[server.cobIdRx].start();
+
                 this.device.send({
                     id:     server.cobIdTx,
                     data:   sendBuffer
                 });
-
-                this.transfers[server.cobIdRx].start();
             })
         })
         .then((data) => {
@@ -584,12 +586,12 @@ class Sdo {
                     data.copy(sendBuffer, 4);
                 }
 
+                this.transfers[server.cobIdRx].start();
+
                 this.device.send({
                     id:     server.cobIdTx,
                     data:   sendBuffer
                 });
-
-                this.transfers[server.cobIdRx].start();
             });
         });
     }
@@ -626,6 +628,9 @@ class Sdo {
      * @private
      */
     _clientUploadSegment(transfer, data) {
+        if(!transfer.active)
+            return;
+
         if((data[0] & 0x10) != (transfer.toggle << 4))
             return transfer.abort(AbortCode.TOGGLE_BIT);
 
@@ -686,6 +691,9 @@ class Sdo {
      * @private
      */
     _clientDownloadSegment(transfer, data) {
+        if(!transfer.active)
+            return;
+
         if((data[0] & 0x10) != (transfer.toggle << 4))
             return transfer.abort(AbortCode.TOGGLE_BIT);
 
@@ -712,6 +720,29 @@ class Sdo {
 
         transfer.send(sendBuffer);
         transfer.refresh();
+    }
+
+    _clientProcess(transfer, message) {
+        switch(message.data[0] >> 5) {
+            case ServerCommand.UPLOAD_SEGMENT:
+                this._clientUploadSegment(transfer, message.data);
+                break;
+            case ServerCommand.DOWNLOAD_SEGMENT:
+                this._clientDownloadSegment(transfer, message.data);
+                break;
+            case ServerCommand.UPLOAD_INITIATE:
+                this._clientUploadInitiate(transfer, message.data);
+                break;
+            case ServerCommand.DOWNLOAD_INITIATE:
+                this._clientDownloadInitiate(transfer);
+                break;
+            case ServerCommand.ABORT:
+                transfer.abort(message.data.readUInt32LE(4));
+                break;
+            default:
+                transfer.abort(AbortCode.BAD_COMMAND);
+                break;
+        }
     }
 
     /**
@@ -881,7 +912,7 @@ class Sdo {
             data:   sendBuffer,
         });
 
-        client.refresh();;
+        client.refresh();
     }
 
     /**
@@ -945,6 +976,29 @@ class Sdo {
         client.refresh();
     }
 
+    _serverProcess(client, message) {
+        switch(message.data[0] >> 5) {
+            case ClientCommand.DOWNLOAD_SEGMENT:
+                this._serverDownloadSegment(client, message.data);
+                break;
+            case ClientCommand.DOWNLOAD_INITIATE:
+                this._serverDownloadInitiate(client, message.data);
+                break;
+            case ClientCommand.UPLOAD_INITIATE:
+                this._serverUploadInitiate(client, message.data);
+                break;
+            case ClientCommand.UPLOAD_SEGMENT:
+                this._serverUploadSegment(client, message.data);
+                break;
+            case ClientCommand.ABORT:
+                client.reject();
+                break;
+            default:
+                client.abort(AbortCode.BAD_COMMAND);
+                break;
+        }
+    }
+
     /**
      * Called when a new CAN message is received.
      * @param {Object} message - CAN frame.
@@ -953,52 +1007,16 @@ class Sdo {
     _onMessage(message) {
         // Handle transfers as a client (remote object dictionary)
         const serverTransfer = this.transfers[message.id];
-        if(serverTransfer !== undefined && serverTransfer.active) {
-            switch(message.data[0] >> 5) {
-                case ServerCommand.ABORT:
-                    serverTransfer.abort(message.data.readUInt32LE(4));
-                    break;
-                case ServerCommand.UPLOAD_INITIATE:
-                    this._clientUploadInitiate(serverTransfer, message.data);
-                    break;
-                case ServerCommand.UPLOAD_SEGMENT:
-                    this._clientUploadSegment(serverTransfer, message.data);
-                    break;
-                case ServerCommand.DOWNLOAD_INITIATE:
-                    this._clientDownloadInitiate(serverTransfer);
-                    break;
-                case ServerCommand.DOWNLOAD_SEGMENT:
-                    this._clientDownloadSegment(serverTransfer, message.data);
-                    break;
-                default:
-                    serverTransfer.abort(AbortCode.BAD_COMMAND);
-                    break;
-            }
+        if(serverTransfer !== undefined) {
+            this._clientProcess(serverTransfer, message);
+            return;
         }
 
         // Handle transfers as a server (local object dictionary)
         const client = this.clients[message.id];
-        if(client) {
-            switch(message.data[0] >> 5) {
-                case ClientCommand.ABORT:
-                    client.reject();
-                    break;
-                case ClientCommand.DOWNLOAD_INITIATE:
-                    this._serverDownloadInitiate(client, message.data);
-                    break;
-                case ClientCommand.UPLOAD_INITIATE:
-                    this._serverUploadInitiate(client, message.data);
-                    break;
-                case ClientCommand.UPLOAD_SEGMENT:
-                    this._serverUploadSegment(client, message.data);
-                    break;
-                case ClientCommand.DOWNLOAD_SEGMENT:
-                    this._serverDownloadSegment(client, message.data);
-                    break;
-                default:
-                    client.abort(AbortCode.BAD_COMMAND);
-                    break;
-            }
+        if(client !== undefined) {
+            this._serverProcess(client, message);
+            return;
         }
     }
 }
