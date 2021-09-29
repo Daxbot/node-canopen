@@ -1,84 +1,228 @@
+/**
+ * @file Implements a CANopen Electronic Data Sheet (EDS)
+ * @author Wilkins White
+ * @copyright 2021 Nova Dynamics LLC
+ */
+
+const { EOL } = require('os');
+const EventEmitter = require('events');
 const fs = require('fs');
 const ini = require('ini');
 const util = require('util');
-const { EOL } = require('os');
-const EventEmitter = require('events');
 
-/** Time offset in milliseconds between January 1, 1970 and January 1, 1984. */
+/**
+ * Time offset in milliseconds between January 1, 1970 and January 1, 1984.
+ *
+ * @memberof Eds
+ * @private
+ */
 const EPOCH_OFFSET = 441763200 * 1000;
 
 /**
  * CANopen object types.
+ *
  * @enum {number}
  * @see CiA301 "Object code usage" (§7.4.3)
  * @memberof Eds
  */
 const ObjectType = {
+    /** An object with no data fields. */
     NULL: 0,
+
+    /** Large variable amount of data, e.g. executable program code. */
     DOMAIN: 2,
+
+    /** Denotes a type definition such as BOOLEAN, UNSIGNED16, etc. */
     DEFTYPE: 5,
+
+    /** Defines a new record type, e.g. PDO mapping structure. */
     DEFSTRUCT: 6,
+
+    /** A single value such as an UNSIGNED8, INTEGER16, etc. */
     VAR: 7,
+
+    /**
+     * A multiple data field object where each data field is a simple variable
+     * of the same basic data type, e.g. array of UNSIGNED16. Sub-index 0 of an
+     * ARRAY is always UNSIGNED8 and therefore not part of the ARRAY data.
+     */
     ARRAY: 8,
+
+    /**
+     * A multiple data field object where the data fields may be any
+     * combination of simple variables. Sub-index 0 of a RECORD is always
+     * UNSIGNED8 and sub-index 255 is always UNSIGNED32 and therefore not part
+     * of the RECORD data.
+     */
     RECORD: 9,
 };
 
 /**
  * CANopen access types.
+ *
+ * The access rights for a particular object. The viewpoint is from the network
+ * into the CANopen device.
+ *
  * @enum {string}
  * @see CiA301 "Access usage" (§7.4.5)
  * @memberof Eds
  */
 const AccessType = {
+    /** Read and write access. */
     READ_WRITE: 'rw',
+
+    /** Write only access. */
     WRITE_ONLY: 'wo',
-    READ_ONLY:  'ro',
-    CONSTANT:   'const',
+
+    /** Read only access. */
+    READ_ONLY: 'ro',
+
+    /**
+     * Read only access, values marked constant may only be changed in
+     * {@link Nmt.NmtState.INITIALIZING}.
+     */
+    CONSTANT: 'const',
 };
 
 /**
  * CANopen data types.
+ *
+ * The static data types are placed in the object dictionary at their specified
+ * index for definition purposes only. Simple types may be mapped to an RPDO
+ * as a way to define space for data that is not being used by this CANopen
+ * device.
+ *
  * @enum {number}
  * @see CiA301 "Data type entry usage" (§7.4.7)
  * @memberof Eds
  */
 const DataType = {
+    /** Boolean value (bool). */
     BOOLEAN: 1,
+
+    /** 8-bit signed integer (int8_t). */
     INTEGER8: 2,
+
+    /** 16-bit signed integer (int16_t). */
     INTEGER16: 3,
+
+    /** 32-bit signed integer (int32_t). */
     INTEGER32: 4,
+
+    /** 8-bit unsigned integer (uint8_t). */
     UNSIGNED8: 5,
+
+    /** 16-bit unsigned integer (uint16_t). */
     UNSIGNED16: 6,
+
+    /** 32-bit unsigned integer (uint32_t). */
     UNSIGNED32: 7,
+
+    /** 32-bit floating point (float). */
     REAL32: 8,
+
+    /** Null terminated c-string. */
     VISIBLE_STRING: 9,
+
+    /** Raw character buffer. */
     OCTET_STRING: 10,
+
+    /** Unicode string. */
     UNICODE_STRING: 11,
+
+    /** Time since January 1, 1984.  */
     TIME_OF_DAY: 12,
+
+    /** Time difference.  */
     TIME_DIFFERENCE: 13,
+
+    /** Data of variable length. */
     DOMAIN: 15,
+
+    /** 64-bit floating point (double) */
     REAL64: 17,
+
+    /** 24-bit signed integer. */
     INTEGER24: 16,
+
+    /** 40-bit signed integer. */
     INTEGER40: 18,
+
+    /** 48-bit signed integer. */
     INTEGER48: 19,
+
+    /** 56-bit signed integer. */
     INTEGER56: 20,
+
+    /** 64-bit signed integer (int64_t). */
     INTEGER64: 21,
+
+    /** 24-bit unsigned integer. */
     UNSIGNED24: 22,
+
+    /** 40-bit unsigned integer. */
     UNSIGNED40: 24,
+
+    /** 48-bit unsigned integer. */
     UNSIGNED48: 25,
+
+    /** 56-bit unsigned integer. */
     UNSIGNED56: 26,
+
+    /** 64-bit unsigned integer (uint64_t) */
     UNSIGNED64: 27,
+
+    /** PDO parameter record. */
     PDO_PARAMETER: 32,
+
+    /** PDO mapping parameter record. */
     PDO_MAPPING: 33,
+
+    /** SDO parameter record. */
     SDO_PARAMETER: 34,
+
+    /** Identity record. */
     IDENTITY: 35,
 };
 
 /**
- * Convert a Buffer object to a value based on type.
+ * Convert a Buffer to a string.
+ *
  * @param {Buffer} raw - data to convert.
- * @param {DataType} type - how to interpret the data.
- * @return {number | string}
+ * @returns {string} converted string.
+ * @memberof Eds
+ * @private
+ */
+function rawToString(raw) {
+    raw = raw.toString();
+
+    const end = raw.indexOf('\0');
+    if(end != -1)
+        raw = raw.substring(0, end);
+
+    return raw;
+}
+
+/**
+ * Convert a Buffer object to a Date.
+ *
+ * @param {Buffer} raw - data to convert.
+ * @returns {Date} converted Date.
+ * @memberof Eds
+ * @private
+ */
+function rawToDate(raw) {
+    const ms = raw.readUInt32LE(0);
+    const days = raw.readUInt16LE(4);
+    return new Date((days * 8.64e7) + ms + EPOCH_OFFSET);
+}
+
+/**
+ * Convert a Buffer to a value based on type.
+ *
+ * @param {Buffer} raw - data to convert.
+ * @param {DataType | string} type - how to interpret the data.
+ * @returns {number | bigint | string | Date} converted data.
  * @memberof Eds
  */
 function rawToType(raw, type) {
@@ -122,27 +266,68 @@ function rawToType(raw, type) {
             return raw.readDoubleLE();
         case DataType.VISIBLE_STRING:
         case DataType.UNICODE_STRING:
-            raw = raw.toString();
-            const end = raw.indexOf('\0');
-            if(end != -1)
-                raw = raw.substring(0, end);
-            return raw;
+            return rawToString(raw);
         case DataType.TIME_OF_DAY:
         case DataType.TIME_DIFFERENCE:
-            const ms = raw.readUInt32LE(0);
-            const days = raw.readUInt16LE(4);
-            return new Date((days * 8.64e7) + ms + EPOCH_OFFSET);
-
+            return rawToDate(raw);
         default:
             return raw;
     }
 }
 
 /**
- * Convert a value to a Buffer object based on type.
+ * Convert a string to a Buffer.
+ *
+ * @param {string} value - data to convert.
+ * @returns {Buffer} converted Buffer.
+ * @memberof Eds
+ * @private
+ */
+function stringToRaw(value) {
+    let raw = (value) ? Buffer.from(value) : Buffer.alloc(0);
+
+    const end = raw.indexOf('\0');
+    if(end != -1)
+        raw = raw.subarray(0, end);
+
+    return raw;
+}
+
+/**
+ * Convert a Date to a Buffer.
+ *
+ * @param {Date} value - data to convert.
+ * @returns {Buffer} converted Buffer.
+ * @memberof Eds
+ * @private
+ */
+function dateToRaw(value) {
+    let raw = Buffer.alloc(6);
+    if(!util.types.isDate(value))
+        value = new Date(value);
+
+    // Milliseconds since January 1, 1984
+    let time = value.getTime() - EPOCH_OFFSET;
+    if(time < 0)
+        time = 0;
+
+    // Days since epoch
+    const days = Math.floor(time / 8.64e7);
+    raw.writeUInt16LE(days, 4);
+
+    // Milliseconds since midnight
+    const ms = time - (days * 8.64e7);
+    raw.writeUInt32LE(ms, 0);
+
+    return raw;
+}
+
+/**
+ * Convert a value to a Buffer based on type.
+ *
  * @param {number | bigint | string | Date} value - data to convert.
- * @param {number} type - how to interpret the data.
- * @return {Buffer}
+ * @param {DataType | string} type - how to interpret the data.
+ * @returns {Buffer} converted Buffer.
  * @memberof Eds
  */
 function typeToRaw(value, type) {
@@ -205,6 +390,7 @@ function typeToRaw(value, type) {
             raw = Buffer.alloc(6);
             raw.writeUIntLE(value, 0, 6);
             break;
+        case DataType.INTEGER56:
         case DataType.INTEGER64:
             if(typeof value != 'bigint')
                 value = BigInt(value);
@@ -212,6 +398,7 @@ function typeToRaw(value, type) {
             raw = Buffer.alloc(8);
             raw.writeBigInt64LE(value);
             break;
+        case DataType.UNSIGNED56:
         case DataType.UNSIGNED64:
             if(typeof value != 'bigint')
                 value = BigInt(value);
@@ -228,10 +415,7 @@ function typeToRaw(value, type) {
             raw.writeDoubleLE(value);
             break;
         case DataType.VISIBLE_STRING:
-            raw = (value) ? Buffer.from(value) : Buffer.alloc(0);
-            const end = raw.indexOf('\0');
-            if(end != -1)
-                raw = raw.subarray(0, end);
+            raw = stringToRaw(value);
             break;
         case DataType.OCTET_STRING:
         case DataType.UNICODE_STRING:
@@ -239,20 +423,7 @@ function typeToRaw(value, type) {
             break;
         case DataType.TIME_OF_DAY:
         case DataType.TIME_DIFFERENCE:
-            raw = Buffer.alloc(6);
-            if(util.types.isDate(value)) {
-                // Milliseconds since January 1, 1984
-                const time = value.getTime() - EPOCH_OFFSET;
-
-                // Days since epoch
-                const days = Math.floor(time / 8.64e7);
-
-                // Milliseconds since midnight
-                const ms = time - (days * 8.64e7);
-
-                raw.writeUInt32LE(ms, 0);
-                raw.writeUInt16LE(days, 4);
-            }
+            raw = dateToRaw(value);
             break;
     }
 
@@ -260,138 +431,127 @@ function typeToRaw(value, type) {
 }
 
 /**
+ * Errors generated due to an improper EDS configuration.
+ *
+ * @param {string} message - error message.
+ * @memberof Eds
+ */
+class EdsError extends Error {
+    constructor(message) {
+        super(message);
+
+        this.name = this.constructor.name;
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+
+/**
  * A Canopen Data Object.
+ *
+ * DataObjects should not be created directly, use {@link Eds#addEntry} or
+ * {@link Eds#addSubEntry} instead.
+ *
  * @param {number} index - index of the data object.
  * @param {number | null} subIndex - subIndex of the data object.
- * @param {Object} args
- * @param {string} args.ParameterName - name of the data object.
- * @param {ObjectType} args.ObjectType - object type.
- * @param {DataType} args.DataType - data type.
- * @param {AccessType} args.AccessType - access restrictions.
- * @param {number} args.LowLimit - minimum value.
- * @param {number} args.HighLimit - maximum value.
- * @param {number} args.SubNumber - number of sub-objects.
- * @param {boolean} args.PDOMapping - enable PDO mapping.
- * @param {boolean} args.CompactSubObj - use the compact sub-object format.
- * @param {number | string | Date} args.DefaultValue - default value.
- *
- * @emits 'update' on value change.
- *
+ * @param {object} data
+ * @param {string} data.parameterName - name of the data object.
+ * @param {ObjectType} data.objectType - object type.
+ * @param {DataType} data.dataType - data type.
+ * @param {AccessType} data.accessType - access restrictions.
+ * @param {number} data.lowLimit - minimum value.
+ * @param {number} data.highLimit - maximum value.
+ * @param {number} data.subNumber - number of sub-objects.
+ * @param {boolean} data.pdoMapping - enable PDO mapping.
+ * @param {boolean} data.compactSubObj - use the compact sub-object format.
+ * @param {number | string | Date} data.defaultValue - default value.
+ * @fires 'update' on value change.
  * @see CiA306 "Object descriptions" (§4.6.3)
  * @memberof Eds
  * @protected
  */
 class DataObject extends EventEmitter {
-    constructor(index, subIndex, args, parent=null) {
+    constructor(index, subIndex, data, parent=null) {
         super();
 
         this.index = index;
         this.subIndex = subIndex;
         this.parent = parent;
 
-        if(args instanceof DataObject)
-            args = args.objectify();
+        Object.assign(this, data);
 
-        this.parameterName = args['ParameterName'];
-        if(this.parameterName === undefined) {
-            throw TypeError('ParameterName is mandatory for DataObject');
-        }
+        if(this.parameterName === undefined)
+            throw new EdsError('parameterName is mandatory for DataObject');
 
-        this.subNumber = parseInt(args['SubNumber']) || undefined;
-        this.objectType = parseInt(args['ObjectType']) || undefined;
-        this.dataType = parseInt(args['DataType']) || undefined;
-        this.lowLimit = parseInt(args['LowLimit']) || undefined;
-        this.highLimit = parseInt(args['HighLimit']) || undefined;
-        this.accessType = args['AccessType'];
-        this.defaultValue = args['DefaultValue'];
-        this.pdoMapping = args['PDOMapping'];
-        this.objFlags = parseInt(args['ObjFlags']) || undefined;
-        this.compactSubObj = parseInt(args['CompactSubObj']) || undefined;
-
-        if(this.objectType === undefined) {
+        if(this.objectType === undefined)
             this.objectType = ObjectType.VAR;
-        }
 
         switch(this.objectType) {
             case ObjectType.DEFTYPE:
             case ObjectType.VAR:
-                // Mandatory args
-                if(this.dataType === undefined) {
-                    throw TypeError(`DataType is mandatory for type ${this.objectTypeString}`);
-                }
+                // Mandatory data
+                if(this.dataType === undefined)
+                    throw new EdsError(`dataType is mandatory for type ${this.objectTypeString}`);
 
-                if(this.accessType === undefined) {
-                    throw TypeError(`AccessType is mandatory for type ${this.objectTypeString}`);
-                }
+                if(this.accessType === undefined)
+                    throw new EdsError(`accessType is mandatory for type ${this.objectTypeString}`);
 
-                // Not supported args
-                if(this.subNumber !== undefined) {
-                    throw TypeError(`SubNumber is not supported for type ${this.objectTypeString}`);
-                }
+                // Not supported data
+                if(this.subNumber !== undefined)
+                    throw new EdsError(`subNumber is not supported for type ${this.objectTypeString}`);
 
-                if(this.compactSubObj !== undefined) {
-                    throw TypeError(`CompactSubObj is not supported for type ${this.objectTypeString}`);
-                }
+                if(this.compactSubObj !== undefined)
+                    throw new EdsError(`compactSubObj is not supported for type ${this.objectTypeString}`);
 
-                // Optional args
-                if(this.pdoMapping === undefined) {
+                // Optional data
+                if(this.pdoMapping === undefined)
                     this.pdoMapping = false;
-                }
 
                 break;
-
             case ObjectType.DEFSTRUCT:
             case ObjectType.ARRAY:
             case ObjectType.RECORD:
                 if(this.compactSubObj) {
-                    // Mandatory args
-                    if(this.dataType === undefined) {
-                        throw TypeError(`DataType is mandatory for compact type ${this.objectTypeString}`);
-                    }
-                    if(this.accessType === undefined) {
-                        throw TypeError(`AccessType is mandatory for compact type ${this.objectTypeString}`);
-                    }
+                    // Mandatory data
+                    if(this.dataType === undefined)
+                        throw new EdsError(`dataType is mandatory for compact type ${this.objectTypeString}`);
 
-                    // Not supported args (Optionally may be zero)
-                    if(this.subNumber) {
-                        throw TypeError(`SubNumber must be undefined or zero for compact type ${this.objectTypeString}`);
-                    }
+                    if(this.accessType === undefined)
+                        throw new EdsError(`accessType is mandatory for compact type ${this.objectTypeString}`);
 
-                    // Optional args
-                    if(this.pdoMapping === undefined) {
+                    // Not supported data (Optionally may be zero)
+                    if(this.subNumber)
+                        throw new EdsError(`subNumber must be undefined or zero for compact type ${this.objectTypeString}`);
+
+                    // Optional data
+                    if(this.pdoMapping === undefined)
                         this.pdoMapping = false;
-                    }
                 }
                 else {
-                    // Mandatory args
-                    if(this.subNumber === undefined) {
-                        throw TypeError(`SubNumber is mandatory for type ${this.objectTypeString}`);
-                    }
+                    // Mandatory data
+                    if(this.subNumber === undefined)
+                        throw new EdsError(`subNumber is mandatory for type ${this.objectTypeString}`);
 
-                    // Not supported args
-                    if(this.dataType !== undefined) {
-                        throw TypeError(`DataType is not supported for type ${this.objectTypeString}`);
-                    }
+                    // Not supported data
+                    if(this.dataType !== undefined)
+                        throw new EdsError(`dataType is not supported for type ${this.objectTypeString}`);
 
-                    if(this.accessType !== undefined) {
-                        throw TypeError(`AccessType is not supported for type ${this.objectTypeString}`);
-                    }
+                    if(this.accessType !== undefined)
+                        throw new EdsError(`accessType is not supported for type ${this.objectTypeString}`);
 
-                    if(this.defaultValue !== undefined) {
-                        throw TypeError(`DefaultValue is not supported for type ${this.objectTypeString}`);
-                    }
+                    if(this.defaultValue !== undefined)
+                        throw new EdsError(`defaultValue is not supported for type ${this.objectTypeString}`);
 
-                    if(this.pdoMapping !== undefined) {
-                        throw TypeError(`PDOMapping is not supported for type ${this.objectTypeString}`);
-                    }
+                    if(this.pdoMapping !== undefined)
+                        throw new EdsError(`pdoMapping is not supported for type ${this.objectTypeString}`);
 
-                    if(this.lowLimit !== undefined) {
-                        throw TypeError(`LowLimit is not supported for type ${this.objectTypeString}`);
-                    }
+                    if(this.lowLimit !== undefined)
+                        throw new EdsError(`lowLimit is not supported for type ${this.objectTypeString}`);
 
-                    if(this.highLimit !== undefined) {
-                        throw TypeError(`HighLimit is not supported for type ${this.objectTypeString}`);
-                    }
+                    if(this.highLimit !== undefined)
+                        throw new EdsError(`highLimit is not supported for type ${this.objectTypeString}`);
+
+                    if(this.subNumber <= 0)
+                        throw new EdsError(`subNumber must be >= 0 for type ${this.objectTypeString}`);
 
                     // Create sub-objects array
                     this._subObjects = new Array(this.subNumber + 1);
@@ -401,68 +561,71 @@ class DataObject extends EventEmitter {
 
                     // Store max sub index at index 0
                     this._subObjects[0] = new DataObject(index, 0, {
-                        'ParameterName':    'Max sub-index',
-                        'ObjectType':       ObjectType.VAR,
-                        'DataType':         DataType.UNSIGNED8,
-                        'AccessType':       AccessType.READ_WRITE,
-                        'DefaultValue':     this.subNumber - 1,
+                        parameterName:  'Max sub-index',
+                        objectType:     ObjectType.VAR,
+                        dataType:       DataType.UNSIGNED8,
+                        accessType:     AccessType.READ_WRITE,
+                        defaultValue:   this.subNumber - 1,
                     });
 
                     // Allow access to sub-objects using bracket notation
                     for(let i = 0; i < (this.subNumber + 1); i++) {
                         Object.defineProperty(this, i, {
-                            get: () => { return this._subObjects[i] },
-                            set: (args) => { this._setSubObject(i, args) },
+                            get: () => {
+                                return this._subObjects[i]
+                            },
+                            set: (data) => {
+                                this._setSubObject(i, data)
+                            },
                         });
                     }
                 }
                 break;
 
             case ObjectType.DOMAIN:
-                // Not supported args
-                if(this.pdoMapping !== undefined) {
-                    throw TypeError(`PDOMapping is not supported for type ${this.objectTypeString}`);
-                }
+                // Not supported data
+                if(this.pdoMapping !== undefined)
+                    throw new EdsError(`pdoMapping is not supported for type ${this.objectTypeString}`);
 
-                if(this.lowLimit !== undefined) {
-                    throw TypeError(`LowLimit is not supported for type ${this.objectTypeString}`);
-                }
+                if(this.lowLimit !== undefined)
+                    throw new EdsError(`lowLimit is not supported for type ${this.objectTypeString}`);
 
-                if(this.highLimit !== undefined) {
-                    throw TypeError(`HighLimit is not supported for type ${this.objectTypeString}`);
-                }
+                if(this.highLimit !== undefined)
+                    throw new EdsError(`highLimit is not supported for type ${this.objectTypeString}`);
 
-                if(this.subNumber !== undefined) {
-                    throw TypeError(`SubNumber is not supported for type ${this.objectTypeString}`);
-                }
+                if(this.subNumber !== undefined)
+                    throw new EdsError(`subNumber is not supported for type ${this.objectTypeString}`);
 
-                if(this.compactSubObj !== undefined) {
-                    throw TypeError(`CompactSubObj is not supported for type ${this.objectTypeString}`);
-                }
+                if(this.compactSubObj !== undefined)
+                    throw new EdsError(`compactSubObj is not supported for type ${this.objectTypeString}`);
 
-                // Optional args
-                if(this.dataType === undefined) {
+                // Optional data
+                if(this.dataType === undefined)
                     this.dataType = DataType.DOMAIN;
-                }
 
-                if(this.accessType === undefined) {
+                if(this.accessType === undefined)
                     this.accessType = AccessType.READ_WRITE;
-                }
+
                 break;
 
             default:
-                throw TypeError(`ObjectType not supported (${this.objectType})`);
-        };
+                throw new EdsError(`objectType not supported (${this.objectType})`);
+        }
 
         if(this.highLimit !== undefined && this.lowLimit !== undefined) {
             if(this.highLimit < this.lowLimit)
-                throw RangeError('HighLimit may not be less LowLimit');
+                throw new EdsError('highLimit may not be less lowLimit');
         }
 
         // Create raw data buffer
         this._raw = typeToRaw(this.defaultValue, this.dataType);
     }
 
+    /**
+     * The object type as a string.
+     *
+     * @type {string}
+     */
     get objectTypeString() {
         switch(this.objectType) {
             case ObjectType.NULL:
@@ -484,6 +647,11 @@ class DataObject extends EventEmitter {
         }
     }
 
+    /**
+     * The data type as a string.
+     *
+     * @type {string}
+     */
     get dataTypeString() {
         switch(this.dataType) {
             case DataType.BOOLEAN:
@@ -549,6 +717,11 @@ class DataObject extends EventEmitter {
         }
     }
 
+    /**
+     * Size of the raw data including sub-entries.
+     *
+     * @type {number}
+     */
     get size() {
         let size = 0;
         if(this.subNumber > 0) {
@@ -562,12 +735,13 @@ class DataObject extends EventEmitter {
         return size;
     }
 
+    /**
+     * The raw data Buffer.
+     *
+     * @type {Buffer}
+     */
     get raw() {
         return this._raw;
-    }
-
-    get value() {
-        return rawToType(this.raw, this.dataType);
     }
 
     set raw(raw) {
@@ -578,72 +752,43 @@ class DataObject extends EventEmitter {
             return;
 
         this._raw = raw;
-        this.emit("update", this);
+        this.emit('update', this);
+    }
+
+    /**
+     * The cooked value.
+     *
+     * @type {number | bigint | string | Date}
+     * @see {@link Eds.typeToRaw}
+     */
+    get value() {
+        return rawToType(this.raw, this.dataType);
     }
 
     set value(value) {
         this.raw = typeToRaw(value, this.dataType);
     }
 
-    /** Formats internal data for writing to an EDS file. */
-    objectify() {
-        let entry = {};
-
-        entry['ParameterName'] = this.parameterName;
-        entry['ObjectType'] = `0x${this.objectType.toString(16)}`;
-
-        if(this.subNumber !== undefined) {
-            entry['SubNumber'] = `0x${this.subNumber.toString(16)}`;
-        }
-
-        if(this.dataType !== undefined) {
-            entry['DataType'] = `0x${this.dataType.toString(16)}`;
-        }
-
-        if(this.lowLimit !== undefined) {
-            entry['LowLimit'] = this.lowLimit.toString();
-        }
-
-        if(this.highLimit !== undefined) {
-            entry['HighLimit'] = this.highLimit.toString();
-        }
-
-        if(this.accessType !== undefined) {
-            entry['AccessType'] = this.accessType;
-        }
-
-        if(this.defaultValue !== undefined) {
-            entry['DefaultValue'] = this.defaultValue.toString();
-        }
-
-        if(this.pdoMapping !== undefined) {
-            entry['PDOMapping'] = (this.pdoMapping) ? '1' : '0';
-        }
-
-        if(this.objFlags !== undefined) {
-            entry['ObjFlags'] = this.objFlags.toString();
-        }
-
-        if(this.compactSubObj !== undefined) {
-            entry['CompactSubObj'] = (this.compactSubObj) ? '1' : '0';
-        }
-
-        return entry;
-    }
-
-    _setSubObject(subIndex, args) {
+    /**
+     * Create or add a new sub-entry to this {@link Eds.DataObject}.
+     *
+     * @param {number} subIndex - sub-entry index.
+     * @param {DataObject | object} data - An existing {@link Eds.DataObject} or the data to create one.
+     * @private
+     */
+    _setSubObject(subIndex, data) {
         if(subIndex > this.subNumber)
-            throw RangeError(`SubIndex must be >= ${this.subNumber}`)
+            throw new EdsError(`subIndex must be >= ${this.subNumber}`)
 
-        if(args instanceof DataObject) {
-            this._subObjects[subIndex] = args;
+        if(data instanceof DataObject) {
+            this._subObjects[subIndex] = data;
         }
         else {
             this._subObjects[subIndex] = new DataObject(
-                this.index, subIndex, args, this);
+                this.index, subIndex, data, this);
         }
     }
-};
+}
 
 /**
  * A CANopen Electronic Data Sheet.
@@ -664,65 +809,66 @@ class Eds {
         // Add default data types
         for(const [name, index] of Object.entries(DataType)) {
             this.addEntry(index, {
-                'ParameterName':    name,
-                'ObjectType':       ObjectType.DEFTYPE,
-                'DataType':         DataType[name],
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  name,
+                objectType:     ObjectType.DEFTYPE,
+                dataType:       DataType[name],
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
         // Add mandatory objects
         this.addEntry(0x1000, {
-            'ParameterName':    'Device type',
-            'ObjectType':       ObjectType.VAR,
-            'DataType':         DataType.UNSIGNED32,
-            'AccessType':       AccessType.READ_ONLY,
+            parameterName:  'Device type',
+            objectType:     ObjectType.VAR,
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_ONLY,
         });
 
         this.addEntry(0x1001, {
-            'ParameterName':    'Error register',
-            'ObjectType':       ObjectType.VAR,
-            'DataType':         DataType.UNSIGNED8,
-            'AccessType':       AccessType.READ_ONLY,
+            parameterName:  'Error register',
+            objectType:     ObjectType.VAR,
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_ONLY,
         });
 
         this.addEntry(0x1018, {
-            'ParameterName':    'Identity object',
-            'ObjectType':       ObjectType.RECORD,
-            'SubNumber':        4,
+            parameterName:  'Identity object',
+            objectType:     ObjectType.RECORD,
+            subNumber:      4,
         });
 
         this.addSubEntry(0x1018, 1, {
-            'ParameterName':    'Vendor-ID',
-            'ObjectType':       ObjectType.VAR,
-            'DataType':         DataType.UNSIGNED32,
-            'AccessType':       AccessType.READ_ONLY,
+            parameterName:  'Vendor-ID',
+            objectType:     ObjectType.VAR,
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_ONLY,
         });
 
         this.addSubEntry(0x1018, 2, {
-            'ParameterName':    'Product code',
-            'ObjectType':       ObjectType.VAR,
-            'DataType':         DataType.UNSIGNED32,
-            'AccessType':       AccessType.READ_ONLY,
+            parameterName:  'Product code',
+            objectType:     ObjectType.VAR,
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_ONLY,
         });
 
         this.addSubEntry(0x1018, 3, {
-            'ParameterName':    'Revision number',
-            'ObjectType':       ObjectType.VAR,
-            'DataType':         DataType.UNSIGNED32,
-            'AccessType':       AccessType.READ_ONLY,
+            parameterName:  'Revision number',
+            objectType:     ObjectType.VAR,
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_ONLY,
         });
 
         this.addSubEntry(0x1018, 4, {
-            'ParameterName':    'Serial number',
-            'ObjectType':       ObjectType.VAR,
-            'DataType':         DataType.UNSIGNED32,
-            'AccessType':       AccessType.READ_ONLY,
+            parameterName:  'Serial number',
+            objectType:     ObjectType.VAR,
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_ONLY,
         });
     }
 
     /**
      * Read and parse an EDS file.
+     *
      * @param {string} path - path to file.
      */
     load(path) {
@@ -745,24 +891,29 @@ class Eds {
         const subIndexMatch = RegExp('^([0-9A-Fa-f]{4})sub([0-9A-Fa-f]+)$');
 
         entries
-            .filter(([key, ]) => { return indexMatch.test(key); })
-            .forEach(([key, value]) => {
+            .filter(([key]) => {
+                return indexMatch.test(key);
+            })
+            .forEach(([key, data]) => {
                 const index = parseInt(key, 16);
-                this.addEntry(index, value);
+                this.addEntry(index, this._edsToEntry(data));
             });
 
         entries
-            .filter(([key, ]) => { return subIndexMatch.test(key); })
-            .forEach(([key, value]) => {
+            .filter(([key]) => {
+                return subIndexMatch.test(key);
+            })
+            .forEach(([key, data]) => {
                 let [index, subIndex] = key.split('sub');
                 index = parseInt(index, 16);
                 subIndex = parseInt(subIndex, 16);
-                this.addSubEntry(index, subIndex, value);
+                this.addSubEntry(index, subIndex, this._edsToEntry(data));
             });
     }
 
     /**
      * Write an EDS file.
+     *
      * @param {string} path - path to file.
      */
     save(path) {
@@ -829,8 +980,9 @@ class Eds {
 
     /**
      * Get a data object.
+     *
      * @param {number | string} index - index or name of the data object.
-     * @return {DataObject | Array} - entry (or entries) matching index.
+     * @returns {DataObject | Array} - entry (or entries) matching index.
      */
     getEntry(index) {
         let entry;
@@ -850,32 +1002,30 @@ class Eds {
 
     /**
      * Create a new data object.
+     *
      * @param {number} index - index of the data object.
-     * @param {DataObject} args - args passed to the DataObject constructor.
-     * @return {DataObject} - the newly created entry.
+     * @param {object} data - data passed to the {@link Eds.DataObject} constructor.
+     * @returns {DataObject} - the newly created entry.
      */
-    addEntry(index, args) {
+    addEntry(index, data) {
         let entry = this.dataObjects[index];
-        if(entry !== undefined) {
-            throw TypeError(
-                `An entry already exists at 0x${index.toString(16)}`);
-        }
+        if(entry !== undefined)
+            throw new EdsError(`An entry already exists at 0x${index.toString(16)}`);
 
-        entry = new DataObject(index, null, args);
+        entry = new DataObject(index, null, data);
         this.dataObjects[index] = entry;
 
-        try {
-            this.nameLookup[entry.parameterName].push(entry);
-        }
-        catch(TypeError) {
-            this.nameLookup[entry.parameterName] = [ entry ];
-        }
+        if(this.nameLookup[entry.parameterName] === undefined)
+            this.nameLookup[entry.parameterName] = [];
+
+        this.nameLookup[entry.parameterName].push(entry);
 
         return entry;
     }
 
     /**
      * Remove a data object.
+     *
      * @param {number} index - index of the data object.
      */
     removeEntry(index) {
@@ -894,45 +1044,47 @@ class Eds {
 
     /**
      * Get a data object.
+     *
      * @param {number | string} index - index or name of the data object.
      * @param {number} subIndex - subIndex of the data object.
-     * @return {DataObject} - the sub-entry at index.
+     * @returns {DataObject} - the sub-entry at index.
      */
     getSubEntry(index, subIndex) {
         const entry = this.getEntry(index);
 
         if(entry === undefined)
-            throw ReferenceError(`0x${index.toString(16)} does not exist`);
+            throw new EdsError(`0x${index.toString(16)} does not exist`);
 
         if(entry.subNumber === undefined)
-            throw TypeError(`0x${index.toString(16)} does not support sub objects`);
+            throw new EdsError(`0x${index.toString(16)} does not support sub objects`);
 
         if(entry.subNumber < subIndex)
-            throw ReferenceError(`0x${index.toString(16)}[${subIndex}] does not exist`);
+            throw new EdsError(`0x${index.toString(16)}[${subIndex}] does not exist`);
 
         return entry[subIndex];
     }
 
     /**
      * Create a new data object.
+     *
      * @param {number} index - index of the data object.
      * @param {number} subIndex - subIndex of the data object.
-     * @param {DataObject} args - args passed to the DataObject constructor.
-     * @return {DataObject} - the newly created sub-entry.
+     * @param {object} data - data passed to the {@link Eds.DataObject} constructor.
+     * @returns {DataObject} - the newly created sub-entry.
      */
-    addSubEntry(index, subIndex, args) {
+    addSubEntry(index, subIndex, data) {
         const entry = this.dataObjects[index];
 
         if(entry === undefined)
-            throw ReferenceError(`0x${index.toString(16)} does not exist`);
+            throw new EdsError(`0x${index.toString(16)} does not exist`);
 
         if(entry.subNumber === undefined)
-            throw TypeError(`0x${index.toString(16)} does not support sub objects`);
+            throw new EdsError(`0x${index.toString(16)} does not support sub objects`);
 
         if(entry.subNumber < subIndex)
-            throw ReferenceError(`0x${index.toString(16)}[${subIndex}] does not exist`);
+            throw new EdsError(`0x${index.toString(16)}[${subIndex}] does not exist`);
 
-        const subEntry = new DataObject(index, subIndex, args, entry);
+        const subEntry = new DataObject(index, subIndex, data, entry);
         entry[subIndex] = subEntry;
 
         return subEntry;
@@ -940,6 +1092,7 @@ class Eds {
 
     /**
      * Remove a data object.
+     *
      * @param {number} index - index of the data object.
      * @param {number} subIndex - subIndex of the data object.
      */
@@ -947,150 +1100,91 @@ class Eds {
         const entry = this.dataObjects[index];
 
         if(entry === undefined)
-            throw ReferenceError(`0x${index.toString(16)} does not exist`);
+            throw new EdsError(`0x${index.toString(16)} does not exist`);
 
         if(entry.subNumber === undefined)
-            throw TypeError(`0x${index.toString(16)} does not support sub objects`);
+            throw new EdsError(`0x${index.toString(16)} does not support sub objects`);
 
         if(entry.subNumber < subIndex)
-            throw ReferenceError(`0x${index.toString(16)}[${subIndex}] does not exist`);
+            throw new EdsError(`0x${index.toString(16)}[${subIndex}] does not exist`);
 
         delete entry[subIndex];
     }
 
+    /**
+     * File name.
+     *
+     * @type {string}
+     */
     get fileName() {
         return this.fileInfo['FileName'];
-    }
-
-    get fileVersion() {
-        return this.fileInfo['FileVersion'];
-    }
-
-    get fileRevision() {
-        return this.fileInfo['FileRevision'];
-    }
-
-    get EDSVersion() {
-        return this.fileInfo['EDSVersion'];
-    }
-
-    get description() {
-        return this.fileInfo['Description'];
-    }
-
-    get creationDate() {
-        const time = this.fileInfo['CreationTime'];
-        const date = this.fileInfo['CreationDate'];
-        return this._parseDate(time, date);
-    }
-
-    get createdBy() {
-        return this.fileInfo['CreatedBy'];
-    }
-
-    get modificationDate() {
-        const time = this.fileInfo['ModificationTime'];
-        const date = this.fileInfo['ModificationDate'];
-        return this._parseDate(time, date);
-    }
-
-    get modifiedBy() {
-        return this.fileInfo['CreatedBy'];
-    }
-
-    get vendorName() {
-        return this.deviceInfo['VendorName'];
-    }
-
-    get vendorNumber() {
-        return this.deviceInfo['VendorNumber'];
-    }
-
-    get productName() {
-        return this.deviceInfo['ProductName'];
-    }
-
-    get productNumber() {
-        return this.deviceInfo['ProductNumber'];
-    }
-
-    get revisionNumber() {
-        return this.deviceInfo['RevisionNumber'];
-    }
-
-    get orderCode() {
-        return this.deviceInfo['OrderCode'];
-    }
-
-    get baudRates() {
-        let rates = [];
-
-        if(this.deviceInfo['BaudRate_10'] == '1')
-            rates.push(10000);
-        if(this.deviceInfo['BaudRate_20'] == '1')
-            rates.push(20000);
-        if(this.deviceInfo['BaudRate_50'] == '1')
-            rates.push(50000);
-        if(this.deviceInfo['BaudRate_125'] == '1')
-            rates.push(125000);
-        if(this.deviceInfo['BaudRate_250'] == '1')
-            rates.push(250000);
-        if(this.deviceInfo['BaudRate_500'] == '1')
-            rates.push(500000);
-        if(this.deviceInfo['BaudRate_800'] == '1')
-            rates.push(800000);
-        if(this.deviceInfo['BaudRate_1000'] == '1')
-            rates.push(1000000);
-
-        return rates;
-    }
-
-    get simpleBootUpMaster() {
-        return this.deviceInfo['SimpleBootUpMaster'];
-    }
-
-    get simpleBootUpSlave() {
-        return this.deviceInfo['SimpleBootUpSlave'];
-    }
-
-    get granularity() {
-        return this.deviceInfo['Granularity'];
-    }
-
-    get dynamicChannelsSupported() {
-        return this.deviceInfo['DynamicChannelsSupported'];
-    }
-
-    get nrOfRXPDO() {
-        return this.deviceInfo['NrOfRXPDO'];
-    }
-
-    get nrOfTXPDO() {
-        return this.deviceInfo['NrOfTXPDO'];
-    }
-
-    get lssSupported() {
-        return this.deviceInfo['LSS_Supported'];
     }
 
     set fileName(value) {
         this.fileInfo['FileName'] = value;
     }
 
+    /**
+     * File version (8-bit unsigned integer).
+     *
+     * @type {number}
+     */
+    get fileVersion() {
+        return parseInt(this.fileInfo['FileVersion']);
+    }
+
     set fileVersion(value) {
         this.fileInfo['FileVersion'] = value;
+    }
+
+    /**
+     * File revision (8-bit unsigned integer).
+     *
+     * @type {number}
+     */
+    get fileRevision() {
+        return parseInt(this.fileInfo['FileRevision']);
     }
 
     set fileRevision(value) {
         this.fileInfo['FileRevision'] = value;
     }
 
+    /**
+     * Version of the EDS specification in the format 'x.y'.
+     *
+     * @type {string}
+     */
+    get edsVersion() {
+        return this.fileInfo['EDSVersion'];
+    }
+
     set edsVersion(value) {
         this.fileInfo['EDSVersion'] = value;
     }
 
+    /**
+     * File description.
+     *
+     * @type {string}
+     */
+    get description() {
+        return this.fileInfo['Description'];
+    }
+
     set description(value) {
         this.fileInfo['Description'] = value;
+    }
+
+    /**
+     * File creation time.
+     *
+     * @type {Date}
+     */
+    get creationDate() {
+        const time = this.fileInfo['CreationTime'];
+        const date = this.fileInfo['CreationDate'];
+        return this._parseDate(time, date);
     }
 
     set creationDate(value) {
@@ -1107,8 +1201,28 @@ class Eds {
         this.fileInfo['CreationDate'] = date;
     }
 
+    /**
+     * Name or description of the file creator (max 245 characters).
+     *
+     * @type {string}
+     */
+    get createdBy() {
+        return this.fileInfo['CreatedBy'];
+    }
+
     set createdBy(value) {
         this.fileInfo['CreatedBy'] = value;
+    }
+
+    /**
+     * Time of the last modification.
+     *
+     * @type {Date}
+     */
+    get modificationDate() {
+        const time = this.fileInfo['ModificationTime'];
+        const date = this.fileInfo['ModificationDate'];
+        return this._parseDate(time, date);
     }
 
     set modificationDate(value) {
@@ -1125,32 +1239,123 @@ class Eds {
         this.fileInfo['ModificationDate'] = date;
     }
 
+    /**
+     * Name or description of the last modifier (max 244 characters).
+     *
+     * @type {string}
+     */
+    get modifiedBy() {
+        return this.fileInfo['CreatedBy'];
+    }
+
     set modifiedBy(value) {
         this.fileInfo['CreatedBy'] = value;
+    }
+
+    /**
+     * Vendor name (max 244 characters).
+     *
+     * @type {string}
+     */
+    get vendorName() {
+        return this.deviceInfo['VendorName'];
     }
 
     set vendorName(value) {
         this.deviceInfo['VendorName'] = value;
     }
 
+    /**
+     * Unique vendor ID (32-bit unsigned integer).
+     *
+     * @type {number}
+     */
+    get vendorNumber() {
+        return parseInt(this.deviceInfo['VendorNumber']);
+    }
+
     set vendorNumber(value) {
         this.deviceInfo['VendorNumber'] = value;
+    }
+
+    /**
+     * Product name (max 243 characters).
+     *
+     * @type {string}
+     */
+    get productName() {
+        return this.deviceInfo['ProductName'];
     }
 
     set productName(value) {
         this.deviceInfo['ProductName'] = value;
     }
 
+    /**
+     * Product code (32-bit unsigned integer).
+     *
+     * @type {number}
+     */
+    get productNumber() {
+        return parseInt(this.deviceInfo['ProductNumber']);
+    }
+
     set productNumber(value) {
         this.deviceInfo['ProductNumber'] = value;
+    }
+
+    /**
+     * Revision number (32-bit unsigned integer).
+     *
+     * @type {number}
+     */
+    get revisionNumber() {
+        return parseInt(this.deviceInfo['RevisionNumber']);
     }
 
     set revisionNumber(value) {
         this.deviceInfo['RevisionNumber'] = value;
     }
 
+    /**
+     * Product order code (max 245 characters).
+     *
+     * @type {string}
+     */
+    get orderCode() {
+        return this.deviceInfo['OrderCode'];
+    }
+
     set orderCode(value) {
         this.deviceInfo['OrderCode'] = value;
+    }
+
+    /**
+     * Supported baud rates.
+     *
+     * @type {Array<number>}
+     */
+    get baudRates() {
+        let rates = [];
+
+        if(parseInt(this.deviceInfo['BaudRate_10']))
+            rates.push(10000);
+        if(parseInt(this.deviceInfo['BaudRate_20']))
+            rates.push(20000);
+        if(parseInt(this.deviceInfo['BaudRate_50']))
+            rates.push(50000);
+        if(parseInt(this.deviceInfo['BaudRate_125']))
+            rates.push(125000);
+        if(parseInt(this.deviceInfo['BaudRate_250']))
+            rates.push(250000);
+        if(parseInt(this.deviceInfo['BaudRate_500']))
+            rates.push(500000);
+        if(parseInt(this.deviceInfo['BaudRate_800']))
+            rates.push(800000);
+        if(parseInt(this.deviceInfo['BaudRate_1000']))
+            rates.push(1000000);
+
+        return rates;
     }
 
     set baudRates(rates) {
@@ -1164,28 +1369,107 @@ class Eds {
         this.deviceInfo['BaudRate_1000'] = rates.includes(1e6) ? '1' : '0';
     }
 
+    /**
+     * Indicates simple boot-up master functionality.
+     *
+     * @type {boolean}
+     */
+    get simpleBootUpMaster() {
+        return parseInt(this.deviceInfo['SimpleBootUpMaster']);
+    }
+
     set simpleBootUpMaster(value) {
         this.deviceInfo['SimpleBootUpMaster'] = value;
+    }
+
+    /**
+     * Indicates simple boot-up slave functionality.
+     *
+     * @type {boolean}
+     */
+    get simpleBootUpSlave() {
+        return parseInt(this.deviceInfo['SimpleBootUpSlave']);
     }
 
     set simpleBootUpSlave(value) {
         this.deviceInfo['SimpleBootUpSlave'] = value;
     }
 
+    /**
+     * Provides the granularity allowed for the mapping on this device - most
+     * devices support a granularity of 8. (8-bit integer, max 64).
+     *
+     * @type {number}
+     */
+    get granularity() {
+        return parseInt(this.deviceInfo['Granularity']);
+    }
+
     set granularity(value) {
         this.deviceInfo['Granularity'] = value;
+    }
+
+    /**
+     * Indicates the facility of dynamic variable generation.
+     *
+     * @type {boolean}
+     * @see CiA302
+     */
+    get dynamicChannelsSupported() {
+        return parseInt(this.deviceInfo['DynamicChannelsSupported']);
     }
 
     set dynamicChannelsSupported(value) {
         this.deviceInfo['DynamicChannelsSupported'] = value;
     }
 
+    /**
+     * Indicates the facility of multiplexed PDOs
+     *
+     * @type {boolean}
+     * @see CiA301
+     */
+    get groupMessaging() {
+        return parseInt(this.deviceInfo['GroupMessaging']);
+    }
+
+    set groupMessaging(value) {
+        this.deviceInfo['GroupMessaging'] = value;
+    }
+
+    /**
+     * The number of supported receive PDOs (16-bit unsigned integer).
+     *
+     * @type {number}
+     */
+    get nrOfRXPDO() {
+        return parseInt(this.deviceInfo['NrOfRXPDO']);
+    }
+
     set nrOfRXPDO(value) {
         this.deviceInfo['NrOfRXPDO'] = value;
     }
 
+    /**
+     * The number of supported transmit PDOs (16-bit unsigned integer).
+     *
+     * @type {number}
+     */
+    get nrOfTXPDO() {
+        return parseInt(this.deviceInfo['NrOfTXPDO']);
+    }
+
     set nrOfTXPDO(value) {
         this.deviceInfo['NrOfTXPDO'] = value;
+    }
+
+    /**
+     * Indicates if LSS functionality is supported.
+     *
+     * @type {boolean}
+     */
+    get lssSupported() {
+        return parseInt(this.deviceInfo['LSS_Supported']);
     }
 
     set lssSupported(value) {
@@ -1194,9 +1478,10 @@ class Eds {
 
     /**
      * Parse EDS date and time.
+     *
      * @param {string} time - time string (hh:mm[AM|PM]).
      * @param {string} date - date string (mm-dd-yyyy).
-     * @return {Date}
+     * @returns {Date} parsed Date.
      * @private
      */
     _parseDate(time, date) {
@@ -1219,10 +1504,77 @@ class Eds {
             hours += 12;
 
         return new Date(year, month - 1, day, hours, minutes)
-    };
+    }
+
+    /**
+     * Helper method to turn EDS file data into {@link Eds.DataObject} data.
+     *
+     * @param {object} data - EDS style data to convert.
+     * @returns {object} DataObject style data.
+     * @private
+     */
+    _edsToEntry(data) {
+        return {
+            parameterName: data['ParameterName'],
+            subNumber: parseInt(data['SubNumber']) || undefined,
+            objectType: parseInt(data['ObjectType']) || undefined,
+            dataType: parseInt(data['DataType']) || undefined,
+            lowLimit: parseInt(data['LowLimit']) || undefined,
+            highLimit: parseInt(data['HighLimit']) || undefined,
+            accessType: data['AccessType'],
+            defaultValue: data['DefaultValue'],
+            pdoMapping: data['PDOMapping'],
+            objFlags: parseInt(data['ObjFlags']) || undefined,
+            compactSubObj: parseInt(data['CompactSubObj']) || undefined
+        };
+    }
+
+    /**
+     * Formats a {@link Eds.DataObject} for writing to an EDS file.
+     *
+     * @param {DataObject} entry - DataObject style data to convert.
+     * @returns {object} EDS style data.
+     * @private
+     */
+    _entryToEds(entry) {
+        let data = {};
+
+        data['ParameterName'] = entry.parameterName;
+        data['ObjectType'] = `0x${entry.objectType.toString(16)}`;
+
+        if(entry.subNumber !== undefined)
+            data['SubNumber'] = `0x${entry.subNumber.toString(16)}`;
+
+        if(entry.dataType !== undefined)
+            data['DataType'] = `0x${entry.dataType.toString(16)}`;
+
+        if(entry.lowLimit !== undefined)
+            data['LowLimit'] = entry.lowLimit.toString();
+
+        if(entry.highLimit !== undefined)
+            data['HighLimit'] = entry.highLimit.toString();
+
+        if(entry.accessType !== undefined)
+            data['AccessType'] = entry.accessType;
+
+        if(entry.defaultValue !== undefined)
+            data['DefaultValue'] = entry.defaultValue.toString();
+
+        if(entry.pdoMapping !== undefined)
+            data['PDOMapping'] = (entry.pdoMapping) ? '1' : '0';
+
+        if(entry.objFlags !== undefined)
+            data['ObjFlags'] = entry.objFlags.toString();
+
+        if(entry.compactSubObj !== undefined)
+            data['CompactSubObj'] = (entry.compactSubObj) ? '1' : '0';
+
+        return data;
+    }
 
     /**
      * Helper method to write strings to an EDS file.
+     *
      * @param {number} fd - file descriptor to write.
      * @param {string} data - string to write.
      * @private
@@ -1236,8 +1588,9 @@ class Eds {
 
     /**
      * Helper method to write objects to an EDS file.
+     *
      * @param {number} fd - file descriptor to write.
-     * @param {Object} objects - objects to write.
+     * @param {object} objects - objects to write.
      * @private
      */
     _writeObjects(fd, objects) {
@@ -1247,25 +1600,25 @@ class Eds {
 
             const index = parseInt(value);
             const dataObject = this.dataObjects[index];
-            const entry = dataObject.objectify();
 
             // Write top level object
             const section = index.toString(16);
-            this._write(fd, ini.encode(entry, { section: section }));
+            this._write(fd, ini.encode(
+                this._entryToEds(dataObject), { section: section }));
 
             // Write sub-objects
             for(let i = 0; i < dataObject.subNumber; i++) {
                 if(dataObject[i]) {
                     const subSection = section + 'sub' + i;
-                    const subEntry = dataObject[i].objectify();
-                    this._write(
-                        fd, ini.encode(subEntry, { section: subSection }));
+                    const subObject = dataObject[i];
+                    this._write(fd, ini.encode(
+                        this._entryToEds(subObject), { section: subSection }));
                 }
             }
         }
     }
-};
+}
 
 module.exports=exports={
-    ObjectType, AccessType, DataType, rawToType, typeToRaw, Eds
+    ObjectType, AccessType, DataType, rawToType, typeToRaw, EdsError, Eds
 }

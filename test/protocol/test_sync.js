@@ -12,21 +12,21 @@ describe('SYNC', function() {
         device = new Device({ id: 0xA, loopback: true });
     });
 
-    afterEach(function() {
-        delete device;
-    });
-
     describe('Module initialization', function() {
         it('should throw if cobId is 0', function() {
             device.sync.cobId = 0;
             device.sync.cyclePeriod = 1000;
-            return expect(() => { device.sync.init(); }).to.throw(TypeError);
+            return expect(() => {
+                device.sync.init();
+            }).to.throw(TypeError);
         });
 
         it('should throw if cyclePeriod is 0', function() {
             device.sync.cobId = 0x80;
             device.sync.cyclePeriod = 0;
-            return expect(() => { device.sync.init(); }).to.throw(TypeError);
+            return expect(() => {
+                device.sync.init();
+            }).to.throw(TypeError);
         });
     });
 
@@ -85,8 +85,12 @@ describe('SYNC', function() {
             device.init();
 
             return Promise.all([
-                expect(() => { device.sync.write(); }).to.throw(TypeError),
-                expect(() => { device.sync.start(); }).to.throw(TypeError),
+                expect(() => {
+                    device.sync.write();
+                }).to.throw(TypeError),
+                expect(() => {
+                    device.sync.start();
+                }).to.throw(TypeError),
             ]);
         });
 
@@ -96,7 +100,9 @@ describe('SYNC', function() {
             device.sync.cyclePeriod = 100;
             device.init();
 
-            device.addListener('message', () => { done(); });
+            device.addListener('message', () => {
+                done();
+            });
             device.sync.write();
         });
 
@@ -123,7 +129,9 @@ describe('SYNC', function() {
             device.sync.cobId = 0x80;
             device.init();
 
-            device.on('sync', () => { done(); });
+            device.on('sync', () => {
+                done();
+            });
             device.sync.write();
         });
     });

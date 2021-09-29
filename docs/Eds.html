@@ -1,0 +1,4943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>Eds - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <input type="text" id="nav-search" placeholder="Search" />
+    
+    <h2><a href="index.html">Home</a></h2><h2><a href="https://github.com/DaxBot/node-canopen" target="_blank" class="menu-item" id="repository" >Repository</a></h2><h3>Classes</h3><ul><li><a href="Device.html">Device</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Device.html#getRaw">getRaw</a></li><li data-type='method' style='display: none;'><a href="Device.html#getRawArray">getRawArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#getValue">getValue</a></li><li data-type='method' style='display: none;'><a href="Device.html#getValueArray">getValueArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Device.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Device.html#send">send</a></li><li data-type='method' style='display: none;'><a href="Device.html#setRaw">setRaw</a></li><li data-type='method' style='display: none;'><a href="Device.html#setRawArray">setRawArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#setTransmitFunction">setTransmitFunction</a></li><li data-type='method' style='display: none;'><a href="Device.html#setValue">setValue</a></li><li data-type='method' style='display: none;'><a href="Device.html#setValueArray">setValueArray</a></li></ul></li><li><a href="Eds.html">Eds</a><ul class='members'><li data-type='member' style='display: none;'><a href="Eds.html#.AccessType">AccessType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#.DataType">DataType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#.ObjectType">ObjectType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#baudRates">baudRates</a></li><li data-type='member' style='display: none;'><a href="Eds.html#createdBy">createdBy</a></li><li data-type='member' style='display: none;'><a href="Eds.html#creationDate">creationDate</a></li><li data-type='member' style='display: none;'><a href="Eds.html#description">description</a></li><li data-type='member' style='display: none;'><a href="Eds.html#dynamicChannelsSupported">dynamicChannelsSupported</a></li><li data-type='member' style='display: none;'><a href="Eds.html#edsVersion">edsVersion</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileName">fileName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileRevision">fileRevision</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileVersion">fileVersion</a></li><li data-type='member' style='display: none;'><a href="Eds.html#granularity">granularity</a></li><li data-type='member' style='display: none;'><a href="Eds.html#groupMessaging">groupMessaging</a></li><li data-type='member' style='display: none;'><a href="Eds.html#lssSupported">lssSupported</a></li><li data-type='member' style='display: none;'><a href="Eds.html#modificationDate">modificationDate</a></li><li data-type='member' style='display: none;'><a href="Eds.html#modifiedBy">modifiedBy</a></li><li data-type='member' style='display: none;'><a href="Eds.html#nrOfRXPDO">nrOfRXPDO</a></li><li data-type='member' style='display: none;'><a href="Eds.html#nrOfTXPDO">nrOfTXPDO</a></li><li data-type='member' style='display: none;'><a href="Eds.html#orderCode">orderCode</a></li><li data-type='member' style='display: none;'><a href="Eds.html#productName">productName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#productNumber">productNumber</a></li><li data-type='member' style='display: none;'><a href="Eds.html#revisionNumber">revisionNumber</a></li><li data-type='member' style='display: none;'><a href="Eds.html#simpleBootUpMaster">simpleBootUpMaster</a></li><li data-type='member' style='display: none;'><a href="Eds.html#simpleBootUpSlave">simpleBootUpSlave</a></li><li data-type='member' style='display: none;'><a href="Eds.html#vendorName">vendorName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#vendorNumber">vendorNumber</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Eds.html#.rawToType">rawToType</a></li><li data-type='method' style='display: none;'><a href="Eds.html#.typeToRaw">typeToRaw</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addEntry">addEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addSubEntry">addSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getEntry">getEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getSubEntry">getSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#load">load</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeEntry">removeEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeSubEntry">removeSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#save">save</a></li></ul></li><li><a href="Eds.DataObject.html">Eds.DataObject</a></li><li><a href="Eds.EdsError.html">Eds.EdsError</a></li><li><a href="Emcy.html">Emcy</a><ul class='members'><li data-type='member' style='display: none;'><a href="Emcy.html#.EmcyCode">EmcyCode</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#.EmcyType">EmcyType</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#cobId">cobId</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#errorRegister">errorRegister</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#history">history</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#inhibitTime">inhibitTime</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#valid">valid</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Emcy.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#setHistoryLength">setHistoryLength</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#write">write</a></li></ul></li><li><a href="Emcy.EmcyMessage.html">Emcy.EmcyMessage</a></li><li><a href="Lss.html">Lss</a><ul class='members'><li data-type='member' style='display: none;'><a href="Lss.html#.LssCommand">LssCommand</a></li><li data-type='member' style='display: none;'><a href="Lss.html#.LssMode">LssMode</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Lss.html#activateBitTiming">activateBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureBitTiming">configureBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureNodeId">configureNodeId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#fastscan">fastscan</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireProductCode">inquireProductCode</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireRevisionNumber">inquireRevisionNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireSerialNumber">inquireSerialNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireVendorId">inquireVendorId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#storeConfiguration">storeConfiguration</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeGlobal">switchModeGlobal</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeSelective">switchModeSelective</a></li></ul></li><li><a href="Lss.LssError.html">Lss.LssError</a></li><li><a href="Nmt.html">Nmt</a><ul class='members'><li data-type='member' style='display: none;'><a href="Nmt.html#.NmtCommand">NmtCommand</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#.NmtState">NmtState</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#producerTime">producerTime</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#producerTime">producerTime</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#state">state</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#state">state</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Nmt.html#enterPreOperational">enterPreOperational</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetCommunication">resetCommunication</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetNode">resetNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#startNode">startNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stopNode">stopNode</a></li></ul></li><li><a href="Pdo.html">Pdo</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Pdo.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#load">load</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#write">write</a></li></ul></li><li><a href="Sdo.html">Sdo</a><ul class='members'><li data-type='member' style='display: none;'><a href="Sdo.html#.AbortCode">AbortCode</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Sdo.html#download">download</a></li><li data-type='method' style='display: none;'><a href="Sdo.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Sdo.html#upload">upload</a></li></ul></li><li><a href="Sdo.SdoError.html">Sdo.SdoError</a></li><li><a href="Sync.html">Sync</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Sync.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Sync.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Sync.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Sync.html#write">write</a></li></ul></li><li><a href="Time.html">Time</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Time.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Time.html#write">write</a></li></ul></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">Eds</h1>
+    
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        Eds
+        </h2>
+        
+            <div class="class-description usertext"><p>A CANopen Electronic Data Sheet.</p>
+<p>This class provides methods for loading and saving CANopen EDS v4.0 files.</p></div>
+        
+    
+</header>
+
+<article>
+    
+        <div class="container-overview">
+        
+            
+
+    
+    <h2>Constructor</h2>
+    
+
+    <h4 class="name" id="Eds"><span class="type-signature"></span>new Eds<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line800">line 800</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>CiA306 "Electronic data sheet specification for CANopen"</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+        </div>
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl>
+            <dt><a href="Eds.DataObject.html">DataObject</a></dt>
+            <dd></dd>
+        
+            <dt><a href="Eds.EdsError.html">EdsError</a></dt>
+            <dd></dd>
+        </dl>
+    
+    
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id=".AccessType"><span class="type-signature">(static, constant) </span>AccessType<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line70">line 70</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>CiA301 "Access usage" (§7.4.5)</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>READ_WRITE</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Read and write access.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>WRITE_ONLY</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Write only access.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>READ_ONLY</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Read only access.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>CONSTANT</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Read only access, values marked constant may only be changed in
+<a href="Nmt.html#.NmtState#.INITIALIZING">Nmt.NmtState.INITIALIZING</a>.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description usertext">
+    <p>CANopen access types.</p>
+<p>The access rights for a particular object. The viewpoint is from the network
+into the CANopen device.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".DataType"><span class="type-signature">(static, constant) </span>DataType<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line99">line 99</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>CiA301 "Data type entry usage" (§7.4.7)</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>BOOLEAN</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Boolean value (bool).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>INTEGER8</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>8-bit signed integer (int8_t).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>INTEGER16</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>16-bit signed integer (int16_t).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>INTEGER32</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>32-bit signed integer (int32_t).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>UNSIGNED8</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>8-bit unsigned integer (uint8_t).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>UNSIGNED16</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>16-bit unsigned integer (uint16_t).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>UNSIGNED32</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>32-bit unsigned integer (uint32_t).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>REAL32</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>32-bit floating point (float).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>VISIBLE_STRING</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Null terminated c-string.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>OCTET_STRING</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Raw character buffer.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>UNICODE_STRING</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Unicode string.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>TIME_OF_DAY</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Time since January 1, 1984.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>TIME_DIFFERENCE</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Time difference.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>DOMAIN</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Data of variable length.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>REAL64</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>64-bit floating point (double)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>INTEGER24</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>24-bit signed integer.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>INTEGER40</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>40-bit signed integer.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>INTEGER48</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>48-bit signed integer.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>INTEGER56</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>56-bit signed integer.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>INTEGER64</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>64-bit signed integer (int64_t).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>UNSIGNED24</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>24-bit unsigned integer.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>UNSIGNED40</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>40-bit unsigned integer.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>UNSIGNED48</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>48-bit unsigned integer.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>UNSIGNED56</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>56-bit unsigned integer.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>UNSIGNED64</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>64-bit unsigned integer (uint64_t)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>PDO_PARAMETER</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>PDO parameter record.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>PDO_MAPPING</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>PDO mapping parameter record.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>SDO_PARAMETER</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>SDO parameter record.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>IDENTITY</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Identity record.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description usertext">
+    <p>CANopen data types.</p>
+<p>The static data types are placed in the object dictionary at their specified
+index for definition purposes only. Simple types may be mapped to an RPDO
+as a way to define space for data that is not being used by this CANopen
+device.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".ObjectType"><span class="type-signature">(static, constant) </span>ObjectType<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line28">line 28</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>CiA301 "Object code usage" (§7.4.3)</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>NULL</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>An object with no data fields.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>DOMAIN</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Large variable amount of data, e.g. executable program code.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>DEFTYPE</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Denotes a type definition such as BOOLEAN, UNSIGNED16, etc.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>DEFSTRUCT</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Defines a new record type, e.g. PDO mapping structure.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>VAR</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>A single value such as an UNSIGNED8, INTEGER16, etc.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>ARRAY</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>A multiple data field object where each data field is a simple variable
+of the same basic data type, e.g. array of UNSIGNED16. Sub-index 0 of an
+ARRAY is always UNSIGNED8 and therefore not part of the ARRAY data.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>RECORD</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>A multiple data field object where the data fields may be any
+combination of simple variables. Sub-index 0 of a RECORD is always
+UNSIGNED8 and sub-index 255 is always UNSIGNED32 and therefore not part
+of the RECORD data.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description usertext">
+    <p>CANopen object types.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="baudRates"><span class="type-signature"></span>baudRates<span class="type-signature"> :Array.&lt;number></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1338">line 1338</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Supported baud rates.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Array.&lt;number></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="createdBy"><span class="type-signature"></span>createdBy<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1209">line 1209</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Name or description of the file creator (max 245 characters).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="creationDate"><span class="type-signature"></span>creationDate<span class="type-signature"> :Date</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1184">line 1184</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>File creation time.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Date</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="description"><span class="type-signature"></span>description<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1171">line 1171</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>File description.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="dynamicChannelsSupported"><span class="type-signature"></span>dynamicChannelsSupported<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1418">line 1418</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>CiA302</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Indicates the facility of dynamic variable generation.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="edsVersion"><span class="type-signature"></span>edsVersion<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1158">line 1158</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Version of the EDS specification in the format 'x.y'.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="fileName"><span class="type-signature"></span>fileName<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1119">line 1119</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>File name.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="fileRevision"><span class="type-signature"></span>fileRevision<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1145">line 1145</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>File revision (8-bit unsigned integer).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="fileVersion"><span class="type-signature"></span>fileVersion<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1132">line 1132</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>File version (8-bit unsigned integer).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="granularity"><span class="type-signature"></span>granularity<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1404">line 1404</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Provides the granularity allowed for the mapping on this device - most
+devices support a granularity of 8. (8-bit integer, max 64).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="groupMessaging"><span class="type-signature"></span>groupMessaging<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1432">line 1432</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>CiA301</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Indicates the facility of multiplexed PDOs</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="lssSupported"><span class="type-signature"></span>lssSupported<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1471">line 1471</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Indicates if LSS functionality is supported.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="modificationDate"><span class="type-signature"></span>modificationDate<span class="type-signature"> :Date</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1222">line 1222</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Time of the last modification.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Date</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="modifiedBy"><span class="type-signature"></span>modifiedBy<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1247">line 1247</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Name or description of the last modifier (max 244 characters).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="nrOfRXPDO"><span class="type-signature"></span>nrOfRXPDO<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1445">line 1445</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>The number of supported receive PDOs (16-bit unsigned integer).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="nrOfTXPDO"><span class="type-signature"></span>nrOfTXPDO<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1458">line 1458</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>The number of supported transmit PDOs (16-bit unsigned integer).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="orderCode"><span class="type-signature"></span>orderCode<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1325">line 1325</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Product order code (max 245 characters).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="productName"><span class="type-signature"></span>productName<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1286">line 1286</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Product name (max 243 characters).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="productNumber"><span class="type-signature"></span>productNumber<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1299">line 1299</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Product code (32-bit unsigned integer).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="revisionNumber"><span class="type-signature"></span>revisionNumber<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1312">line 1312</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Revision number (32-bit unsigned integer).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="simpleBootUpMaster"><span class="type-signature"></span>simpleBootUpMaster<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1377">line 1377</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Indicates simple boot-up master functionality.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="simpleBootUpSlave"><span class="type-signature"></span>simpleBootUpSlave<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1390">line 1390</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Indicates simple boot-up slave functionality.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="vendorName"><span class="type-signature"></span>vendorName<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1260">line 1260</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Vendor name (max 244 characters).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">string</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="vendorNumber"><span class="type-signature"></span>vendorNumber<span class="type-signature"> :number</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1273">line 1273</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Unique vendor ID (32-bit unsigned integer).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id=".rawToType"><span class="type-signature">(static) </span>rawToType<span class="signature">(raw, type)</span><span class="type-signature"> &rarr; {number|bigint|string|Date}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line228">line 228</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Convert a Buffer to a value based on type.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>raw</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Buffer</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>data to convert.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>type</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">DataType</span>
+|
+
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>how to interpret the data.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>converted data.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+|
+
+<span class="param-type">bigint</span>
+|
+
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Date</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".typeToRaw"><span class="type-signature">(static) </span>typeToRaw<span class="signature">(value, type)</span><span class="type-signature"> &rarr; {Buffer}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line333">line 333</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Convert a value to a Buffer based on type.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+|
+
+<span class="param-type">bigint</span>
+|
+
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Date</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>data to convert.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>type</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">DataType</span>
+|
+
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>how to interpret the data.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>converted Buffer.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Buffer</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="addEntry"><span class="type-signature"></span>addEntry<span class="signature">(index, data)</span><span class="type-signature"> &rarr; {DataObject}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1010">line 1010</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Create a new data object.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>index of the data object.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>data passed to the <a href="Eds.DataObject.html">Eds.DataObject</a> constructor.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>the newly created entry.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">DataObject</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="addSubEntry"><span class="type-signature"></span>addSubEntry<span class="signature">(index, subIndex, data)</span><span class="type-signature"> &rarr; {DataObject}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1075">line 1075</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Create a new data object.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>index of the data object.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>subIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>subIndex of the data object.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>data passed to the <a href="Eds.DataObject.html">Eds.DataObject</a> constructor.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>the newly created sub-entry.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">DataObject</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getEntry"><span class="type-signature"></span>getEntry<span class="signature">(index)</span><span class="type-signature"> &rarr; {DataObject|Array}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line987">line 987</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Get a data object.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+|
+
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>index or name of the data object.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>entry (or entries) matching index.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">DataObject</span>
+|
+
+<span class="param-type">Array</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getSubEntry"><span class="type-signature"></span>getSubEntry<span class="signature">(index, subIndex)</span><span class="type-signature"> &rarr; {DataObject}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1052">line 1052</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Get a data object.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+|
+
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>index or name of the data object.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>subIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>subIndex of the data object.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>the sub-entry at index.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">DataObject</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="load"><span class="type-signature"></span>load<span class="signature">(path)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line874">line 874</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Read and parse an EDS file.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>path</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>path to file.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="removeEntry"><span class="type-signature"></span>removeEntry<span class="signature">(index)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1031">line 1031</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Remove a data object.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>index of the data object.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="removeSubEntry"><span class="type-signature"></span>removeSubEntry<span class="signature">(index, subIndex)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line1099">line 1099</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Remove a data object.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>index of the data object.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>subIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>subIndex of the data object.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="save"><span class="type-signature"></span>save<span class="signature">(path)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="eds.js.html">eds.js</a>, <a href="eds.js.html#line919">line 919</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Write an EDS file.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>path</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>path to file.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Tue Sep 28 2021 16:59:34 GMT-0700 (Pacific Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+<script src="scripts/search.js" defer></script>
+
+
+<script src="scripts/collapse.js" defer></script>
+
+
+</body>
+</html>

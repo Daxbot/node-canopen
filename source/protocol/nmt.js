@@ -1,7 +1,15 @@
-const { ObjectType, AccessType, DataType } = require('../eds');
+/**
+ * @file Implements the CANopen Network Managements (NMT) protocol.
+ * @author Wilkins White
+ * @copyright 2021 Nova Dynamics LLC
+ */
+
+const Device = require('../device');
+const { ObjectType, AccessType, DataType, DataObject } = require('../eds');
 
 /**
  * NMT internal states.
+ *
  * @enum {number}
  * @memberof Nmt
  */
@@ -14,6 +22,7 @@ const NmtState = {
 
 /**
  * NMT commands.
+ *
  * @enum {number}
  * @memberof Nmt
  */
@@ -23,7 +32,7 @@ const NmtCommand = {
     ENTER_PRE_OPERATIONAL: 128,
     RESET_NODE: 129,
     RESET_COMMUNICATION: 130,
- };
+};
 
 /**
  * CANopen NMT protocol handler.
@@ -38,6 +47,7 @@ const NmtCommand = {
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Network management" (§7.2.8)
+ * @protected
  */
 class Nmt {
     constructor(device) {
@@ -50,6 +60,7 @@ class Nmt {
 
     /**
      * Set the NMT state.
+     *
      * @param {number} newState - NMT state.
      */
     set state(newState) {
@@ -62,7 +73,8 @@ class Nmt {
 
     /**
      * Get the NMT state.
-     * @return {number} - NMT state.
+     *
+     * @returns {number} - NMT state.
      */
     get state() {
         return this._state;
@@ -70,16 +82,17 @@ class Nmt {
 
     /**
      * Set producer heartbeat time.
+     *
      * @param {number} time - heartbeat time (ms).
      */
     set producerTime(time) {
         let obj1017 = this.device.eds.getEntry(0x1017);
         if(obj1017 === undefined) {
             obj1017 = this.device.eds.addEntry(0x1017, {
-                'ParameterName':    'Producer heartbeat time',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED32,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'Producer heartbeat time',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -88,7 +101,8 @@ class Nmt {
 
     /**
      * Get producer heartbeat time.
-     * @return {number} - heartbeat time (ms).
+     *
+     * @returns {number} - heartbeat time (ms).
      */
     get producerTime() {
         return this._producerTime;
@@ -138,7 +152,8 @@ class Nmt {
      * Service: start remote node.
      *
      * Change the state of NMT slave(s) to NMT state operational.
-     * @param {number} nodeId - id of node or 0 for all.
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
      * @see CiA301 "Service start remote node" (§7.2.8.2.1.2)
      */
     startNode(nodeId) {
@@ -149,7 +164,8 @@ class Nmt {
      * Service: stop remote node.
      *
      * Change the state of NMT slave(s) to NMT state stopped.
-     * @param {number} nodeId - id of node or 0 for all.
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
      * @see CiA301 "Service stop remote node" (§7.2.8.2.1.3)
      */
     stopNode(nodeId) {
@@ -160,7 +176,8 @@ class Nmt {
      * Service: enter pre-operational.
      *
      * Change the state of NMT slave(s) to NMT state pre-operational.
-     * @param {number} nodeId - id of node or 0 for all.
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
      * @see CiA301 "Service enter pre-operational" (§7.2.8.2.1.4)
      */
     enterPreOperational(nodeId) {
@@ -171,7 +188,8 @@ class Nmt {
      * Service: reset node.
      *
      * Reset the application of NMT slave(s).
-     * @param {number} nodeId - id of node or 0 for all.
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
      * @see CiA301 "Service reset node" (§7.2.8.2.1.5)
      */
     resetNode(nodeId) {
@@ -182,7 +200,8 @@ class Nmt {
      * Service: reset communication.
      *
      * Reset communication of NMT slave(s).
-     * @param {number} nodeId - id of node or 0 for all.
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
      * @see CiA301 "Service reset communication" (§7.2.8.2.1.6)
      */
     resetCommunication(nodeId) {
@@ -191,6 +210,8 @@ class Nmt {
 
     /**
      * Serve an NMT command object.
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
      * @param {number} command - NMT command to serve.
      * @private
      */
@@ -206,6 +227,7 @@ class Nmt {
 
     /**
      * Serve a Heartbeat object.
+     *
      * @private
      */
     _sendHeartbeat() {
@@ -218,6 +240,7 @@ class Nmt {
 
     /**
      * Parse an NMT command.
+     *
      * @param {number} command - NMT command to handle.
      * @private
      */
@@ -241,7 +264,11 @@ class Nmt {
 
     /**
      * Called when a new CAN message is received.
-     * @param {Object} message - CAN frame.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
      * @private
      */
     _onMessage(message) {
@@ -274,6 +301,7 @@ class Nmt {
 
     /**
      * Called when 0x1016 (Consumer heartbeat time) is updated.
+     *
      * @param {DataObject} data - updated DataObject.
      * @private
      */
@@ -302,6 +330,7 @@ class Nmt {
 
     /**
      * Called when 0x1017 (Producer heartbeat time) is updated.
+     *
      * @param {DataObject} data - updated DataObject.
      * @private
      */

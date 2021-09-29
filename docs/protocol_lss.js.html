@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>protocol/lss.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <input type="text" id="nav-search" placeholder="Search" />
+    
+    <h2><a href="index.html">Home</a></h2><h2><a href="https://github.com/DaxBot/node-canopen" target="_blank" class="menu-item" id="repository" >Repository</a></h2><h3>Classes</h3><ul><li><a href="Device.html">Device</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Device.html#getRaw">getRaw</a></li><li data-type='method' style='display: none;'><a href="Device.html#getRawArray">getRawArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#getValue">getValue</a></li><li data-type='method' style='display: none;'><a href="Device.html#getValueArray">getValueArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Device.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Device.html#send">send</a></li><li data-type='method' style='display: none;'><a href="Device.html#setRaw">setRaw</a></li><li data-type='method' style='display: none;'><a href="Device.html#setRawArray">setRawArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#setTransmitFunction">setTransmitFunction</a></li><li data-type='method' style='display: none;'><a href="Device.html#setValue">setValue</a></li><li data-type='method' style='display: none;'><a href="Device.html#setValueArray">setValueArray</a></li></ul></li><li><a href="Eds.html">Eds</a><ul class='members'><li data-type='member' style='display: none;'><a href="Eds.html#.AccessType">AccessType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#.DataType">DataType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#.ObjectType">ObjectType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#baudRates">baudRates</a></li><li data-type='member' style='display: none;'><a href="Eds.html#createdBy">createdBy</a></li><li data-type='member' style='display: none;'><a href="Eds.html#creationDate">creationDate</a></li><li data-type='member' style='display: none;'><a href="Eds.html#description">description</a></li><li data-type='member' style='display: none;'><a href="Eds.html#dynamicChannelsSupported">dynamicChannelsSupported</a></li><li data-type='member' style='display: none;'><a href="Eds.html#edsVersion">edsVersion</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileName">fileName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileRevision">fileRevision</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileVersion">fileVersion</a></li><li data-type='member' style='display: none;'><a href="Eds.html#granularity">granularity</a></li><li data-type='member' style='display: none;'><a href="Eds.html#groupMessaging">groupMessaging</a></li><li data-type='member' style='display: none;'><a href="Eds.html#lssSupported">lssSupported</a></li><li data-type='member' style='display: none;'><a href="Eds.html#modificationDate">modificationDate</a></li><li data-type='member' style='display: none;'><a href="Eds.html#modifiedBy">modifiedBy</a></li><li data-type='member' style='display: none;'><a href="Eds.html#nrOfRXPDO">nrOfRXPDO</a></li><li data-type='member' style='display: none;'><a href="Eds.html#nrOfTXPDO">nrOfTXPDO</a></li><li data-type='member' style='display: none;'><a href="Eds.html#orderCode">orderCode</a></li><li data-type='member' style='display: none;'><a href="Eds.html#productName">productName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#productNumber">productNumber</a></li><li data-type='member' style='display: none;'><a href="Eds.html#revisionNumber">revisionNumber</a></li><li data-type='member' style='display: none;'><a href="Eds.html#simpleBootUpMaster">simpleBootUpMaster</a></li><li data-type='member' style='display: none;'><a href="Eds.html#simpleBootUpSlave">simpleBootUpSlave</a></li><li data-type='member' style='display: none;'><a href="Eds.html#vendorName">vendorName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#vendorNumber">vendorNumber</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Eds.html#.rawToType">rawToType</a></li><li data-type='method' style='display: none;'><a href="Eds.html#.typeToRaw">typeToRaw</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addEntry">addEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addSubEntry">addSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getEntry">getEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getSubEntry">getSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#load">load</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeEntry">removeEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeSubEntry">removeSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#save">save</a></li></ul></li><li><a href="Eds.DataObject.html">Eds.DataObject</a></li><li><a href="Eds.EdsError.html">Eds.EdsError</a></li><li><a href="Emcy.html">Emcy</a><ul class='members'><li data-type='member' style='display: none;'><a href="Emcy.html#.EmcyCode">EmcyCode</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#.EmcyType">EmcyType</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#cobId">cobId</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#errorRegister">errorRegister</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#history">history</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#inhibitTime">inhibitTime</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#valid">valid</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Emcy.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#setHistoryLength">setHistoryLength</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#write">write</a></li></ul></li><li><a href="Emcy.EmcyMessage.html">Emcy.EmcyMessage</a></li><li><a href="Lss.html">Lss</a><ul class='members'><li data-type='member' style='display: none;'><a href="Lss.html#.LssCommand">LssCommand</a></li><li data-type='member' style='display: none;'><a href="Lss.html#.LssMode">LssMode</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Lss.html#activateBitTiming">activateBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureBitTiming">configureBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureNodeId">configureNodeId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#fastscan">fastscan</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireProductCode">inquireProductCode</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireRevisionNumber">inquireRevisionNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireSerialNumber">inquireSerialNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireVendorId">inquireVendorId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#storeConfiguration">storeConfiguration</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeGlobal">switchModeGlobal</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeSelective">switchModeSelective</a></li></ul></li><li><a href="Lss.LssError.html">Lss.LssError</a></li><li><a href="Nmt.html">Nmt</a><ul class='members'><li data-type='member' style='display: none;'><a href="Nmt.html#.NmtCommand">NmtCommand</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#.NmtState">NmtState</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#producerTime">producerTime</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#producerTime">producerTime</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#state">state</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#state">state</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Nmt.html#enterPreOperational">enterPreOperational</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetCommunication">resetCommunication</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetNode">resetNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#startNode">startNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stopNode">stopNode</a></li></ul></li><li><a href="Pdo.html">Pdo</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Pdo.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#load">load</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#write">write</a></li></ul></li><li><a href="Sdo.html">Sdo</a><ul class='members'><li data-type='member' style='display: none;'><a href="Sdo.html#.AbortCode">AbortCode</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Sdo.html#download">download</a></li><li data-type='method' style='display: none;'><a href="Sdo.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Sdo.html#upload">upload</a></li></ul></li><li><a href="Sdo.SdoError.html">Sdo.SdoError</a></li><li><a href="Sync.html">Sync</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Sync.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Sync.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Sync.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Sync.html#write">write</a></li></ul></li><li><a href="Time.html">Time</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Time.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Time.html#write">write</a></li></ul></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">protocol/lss.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Implements the CANopen Layer Setting Services (LSS) protocol.
+ * @author Wilkins White
+ * @copyright 2021 Nova Dynamics LLC
+ */
+
+const Device = require('../device');
+
+/**
+ * CANopen LSS command specifiers.
+ *
+ * @enum {number}
+ * @see CiA305 "LSS Protocol Descriptions" (§3.8.2)
+ * @memberof Lss
+ */
+const LssCommand = {
+    SWITCH_MODE_GLOBAL: 4,
+    CONFIGURE_NODE_ID: 17,
+    CONFIGURE_BIT_TIMING: 19,
+    ACTIVATE_BIT_TIMING: 21,
+    STORE_CONFIGURATION: 23,
+    SWITCH_MODE_VENDOR_ID: 64,
+    SWITCH_MODE_PRODUCT_CODE: 65,
+    SWITCH_MODE_REVISION_NUMBER: 66,
+    SWITCH_MODE_SERIAL_NUMBER: 67,
+    FASTSCAN: 81,
+    INQUIRE_MANUFACTURER_NAME: 90,
+    INQUIRE_PRODUCT_NAME: 91,
+    INQUIRE_REVISION_NUMBER: 92,
+    INQUIRE_SERIAL_NUMBER: 93,
+}
+
+/**
+ * CANopen LSS modes.
+ *
+ * @enum {number}
+ * @see CiA305 "Switch Mode Global" (§3.9.1)
+ * @memberof Lss
+ */
+const LssMode = {
+    OPERATION: 0,
+    CONFIGURATION: 1,
+}
+
+/**
+ * Represents an LSS error.
+ *
+ * @param {string} message - error message.
+ * @param {number} code - error code.
+ * @param {number} info - error info code.
+ * @memberof Lss
+ */
+class LssError extends Error {
+    constructor(message, code, info) {
+        super(message);
+        this.code = code;
+        this.info = info;
+
+        this.name = this.constructor.name;
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+
+/**
+ * CANopen LSS protocol handler.
+ *
+ * @param {Device} device - parent device.
+ * @see CiA305 "Layer Settings Services and Protocol (LSS)"
+ * @protected
+ */
+class Lss {
+    constructor(device) {
+        this.device = device;
+        this.mode = LssMode.OPERATION;
+        this.pending = {};
+    }
+
+    set vendorId(value) {
+        this.device.setValueArray(0x1018, 1, value);
+    }
+
+    get vendorId() {
+        return this.device.getValueArray(0x1018, 1);
+    }
+
+    set productCode(value) {
+        this.device.setValueArray(0x1018, 2, value);
+    }
+
+    get productCode() {
+        return this.device.getValueArray(0x1018, 2);
+    }
+
+    set revisionNumber(value) {
+        this.device.setValueArray(0x1018, 3, value);
+    }
+
+    get revisionNumber() {
+        return this.device.getValueArray(0x1018, 3);
+    }
+
+    set serialNumber(value) {
+        this.device.setValueArray(0x1018, 4, value);
+    }
+
+    get serialNumber() {
+        return this.device.getValueArray(0x1018, 4);
+    }
+
+    init() {
+        if(!this.device.eds.lssSupported)
+            return;
+
+        this.device.addListener('message', this._onMessage.bind(this));
+    }
+
+    /**
+     * LSS Fastscan protocol.
+     *
+     * Identifies exactly one LSS slave device and switches it to configuration
+     * mode.
+     *
+     * @param {number} vendorId - vendor-id hint (optional).
+     * @param {number} productCode - product-code hint (optional).
+     * @param {number} revisionNumber - revision-number hint (optional).
+     * @param {number} serialNumber - serial-number hint (optional).
+     * @param {number} timeout - how long to wait for nodes to respond.
+     * @returns {Promise&lt;null | object>} resolves to the discovered device's id (or null).
+     * @see https://www.can-cia.org/fileadmin/resources/documents/proceedings/2008_pfeiffer.pdf
+     */
+    async fastscan(
+        vendorId=null,
+        productCode=null,
+        revisionNumber=null,
+        serialNumber=null,
+        timeout=20
+    ) {
+        let timeoutFlag = false;
+
+        // Initiate fastscan
+        await new Promise((resolve) => {
+            const timer = setTimeout(() => {
+                timeoutFlag = true;
+                resolve();
+            }, timeout);
+
+            this._sendLssRequest(
+                LssCommand.FASTSCAN, Buffer.from([0, 0, 0, 0, 0x80]));
+
+            this.pending[0x4f] = {resolve, timer};
+        });
+
+        if(timeoutFlag)
+            return null; // No devices
+
+        // Find vendor-id
+        if(vendorId === null) {
+            vendorId = 0;
+            for(let i = 31; i >= 0; --i) {
+                await new Promise((resolve) => {
+                    const timer = setTimeout(() => {
+                        vendorId |= 1 &lt;&lt; i;
+                        resolve();
+                    }, timeout);
+
+                    const data = Buffer.alloc(7);
+                    data.writeUInt32LE(vendorId >>> 0);
+                    data[4] = i; // Bit checked
+                    data[5] = 0; // LSS sub
+                    data[6] = 0; // LSS next
+                    this._sendLssRequest(LssCommand.FASTSCAN, data);
+
+                    this.pending[0x4f] = {resolve, timer};
+                });
+            }
+        }
+
+        // Verify vendor-id
+        await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('Failed to verify vendorId'));
+            }, timeout);
+
+            const data = Buffer.alloc(7);
+            data.writeUInt32LE(vendorId >>> 0);
+            data[4] = 0; // Bit checked
+            data[5] = 0; // LSS sub
+            data[6] = 1; // LSS next
+            this._sendLssRequest(LssCommand.FASTSCAN, data);
+
+            this.pending[0x4f] = {resolve, timer};
+        });
+
+        // Find product-code
+        if(productCode === null) {
+            productCode = 0;
+            for(let i = 31; i >= 0; --i) {
+                await new Promise((resolve) => {
+                    const timer = setTimeout(() => {
+                        productCode |= (1 &lt;&lt; i);
+                        resolve();
+                    }, timeout);
+
+                    const data = Buffer.alloc(7);
+                    data.writeUInt32LE(productCode >>> 0);
+                    data[4] = i; // Bit checked
+                    data[5] = 1; // LSS sub
+                    data[6] = 1; // LSS next
+                    this._sendLssRequest(LssCommand.FASTSCAN, data);
+
+                    this.pending[0x4f] = {resolve, timer};
+                });
+            }
+        }
+
+        // Verify product-code
+        await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('Failed to verify productCode'));
+            }, timeout);
+
+            const data = Buffer.alloc(7);
+            data.writeUInt32LE(productCode >>> 0);
+            data[4] = 0; // Bit checked
+            data[5] = 1; // LSS sub
+            data[6] = 2; // LSS next
+            this._sendLssRequest(LssCommand.FASTSCAN, data);
+
+            this.pending[0x4f] = {resolve, timer};
+        });
+
+        // Find revision-number
+        if(revisionNumber === null) {
+            revisionNumber = 0;
+            for(let i = 31; i >= 0; --i) {
+                await new Promise((resolve) => {
+                    const timer = setTimeout(() => {
+                        revisionNumber |= 1 &lt;&lt; i;
+                        resolve();
+                    }, timeout);
+
+                    const data = Buffer.alloc(7);
+                    data.writeUInt32LE(revisionNumber >>> 0);
+                    data[4] = i; // Bit checked
+                    data[5] = 2; // LSS sub
+                    data[6] = 2; // LSS next
+                    this._sendLssRequest(LssCommand.FASTSCAN, data);
+
+                    this.pending[0x4f] = {resolve, timer};
+                });
+            }
+        }
+
+        // Verify revision-number
+        await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('Failed to verify revisionNumber'));
+            }, timeout);
+
+            const data = Buffer.alloc(7);
+            data.writeUInt32LE(revisionNumber >>> 0);
+            data[4] = 0; // Bit checked
+            data[5] = 2; // LSS sub
+            data[6] = 3; // LSS next
+            this._sendLssRequest(LssCommand.FASTSCAN, data);
+
+            this.pending[0x4f] = {resolve, timer};
+        });
+
+        // Find serial-number
+        if(serialNumber === null) {
+            serialNumber = 0;
+            for(let i = 31; i >= 0; --i) {
+                await new Promise((resolve) => {
+                    const timer = setTimeout(() => {
+                        serialNumber |= 1 &lt;&lt; i;
+                        resolve();
+                    }, timeout);
+
+                    const data = Buffer.alloc(7);
+                    data.writeUInt32LE(serialNumber >>> 0);
+                    data[4] = i; // Bit checked
+                    data[5] = 3; // LSS sub
+                    data[6] = 3; // LSS next
+                    this._sendLssRequest(LssCommand.FASTSCAN, data);
+
+                    this.pending[0x4f] = {resolve, timer};
+                });
+            }
+        }
+
+        // Verify serial-number
+        await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('Failed to verify serialNumber'));
+            }, timeout);
+
+            const data = Buffer.alloc(7);
+            data.writeUInt32LE(serialNumber >>> 0);
+            data[4] = 0; // Bit checked
+            data[5] = 3; // LSS sub
+            data[6] = 0; // LSS next
+            this._sendLssRequest(LssCommand.FASTSCAN, data);
+
+            this.pending[0x4f] = {resolve, timer};
+        });
+
+        return { vendorId, productCode, revisionNumber, serialNumber };
+    }
+
+    /**
+     * Service: switch mode global.
+     *
+     * @param {LssMode} mode - LSS mode to switch to.
+     * @see CiA305 "Switch Mode Global" (§3.9.1)
+     */
+    switchModeGlobal(mode) {
+        if(mode === undefined)
+            throw ReferenceError("Parameter 'mode' undefined");
+
+        this._sendLssRequest(
+            LssCommand.SWITCH_MODE_GLOBAL, Buffer.from([mode]));
+    }
+
+    /**
+     * Service: switch mode selective.
+     *
+     * @param {number} vendorId - LSS slave vendor-id.
+     * @param {number} productCode - LSS slave product-code.
+     * @param {number} revisionNumber - LSS slave revision-number.
+     * @param {number} serialNumber - LSS slave serial-number.
+     * @param {number} timeout - time until promise is rejected.
+     * @returns {Promise&lt;LssMode>} - the actual mode of the LSS slave.
+     * @see CiA305 "Switch Mode Selective" (§3.9.2)
+     */
+    switchModeSelective(
+        vendorId, productCode, revisionNumber, serialNumber, timeout=20) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
+            const data = Buffer.alloc(4);
+
+            // Send vendor-id
+            data.writeUInt32LE(vendorId);
+            this._sendLssRequest(LssCommand.SWITCH_MODE_VENDOR_ID, data);
+
+            // Send product-code
+            data.writeUInt32LE(productCode);
+            this._sendLssRequest(LssCommand.SWITCH_MODE_PRODUCT_CODE, data);
+
+            // Send revision-number
+            data.writeUInt32LE(revisionNumber);
+            this._sendLssRequest(LssCommand.SWITCH_MODE_REVISION_NUMBER, data);
+
+            // Send serial-number
+            data.writeUInt32LE(serialNumber);
+            this._sendLssRequest(LssCommand.SWITCH_MODE_SERIAL_NUMBER, data);
+
+            this.pending[68] = {resolve, timer};
+        });
+    }
+
+    /**
+     * Service: configure node-id.
+     *
+     * @param {number} nodeId - new node-id
+     * @param {number} timeout - time until promise is rejected.
+     * @returns {Promise} resolves when the service is finished.
+     * @see CiA305 "Configure Node-ID Protocol" (§3.10.1)
+     */
+    configureNodeId(nodeId, timeout=20) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
+
+            this._sendLssRequest(
+                LssCommand.CONFIGURE_NODE_ID, Buffer.from([nodeId]));
+
+            this.pending[LssCommand.CONFIGURE_NODE_ID] = {
+                resolve,
+                timer
+            };
+        })
+        .then((result) => {
+            const code = result[0];
+            if(code == 0)
+                return; // Success
+
+            let message = '';
+            switch(code) {
+                case 1:
+                    message = 'Node-ID out of range';
+                    break;
+                case 255:
+                    message = 'Implementation specific error';
+                    break;
+                default:
+                    message = 'Unsupported error code';
+                    break;
+            }
+
+            throw new LssError(message, code, result[1]);
+        });
+    }
+
+    /**
+     * Service: configure bit timing parameters.
+     *
+     * @param {number} tableSelect - which bit timing parameters table to use.
+     * @param {number} tableIndex - the entry in the selected table to use.
+     * @param {number} timeout - time until promise is rejected.
+     * @returns {Promise} resolves when the service is finished.
+     * @see CiA305 "Configure Bit Timing Parameters Protocol" (§3.10.2)
+     */
+    configureBitTiming(tableSelect, tableIndex, timeout=20) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
+
+            this._sendLssRequest(
+                LssCommand.CONFIGURE_BIT_TIMING, Buffer.from([tableSelect, tableIndex]));
+
+            this.pending[LssCommand.CONFIGURE_BIT_TIMING] = {
+                resolve,
+                timer
+            };
+        })
+        .then((result) => {
+            const code = result[0];
+            if(code == 0)
+                return; // Success
+
+            let message = '';
+            switch(code) {
+                case 1:
+                    message = 'Bit timing not supported';
+                    break;
+                case 255:
+                    message = 'Implementation specific error';
+                    break;
+                default:
+                    message = 'Unsupported error code';
+                    break;
+            }
+
+            throw new LssError(message, code, result[1]);
+        });
+    }
+
+    /**
+     * Service: activate bit timing parameters.
+     *
+     * @param {number} delay - switch delay in ms.
+     * @see CiA305 "Activate Bit Timing Parameters Protocol" (§3.10.3)
+     */
+    activateBitTiming(delay) {
+        const switchDelay = Buffer.alloc(2);
+        switchDelay.writeUInt16LE(delay);
+        this._sendLssRequest(LssCommand.ACTIVATE_BIT_TIMING, switchDelay);
+    }
+
+    /**
+     * Service: store configuration.
+     *
+     * @param {number} timeout - time until promise is rejected.
+     * @returns {Promise} resolves when the service is finished.
+     * @see CiA305 "Store Configuration Protocol" (§3.10.4)
+     */
+    storeConfiguration(timeout=20) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
+
+            this._sendLssRequest(LssCommand.STORE_CONFIGURATION);
+
+            this.pending[LssCommand.STORE_CONFIGURATION] = {
+                resolve,
+                timer
+            };
+        })
+        .then((result) => {
+            const code = result[0];
+            if(code == 0)
+                return; // Success
+
+            let message = '';
+            switch(code) {
+                case 1:
+                    message = 'Store configuration not supported';
+                    break;
+                case 2:
+                    message = 'Storage media access error';
+                    break;
+                case 255:
+                    message = 'Implementation specific error';
+                    break;
+                default:
+                    message = 'Unsupported error code';
+                    break;
+            }
+
+            throw new LssError(message, code, result[1]);
+        });
+    }
+
+    /**
+     * Service: inquire identity vendor-id.
+     *
+     * @param {number} timeout - time until promise is rejected.
+     * @returns {Promise&lt;number>} - LSS slave vendor-id.
+     * @see CiA305 "Inquire Identity Vendor-ID Protocol" (§3.11.1.1)
+     */
+    inquireVendorId(timeout=20) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
+
+            this._sendLssRequest(LssCommand.INQUIRE_MANUFACTURER_NAME);
+
+            this.pending[LssCommand.INQUIRE_MANUFACTURER_NAME] = {
+                resolve,
+                timer
+            };
+        })
+        .then((result) => {
+            return result.readUInt32LE();
+        });
+    }
+
+    /**
+     * Service: inquire identity product-code.
+     *
+     * @param {number} timeout - time until promise is rejected.
+     * @returns {Promise&lt;number>} - LSS slave product-code.
+     * @see CiA305 "Inquire Identity Product-Code Protocol" (§3.11.1.2)
+     */
+    inquireProductCode(timeout=20) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
+
+            this._sendLssRequest(LssCommand.INQUIRE_PRODUCT_NAME);
+
+            this.pending[LssCommand.INQUIRE_PRODUCT_NAME] = {
+                resolve,
+                timer
+            };
+        })
+        .then((result) => {
+            return result.readUInt32LE();
+        });
+    }
+
+    /**
+     * Service: inquire identity revision-number.
+     *
+     * @param {number} timeout - time until promise is rejected.
+     * @returns {Promise&lt;number>} - LSS slave revision-number.
+     * @see CiA305 "Inquire Identity Revision-Number Protocol" (§3.11.1.3)
+     */
+    inquireRevisionNumber(timeout=20) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
+
+            this._sendLssRequest(LssCommand.INQUIRE_REVISION_NUMBER);
+
+            this.pending[LssCommand.INQUIRE_REVISION_NUMBER] = {
+                resolve,
+                timer
+            };
+        })
+        .then((result) => {
+            return result.readUInt32LE();
+        });
+    }
+
+    /**
+     * Service: inquire identity serial-number.
+     *
+     * @param {number} timeout - time until promise is rejected.
+     * @returns {Promise&lt;number>} - LSS slave serial-number.
+     * @see CiA305 "Inquire Identity Serial-Number Protocol" (§3.11.1.4)
+     */
+    inquireSerialNumber(timeout=20) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('LSS timeout'));
+            }, timeout);
+
+            this._sendLssRequest(LssCommand.INQUIRE_SERIAL_NUMBER);
+
+            this.pending[LssCommand.INQUIRE_SERIAL_NUMBER] = {
+                resolve,
+                timer
+            };
+        })
+        .then((result) => {
+            return result.readUInt32LE();
+        });
+    }
+
+    /**
+     * Send an LSS request object.
+     *
+     * @param {LssCommand} command - LSS command specifier.
+     * @param {Buffer} data - command data.
+     * @private
+     */
+    _sendLssRequest(command, data) {
+        const sendBuffer = Buffer.alloc(8);
+        sendBuffer[0] = command;
+
+        if(data !== undefined)
+            data.copy(sendBuffer, 1);
+
+        this.device.send({
+            id:     0x7e5,
+            data:   sendBuffer,
+        });
+    }
+
+    /**
+     * Called when a new CAN message is received.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
+     * @private
+     */
+    _onMessage(message) {
+        if(message.id != 0x7e4)
+            return;
+
+        const cs = message.data[0];
+        if(this.pending[cs] !== undefined) {
+            clearTimeout(this.pending[cs].timer);
+            this.pending[cs].resolve(message.data.slice(1));
+        }
+    }
+}
+
+module.exports=exports={ LssMode, LssError, Lss };
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Tue Sep 28 2021 16:59:34 GMT-0700 (Pacific Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+<script src="scripts/search.js" defer></script>
+
+
+<script src="scripts/collapse.js" defer></script>
+
+
+</body>
+</html>

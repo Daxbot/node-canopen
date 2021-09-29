@@ -1,6 +1,20 @@
-const { ObjectType, AccessType, DataType, typeToRaw, rawToType } = require('../eds');
+/**
+ * @file Implements the CANopen Time Stamp (TIME) protocol.
+ * @author Wilkins White
+ * @copyright 2021 Nova Dynamics LLC
+ */
 
-/** CANopen TIME protocol handler.
+const Device = require('../device');
+const {
+    ObjectType,
+    AccessType,
+    DataType,
+    typeToRaw,
+    rawToType,
+    DataObject } = require('../eds');
+
+/**
+ * CANopen TIME protocol handler.
  *
  * The time stamp (TIME) protocol follows a producer-consumer structure that
  * provides a simple network clock. There should be at most one time stamp
@@ -8,6 +22,7 @@ const { ObjectType, AccessType, DataType, typeToRaw, rawToType } = require('../e
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Time stamp object (TIME)" (§7.2.6)
+ * @protected
  */
 class Time {
     constructor(device) {
@@ -19,16 +34,17 @@ class Time {
 
     /**
      * Set the time stamp producer enable bit.
+     *
      * @param {boolean} produce - enable flag.
      */
     set produce(produce) {
         let obj1012 = this.device.eds.getEntry(0x1012);
         if(obj1012 === undefined) {
             obj1012 = this.device.eds.addEntry(0x1012, {
-                'ParameterName':    'COB-ID TIME',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED32,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'COB-ID TIME',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -40,7 +56,8 @@ class Time {
 
     /**
      * Get the time stamp producer enable bit.
-     * @return {boolean} - enable flag.
+     *
+     * @returns {boolean} - enable flag.
      */
     get produce() {
         return this._produce;
@@ -48,16 +65,17 @@ class Time {
 
     /**
      * Set the time stamp consumer enable bit.
+     *
      * @param {boolean} consume - enable flag.
      */
     set consume(consume) {
         let obj1012 = this.device.eds.getEntry(0x1012);
         if(obj1012 === undefined) {
             obj1012 = this.device.eds.addEntry(0x1012, {
-                'ParameterName':    'COB-ID TIME',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED32,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'COB-ID TIME',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -72,7 +90,8 @@ class Time {
 
     /**
      * Get the time stamp consumer enable bit.
-     * @return {boolean} - enable flag.
+     *
+     * @returns {boolean} - enable flag.
      */
     get consume() {
         return this._consume;
@@ -80,16 +99,17 @@ class Time {
 
     /**
      * Set the COB-ID.
+     *
      * @param {number} cobId - COB-ID.
      */
     set cobId(cobId) {
         let obj1012 = this.device.eds.getEntry(0x1012);
         if(obj1012 === undefined) {
             obj1012 = this.device.eds.addEntry(0x1012, {
-                'ParameterName':    'COB-ID TIME',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED32,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'COB-ID TIME',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -99,7 +119,8 @@ class Time {
 
     /**
      * Get the COB-ID.
-     * @return {number} - COB-ID.
+     *
+     * @returns {number} - COB-ID.
      */
     get cobId() {
         return this._cobId;
@@ -119,6 +140,7 @@ class Time {
 
     /**
      * Service: TIME write.
+     *
      * @param {Date} date - date to write.
      */
     write(date=new Date()) {
@@ -134,7 +156,11 @@ class Time {
 
     /**
      * Called when a new CAN message is received.
-     * @param {Object} message - CAN frame.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
      * @private
      */
     _onMessage(message) {
@@ -147,6 +173,7 @@ class Time {
 
     /**
      * Called when 0x1012 (COB-ID TIME) is updated.
+     *
      * @param {DataObject} data - updated DataObject.
      * @private
      */

@@ -12,26 +12,22 @@ describe('TIME', function() {
         device = new Device({ id: 0xA, loopback: true });
     });
 
-    afterEach(function() {
-        delete device;
-    });
-
     describe('Module initialization', function() {
         it('should throw if cobId is 0', function() {
             device.time.cobId = 0;
-            return expect(() => { device.time.init(); }).to.throw(TypeError);
+            return expect(() => {
+                device.time.init();
+            }).to.throw(TypeError);
         });
     });
 
     describe('Object dictionary updates', function() {
-        beforeEach(function() {
+        it('should listen for updates to 0x1012', function(done) {
             device.time.cobId = 0x80;
             device.time.produce = true;
             device.time.consume = true;
-            device.init();
-        });
+            device.init()
 
-        it('should listen for updates to 0x1012', function(done) {
             const obj1012 = device.eds.getEntry(0x1012);
             obj1012.addListener('update', () => {
                 setImmediate(() => {
@@ -53,7 +49,9 @@ describe('TIME', function() {
             device.time.consume = true;
             device.init();
 
-            return expect(() => { device.time.write(); }).to.throw(TypeError);
+            return expect(() => {
+                device.time.write();
+            }).to.throw(TypeError);
         });
 
         it('should produce a time object', function(done) {
@@ -62,7 +60,9 @@ describe('TIME', function() {
             device.time.consume = true;
             device.init();
 
-            device.addListener('message', () => { done(); });
+            device.addListener('message', () => {
+                done();
+            });
             device.time.write();
         });
     });
@@ -74,7 +74,9 @@ describe('TIME', function() {
             device.time.consume = true;
             device.init();
 
-            device.on('time', () => { done(); });
+            device.on('time', () => {
+                done();
+            });
             device.time.write();
         });
     });

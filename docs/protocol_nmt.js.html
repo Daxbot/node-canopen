@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>protocol/nmt.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <input type="text" id="nav-search" placeholder="Search" />
+    
+    <h2><a href="index.html">Home</a></h2><h2><a href="https://github.com/DaxBot/node-canopen" target="_blank" class="menu-item" id="repository" >Repository</a></h2><h3>Classes</h3><ul><li><a href="Device.html">Device</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Device.html#getRaw">getRaw</a></li><li data-type='method' style='display: none;'><a href="Device.html#getRawArray">getRawArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#getValue">getValue</a></li><li data-type='method' style='display: none;'><a href="Device.html#getValueArray">getValueArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Device.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Device.html#send">send</a></li><li data-type='method' style='display: none;'><a href="Device.html#setRaw">setRaw</a></li><li data-type='method' style='display: none;'><a href="Device.html#setRawArray">setRawArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#setTransmitFunction">setTransmitFunction</a></li><li data-type='method' style='display: none;'><a href="Device.html#setValue">setValue</a></li><li data-type='method' style='display: none;'><a href="Device.html#setValueArray">setValueArray</a></li></ul></li><li><a href="Eds.html">Eds</a><ul class='members'><li data-type='member' style='display: none;'><a href="Eds.html#.AccessType">AccessType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#.DataType">DataType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#.ObjectType">ObjectType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#baudRates">baudRates</a></li><li data-type='member' style='display: none;'><a href="Eds.html#createdBy">createdBy</a></li><li data-type='member' style='display: none;'><a href="Eds.html#creationDate">creationDate</a></li><li data-type='member' style='display: none;'><a href="Eds.html#description">description</a></li><li data-type='member' style='display: none;'><a href="Eds.html#dynamicChannelsSupported">dynamicChannelsSupported</a></li><li data-type='member' style='display: none;'><a href="Eds.html#edsVersion">edsVersion</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileName">fileName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileRevision">fileRevision</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileVersion">fileVersion</a></li><li data-type='member' style='display: none;'><a href="Eds.html#granularity">granularity</a></li><li data-type='member' style='display: none;'><a href="Eds.html#groupMessaging">groupMessaging</a></li><li data-type='member' style='display: none;'><a href="Eds.html#lssSupported">lssSupported</a></li><li data-type='member' style='display: none;'><a href="Eds.html#modificationDate">modificationDate</a></li><li data-type='member' style='display: none;'><a href="Eds.html#modifiedBy">modifiedBy</a></li><li data-type='member' style='display: none;'><a href="Eds.html#nrOfRXPDO">nrOfRXPDO</a></li><li data-type='member' style='display: none;'><a href="Eds.html#nrOfTXPDO">nrOfTXPDO</a></li><li data-type='member' style='display: none;'><a href="Eds.html#orderCode">orderCode</a></li><li data-type='member' style='display: none;'><a href="Eds.html#productName">productName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#productNumber">productNumber</a></li><li data-type='member' style='display: none;'><a href="Eds.html#revisionNumber">revisionNumber</a></li><li data-type='member' style='display: none;'><a href="Eds.html#simpleBootUpMaster">simpleBootUpMaster</a></li><li data-type='member' style='display: none;'><a href="Eds.html#simpleBootUpSlave">simpleBootUpSlave</a></li><li data-type='member' style='display: none;'><a href="Eds.html#vendorName">vendorName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#vendorNumber">vendorNumber</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Eds.html#.rawToType">rawToType</a></li><li data-type='method' style='display: none;'><a href="Eds.html#.typeToRaw">typeToRaw</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addEntry">addEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addSubEntry">addSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getEntry">getEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getSubEntry">getSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#load">load</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeEntry">removeEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeSubEntry">removeSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#save">save</a></li></ul></li><li><a href="Eds.DataObject.html">Eds.DataObject</a></li><li><a href="Eds.EdsError.html">Eds.EdsError</a></li><li><a href="Emcy.html">Emcy</a><ul class='members'><li data-type='member' style='display: none;'><a href="Emcy.html#.EmcyCode">EmcyCode</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#.EmcyType">EmcyType</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#cobId">cobId</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#errorRegister">errorRegister</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#history">history</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#inhibitTime">inhibitTime</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#valid">valid</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Emcy.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#setHistoryLength">setHistoryLength</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#write">write</a></li></ul></li><li><a href="Emcy.EmcyMessage.html">Emcy.EmcyMessage</a></li><li><a href="Lss.html">Lss</a><ul class='members'><li data-type='member' style='display: none;'><a href="Lss.html#.LssCommand">LssCommand</a></li><li data-type='member' style='display: none;'><a href="Lss.html#.LssMode">LssMode</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Lss.html#activateBitTiming">activateBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureBitTiming">configureBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureNodeId">configureNodeId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#fastscan">fastscan</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireProductCode">inquireProductCode</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireRevisionNumber">inquireRevisionNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireSerialNumber">inquireSerialNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireVendorId">inquireVendorId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#storeConfiguration">storeConfiguration</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeGlobal">switchModeGlobal</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeSelective">switchModeSelective</a></li></ul></li><li><a href="Lss.LssError.html">Lss.LssError</a></li><li><a href="Nmt.html">Nmt</a><ul class='members'><li data-type='member' style='display: none;'><a href="Nmt.html#.NmtCommand">NmtCommand</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#.NmtState">NmtState</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#producerTime">producerTime</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#producerTime">producerTime</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#state">state</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#state">state</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Nmt.html#enterPreOperational">enterPreOperational</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetCommunication">resetCommunication</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetNode">resetNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#startNode">startNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stopNode">stopNode</a></li></ul></li><li><a href="Pdo.html">Pdo</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Pdo.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#load">load</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#write">write</a></li></ul></li><li><a href="Sdo.html">Sdo</a><ul class='members'><li data-type='member' style='display: none;'><a href="Sdo.html#.AbortCode">AbortCode</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Sdo.html#download">download</a></li><li data-type='method' style='display: none;'><a href="Sdo.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Sdo.html#upload">upload</a></li></ul></li><li><a href="Sdo.SdoError.html">Sdo.SdoError</a></li><li><a href="Sync.html">Sync</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Sync.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Sync.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Sync.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Sync.html#write">write</a></li></ul></li><li><a href="Time.html">Time</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Time.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Time.html#write">write</a></li></ul></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">protocol/nmt.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Implements the CANopen Network Managements (NMT) protocol.
+ * @author Wilkins White
+ * @copyright 2021 Nova Dynamics LLC
+ */
+
+const Device = require('../device');
+const { ObjectType, AccessType, DataType, DataObject } = require('../eds');
+
+/**
+ * NMT internal states.
+ *
+ * @enum {number}
+ * @memberof Nmt
+ */
+const NmtState = {
+    INITIALIZING: 0,
+    PRE_OPERATIONAL: 127,
+    OPERATIONAL: 5,
+    STOPPED: 4,
+};
+
+/**
+ * NMT commands.
+ *
+ * @enum {number}
+ * @memberof Nmt
+ */
+const NmtCommand = {
+    ENTER_OPERATIONAL: 1,
+    ENTER_STOPPED: 2,
+    ENTER_PRE_OPERATIONAL: 128,
+    RESET_NODE: 129,
+    RESET_COMMUNICATION: 130,
+};
+
+/**
+ * CANopen NMT protocol handler.
+ *
+ * The network management (NMT) protocol follows a master-slave structure where
+ * NMT objects are used to initialze, start, monitor, reset, or stop nodes. All
+ * CANopen devices are considered NMT slaves with one device fulfilling the
+ * role of NMT master.
+ *
+ * This class implements the NMT node control services and tracks the device's
+ * current NMT slave state.
+ *
+ * @param {Device} device - parent device.
+ * @see CiA301 "Network management" (§7.2.8)
+ * @protected
+ */
+class Nmt {
+    constructor(device) {
+        this.device = device;
+        this.heartbeatTimer = null;
+        this.heartbeats = {};
+        this._producerTime = 0;
+        this._state = NmtState.INITIALIZING;
+    }
+
+    /**
+     * Set the NMT state.
+     *
+     * @param {number} newState - NMT state.
+     */
+    set state(newState) {
+        const oldState = this.state;
+        if(newState != oldState) {
+            this._state = newState;
+            this.device.emit('nmtChangeState', newState, oldState);
+        }
+    }
+
+    /**
+     * Get the NMT state.
+     *
+     * @returns {number} - NMT state.
+     */
+    get state() {
+        return this._state;
+    }
+
+    /**
+     * Set producer heartbeat time.
+     *
+     * @param {number} time - heartbeat time (ms).
+     */
+    set producerTime(time) {
+        let obj1017 = this.device.eds.getEntry(0x1017);
+        if(obj1017 === undefined) {
+            obj1017 = this.device.eds.addEntry(0x1017, {
+                parameterName:  'Producer heartbeat time',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+
+        obj1017.value = time;
+    }
+
+    /**
+     * Get producer heartbeat time.
+     *
+     * @returns {number} - heartbeat time (ms).
+     */
+    get producerTime() {
+        return this._producerTime;
+    }
+
+    /** Initialize members and begin heartbeat monitoring. */
+    init() {
+        // Object 0x1016 - Consumer heartbeat time
+        const obj1016 = this.device.eds.getEntry(0x1016);
+        if(obj1016 !== undefined) {
+            for(let i = 1; i &lt;= obj1016[0].value; ++i) {
+                const entry = obj1016[i];
+                if(entry === undefined)
+                    continue;
+
+                this._parse1016(entry);
+                entry.addListener('update', this._parse1016.bind(this));
+            }
+        }
+
+        // Object 0x1017 - Producer heartbeat time
+        const obj1017 = this.device.eds.getEntry(0x1017);
+        if(obj1017 !== undefined) {
+            this._parse1017(obj1017);
+            obj1017.addListener('update', this._parse1017.bind(this));
+        }
+
+        this.device.addListener('message', this._onMessage.bind(this));
+    }
+
+    /** Begin heartbeat generation. */
+    start() {
+        if(this.producerTime == 0)
+            throw TypeError('Producer heartbeat time can not be 0.')
+
+        this.heartbeatTimer = setInterval(() => {
+            this._sendHeartbeat();
+        }, this.producerTime);
+    }
+
+    /** Stop heartbeat generation. */
+    stop() {
+        clearInterval(this.heartbeatTimer);
+    }
+
+    /**
+     * Service: start remote node.
+     *
+     * Change the state of NMT slave(s) to NMT state operational.
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
+     * @see CiA301 "Service start remote node" (§7.2.8.2.1.2)
+     */
+    startNode(nodeId) {
+        this._sendNmt(nodeId, NmtCommand.ENTER_OPERATIONAL);
+    }
+
+    /**
+     * Service: stop remote node.
+     *
+     * Change the state of NMT slave(s) to NMT state stopped.
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
+     * @see CiA301 "Service stop remote node" (§7.2.8.2.1.3)
+     */
+    stopNode(nodeId) {
+        this._sendNmt(nodeId, NmtCommand.ENTER_STOPPED);
+    }
+
+    /**
+     * Service: enter pre-operational.
+     *
+     * Change the state of NMT slave(s) to NMT state pre-operational.
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
+     * @see CiA301 "Service enter pre-operational" (§7.2.8.2.1.4)
+     */
+    enterPreOperational(nodeId) {
+        this._sendNmt(nodeId, NmtCommand.ENTER_PRE_OPERATIONAL);
+    }
+
+    /**
+     * Service: reset node.
+     *
+     * Reset the application of NMT slave(s).
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
+     * @see CiA301 "Service reset node" (§7.2.8.2.1.5)
+     */
+    resetNode(nodeId) {
+        this._sendNmt(nodeId, NmtCommand.RESET_NODE);
+    }
+
+    /**
+     * Service: reset communication.
+     *
+     * Reset communication of NMT slave(s).
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
+     * @see CiA301 "Service reset communication" (§7.2.8.2.1.6)
+     */
+    resetCommunication(nodeId) {
+        this._sendNmt(nodeId, NmtCommand.RESET_COMMUNICATION);
+    }
+
+    /**
+     * Serve an NMT command object.
+     *
+     * @param {number} nodeId - id of node or 0 for broadcast.
+     * @param {number} command - NMT command to serve.
+     * @private
+     */
+    _sendNmt(nodeId, command) {
+        if(nodeId == 0 || nodeId == this.device.id)
+            this._handleNmt(command);
+
+        this.device.send({
+            id:     0x0,
+            data:   Buffer.from([command, nodeId]),
+        });
+    }
+
+    /**
+     * Serve a Heartbeat object.
+     *
+     * @private
+     */
+    _sendHeartbeat() {
+        this.device.send({
+            id: 0x700 + this.device.id,
+            data: Buffer.from([this.state])
+        });
+    }
+
+
+    /**
+     * Parse an NMT command.
+     *
+     * @param {number} command - NMT command to handle.
+     * @private
+     */
+    _handleNmt(command) {
+        switch(command) {
+            case NmtCommand.ENTER_OPERATIONAL:
+                this.state = NmtState.OPERATIONAL;
+                break;
+            case NmtCommand.ENTER_STOPPED:
+                this.state = NmtState.STOPPED;
+                break;
+            case NmtCommand.ENTER_PRE_OPERATIONAL:
+                this.state = NmtState.PRE_OPERATIONAL;
+                break;
+            case NmtCommand.RESET_NODE:
+            case NmtCommand.RESET_COMMUNICATION:
+                this.state = NmtState.INITIALIZING;
+                break;
+        }
+    }
+
+    /**
+     * Called when a new CAN message is received.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
+     * @private
+     */
+    _onMessage(message) {
+        if((message.id &amp; 0x7FF) == 0x0) {
+            const nodeId = message.data[1];
+            if(nodeId == 0 || nodeId == this.device.id)
+                this._handleNmt(message.data[0]);
+        }
+        else if((message.id &amp; 0x700) == 0x700) {
+            const deviceId = message.id &amp; 0x7F;
+            if(deviceId in this.heartbeats) {
+                this.heartbeats[deviceId]['state'] = message.data[0];
+                this.heartbeats[deviceId]['last'] = Date.now();
+
+                if(!this.heartbeats[deviceId]['timer']) {
+                    /* First heartbeat - start timer. */
+                    const interval = this.heartbeats[deviceId]['interval'];
+                    this.heartbeats[deviceId]['timer'] = setTimeout(() => {
+                        this.device.emit("nmtTimeout",
+                            deviceId, this.heartbeats[deviceId]);
+                        this.heartbeats[deviceId]['timer'] = null;
+                    }, interval);
+                }
+                else {
+                    this.heartbeats[deviceId]['timer'].refresh();
+                }
+            }
+        }
+    }
+
+    /**
+     * Called when 0x1016 (Consumer heartbeat time) is updated.
+     *
+     * @param {DataObject} data - updated DataObject.
+     * @private
+     */
+    _parse1016(data) {
+        /* Object 0x1016 - Consumer heartbeat time.
+         *   sub-index 1+:
+         *     bit 0..15    Heartbeat time in ms.
+         *     bit 16..23   Node-ID of producer.
+         *     bit 24..31   Reserved (0x00);
+         */
+        const heartbeatTime = data.raw.readUInt16LE(0);
+        const deviceId = data.raw.readUInt8(2);
+
+        const heartbeat = this.heartbeats[deviceId];
+        if(heartbeat !== undefined) {
+            heartbeat['interval'] = heartbeatTime;
+            clearTimeout(heartbeat['timer']);
+        }
+        else {
+            this.heartbeats[deviceId] = {
+                state:      NmtState.INITIALIZING,
+                interval:   heartbeatTime,
+            }
+        }
+    }
+
+    /**
+     * Called when 0x1017 (Producer heartbeat time) is updated.
+     *
+     * @param {DataObject} data - updated DataObject.
+     * @private
+     */
+    _parse1017(data) {
+        this._producerTime = data.value;
+    }
+}
+
+module.exports=exports={ NmtState, NmtCommand, Nmt };
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Tue Sep 28 2021 16:59:34 GMT-0700 (Pacific Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+<script src="scripts/search.js" defer></script>
+
+
+<script src="scripts/collapse.js" defer></script>
+
+
+</body>
+</html>
