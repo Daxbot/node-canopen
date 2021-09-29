@@ -13,7 +13,6 @@ const util = require('util');
 /**
  * Time offset in milliseconds between January 1, 1970 and January 1, 1984.
  *
- * @memberof Eds
  * @private
  */
 const EPOCH_OFFSET = 441763200 * 1000;
@@ -23,7 +22,6 @@ const EPOCH_OFFSET = 441763200 * 1000;
  *
  * @enum {number}
  * @see CiA301 "Object code usage" (§7.4.3)
- * @memberof Eds
  */
 const ObjectType = {
     /** An object with no data fields. */
@@ -65,7 +63,6 @@ const ObjectType = {
  *
  * @enum {string}
  * @see CiA301 "Access usage" (§7.4.5)
- * @memberof Eds
  */
 const AccessType = {
     /** Read and write access. */
@@ -94,7 +91,6 @@ const AccessType = {
  *
  * @enum {number}
  * @see CiA301 "Data type entry usage" (§7.4.7)
- * @memberof Eds
  */
 const DataType = {
     /** Boolean value (bool). */
@@ -190,7 +186,6 @@ const DataType = {
  *
  * @param {Buffer} raw - data to convert.
  * @returns {string} converted string.
- * @memberof Eds
  * @private
  */
 function rawToString(raw) {
@@ -208,7 +203,6 @@ function rawToString(raw) {
  *
  * @param {Buffer} raw - data to convert.
  * @returns {Date} converted Date.
- * @memberof Eds
  * @private
  */
 function rawToDate(raw) {
@@ -223,7 +217,6 @@ function rawToDate(raw) {
  * @param {Buffer} raw - data to convert.
  * @param {DataType | string} type - how to interpret the data.
  * @returns {number | bigint | string | Date} converted data.
- * @memberof Eds
  */
 function rawToType(raw, type) {
     if(typeof type === 'string')
@@ -280,7 +273,6 @@ function rawToType(raw, type) {
  *
  * @param {string} value - data to convert.
  * @returns {Buffer} converted Buffer.
- * @memberof Eds
  * @private
  */
 function stringToRaw(value) {
@@ -298,7 +290,6 @@ function stringToRaw(value) {
  *
  * @param {Date} value - data to convert.
  * @returns {Buffer} converted Buffer.
- * @memberof Eds
  * @private
  */
 function dateToRaw(value) {
@@ -328,7 +319,6 @@ function dateToRaw(value) {
  * @param {number | bigint | string | Date} value - data to convert.
  * @param {DataType | string} type - how to interpret the data.
  * @returns {Buffer} converted Buffer.
- * @memberof Eds
  */
 function typeToRaw(value, type) {
     if(value === undefined || value === null)
@@ -434,7 +424,6 @@ function typeToRaw(value, type) {
  * Errors generated due to an improper EDS configuration.
  *
  * @param {string} message - error message.
- * @memberof Eds
  */
 class EdsError extends Error {
     constructor(message) {
@@ -466,8 +455,7 @@ class EdsError extends Error {
  * @param {number | string | Date} data.defaultValue - default value.
  * @fires 'update' on value change.
  * @see CiA306 "Object descriptions" (§4.6.3)
- * @memberof Eds
- * @protected
+ * @private
  */
 class DataObject extends EventEmitter {
     constructor(index, subIndex, data, parent=null) {
@@ -770,10 +758,10 @@ class DataObject extends EventEmitter {
     }
 
     /**
-     * Create or add a new sub-entry to this {@link Eds.DataObject}.
+     * Create or add a new sub-entry to this {@link DataObject}.
      *
      * @param {number} subIndex - sub-entry index.
-     * @param {DataObject | object} data - An existing {@link Eds.DataObject} or the data to create one.
+     * @param {DataObject | object} data - An existing {@link DataObject} or the data to create one.
      * @private
      */
     _setSubObject(subIndex, data) {
@@ -1004,7 +992,7 @@ class Eds {
      * Create a new data object.
      *
      * @param {number} index - index of the data object.
-     * @param {object} data - data passed to the {@link Eds.DataObject} constructor.
+     * @param {object} data - data passed to the {@link DataObject} constructor.
      * @returns {DataObject} - the newly created entry.
      */
     addEntry(index, data) {
@@ -1069,7 +1057,7 @@ class Eds {
      *
      * @param {number} index - index of the data object.
      * @param {number} subIndex - subIndex of the data object.
-     * @param {object} data - data passed to the {@link Eds.DataObject} constructor.
+     * @param {object} data - data passed to the {@link DataObject} constructor.
      * @returns {DataObject} - the newly created sub-entry.
      */
     addSubEntry(index, subIndex, data) {
@@ -1507,7 +1495,7 @@ class Eds {
     }
 
     /**
-     * Helper method to turn EDS file data into {@link Eds.DataObject} data.
+     * Helper method to turn EDS file data into {@link DataObject} data.
      *
      * @param {object} data - EDS style data to convert.
      * @returns {object} DataObject style data.
@@ -1530,7 +1518,7 @@ class Eds {
     }
 
     /**
-     * Formats a {@link Eds.DataObject} for writing to an EDS file.
+     * Formats a {@link DataObject} for writing to an EDS file.
      *
      * @param {DataObject} entry - DataObject style data to convert.
      * @returns {object} EDS style data.

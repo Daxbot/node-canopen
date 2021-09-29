@@ -37,5 +37,5 @@ device.lss.configureNodeId(0x7f)
         // Step 7: Switch LSS slave into operation mode.
         device.lss.switchModeGlobal(LssMode.OPERATION);
     })
-    .catch((e) => console.log(e))
+    .catch((e) => console.log(e.message))
     .finally(() => channel.stop());

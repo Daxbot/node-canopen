@@ -9,10 +9,10 @@ const { Emcy } = require('./protocol/emcy');
 const { Lss } = require('./protocol/lss');
 const { Nmt } = require ('./protocol/nmt');
 const { Pdo } = require('./protocol/pdo');
-const { Sdo } = require('./protocol/sdo');
+const { SdoClient, SdoServer } = require('./protocol/sdo');
 const { Sync } = require('./protocol/sync');
 const { Time } = require('./protocol/time');
-const { Eds } = require('./eds');
+const { Eds, DataObject } = require('./eds');
 
 /**
  * A CANopen device.
@@ -58,7 +58,8 @@ class Device extends EventEmitter {
         this.lss = new Lss(this);
         this.nmt = new Nmt(this);
         this.pdo = new Pdo(this);
-        this.sdo = new Sdo(this);
+        this.sdo = new SdoClient(this);
+        this.sdoServer = new SdoServer(this);
         this.sync = new Sync(this);
         this.time = new Time(this);
     }
@@ -66,7 +67,7 @@ class Device extends EventEmitter {
     /**
      * The device's DataObjects.
      *
-     * @type {Array<Eds.DataObject>}
+     * @type {Array<DataObject>}
      */
     get dataObjects() {
         return this.eds.dataObjects;
@@ -88,6 +89,7 @@ class Device extends EventEmitter {
         this.nmt.init();
         this.pdo.init();
         this.sdo.init();
+        this.sdoServer.init();
         this.sync.init();
         this.time.init();
     }

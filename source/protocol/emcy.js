@@ -12,7 +12,7 @@ const { ObjectType, AccessType, DataType, DataObject } = require('../eds');
  *
  * @enum {number}
  * @see CiA301 "Emergency object (EMCY)" (§7.2.7)
- * @memberof Emcy
+ * @memberof EmcyMessage
  */
 const EmcyType = {
     /** Error reset or no error. */
@@ -96,7 +96,7 @@ const EmcyType = {
  *
  * @enum {number}
  * @see CiA301 "Emergency object (EMCY)" (§7.2.7)
- * @memberof Emcy
+ * @memberof EmcyMessage
  */
 const EmcyCode = {
     /** CAN overrun (objects lost). */
@@ -136,10 +136,9 @@ const EmcyCode = {
 /**
  * Structure for storing and parsing CANopen emergency objects.
  *
- * @param {number} code - error code.
+ * @param {EmcyCode} code - error code.
  * @param {number} register - error register.
  * @param {Buffer} info - error info.
- * @memberof Emcy
  */
 class EmcyMessage {
     constructor(code, register, info=null) {
@@ -309,6 +308,53 @@ class Emcy {
     }
 
     /**
+     * Length of the error history (Object 0x1003).
+     *
+     * @type {number}
+     */
+    get historyLength() {
+        return this.history.length;
+    }
+
+    set historyLength(length) {
+        if(length === undefined || length < 0)
+            throw ReferenceError('Error field size must >= 0');
+
+        let obj1003 = this.device.eds.getEntry(0x1003);
+        if(obj1003 === undefined) {
+            obj1003 = this.device.eds.addEntry(0x1003, {
+                parameterName:  'Pre-defined error field',
+                objectType:     ObjectType.ARRAY,
+                subNumber:      1,
+            });
+        }
+
+        if(length == obj1003.subNumber - 1)
+            return; // Already configured
+
+        while(length < obj1003.subNumber - 1) {
+            // Remove extra entries
+            this.device.eds.removeSubEntry(0x1003, obj1003.subNumber);
+            obj1003.subNumber -= 1;
+        }
+
+        while(length > obj1003.subNumber - 1) {
+            // Add new entries
+            const index = obj1003.subNumber;
+            obj1003.subNumber += 1;
+
+            this.device.eds.addSubEntry(0x1003, index, {
+                parameterName:  `Standard error field ${index}`,
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+
+        obj1003[0].value = length;
+    }
+
+    /**
      * Emcy valid bit (Object 0x1014, bit 31).
      *
      * @type {boolean}
@@ -381,49 +427,6 @@ class Emcy {
 
         time &= 0xFFFF;
         obj1015.value = time
-    }
-
-    /**
-     * Set the length of the error history (Object 0x1003).
-     *
-     * @param {number} length - number of historical entires to store.
-     */
-    setHistoryLength(length) {
-        if(length === undefined || length < 0)
-            throw ReferenceError('Error field size must >= 0');
-
-        let obj1003 = this.device.eds.getEntry(0x1003);
-        if(obj1003 === undefined) {
-            obj1003 = this.device.eds.addEntry(0x1003, {
-                parameterName:  'Pre-defined error field',
-                objectType:     ObjectType.ARRAY,
-                subNumber:      1,
-            });
-        }
-
-        if(length == obj1003.subNumber - 1)
-            return; // Already configured
-
-        while(length < obj1003.subNumber - 1) {
-            // Remove extra entries
-            this.device.eds.removeSubEntry(0x1003, obj1003.subNumber);
-            obj1003.subNumber -= 1;
-        }
-
-        while(length > obj1003.subNumber - 1) {
-            // Add new entries
-            const index = obj1003.subNumber;
-            obj1003.subNumber += 1;
-
-            this.device.eds.addSubEntry(0x1003, index, {
-                parameterName:  `Standard error field ${index}`,
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-
-        obj1003[0].value = length;
     }
 
     /** Initialize members and begin emergency monitoring. */

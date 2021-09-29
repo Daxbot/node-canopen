@@ -12,6 +12,7 @@ const Device = require('../device');
  * @enum {number}
  * @see CiA305 "LSS Protocol Descriptions" (§3.8.2)
  * @memberof Lss
+ * @private
  */
 const LssCommand = {
     SWITCH_MODE_GLOBAL: 4,
@@ -35,10 +36,12 @@ const LssCommand = {
  *
  * @enum {number}
  * @see CiA305 "Switch Mode Global" (§3.9.1)
- * @memberof Lss
  */
 const LssMode = {
+    /** Only the switch mode service is available. */
     OPERATION: 0,
+
+    /** All LSS services are available. */
     CONFIGURATION: 1,
 }
 
@@ -48,7 +51,6 @@ const LssMode = {
  * @param {string} message - error message.
  * @param {number} code - error code.
  * @param {number} info - error info code.
- * @memberof Lss
  */
 class LssError extends Error {
     constructor(message, code, info) {

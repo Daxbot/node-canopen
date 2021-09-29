@@ -74,7 +74,7 @@ device.setValueArray(0x1A00, 0, 1);
 
 // Step 6: Initialize and start the node.
 channel.addListener('onMessage', (message) => device.receive(message));
-device.transmit((message) => channel.send(message));
+device.setTransmitFunction((message) => channel.send(message));
 
 device.init();
 device.pdo.start();

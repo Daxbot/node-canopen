@@ -3,23 +3,23 @@ const { ObjectType, AccessType, DataType, typeToRaw, rawToType, EdsError, Eds} =
 const { EmcyType, EmcyCode, EmcyMessage } = require('./source/protocol/emcy');
 const { LssMode } = require('./source/protocol/lss');
 const { NmtState, NmtCommand } = require('./source/protocol/nmt');
-const { AbortCode, SdoError } = require('./source/protocol/sdo');
+const { SdoCode, SdoError } = require('./source/protocol/sdo');
 
 module.exports=exports={
     Device,
-    EdsError,
     Eds,
+    EdsError,
     SdoError,
+    SdoCode,
     EmcyMessage,
-    ObjectType,
+    EmcyCode,
+    EmcyType,
     AccessType,
     DataType,
-    AbortCode,
-    EmcyType,
-    EmcyCode,
     LssMode,
     NmtState,
     NmtCommand,
+    ObjectType,
     typeToRaw,
     rawToType,
 };

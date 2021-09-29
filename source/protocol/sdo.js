@@ -12,39 +12,106 @@ const { ObjectType, AccessType, DataType, rawToType, typeToRaw } = require('../e
  *
  * @enum {string}
  * @see CiA301 'Protocol SDO abort transfer' (§7.2.4.3.17)
- * @memberof Sdo
+ * @memberof SdoError
  */
-const AbortCode = {
+const SdoCode = {
+    /** Toggle bit not altered. */
     TOGGLE_BIT: 0x05030000,
+
+    /** SDO protocol timed out. */
     TIMEOUT: 0x05040000,
+
+    /** Command specifier not valid or unknown. */
     BAD_COMMAND: 0x05040001,
+
+    /** Invalid block size in block mode. */
     BAD_BLOCK_SIZE: 0x05040002,
+
+    /** Invalid sequence number in block mode. */
     BAD_BLOCK_SEQUENCE: 0x05040003,
+
+    /** CRC error in block mode. */
     BAD_BLOCK_CRC: 0x05040004,
+
+    /** Out of memory. */
     OUT_OF_MEMORY: 0x05040005,
+
+    /** Unsupported access to an object. */
     UNSUPPORTED_ACCESS: 0x06010000,
+
+    /** Attempt to read a write only object. */
     WRITE_ONLY: 0x06010001,
+
+    /** Attempt to write a read only object. */
     READ_ONLY: 0x06010002,
+
+    /** Object does not exist. */
     OBJECT_UNDEFINED: 0x06020000,
+
+    /** Object cannot be mapped to the PDO. */
     OBJECT_NOT_MAPPABLE: 0x06040041,
+
+    /** Number and length of object to be mapped exceeds PDO length. */
     MAP_LENGTH: 0x06040042,
+
+    /** General parameter incompatibility reasons. */
     PARAMETER_INCOMPATIBILITY: 0x06040043,
+
+    /** General internal incompatibility in device. */
     DEVICE_INCOMPATIBILITY: 0x06040047,
+
+    /** Access failed due to hardware error. */
     HARDWARE_ERROR: 0x06060000,
+
+    /** Data type does not match: length of service parameter does not match. */
     BAD_LENGTH: 0x06070010,
+
+    /** Data type does not match: length of service parameter too high. */
     DATA_LONG: 0x06070012,
+
+    /** Data type does not match: length of service parameter too short. */
     DATA_SHORT: 0x06070012,
+
+    /** Sub index does not exist. */
     BAD_SUB_INDEX: 0x06090011,
+
+    /** Invalid value for download parameter. */
     BAD_VALUE: 0x06090030,
+
+    /** Value range of parameter written too high. */
     VALUE_HIGH: 0x06090031,
+
+    /** Value range of parameter written too low. */
     VALUE_LOW: 0x06090032,
+
+    /** Maximum value is less than minimum value. */
     RANGE_ERROR: 0x06090036,
+
+    /** Resource not available: SDO connection. */
     SDO_NOT_AVAILBLE: 0x060A0023,
+
+    /** General error. */
     GENERAL_ERROR: 0x08000000,
+
+    /** Data cannot be transferred or stored to application. */
     DATA_TRANSFER: 0x08000020,
+
+    /**
+     * Data cannot be transferred or stored to application because of local
+     * control
+     */
     LOCAL_CONTROL: 0x08000021,
+
+    /**
+     * Data cannot be transferred or stored to application because of present
+     * device state.
+     */
     DEVICE_STATE: 0x08000022,
+
+    /** Object dictionary not present or dynamic generation failed. */
     OD_ERROR: 0x08000023,
+
+    /** No data available. */
     NO_DATA: 0x08000024,
 };
 
@@ -81,73 +148,73 @@ const ServerCommand = {
 /**
  * Return the error message associated with an AbortCode.
  *
- * @param {AbortCode} code - message to lookup.
+ * @param {SdoCode} code - message to lookup.
  * @returns {string} abort code string.
  * @private
  */
 function codeToString(code) {
     switch(code) {
-        case AbortCode.TOGGLE_BIT:
+        case SdoCode.TOGGLE_BIT:
             return 'Toggle bit not altered';
-        case AbortCode.TIMEOUT:
+        case SdoCode.TIMEOUT:
             return 'SDO protocol timed out';
-        case AbortCode.BAD_COMMAND:
+        case SdoCode.BAD_COMMAND:
             return 'Command specifier not valid or unknown';
-        case AbortCode.BAD_BLOCK_SIZE:
+        case SdoCode.BAD_BLOCK_SIZE:
             return 'Invalid block size in block mode';
-        case AbortCode.BAD_BLOCK_SEQUENCE:
+        case SdoCode.BAD_BLOCK_SEQUENCE:
             return 'Invalid sequence number in block mode';
-        case AbortCode.BAD_BLOCK_CRC:
+        case SdoCode.BAD_BLOCK_CRC:
             return 'CRC error in block mode';
-        case AbortCode.OUT_OF_MEMORY:
+        case SdoCode.OUT_OF_MEMORY:
             return 'Out of memory';
-        case AbortCode.UNSUPPORTED_ACCESS:
+        case SdoCode.UNSUPPORTED_ACCESS:
             return 'Unsupported access to an object';
-        case AbortCode.WRITE_ONLY:
+        case SdoCode.WRITE_ONLY:
             return 'Attempt to read a write only object'
-        case AbortCode.READ_ONLY:
+        case SdoCode.READ_ONLY:
             return 'Attempt to write a read only object';
-        case AbortCode.OBJECT_UNDEFINED:
+        case SdoCode.OBJECT_UNDEFINED:
             return 'Object does not exist';
-        case AbortCode.OBJECT_NOT_MAPPABLE:
+        case SdoCode.OBJECT_NOT_MAPPABLE:
             return 'Object cannot be mapped to the PDO';
-        case AbortCode.MAP_LENGTH:
+        case SdoCode.MAP_LENGTH:
             return 'Number and length of object to be mapped exceeds PDO length';
-        case AbortCode.PARAMETER_INCOMPATIBILITY:
+        case SdoCode.PARAMETER_INCOMPATIBILITY:
             return 'General parameter incompatibility reasons';
-        case AbortCode.DEVICE_INCOMPATIBILITY:
+        case SdoCode.DEVICE_INCOMPATIBILITY:
             return 'General internal incompatibility in device';
-        case AbortCode.HARDWARE_ERROR:
+        case SdoCode.HARDWARE_ERROR:
             return 'Access failed due to hardware error';
-        case AbortCode.BAD_LENGTH:
+        case SdoCode.BAD_LENGTH:
             return 'Data type does not match: length of service parameter does not match';
-        case AbortCode.DATA_LONG:
+        case SdoCode.DATA_LONG:
             return 'Data type does not match: length of service parameter too high';
-        case AbortCode.DATA_SHORT:
+        case SdoCode.DATA_SHORT:
             return 'Data type does not match: length of service parameter too short';
-        case AbortCode.BAD_SUB_INDEX:
+        case SdoCode.BAD_SUB_INDEX:
             return 'Sub index does not exist';
-        case AbortCode.BAD_VALUE:
+        case SdoCode.BAD_VALUE:
             return 'Invalid value for download parameter';
-        case AbortCode.VALUE_HIGH:
+        case SdoCode.VALUE_HIGH:
             return 'Value range of parameter written too high';
-        case AbortCode.VALUE_LOW:
+        case SdoCode.VALUE_LOW:
             return 'Value range of parameter written too low';
-        case AbortCode.RANGE_ERROR:
+        case SdoCode.RANGE_ERROR:
             return 'Maximum value is less than minimum value';
-        case AbortCode.SDO_NOT_AVAILBLE:
+        case SdoCode.SDO_NOT_AVAILBLE:
             return 'Resource not available: SDO connection';
-        case AbortCode.GENERAL_ERROR:
+        case SdoCode.GENERAL_ERROR:
             return 'General error';
-        case AbortCode.DATA_TRANSFER:
+        case SdoCode.DATA_TRANSFER:
             return 'Data cannot be transferred or stored to application';
-        case AbortCode.LOCAL_CONTROL:
+        case SdoCode.LOCAL_CONTROL:
             return 'Data cannot be transferred or stored to application because of local control';
-        case AbortCode.DEVICE_STATE:
+        case SdoCode.DEVICE_STATE:
             return 'Data cannot be transferred or stored to application because of present device state';
-        case AbortCode.OD_ERROR:
+        case SdoCode.OD_ERROR:
             return 'Object dictionary not present or dynamic generation failed';
-        case AbortCode.NO_DATA:
+        case SdoCode.NO_DATA:
             return 'No data available';
         default:
             return 'Unknown error';
@@ -157,10 +224,9 @@ function codeToString(code) {
 /**
  * Represents an SDO transfer error.
  *
- * @param {AbortCode} code - error code.
+ * @param {SdoCode} code - error code.
  * @param {number} index - object index.
  * @param {number} subIndex - object subIndex.
- * @memberof Sdo
  */
 class SdoError extends Error {
     constructor(code, index, subIndex=null) {
@@ -183,7 +249,7 @@ class SdoError extends Error {
 /**
  * Represents an SDO transfer.
  *
- * @memberof Sdo
+ * @memberof SdoClient
  * @private
  */
 class Transfer {
@@ -220,7 +286,7 @@ class Transfer {
         this.active = true;
         if(this.timeout) {
             this.timer = setTimeout(() => {
-                this.abort(AbortCode.TIMEOUT);
+                this.abort(SdoCode.TIMEOUT);
             }, this.timeout);
         }
     }
@@ -260,7 +326,7 @@ class Transfer {
     /**
      * Complete the transfer and reject its promise.
      *
-     * @param {AbortCode} code - SDO abort code.
+     * @param {SdoCode} code - SDO abort code.
      */
     reject(code) {
         this.active = false;
@@ -272,7 +338,7 @@ class Transfer {
     /**
      * Abort the transfer.
      *
-     * @param {AbortCode} code - SDO abort code.
+     * @param {SdoCode} code - SDO abort code.
      */
     abort(code) {
         const sendBuffer = Buffer.alloc(8);
@@ -290,7 +356,7 @@ class Transfer {
  * Queue of pending transfers.
  *
  * @see https://medium.com/@karenmarkosyan/how-to-manage-promises-into-dynamic-queue-with-vanilla-javascript-9d0d1f8d4df5
- * @memberof Sdo
+ * @memberof SdoClient
  * @private
  */
 class Queue {
@@ -335,7 +401,7 @@ class Queue {
 }
 
 /**
- * CANopen SDO protocol handler.
+ * CANopen SDO protocol handler (Client).
  *
  * The service data object (SDO) protocol uses a client-server structure where
  * a client can initiate the transfer of data from the server's object
@@ -346,40 +412,27 @@ class Queue {
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
  * @protected
  */
-class Sdo {
+class SdoClient {
     constructor(device) {
         this.device = device;
-        this.clients = {};
         this.servers = {};
         this.transfers = {};
     }
 
-    setServerParameters(cobIdRx=0x600, cobIdTx=0x580) {
-        let obj1200 = this.device.eds.getEntry(0x1200);
-        if(obj1200 === undefined) {
-            obj1200 = this.device.eds.addEntry(0x1200, {
-                parameterName:  'SDO server parameter',
-                objectType:     ObjectType.RECORD,
-                subNumber:      3,
-            });
-        }
+    /**
+     * Sdo client COB-ID for incoming messages (Object 0x1280.2).
+     *
+     * @type {number}
+     */
+    get cobIdRx() {
+        const obj1280 = this.device.eds.getEntry(0x1280);
+        if(obj1280 === undefined && obj1280[2] !== undefined)
+            return obj1280[2].value;
 
-        this.device.eds.addSubEntry(0x1200, 1, {
-            parameterName:  'COB-ID client to server',
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_WRITE,
-            defaultValue:   cobIdRx,
-        });
-
-        this.device.eds.addSubEntry(0x1200, 2, {
-            parameterName:  'COB-ID server to client',
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_WRITE,
-            defaultValue:   cobIdTx,
-        });
+        return null;
     }
 
-    setClientParameters(deviceId, cobIdRx=0x580, cobIdTx=0x600) {
+    set cobIdRx(value) {
         let obj1280 = this.device.eds.getEntry(0x1280);
         if(obj1280 === undefined) {
             obj1280 = this.device.eds.addEntry(0x1280, {
@@ -387,80 +440,121 @@ class Sdo {
                 objectType:     ObjectType.RECORD,
                 subNumber:      4,
             });
+
+            this.device.eds.addSubEntry(0x1280, 1, {
+                parameterName:  'COB-ID client to server',
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+
+            this.device.eds.addSubEntry(0x1280, 2, {
+                parameterName:  'COB-ID server to client',
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+
+            this.device.eds.addSubEntry(0x1280, 3, {
+                parameterName:  'Node-ID of the SDO server',
+                dataType:       DataType.UNSIGNED8,
+                accessType:     AccessType.READ_WRITE,
+            });
         }
 
-        this.device.eds.addSubEntry(0x1280, 1, {
-            parameterName:  'COB-ID client to server',
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_WRITE,
-            defaultValue:   cobIdTx,
-        });
+        obj1280[2].value = value;
+    }
 
-        this.device.eds.addSubEntry(0x1280, 2, {
-            parameterName:  'COB-ID server to client',
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_WRITE,
-            defaultValue:   cobIdRx,
-        });
+    /**
+     * Sdo client COB-ID for outgoing messages (Object 0x1280.1).
+     *
+     * @type {number}
+     */
+    get cobIdTx() {
+        const obj1280 = this.device.eds.getEntry(0x1280);
+        if(obj1280 === undefined && obj1280[1] !== undefined)
+            return obj1280[1].value;
 
-        this.device.eds.addSubEntry(0x1280, 3, {
-            parameterName:  'Node-ID of the SDO server',
-            dataType:       DataType.UNSIGNED8,
-            accessType:     AccessType.READ_WRITE,
-            defaultValue:   deviceId,
-        });
+        return null;
+    }
+
+    set cobIdTx(value) {
+        let obj1280 = this.device.eds.getEntry(0x1280);
+        if(obj1280 === undefined) {
+            obj1280 = this.device.eds.addEntry(0x1280, {
+                parameterName:  'SDO client parameter',
+                objectType:     ObjectType.RECORD,
+                subNumber:      4,
+            });
+
+            this.device.eds.addSubEntry(0x1280, 1, {
+                parameterName:  'COB-ID client to server',
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+
+            this.device.eds.addSubEntry(0x1280, 2, {
+                parameterName:  'COB-ID server to client',
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+
+            this.device.eds.addSubEntry(0x1280, 3, {
+                parameterName:  'Node-ID of the SDO server',
+                dataType:       DataType.UNSIGNED8,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+
+        obj1280[1].value = value;
+    }
+
+    /**
+     * COB-ID of the remote server.
+     *
+     * @type {number}
+     */
+    get serverId() {
+        const obj1280 = this.device.eds.getEntry(0x1280);
+        if(obj1280 !== undefined && obj1280[3] !== undefined)
+            return obj1280[3].value;
+
+        return null;
+    }
+
+    set serverId(value) {
+        let obj1280 = this.device.eds.getEntry(0x1280);
+        if(obj1280 === undefined) {
+            obj1280 = this.device.eds.addEntry(0x1280, {
+                parameterName:  'SDO client parameter',
+                objectType:     ObjectType.RECORD,
+                subNumber:      4,
+            });
+
+            this.device.eds.addSubEntry(0x1280, 1, {
+                parameterName:  'COB-ID client to server',
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+
+            this.device.eds.addSubEntry(0x1280, 2, {
+                parameterName:  'COB-ID server to client',
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+
+            this.device.eds.addSubEntry(0x1280, 3, {
+                parameterName:  'Node-ID of the SDO server',
+                dataType:       DataType.UNSIGNED8,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+
+        obj1280[3].value = value;
     }
 
     /** Initialize members and begin serving SDO transfers. */
     init() {
         for(let [index, entry] of Object.entries(this.device.dataObjects)) {
-            index = parseInt(index);
-            if(0x1200 <= index && index < 0x1280) {
-                /* Object 0x1200..0x127F - SDO server parameter.
-                 *   sub-index 1/2:
-                 *     bit 0..10      11-bit CAN base frame.
-                 *     bit 11..28     29-bit CAN extended frame.
-                 *     bit 29         Frame type (base or extended).
-                 *     bit 30         Dynamically allocated.
-                 *     bit 31         SDO exists / is valid.
-                 *
-                 *   sub-index 3 (optional):
-                 *     bit 0..7      Node-ID of the SDO client.
-                 */
-                let cobIdRx = entry[1].value;
-                if(!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
-                    continue;
-
-                if(((cobIdRx >> 30) & 0x1) == 0x1)
-                    throw TypeError('Dynamic assignment is not supported.');
-
-                if(((cobIdRx >> 29) & 0x1) == 0x1)
-                    throw TypeError('CAN extended frames are not supported.');
-
-                cobIdRx &= 0x7FF;
-                if((cobIdRx & 0xF) == 0x0)
-                    cobIdRx |= this.device.id;
-
-                let cobIdTx = entry[2].value;
-                if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
-                    continue;
-
-                if(((cobIdTx >> 30) & 0x1) == 0x1)
-                    throw TypeError('Dynamic assignment is not supported.');
-
-                if(((cobIdTx >> 29) & 0x1) == 0x1)
-                    throw TypeError('CAN extended frames are not supported.');
-
-                cobIdTx &= 0x7FF;
-                if((cobIdTx & 0xF) == 0x0)
-                    cobIdTx |= this.device.id;
-
-                this.clients[cobIdRx] = new Transfer({
-                    device: this.device,
-                    cobId: cobIdTx
-                });
-            }
-            else if(0x1280 <= index && index < 0x12FF) {
+            if(0x1280 <= index && index < 0x12FF) {
                 /* Object 0x1280..0x12FF - SDO client parameter.
                  *   sub-index 1/2:
                  *     bit 0..10      11-bit CAN base frame.
@@ -473,7 +567,7 @@ class Sdo {
                  *     bit 0..7      Node-ID of the SDO server.
                  */
                 const serverId = entry[3].value;
-                if(serverId === undefined)
+                if(!serverId)
                     throw new ReferenceError('ID of the SDO server is required.');
 
                 let cobIdTx = entry[1].value;
@@ -686,7 +780,7 @@ class Sdo {
      * @param {Buffer} data - message data.
      * @private
      */
-    _clientUploadInitiate(transfer, data) {
+    _uploadInitiate(transfer, data) {
         if(data[0] & 0x02) {
             // Expedited transfer
             const size = (data[0] & 1) ? (4 - ((data[0] >> 2) & 3)) : 4;
@@ -710,15 +804,14 @@ class Sdo {
      *
      * @param {Transfer} transfer - SDO context.
      * @param {Buffer} data - message data.
-     * @memberof Sdo
      * @private
      */
-    _clientUploadSegment(transfer, data) {
+    _uploadSegment(transfer, data) {
         if(!transfer.active)
             return;
 
         if((data[0] & 0x10) != (transfer.toggle << 4)) {
-            transfer.abort(AbortCode.TOGGLE_BIT);
+            transfer.abort(SdoCode.TOGGLE_BIT);
             return;
         }
 
@@ -729,7 +822,7 @@ class Sdo {
 
         if(data[0] & 1) {
             if(transfer.size != size) {
-                transfer.abort(AbortCode.BAD_LENGTH);
+                transfer.abort(SdoCode.BAD_LENGTH);
                 return;
             }
 
@@ -752,10 +845,9 @@ class Sdo {
      * Handle SCS.DOWNLOAD_INITIATE.
      *
      * @param {Transfer} transfer - SDO context.
-     * @memberof Sdo
      * @private
      */
-    _clientDownloadInitiate(transfer) {
+    _downloadInitiate(transfer) {
         if(transfer.size <= 4) {
             /* Expedited transfer. */
             transfer.resolve();
@@ -781,15 +873,14 @@ class Sdo {
      *
      * @param {Transfer} transfer - SDO context.
      * @param {Buffer} data - message data.
-     * @memberof Sdo
      * @private
      */
-    _clientDownloadSegment(transfer, data) {
+    _downloadSegment(transfer, data) {
         if(!transfer.active)
             return;
 
         if((data[0] & 0x10) != (transfer.toggle << 4)) {
-            transfer.abort(AbortCode.TOGGLE_BIT);
+            transfer.abort(SdoCode.TOGGLE_BIT);
             return;
         }
 
@@ -821,34 +912,189 @@ class Sdo {
     }
 
     /**
-     * Handle messages as a client.
+     * Called when a new CAN message is received.
      *
-     * @param {Transfer} transfer - SDO context.
      * @param {object} message - CAN frame.
-     * @memberof Sdo
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
      * @private
      */
-    _clientProcess(transfer, message) {
+    _onMessage(message) {
+        // Handle transfers as a client (remote object dictionary)
+        const transfer = this.transfers[message.id];
+        if(transfer === undefined)
+            return;
+
         switch(message.data[0] >> 5) {
             case ServerCommand.UPLOAD_SEGMENT:
-                this._clientUploadSegment(transfer, message.data);
+                this._uploadSegment(transfer, message.data);
                 break;
             case ServerCommand.DOWNLOAD_SEGMENT:
-                this._clientDownloadSegment(transfer, message.data);
+                this._downloadSegment(transfer, message.data);
                 break;
             case ServerCommand.UPLOAD_INITIATE:
-                this._clientUploadInitiate(transfer, message.data);
+                this._uploadInitiate(transfer, message.data);
                 break;
             case ServerCommand.DOWNLOAD_INITIATE:
-                this._clientDownloadInitiate(transfer);
+                this._downloadInitiate(transfer);
                 break;
             case ServerCommand.ABORT:
                 transfer.abort(message.data.readUInt32LE(4));
                 break;
             default:
-                transfer.abort(AbortCode.BAD_COMMAND);
+                transfer.abort(SdoCode.BAD_COMMAND);
                 break;
         }
+    }
+}
+
+/**
+ * CANopen SDO protocol handler (Server).
+ *
+ * The service data object (SDO) protocol uses a client-server structure where
+ * a client can initiate the transfer of data from the server's object
+ * dictionary. An SDO is transfered as a sequence of segments with basic
+ * error checking.
+ *
+ * @param {Device} device - parent device.
+ * @see CiA301 'Service data object (SDO)' (§7.2.4)
+ * @protected
+ */
+class SdoServer {
+    constructor(device) {
+        this.device = device;
+        this.clients = {};
+    }
+
+    /**
+     * Sdo server COB-ID for incoming messages (Object 0x1200.1).
+     *
+     * @type {number}
+     */
+    get cobIdRx() {
+        const obj1200 = this.device.eds.getEntry(0x1200);
+        if(obj1200 === undefined && obj1200[1] !== undefined)
+            return obj1200[1].value;
+
+        return null;
+    }
+
+    set cobIdRx(value) {
+        let obj1200 = this.device.eds.getEntry(0x1200);
+        if(obj1200 === undefined) {
+            obj1200 = this.device.eds.addEntry(0x1200, {
+                parameterName:  'SDO server parameter',
+                objectType:     ObjectType.RECORD,
+                subNumber:      3,
+            });
+
+            this.device.eds.addSubEntry(0x1200, 1, {
+                parameterName:  'COB-ID client to server',
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+
+            this.device.eds.addSubEntry(0x1200, 2, {
+                parameterName:  'COB-ID server to client',
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+
+        obj1200[1].value = value;
+    }
+
+    /**
+     * Sdo server COB-ID for outgoing messages (Object 0x1200.2).
+     *
+     * @type {number}
+     */
+    get cobIdTx() {
+        const obj1200 = this.device.eds.getEntry(0x1200);
+        if(obj1200 === undefined && obj1200[2] !== undefined)
+            return obj1200[2].value;
+
+        return null;
+    }
+
+    set cobIdTx(value) {
+        let obj1200 = this.device.eds.getEntry(0x1200);
+        if(obj1200 === undefined) {
+            obj1200 = this.device.eds.addEntry(0x1200, {
+                parameterName:  'SDO server parameter',
+                objectType:     ObjectType.RECORD,
+                subNumber:      3,
+            });
+
+            this.device.eds.addSubEntry(0x1200, 1, {
+                parameterName:  'COB-ID client to server',
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+
+            this.device.eds.addSubEntry(0x1200, 2, {
+                parameterName:  'COB-ID server to client',
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+
+        obj1200[2].value = value;
+    }
+
+    /** Initialize members and begin serving SDO transfers. */
+    init() {
+        for(let [index, entry] of Object.entries(this.device.dataObjects)) {
+            index = parseInt(index);
+            if(0x1200 <= index && index < 0x1280) {
+                /* Object 0x1200..0x127F - SDO server parameter.
+                 *   sub-index 1/2:
+                 *     bit 0..10      11-bit CAN base frame.
+                 *     bit 11..28     29-bit CAN extended frame.
+                 *     bit 29         Frame type (base or extended).
+                 *     bit 30         Dynamically allocated.
+                 *     bit 31         SDO exists / is valid.
+                 *
+                 *   sub-index 3 (optional):
+                 *     bit 0..7      Node-ID of the SDO client.
+                 */
+                let cobIdRx = entry[1].value;
+                if(!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
+                    continue;
+
+                if(((cobIdRx >> 30) & 0x1) == 0x1)
+                    throw TypeError('Dynamic assignment is not supported.');
+
+                if(((cobIdRx >> 29) & 0x1) == 0x1)
+                    throw TypeError('CAN extended frames are not supported.');
+
+                cobIdRx &= 0x7FF;
+                if((cobIdRx & 0xF) == 0x0)
+                    cobIdRx |= this.device.id;
+
+                let cobIdTx = entry[2].value;
+                if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
+                    continue;
+
+                if(((cobIdTx >> 30) & 0x1) == 0x1)
+                    throw TypeError('Dynamic assignment is not supported.');
+
+                if(((cobIdTx >> 29) & 0x1) == 0x1)
+                    throw TypeError('CAN extended frames are not supported.');
+
+                cobIdTx &= 0x7FF;
+                if((cobIdTx & 0xF) == 0x0)
+                    cobIdTx |= this.device.id;
+
+                this.clients[cobIdRx] = new Transfer({
+                    device: this.device,
+                    cobId: cobIdTx
+                });
+            }
+        }
+
+        this.device.addListener('message', this._onMessage.bind(this));
     }
 
     /**
@@ -856,10 +1102,9 @@ class Sdo {
      *
      * @param {Transfer} client - SDO context.
      * @param {Buffer} data - message data.
-     * @memberof Sdo
      * @private
      */
-    _serverDownloadInitiate(client, data) {
+    _downloadInitiate(client, data) {
         client.index = data.readUInt16LE(1);
         client.subIndex = data.readUInt8(3);
 
@@ -867,21 +1112,21 @@ class Sdo {
             // Expedited client
             let entry = this.device.eds.getEntry(client.index);
             if(entry === undefined) {
-                client.abort(AbortCode.OBJECT_UNDEFINED);
+                client.abort(SdoCode.OBJECT_UNDEFINED);
                 return;
             }
 
             if(entry.subNumber > 0) {
                 entry = entry[client.subIndex];
                 if(entry === undefined) {
-                    client.abort(AbortCode.BAD_SUB_INDEX);
+                    client.abort(SdoCode.BAD_SUB_INDEX);
                     return;
                 }
             }
 
             if(entry.accessType == AccessType.CONSTANT
             || entry.accessType == AccessType.READ_ONLY) {
-                client.abort(AbortCode.READ_ONLY);
+                client.abort(SdoCode.READ_ONLY);
                 return;
             }
 
@@ -891,12 +1136,12 @@ class Sdo {
 
             const value = rawToType(raw, entry.dataType);
             if(entry.highLimit !== undefined && value > entry.highLimit) {
-                client.abort(AbortCode.VALUE_HIGH);
+                client.abort(SdoCode.VALUE_HIGH);
                 return;
             }
 
             if(entry.lowLimit !== undefined && value < entry.lowLimit) {
-                client.abort(AbortCode.VALUE_LOW);
+                client.abort(SdoCode.VALUE_LOW);
                 return;
             }
 
@@ -937,29 +1182,28 @@ class Sdo {
      *
      * @param {Transfer} client - SDO context.
      * @param {Buffer} data - message data.
-     * @memberof Sdo
      * @private
      */
-    _serverUploadInitiate(client, data) {
+    _uploadInitiate(client, data) {
         client.index = data.readUInt16LE(1);
         client.subIndex = data.readUInt8(3);
 
         let entry = this.device.eds.getEntry(client.index);
         if(entry === undefined) {
-            client.abort(AbortCode.OBJECT_UNDEFINED);
+            client.abort(SdoCode.OBJECT_UNDEFINED);
             return;
         }
 
         if(entry.subNumber > 0) {
             entry = entry[client.subIndex];
             if(entry === undefined) {
-                client.abort(AbortCode.BAD_SUB_INDEX);
+                client.abort(SdoCode.BAD_SUB_INDEX);
                 return;
             }
         }
 
         if(entry.accessType == AccessType.WRITE_ONLY) {
-            client.abort(AbortCode.WRITE_ONLY);
+            client.abort(SdoCode.WRITE_ONLY);
             return;
         }
 
@@ -1012,12 +1256,11 @@ class Sdo {
      *
      * @param {Transfer} client - SDO context.
      * @param {Buffer} data - message data.
-     * @memberof Sdo
      * @private
      */
-    _serverUploadSegment(client, data) {
+    _uploadSegment(client, data) {
         if((data[0] & 0x10) != (client.toggle << 4)) {
-            client.abort(AbortCode.TOGGLE_BIT);
+            client.abort(SdoCode.TOGGLE_BIT);
             return;
         }
 
@@ -1049,12 +1292,11 @@ class Sdo {
      *
      * @param {Transfer} client - SDO context.
      * @param {Buffer} data - message data.
-     * @memberof Sdo
      * @private
      */
-    _serverDownloadSegment(client, data) {
+    _downloadSegment(client, data) {
         if((data[0] & 0x10) != (client.toggle << 4)) {
-            client.abort(AbortCode.TOGGLE_BIT);
+            client.abort(SdoCode.TOGGLE_BIT);
             return;
         }
 
@@ -1067,21 +1309,21 @@ class Sdo {
         if(data[0] & 1) {
             let entry = this.device.eds.getEntry(client.index);
             if(entry === undefined) {
-                client.abort(AbortCode.OBJECT_UNDEFINED);
+                client.abort(SdoCode.OBJECT_UNDEFINED);
                 return;
             }
 
             if(entry.subNumber > 0) {
                 entry = entry[client.subIndex];
                 if(entry === undefined) {
-                    client.abort(AbortCode.BAD_SUB_INDEX);
+                    client.abort(SdoCode.BAD_SUB_INDEX);
                     return;
                 }
             }
 
             if(entry.accessType == AccessType.CONSTANT
             || entry.accessType == AccessType.READ_ONLY) {
-                client.abort(AbortCode.READ_ONLY);
+                client.abort(SdoCode.READ_ONLY);
                 return;
             }
 
@@ -1090,12 +1332,12 @@ class Sdo {
 
             const value = rawToType(raw, entry.dataType);
             if(entry.highLimit !== undefined && value > entry.highLimit) {
-                client.abort(AbortCode.VALUE_HIGH);
+                client.abort(SdoCode.VALUE_HIGH);
                 return;
             }
 
             if(entry.lowLimit !== undefined && value < entry.lowLimit) {
-                client.abort(AbortCode.VALUE_LOW);
+                client.abort(SdoCode.VALUE_LOW);
                 return;
             }
 
@@ -1119,37 +1361,6 @@ class Sdo {
     }
 
     /**
-     * Handle messages as a server.
-     *
-     * @param {Transfer} client - SDO context.
-     * @param {object} message - CAN frame.
-     * @memberof Sdo
-     * @private
-     */
-    _serverProcess(client, message) {
-        switch(message.data[0] >> 5) {
-            case ClientCommand.DOWNLOAD_SEGMENT:
-                this._serverDownloadSegment(client, message.data);
-                break;
-            case ClientCommand.DOWNLOAD_INITIATE:
-                this._serverDownloadInitiate(client, message.data);
-                break;
-            case ClientCommand.UPLOAD_INITIATE:
-                this._serverUploadInitiate(client, message.data);
-                break;
-            case ClientCommand.UPLOAD_SEGMENT:
-                this._serverUploadSegment(client, message.data);
-                break;
-            case ClientCommand.ABORT:
-                client.reject();
-                break;
-            default:
-                client.abort(AbortCode.BAD_COMMAND);
-                break;
-        }
-    }
-
-    /**
      * Called when a new CAN message is received.
      *
      * @param {object} message - CAN frame.
@@ -1159,20 +1370,32 @@ class Sdo {
      * @private
      */
     _onMessage(message) {
-        // Handle transfers as a client (remote object dictionary)
-        const serverTransfer = this.transfers[message.id];
-        if(serverTransfer !== undefined) {
-            this._clientProcess(serverTransfer, message);
-            return;
-        }
-
         // Handle transfers as a server (local object dictionary)
         const client = this.clients[message.id];
-        if(client !== undefined) {
-            this._serverProcess(client, message);
+        if(client === undefined)
             return;
+
+        switch(message.data[0] >> 5) {
+            case ClientCommand.DOWNLOAD_SEGMENT:
+                this._downloadSegment(client, message.data);
+                break;
+            case ClientCommand.DOWNLOAD_INITIATE:
+                this._downloadInitiate(client, message.data);
+                break;
+            case ClientCommand.UPLOAD_INITIATE:
+                this._uploadInitiate(client, message.data);
+                break;
+            case ClientCommand.UPLOAD_SEGMENT:
+                this._uploadSegment(client, message.data);
+                break;
+            case ClientCommand.ABORT:
+                client.reject();
+                break;
+            default:
+                client.abort(SdoCode.BAD_COMMAND);
+                break;
         }
     }
 }
 
-module.exports=exports={ AbortCode, SdoError, Sdo };
+module.exports=exports={ SdoCode, SdoError, SdoClient, SdoServer };
