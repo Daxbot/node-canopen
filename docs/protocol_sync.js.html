@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>protocol/sync.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <input type="text" id="nav-search" placeholder="Search" />
+    
+    <h2><a href="index.html">Home</a></h2><h2><a href="https://github.com/DaxBot/node-canopen" target="_blank" class="menu-item" id="repository" >Repository</a></h2><h3>Classes</h3><ul><li><a href="Device.html">Device</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Device.html#getRaw">getRaw</a></li><li data-type='method' style='display: none;'><a href="Device.html#getRawArray">getRawArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#getValue">getValue</a></li><li data-type='method' style='display: none;'><a href="Device.html#getValueArray">getValueArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Device.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Device.html#send">send</a></li><li data-type='method' style='display: none;'><a href="Device.html#setRaw">setRaw</a></li><li data-type='method' style='display: none;'><a href="Device.html#setRawArray">setRawArray</a></li><li data-type='method' style='display: none;'><a href="Device.html#setTransmitFunction">setTransmitFunction</a></li><li data-type='method' style='display: none;'><a href="Device.html#setValue">setValue</a></li><li data-type='method' style='display: none;'><a href="Device.html#setValueArray">setValueArray</a></li></ul></li><li><a href="Eds.html">Eds</a><ul class='members'><li data-type='member' style='display: none;'><a href="Eds.html#.AccessType">AccessType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#.DataType">DataType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#.ObjectType">ObjectType</a></li><li data-type='member' style='display: none;'><a href="Eds.html#baudRates">baudRates</a></li><li data-type='member' style='display: none;'><a href="Eds.html#createdBy">createdBy</a></li><li data-type='member' style='display: none;'><a href="Eds.html#creationDate">creationDate</a></li><li data-type='member' style='display: none;'><a href="Eds.html#description">description</a></li><li data-type='member' style='display: none;'><a href="Eds.html#dynamicChannelsSupported">dynamicChannelsSupported</a></li><li data-type='member' style='display: none;'><a href="Eds.html#edsVersion">edsVersion</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileName">fileName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileRevision">fileRevision</a></li><li data-type='member' style='display: none;'><a href="Eds.html#fileVersion">fileVersion</a></li><li data-type='member' style='display: none;'><a href="Eds.html#granularity">granularity</a></li><li data-type='member' style='display: none;'><a href="Eds.html#groupMessaging">groupMessaging</a></li><li data-type='member' style='display: none;'><a href="Eds.html#lssSupported">lssSupported</a></li><li data-type='member' style='display: none;'><a href="Eds.html#modificationDate">modificationDate</a></li><li data-type='member' style='display: none;'><a href="Eds.html#modifiedBy">modifiedBy</a></li><li data-type='member' style='display: none;'><a href="Eds.html#nrOfRXPDO">nrOfRXPDO</a></li><li data-type='member' style='display: none;'><a href="Eds.html#nrOfTXPDO">nrOfTXPDO</a></li><li data-type='member' style='display: none;'><a href="Eds.html#orderCode">orderCode</a></li><li data-type='member' style='display: none;'><a href="Eds.html#productName">productName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#productNumber">productNumber</a></li><li data-type='member' style='display: none;'><a href="Eds.html#revisionNumber">revisionNumber</a></li><li data-type='member' style='display: none;'><a href="Eds.html#simpleBootUpMaster">simpleBootUpMaster</a></li><li data-type='member' style='display: none;'><a href="Eds.html#simpleBootUpSlave">simpleBootUpSlave</a></li><li data-type='member' style='display: none;'><a href="Eds.html#vendorName">vendorName</a></li><li data-type='member' style='display: none;'><a href="Eds.html#vendorNumber">vendorNumber</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Eds.html#.rawToType">rawToType</a></li><li data-type='method' style='display: none;'><a href="Eds.html#.typeToRaw">typeToRaw</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addEntry">addEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addSubEntry">addSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getEntry">getEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getSubEntry">getSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#load">load</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeEntry">removeEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeSubEntry">removeSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#save">save</a></li></ul></li><li><a href="Eds.DataObject.html">Eds.DataObject</a></li><li><a href="Eds.EdsError.html">Eds.EdsError</a></li><li><a href="Emcy.html">Emcy</a><ul class='members'><li data-type='member' style='display: none;'><a href="Emcy.html#.EmcyCode">EmcyCode</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#.EmcyType">EmcyType</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#cobId">cobId</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#errorRegister">errorRegister</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#history">history</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#inhibitTime">inhibitTime</a></li><li data-type='member' style='display: none;'><a href="Emcy.html#valid">valid</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Emcy.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#setHistoryLength">setHistoryLength</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#write">write</a></li></ul></li><li><a href="Emcy.EmcyMessage.html">Emcy.EmcyMessage</a></li><li><a href="Lss.html">Lss</a><ul class='members'><li data-type='member' style='display: none;'><a href="Lss.html#.LssCommand">LssCommand</a></li><li data-type='member' style='display: none;'><a href="Lss.html#.LssMode">LssMode</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Lss.html#activateBitTiming">activateBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureBitTiming">configureBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureNodeId">configureNodeId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#fastscan">fastscan</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireProductCode">inquireProductCode</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireRevisionNumber">inquireRevisionNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireSerialNumber">inquireSerialNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireVendorId">inquireVendorId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#storeConfiguration">storeConfiguration</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeGlobal">switchModeGlobal</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeSelective">switchModeSelective</a></li></ul></li><li><a href="Lss.LssError.html">Lss.LssError</a></li><li><a href="Nmt.html">Nmt</a><ul class='members'><li data-type='member' style='display: none;'><a href="Nmt.html#.NmtCommand">NmtCommand</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#.NmtState">NmtState</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#producerTime">producerTime</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#producerTime">producerTime</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#state">state</a></li><li data-type='member' style='display: none;'><a href="Nmt.html#state">state</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Nmt.html#enterPreOperational">enterPreOperational</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetCommunication">resetCommunication</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetNode">resetNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#startNode">startNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stopNode">stopNode</a></li></ul></li><li><a href="Pdo.html">Pdo</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Pdo.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#load">load</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#write">write</a></li></ul></li><li><a href="Sdo.html">Sdo</a><ul class='members'><li data-type='member' style='display: none;'><a href="Sdo.html#.AbortCode">AbortCode</a></li></ul><ul class='methods'><li data-type='method' style='display: none;'><a href="Sdo.html#download">download</a></li><li data-type='method' style='display: none;'><a href="Sdo.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Sdo.html#upload">upload</a></li></ul></li><li><a href="Sdo.SdoError.html">Sdo.SdoError</a></li><li><a href="Sync.html">Sync</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Sync.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Sync.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Sync.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Sync.html#write">write</a></li></ul></li><li><a href="Time.html">Time</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Time.html#init">init</a></li><li data-type='method' style='display: none;'><a href="Time.html#write">write</a></li></ul></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">protocol/sync.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Implements the CANopen Synchronization (SYNC) protocol.
+ * @author Wilkins White
+ * @copyright 2021 Nova Dynamics LLC
+ */
+
+const Device = require('../device');
+const { ObjectType, AccessType, DataType, DataObject } = require('../eds');
+
+/**
+ * CANopen SYNC protocol handler.
+ *
+ * The synchronization (SYNC) protocol follows a producer-consumer structure
+ * that provides a basic network synchronization mechanism. There should be
+ * at most one sync producer on the network at a time.
+ *
+ * @param {Device} device - parent device.
+ * @see CiA301 "Synchronization object (SYNC)" (§7.2.5)
+ * @protected
+ */
+class Sync {
+    constructor(device) {
+        this.device = device;
+        this.syncCounter = 0;
+        this.syncTimer = null;
+        this._generate = false;
+        this._cobId = null;
+        this._cyclePeriod = 0;
+        this._overflow = 0;
+    }
+
+    /**
+     * Set the sync generation enable bit.
+     *
+     * @param {boolean} gen - enable flag.
+     */
+    set generate(gen) {
+        let obj1005 = this.device.eds.getEntry(0x1005);
+        if(obj1005 === undefined) {
+            obj1005 = this.device.eds.addEntry(0x1005, {
+                parameterName:  'COB-ID SYNC',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+
+        if(gen)
+            obj1005.value |= (1 &lt;&lt; 30);
+        else
+            obj1005.value &amp;= ~(1 &lt;&lt; 30);
+    }
+
+    /**
+     * Get the sync generation enable bit.
+     *
+     * @returns {boolean} - enable flag.
+     */
+    get generate() {
+        return this._generate;
+    }
+
+    /**
+     * Set the COB-ID.
+     *
+     * @param {number} cobId - COB-ID.
+     */
+    set cobId(cobId) {
+        let obj1005 = this.device.eds.getEntry(0x1005);
+        if(obj1005 === undefined) {
+            obj1005 = this.device.eds.addEntry(0x1005, {
+                parameterName:  'COB-ID SYNC',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+
+        cobId &amp;= 0x7FF;
+        obj1005.value = (obj1005.value &amp; ~(0x7FF)) | cobId;
+    }
+
+    /**
+     * Get the COB-ID.
+     *
+     * @returns {number} - COB-ID.
+     */
+    get cobId() {
+        return this._cobId;
+    }
+
+    /**
+     * Set the sync interval.
+     *
+     * @param {number} period - cycle period (μs).
+     */
+    set cyclePeriod(period) {
+        let obj1006 = this.device.eds.getEntry(0x1006);
+        if(obj1006 === undefined) {
+            obj1006 = this.device.eds.addEntry(0x1006, {
+                parameterName:  'Communication cycle period',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+
+        obj1006.value = period;
+    }
+
+    /**
+     * Get the sync interval.
+     *
+     * @returns {number} - cycle period (μs)
+     */
+    get cyclePeriod() {
+        return this._cyclePeriod;
+    }
+
+    /**
+     * Set the sync counter overflow value.
+     *
+     * @param {number} overflow - overflow value.
+     */
+    set overflow(overflow) {
+        let obj1019 = this.device.eds.getEntry(0x1019);
+        if(obj1019 === undefined) {
+            obj1019 = this.device.eds.addEntry(0x1019, {
+                parameterName:  'Synchronous counter overflow value',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED8,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+
+        overflow &amp;= 0xFF;
+        obj1019.value = overflow;
+    }
+
+    /**
+     * Get the sync counter overflow value.
+     *
+     * @returns {number} - overflow value.
+     */
+    get overflow() {
+        return this._overflow;
+    }
+
+    /** Initialize members and begin consuming sync objects. */
+    init() {
+        // Object 0x1005 - COB-ID SYNC
+        const obj1005 = this.device.eds.getEntry(0x1005);
+        if(obj1005 !== undefined) {
+            this._parse1005(obj1005);
+            obj1005.addListener('update', this._parse1005.bind(this));
+
+            this.device.addListener('message', this._onMessage.bind(this));
+        }
+
+        // Object 0x1006 - Communication cycle period
+        const obj1006 = this.device.eds.getEntry(0x1006);
+        if(obj1006 !== undefined) {
+            this._parse1006(obj1006);
+            obj1006.addListener('update', this._parse1006.bind(this));
+        }
+
+        // Object 0x1019 - Synchronous counter overflow value
+        const obj1019 = this.device.eds.getEntry(0x1019);
+        if(obj1019 !== undefined) {
+            this._parse1019(obj1019);
+            obj1019.addListener('update', this._parse1019.bind(this));
+        }
+    }
+
+    /** Begin producing sync objects. */
+    start() {
+        if(!this.generate)
+            throw TypeError('SYNC generation is disabled.');
+
+        if(this._overflow) {
+            this.syncTimer = setInterval(() => {
+                this.syncCounter += 1;
+                if(this.syncCounter > this._overflow)
+                    this.syncCounter = 1;
+
+                this.write(this.syncCounter);
+            }, this._cyclePeriod / 1000);
+        }
+        else {
+            this.syncTimer = setInterval(() => {
+                this.write();
+            }, this._cyclePeriod / 1000);
+        }
+    }
+
+    /** Stop producing sync objects. */
+    stop() {
+        clearInterval(this.syncTimer);
+        this.syncTimer = null;
+        this.syncCounter = 0;
+    }
+
+    /**
+     * Service: SYNC write.
+     *
+     * @param {number | null} counter - sync counter;
+     */
+    write(counter=null) {
+        if(!this.generate)
+            throw TypeError('SYNC generation is disabled.');
+
+        const data = (counter) ? Buffer.from([counter]) : Buffer.alloc(0);
+        this.device.send({
+            id:     this.cobId,
+            data:   data,
+        });
+    }
+
+    /**
+     * Called when a new CAN message is received.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
+     * @private
+     */
+    _onMessage(message) {
+        if((message.id &amp; 0x7FF) != this._cobId)
+            return;
+
+        if(message.data)
+            this.device.emit('sync', message.data[1]);
+        else
+            this.device.emit('sync');
+    }
+
+    /**
+     * Called when 0x1005 (COB-ID SYNC) is updated.
+     *
+     * @param {DataObject} data - updated DataObject.
+     * @private
+     */
+    _parse1005(data) {
+        /* Object 0x1005 - COB-ID SYNC.
+         *   bit 0..10      11-bit CAN base frame.
+         *   bit 11..28     29-bit CAN extended frame.
+         *   bit 29         Frame type.
+         *   bit 30         Produce sync objects.
+         */
+        const value = data.value;
+        const gen = (value >> 30) &amp; 0x1
+        const rtr = (value >> 29) &amp; 0x1;
+        const cobId = value &amp; 0x7FF;
+
+        if(rtr == 0x1)
+            throw TypeError("CAN extended frames are not supported.")
+
+        if(cobId == 0)
+            throw TypeError('COB-ID SYNC can not be 0.');
+
+        this._generate = !!gen;
+        this._cobId = cobId;
+    }
+
+    /**
+     * Called when 0x1006 (Communication cycle period) is updated.
+     *
+     * @param {DataObject} data - updated DataObject.
+     * @private
+     */
+    _parse1006(data) {
+        const cyclePeriod = data.value;
+        if(cyclePeriod == 0)
+            throw TypeError('Communication cycle period can not be 0.')
+
+        this._cyclePeriod = cyclePeriod;
+    }
+
+    /**
+     * Called when 0x1019 (Synchronous counter overflow value) is updated.
+     *
+     * @param {DataObject} data - updated DataObject.
+     * @private
+     */
+    _parse1019(data) {
+        this._overflow = data.value;
+    }
+}
+
+module.exports=exports={ Sync };
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Tue Sep 28 2021 16:59:34 GMT-0700 (Pacific Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+<script src="scripts/search.js" defer></script>
+
+
+<script src="scripts/collapse.js" defer></script>
+
+
+</body>
+</html>

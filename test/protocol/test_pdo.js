@@ -13,95 +13,91 @@ describe('PDO', function() {
 
         /* RPDO communication parameter. */
         device.eds.addEntry(0x1400, {
-            'ParameterName':    'RPDO communication parameter',
-            'ObjectType':       ObjectType.RECORD,
-            'SubNumber':        6,
+            parameterName:  'RPDO communication parameter',
+            objectType:     ObjectType.RECORD,
+            subNumber:      6,
         });
         device.eds.addSubEntry(0x1400, 1, {
-            'ParameterName':    'COB-ID RPDO',
-            'DataType':         DataType.UNSIGNED32,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'COB-ID RPDO',
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_WRITE,
         });
         device.eds.addSubEntry(0x1400, 2, {
-            'ParameterName':    'transmission type',
-            'DataType':         DataType.UNSIGNED8,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'transmission type',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
         });
         device.eds.addSubEntry(0x1400, 3, {
-            'ParameterName':    'inhibit time',
-            'DataType':         DataType.UNSIGNED16,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'inhibit time',
+            dataType:       DataType.UNSIGNED16,
+            accessType:     AccessType.READ_WRITE,
         });
         device.eds.addSubEntry(0x1400, 5, {
-            'ParameterName':    'event timer',
-            'DataType':         DataType.UNSIGNED16,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'event timer',
+            dataType:       DataType.UNSIGNED16,
+            accessType:     AccessType.READ_WRITE,
         });
         device.eds.addSubEntry(0x1400, 6, {
-            'ParameterName':    'SYNC start value',
-            'DataType':         DataType.UNSIGNED8,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'SYNC start value',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
         });
 
         /* RPDO mapping parameter. */
         device.eds.addEntry(0x1600, {
-            'ParameterName':    'RPDO mapping parameter',
-            'ObjectType':       ObjectType.RECORD,
-            'SubNumber':        1,
+            parameterName:  'RPDO mapping parameter',
+            objectType:     ObjectType.RECORD,
+            subNumber:      1,
         });
         device.eds.addSubEntry(0x1600, 1, {
-            'ParameterName':    'RPDO mapped object 1',
-            'DataType':         DataType.UNSIGNED32,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'RPDO mapped object 1',
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_WRITE,
         });
 
         /* TPDO communication parameter. */
         device.eds.addEntry(0x1800, {
-            'ParameterName':    'TPDO communication parameter',
-            'ObjectType':       ObjectType.RECORD,
-            'SubNumber':        6,
+            parameterName:  'TPDO communication parameter',
+            objectType:     ObjectType.RECORD,
+            subNumber:      6,
         });
         device.eds.addSubEntry(0x1800, 1, {
-            'ParameterName':    'COB-ID TPDO',
-            'DataType':         DataType.UNSIGNED32,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'COB-ID TPDO',
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_WRITE,
         });
         device.eds.addSubEntry(0x1800, 2, {
-            'ParameterName':    'transmission type',
-            'DataType':         DataType.UNSIGNED8,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'Transmission type',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
         });
         device.eds.addSubEntry(0x1800, 3, {
-            'ParameterName':    'inhibit time',
-            'DataType':         DataType.UNSIGNED16,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'Inhibit time',
+            dataType:       DataType.UNSIGNED16,
+            accessType:     AccessType.READ_WRITE,
         });
         device.eds.addSubEntry(0x1800, 5, {
-            'ParameterName':    'event timer',
-            'DataType':         DataType.UNSIGNED16,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'Event timer',
+            dataType:       DataType.UNSIGNED16,
+            accessType:     AccessType.READ_WRITE,
         });
         device.eds.addSubEntry(0x1800, 6, {
-            'ParameterName':    'SYNC start value',
-            'DataType':         DataType.UNSIGNED8,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'SYNC start value',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
         });
 
         /* TPDO mapping parameter. */
         device.eds.addEntry(0x1A00, {
-            'ParameterName':    'TPDO mapping parameter',
-            'ObjectType':       ObjectType.RECORD,
-            'SubNumber':        1,
+            parameterName:  'TPDO mapping parameter',
+            objectType:     ObjectType.RECORD,
+            subNumber:      1,
         });
         device.eds.addSubEntry(0x1A00, 1, {
-            'ParameterName':    'TPDO mapped object 1',
-            'DataType':         DataType.UNSIGNED32,
-            'AccessType':       AccessType.READ_WRITE,
+            parameterName:  'TPDO mapped object 1',
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_WRITE,
         });
-    });
-
-    afterEach(function() {
-        delete device;
     });
 
     it('should produce a PDO object', function(done) {
@@ -111,7 +107,9 @@ describe('PDO', function() {
         device.setValueArray(0x1A00, 0, 1);
 
         device.init();
-        device.addListener('message', () => { done(); });
+        device.addListener('message', () => {
+            done();
+        });
         device.pdo.write(0x18A);
     });
 

@@ -1,4 +1,13 @@
 /**
+ * @file Implements the CANopen Process Data Object (PDO) protocol.
+ * @author Wilkins White
+ * @copyright 2021 Nova Dynamics LLC
+ */
+
+const Device = require('../device');
+const { DataObject } = require('../eds');
+
+/**
  * CANopen PDO protocol handler.
  *
  * The process data object (PDO) protocol follows a producer-consumer structure
@@ -8,6 +17,7 @@
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Process data objects (PDO)" (§7.2.2)
+ * @protected
  */
 class Pdo {
     constructor(device) {
@@ -165,8 +175,9 @@ class Pdo {
 
     /**
      * Service: PDO write
+     *
      * @param {number} cobId - mapped TPDO to send.
-     * @param {bool} update - only write if data has changed.
+     * @param {boolean} update - only write if data has changed.
      */
     write(cobId, update=false) {
         const pdo = this.writeMap[cobId];
@@ -198,7 +209,11 @@ class Pdo {
 
     /**
      * Called when a new CAN message is received.
-     * @param {Object} message - CAN frame.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
      * @private
      */
     _onMessage(message) {
@@ -236,8 +251,10 @@ class Pdo {
 
     /**
      * Parse a PDO communication/mapping parameter.
+     *
      * @param {number} index - entry index.
      * @param {DataObject} entry - entry to parse.
+     * @returns {object} parsed PDO data.
      * @private
      */
     _parsePDO(index, entry) {

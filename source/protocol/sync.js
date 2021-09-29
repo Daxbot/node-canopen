@@ -1,4 +1,11 @@
-const { ObjectType, AccessType, DataType } = require('../eds');
+/**
+ * @file Implements the CANopen Synchronization (SYNC) protocol.
+ * @author Wilkins White
+ * @copyright 2021 Nova Dynamics LLC
+ */
+
+const Device = require('../device');
+const { ObjectType, AccessType, DataType, DataObject } = require('../eds');
 
 /**
  * CANopen SYNC protocol handler.
@@ -9,6 +16,7 @@ const { ObjectType, AccessType, DataType } = require('../eds');
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Synchronization object (SYNC)" (§7.2.5)
+ * @protected
  */
 class Sync {
     constructor(device) {
@@ -23,16 +31,17 @@ class Sync {
 
     /**
      * Set the sync generation enable bit.
+     *
      * @param {boolean} gen - enable flag.
      */
     set generate(gen) {
         let obj1005 = this.device.eds.getEntry(0x1005);
         if(obj1005 === undefined) {
             obj1005 = this.device.eds.addEntry(0x1005, {
-                'ParameterName':    'COB-ID SYNC',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED32,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'COB-ID SYNC',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -44,7 +53,8 @@ class Sync {
 
     /**
      * Get the sync generation enable bit.
-     * @return {boolean} - enable flag.
+     *
+     * @returns {boolean} - enable flag.
      */
     get generate() {
         return this._generate;
@@ -52,16 +62,17 @@ class Sync {
 
     /**
      * Set the COB-ID.
+     *
      * @param {number} cobId - COB-ID.
      */
     set cobId(cobId) {
         let obj1005 = this.device.eds.getEntry(0x1005);
         if(obj1005 === undefined) {
             obj1005 = this.device.eds.addEntry(0x1005, {
-                'ParameterName':    'COB-ID SYNC',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED32,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'COB-ID SYNC',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -71,7 +82,8 @@ class Sync {
 
     /**
      * Get the COB-ID.
-     * @return {number} - COB-ID.
+     *
+     * @returns {number} - COB-ID.
      */
     get cobId() {
         return this._cobId;
@@ -79,16 +91,17 @@ class Sync {
 
     /**
      * Set the sync interval.
+     *
      * @param {number} period - cycle period (μs).
      */
     set cyclePeriod(period) {
         let obj1006 = this.device.eds.getEntry(0x1006);
         if(obj1006 === undefined) {
             obj1006 = this.device.eds.addEntry(0x1006, {
-                'ParameterName':    'Communication cycle period',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED32,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'Communication cycle period',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -97,7 +110,8 @@ class Sync {
 
     /**
      * Get the sync interval.
-     * @return {number} - cycle period (μs)
+     *
+     * @returns {number} - cycle period (μs)
      */
     get cyclePeriod() {
         return this._cyclePeriod;
@@ -105,16 +119,17 @@ class Sync {
 
     /**
      * Set the sync counter overflow value.
+     *
      * @param {number} overflow - overflow value.
      */
     set overflow(overflow) {
         let obj1019 = this.device.eds.getEntry(0x1019);
         if(obj1019 === undefined) {
             obj1019 = this.device.eds.addEntry(0x1019, {
-                'ParameterName':    'Synchronous counter overflow value',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED8,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'Synchronous counter overflow value',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED8,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -124,7 +139,8 @@ class Sync {
 
     /**
      * Get the sync counter overflow value.
-     * @return {number} - overflow value.
+     *
+     * @returns {number} - overflow value.
      */
     get overflow() {
         return this._overflow;
@@ -163,12 +179,12 @@ class Sync {
 
         if(this._overflow) {
             this.syncTimer = setInterval(() => {
-                    this.syncCounter += 1;
-                    if(this.syncCounter > this._overflow)
-                        this.syncCounter = 1;
+                this.syncCounter += 1;
+                if(this.syncCounter > this._overflow)
+                    this.syncCounter = 1;
 
-                    this.write(this.syncCounter);
-                }, this._cyclePeriod / 1000);
+                this.write(this.syncCounter);
+            }, this._cyclePeriod / 1000);
         }
         else {
             this.syncTimer = setInterval(() => {
@@ -186,6 +202,7 @@ class Sync {
 
     /**
      * Service: SYNC write.
+     *
      * @param {number | null} counter - sync counter;
      */
     write(counter=null) {
@@ -201,7 +218,11 @@ class Sync {
 
     /**
      * Called when a new CAN message is received.
-     * @param {Object} message - CAN frame.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
      * @private
      */
     _onMessage(message) {
@@ -216,6 +237,7 @@ class Sync {
 
     /**
      * Called when 0x1005 (COB-ID SYNC) is updated.
+     *
      * @param {DataObject} data - updated DataObject.
      * @private
      */
@@ -243,6 +265,7 @@ class Sync {
 
     /**
      * Called when 0x1006 (Communication cycle period) is updated.
+     *
      * @param {DataObject} data - updated DataObject.
      * @private
      */
@@ -256,6 +279,7 @@ class Sync {
 
     /**
      * Called when 0x1019 (Synchronous counter overflow value) is updated.
+     *
      * @param {DataObject} data - updated DataObject.
      * @private
      */
