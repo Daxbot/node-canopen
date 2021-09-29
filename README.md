@@ -1,6 +1,4 @@
 # node-canopen
-[![Build Status](https://travis-ci.org/DaxBot/node-canopen.svg?branch=v2-beta)](https://travis-ci.org/DaxBot/node-canopen)
-
 CANopen is the internationally standardized (EN 50325-4) CAN-based
 higher-layer protocol for embedded control system. For more information on
 CANopen see http://www.can-cia.org/
