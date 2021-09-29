@@ -33,10 +33,14 @@ class Time {
     }
 
     /**
-     * Set the time stamp producer enable bit.
+     * Time stamp producer enable bit (Object 0x1012, bit 30).
      *
-     * @param {boolean} produce - enable flag.
+     * @type {boolean}
      */
+    get produce() {
+        return this._produce;
+    }
+
     set produce(produce) {
         let obj1012 = this.device.eds.getEntry(0x1012);
         if(obj1012 === undefined) {
@@ -55,19 +59,14 @@ class Time {
     }
 
     /**
-     * Get the time stamp producer enable bit.
+     * Time stamp consumer enable bit (Object 0x1012, bit 31).
      *
-     * @returns {boolean} - enable flag.
+     * @type {boolean}
      */
-    get produce() {
-        return this._produce;
+    get consume() {
+        return this._consume;
     }
 
-    /**
-     * Set the time stamp consumer enable bit.
-     *
-     * @param {boolean} consume - enable flag.
-     */
     set consume(consume) {
         let obj1012 = this.device.eds.getEntry(0x1012);
         if(obj1012 === undefined) {
@@ -89,19 +88,14 @@ class Time {
     }
 
     /**
-     * Get the time stamp consumer enable bit.
+     * Time COB-ID (Object 0x1012, bits 0-28).
      *
-     * @returns {boolean} - enable flag.
+     * @type {number}
      */
-    get consume() {
-        return this._consume;
+    get cobId() {
+        return this._cobId;
     }
 
-    /**
-     * Set the COB-ID.
-     *
-     * @param {number} cobId - COB-ID.
-     */
     set cobId(cobId) {
         let obj1012 = this.device.eds.getEntry(0x1012);
         if(obj1012 === undefined) {
@@ -115,15 +109,6 @@ class Time {
 
         cobId &= 0x7FF;
         obj1012.value = (obj1012.value & ~(0x7FF)) | cobId;
-    }
-
-    /**
-     * Get the COB-ID.
-     *
-     * @returns {number} - COB-ID.
-     */
-    get cobId() {
-        return this._cobId;
     }
 
     /** Initialize members and begin consuming time stamp objects. */

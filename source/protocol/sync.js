@@ -30,10 +30,14 @@ class Sync {
     }
 
     /**
-     * Set the sync generation enable bit.
+     * Sync generation enable bit (Object 0x1005, bit 30).
      *
-     * @param {boolean} gen - enable flag.
+     * @type {boolean}
      */
+    get generate() {
+        return this._generate;
+    }
+
     set generate(gen) {
         let obj1005 = this.device.eds.getEntry(0x1005);
         if(obj1005 === undefined) {
@@ -52,19 +56,14 @@ class Sync {
     }
 
     /**
-     * Get the sync generation enable bit.
+     * Sync COB-ID (Object 0x1005, bits 0-28).
      *
-     * @returns {boolean} - enable flag.
+     * @type {number}
      */
-    get generate() {
-        return this._generate;
+    get cobId() {
+        return this._cobId;
     }
 
-    /**
-     * Set the COB-ID.
-     *
-     * @param {number} cobId - COB-ID.
-     */
     set cobId(cobId) {
         let obj1005 = this.device.eds.getEntry(0x1005);
         if(obj1005 === undefined) {
@@ -80,20 +79,16 @@ class Sync {
         obj1005.value = (obj1005.value & ~(0x7FF)) | cobId;
     }
 
-    /**
-     * Get the COB-ID.
-     *
-     * @returns {number} - COB-ID.
-     */
-    get cobId() {
-        return this._cobId;
-    }
 
     /**
-     * Set the sync interval.
+     * Sync interval in μs (Object 0x1006).
      *
-     * @param {number} period - cycle period (μs).
+     * @type {number}
      */
+    get cyclePeriod() {
+        return this._cyclePeriod;
+    }
+
     set cyclePeriod(period) {
         let obj1006 = this.device.eds.getEntry(0x1006);
         if(obj1006 === undefined) {
@@ -109,19 +104,14 @@ class Sync {
     }
 
     /**
-     * Get the sync interval.
+     * Sync counter overflow value (Object 0x1019).
      *
-     * @returns {number} - cycle period (μs)
+     * @type {number}
      */
-    get cyclePeriod() {
-        return this._cyclePeriod;
+    get overflow() {
+        return this._overflow;
     }
 
-    /**
-     * Set the sync counter overflow value.
-     *
-     * @param {number} overflow - overflow value.
-     */
     set overflow(overflow) {
         let obj1019 = this.device.eds.getEntry(0x1019);
         if(obj1019 === undefined) {
@@ -135,15 +125,6 @@ class Sync {
 
         overflow &= 0xFF;
         obj1019.value = overflow;
-    }
-
-    /**
-     * Get the sync counter overflow value.
-     *
-     * @returns {number} - overflow value.
-     */
-    get overflow() {
-        return this._overflow;
     }
 
     /** Initialize members and begin consuming sync objects. */

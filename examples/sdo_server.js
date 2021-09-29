@@ -21,7 +21,8 @@ const device = new Device({ id: serverId });
 const channel = can.createRawChannel('can0');
 
 // Step 3: Configure the SDO server parameters.
-device.sdo.setServerParameters(0x600, 0x580);
+device.sdoServer.cobIdRx = 0x600;
+device.sdoServer.cobIdTx = 0x580;
 
 // Step 4: Create an additional entry to be accessed by the SDO client.
 device.eds.addEntry(0x2000, {

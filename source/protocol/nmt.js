@@ -11,12 +11,25 @@ const { ObjectType, AccessType, DataType, DataObject } = require('../eds');
  * NMT internal states.
  *
  * @enum {number}
- * @memberof Nmt
+ * @see CiA301 "NMT states" (§7.3.2.2)
  */
 const NmtState = {
+    /** The CANopen device's parameters are set to their power-on values. */
     INITIALIZING: 0,
+
+    /**
+     * Communication via SDOs is possible, but PDO communication is not
+     * allowed. PDO configuration may be performed by the application.
+     */
     PRE_OPERATIONAL: 127,
+
+    /**
+     * All communication objects are active. Access to certain aspects of the
+     * application may be limited.
+     */
     OPERATIONAL: 5,
+
+    /** No communication except for node guarding and heartbeat.  */
     STOPPED: 4,
 };
 
@@ -24,13 +37,22 @@ const NmtState = {
  * NMT commands.
  *
  * @enum {number}
- * @memberof Nmt
+ * @see CiA301 "Node control protocols" (§7.2.8.3.1)
  */
 const NmtCommand = {
+    /** Switch target device to {@link NmtState.OPERATIONAL}. */
     ENTER_OPERATIONAL: 1,
+
+    /** Switch target device to {@link NmtState.STOPPED}. */
     ENTER_STOPPED: 2,
+
+    /** Switch target device to {@link NmtState.PRE_OPERATIONAL}. */
     ENTER_PRE_OPERATIONAL: 128,
+
+    /** Reset the target device. */
     RESET_NODE: 129,
+
+    /** Reset the target device's communication. */
     RESET_COMMUNICATION: 130,
 };
 
@@ -54,15 +76,21 @@ class Nmt {
         this.device = device;
         this.heartbeatTimer = null;
         this.heartbeats = {};
+        this._consumerTime = 0;
         this._producerTime = 0;
         this._state = NmtState.INITIALIZING;
     }
 
+
     /**
-     * Set the NMT state.
+     * Device NMT state.
      *
-     * @param {number} newState - NMT state.
+     * @type {NmtState}
      */
+    get state() {
+        return this._state;
+    }
+
     set state(newState) {
         const oldState = this.state;
         if(newState != oldState) {
@@ -72,20 +100,38 @@ class Nmt {
     }
 
     /**
-     * Get the NMT state.
+     * Consumer heartbeat time in ms (Object 0x1016).
      *
-     * @returns {number} - NMT state.
+     * @type {number}
      */
-    get state() {
-        return this._state;
+    get consumerTime() {
+        return this._consumerTime;
+    }
+
+    set consumerTime(value) {
+        let obj1016 = this.device.eds.getEntry(0x1016);
+        if(obj1016 === undefined) {
+            obj1016 = this.device.eds.addEntry(0x1017, {
+                parameterName:  'Consumer heartbeat time',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+
+        obj1016.value = value;
     }
 
     /**
-     * Set producer heartbeat time.
+     * Producer heartbeat time in ms (Object 0x1017).
      *
-     * @param {number} time - heartbeat time (ms).
+     * @type {number}
      */
-    set producerTime(time) {
+    get producerTime() {
+        return this._producerTime;
+    }
+
+    set producerTime(value) {
         let obj1017 = this.device.eds.getEntry(0x1017);
         if(obj1017 === undefined) {
             obj1017 = this.device.eds.addEntry(0x1017, {
@@ -96,16 +142,7 @@ class Nmt {
             });
         }
 
-        obj1017.value = time;
-    }
-
-    /**
-     * Get producer heartbeat time.
-     *
-     * @returns {number} - heartbeat time (ms).
-     */
-    get producerTime() {
-        return this._producerTime;
+        obj1017.value = value;
     }
 
     /** Initialize members and begin heartbeat monitoring. */
@@ -312,18 +349,18 @@ class Nmt {
          *     bit 16..23   Node-ID of producer.
          *     bit 24..31   Reserved (0x00);
          */
-        const heartbeatTime = data.raw.readUInt16LE(0);
+        this._consumerTime = data.raw.readUInt16LE(0);
         const deviceId = data.raw.readUInt8(2);
 
         const heartbeat = this.heartbeats[deviceId];
         if(heartbeat !== undefined) {
-            heartbeat['interval'] = heartbeatTime;
+            heartbeat['interval'] = this._consumerTime;
             clearTimeout(heartbeat['timer']);
         }
         else {
             this.heartbeats[deviceId] = {
                 state:      NmtState.INITIALIZING,
-                interval:   heartbeatTime,
+                interval:   this._consumerTime,
             }
         }
     }

@@ -41,8 +41,15 @@ describe('SDO', function() {
 
     beforeEach(function() {
         device = new Device({ id: 0xA, loopback: true });
-        device.sdo.setServerParameters();
-        device.sdo.setClientParameters(device.id);
+
+        // Set client parameters
+        device.sdo.cobIdRx = 0x580;
+        device.sdo.cobIdTx = 0x600;
+        device.sdo.serverId = device.id;
+
+        // Set server parameters
+        device.sdoServer.cobIdRx = 0x600;
+        device.sdoServer.cobIdTx = 0x580;
     });
 
     describe('Expediated transfer', function() {
