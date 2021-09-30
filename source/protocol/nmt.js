@@ -77,7 +77,6 @@ class Nmt {
         this.device = device;
         this.heartbeats = {};
         this.timers = {};
-        this._consumerTime = 0;
         this._producerTime = 0;
         this._state = NmtState.INITIALIZING;
     }
@@ -97,29 +96,6 @@ class Nmt {
             this._state = newState;
             this.device.emit('nmtChangeState', this.device.id, newState);
         }
-    }
-
-    /**
-     * Consumer heartbeat time in ms (Object 0x1016).
-     *
-     * @type {number}
-     */
-    get consumerTime() {
-        return this._consumerTime;
-    }
-
-    set consumerTime(value) {
-        let obj1016 = this.device.eds.getEntry(0x1016);
-        if(obj1016 === undefined) {
-            obj1016 = this.device.eds.addEntry(0x1017, {
-                parameterName:  'Consumer heartbeat time',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-
-        obj1016.value = value;
     }
 
     /**
@@ -352,17 +328,17 @@ class Nmt {
          *     bit 16..23   Node-ID of producer.
          *     bit 24..31   Reserved (0x00);
          */
-        this._consumerTime = data.raw.readUInt16LE(0);
+        const heartbeatTime = data.raw.readUInt16LE(0);
         const deviceId = data.raw.readUInt8(2);
 
         if(this.heartbeats[deviceId] !== undefined) {
-            this.heartbeats[deviceId].interval = this._consumerTime;
+            this.heartbeats[deviceId].interval = heartbeatTime;
             clearTimeout(this.timers[deviceId]);
         }
         else {
             this.heartbeats[deviceId] = {
                 state:      NmtState.INITIALIZING,
-                interval:   this._consumerTime,
+                interval:   heartbeatTime,
             }
         }
     }
