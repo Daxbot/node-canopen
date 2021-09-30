@@ -81,7 +81,6 @@ class Nmt {
         this._state = NmtState.INITIALIZING;
     }
 
-
     /**
      * Device NMT state.
      *
@@ -273,7 +272,6 @@ class Nmt {
             data: Buffer.from([this.state])
         });
     }
-
 
     /**
      * Parse an NMT command.

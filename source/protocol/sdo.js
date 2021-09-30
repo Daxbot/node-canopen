@@ -620,7 +620,7 @@ class SdoClient {
      * @param {number} args.subIndex - data subIndex to upload.
      * @param {number} args.timeout - time before transfer is aborted.
      * @param {DataType} args.dataType - expected data type.
-     * @returns {Promise<object>} resolves when the upload is complete.
+     * @returns {Promise<Buffer | number | bigint | string | Date>} resolves when the upload is complete.
      */
     upload({serverId, index, subIndex=null, timeout=30, dataType=null}) {
         let server = this.servers[serverId];

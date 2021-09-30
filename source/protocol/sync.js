@@ -79,7 +79,6 @@ class Sync {
         obj1005.value = (obj1005.value & ~(0x7FF)) | cobId;
     }
 
-
     /**
      * Sync interval in μs (Object 0x1006).
      *

@@ -77,38 +77,59 @@ class Lss {
         this.pending = {};
     }
 
+    /**
+     * Device identity vendor id (Object 0x1018.1).
+     *
+     * @type {number}
+     */
+    get vendorId() {
+        return this.device.getValueArray(0x1018, 1);
+    }
+
     set vendorId(value) {
         this.device.setValueArray(0x1018, 1, value);
     }
 
-    get vendorId() {
-        return this.device.getValueArray(0x1018, 1);
+    /**
+     * Device identity product code (Object 0x1018.2).
+     *
+     * @type {number}
+     */
+    get productCode() {
+        return this.device.getValueArray(0x1018, 2);
     }
 
     set productCode(value) {
         this.device.setValueArray(0x1018, 2, value);
     }
 
-    get productCode() {
-        return this.device.getValueArray(0x1018, 2);
+    /**
+     * Device identity revision number (Object 0x1018.3).
+     *
+     * @type {number}
+     */
+    get revisionNumber() {
+        return this.device.getValueArray(0x1018, 3);
     }
 
     set revisionNumber(value) {
         this.device.setValueArray(0x1018, 3, value);
     }
 
-    get revisionNumber() {
-        return this.device.getValueArray(0x1018, 3);
+    /**
+     * Device identity serial number (Object 0x1018.4).
+     *
+     * @type {number}
+     */
+    get serialNumber() {
+        return this.device.getValueArray(0x1018, 4);
     }
 
     set serialNumber(value) {
         this.device.setValueArray(0x1018, 4, value);
     }
 
-    get serialNumber() {
-        return this.device.getValueArray(0x1018, 4);
-    }
-
+    /** Begin listening for LSS command responses. */
     init() {
         if(!this.device.eds.lssSupported)
             return;
