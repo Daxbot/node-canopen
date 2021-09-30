@@ -38,6 +38,7 @@ const NmtState = {
  *
  * @enum {number}
  * @see CiA301 "Node control protocols" (§7.2.8.3.1)
+ * @private
  */
 const NmtCommand = {
     /** Switch target device to {@link NmtState.OPERATIONAL}. */
@@ -248,7 +249,7 @@ class Nmt {
      * Serve an NMT command object.
      *
      * @param {number} nodeId - id of node or 0 for broadcast.
-     * @param {number} command - NMT command to serve.
+     * @param {NmtCommand} command - NMT command to serve.
      * @private
      */
     _sendNmt(nodeId, command) {
@@ -276,7 +277,7 @@ class Nmt {
     /**
      * Parse an NMT command.
      *
-     * @param {number} command - NMT command to handle.
+     * @param {NmtCommand} command - NMT command to handle.
      * @private
      */
     _handleNmt(command) {
@@ -373,4 +374,4 @@ class Nmt {
     }
 }
 
-module.exports=exports={ NmtState, NmtCommand, Nmt };
+module.exports=exports={ NmtState, Nmt };
