@@ -74,8 +74,8 @@ const NmtCommand = {
 class Nmt {
     constructor(device) {
         this.device = device;
-        this.heartbeatTimer = null;
         this.heartbeats = {};
+        this.timers = {};
         this._consumerTime = 0;
         this._producerTime = 0;
         this._state = NmtState.INITIALIZING;
@@ -174,14 +174,14 @@ class Nmt {
         if(this.producerTime == 0)
             throw TypeError('Producer heartbeat time can not be 0.')
 
-        this.heartbeatTimer = setInterval(() => {
+        this.timers[this.device.id] = setInterval(() => {
             this._sendHeartbeat();
         }, this.producerTime);
     }
 
     /** Stop heartbeat generation. */
     stop() {
-        clearInterval(this.heartbeatTimer);
+        clearInterval(this.timers[this.device.id]);
     }
 
     /**
@@ -315,20 +315,20 @@ class Nmt {
         else if((message.id & 0x700) == 0x700) {
             const deviceId = message.id & 0x7F;
             if(deviceId in this.heartbeats) {
-                this.heartbeats[deviceId]['state'] = message.data[0];
-                this.heartbeats[deviceId]['last'] = Date.now();
+                this.heartbeats[deviceId].state = message.data[0];
+                this.heartbeats[deviceId].last = Date.now();
 
-                if(!this.heartbeats[deviceId]['timer']) {
-                    /* First heartbeat - start timer. */
-                    const interval = this.heartbeats[deviceId]['interval'];
-                    this.heartbeats[deviceId]['timer'] = setTimeout(() => {
+                if(!this.timers[deviceId]) {
+                    // First heartbeat - start timer.
+                    const interval = this.heartbeats[deviceId].interval;
+                    this.timers[deviceId] = setTimeout(() => {
                         this.device.emit("nmtTimeout",
                             deviceId, this.heartbeats[deviceId]);
-                        this.heartbeats[deviceId]['timer'] = null;
+                        this.timers[deviceId] = null;
                     }, interval);
                 }
                 else {
-                    this.heartbeats[deviceId]['timer'].refresh();
+                    this.timers[deviceId].refresh();
                 }
             }
         }
@@ -350,10 +350,9 @@ class Nmt {
         this._consumerTime = data.raw.readUInt16LE(0);
         const deviceId = data.raw.readUInt8(2);
 
-        const heartbeat = this.heartbeats[deviceId];
-        if(heartbeat !== undefined) {
-            heartbeat['interval'] = this._consumerTime;
-            clearTimeout(heartbeat['timer']);
+        if(this.heartbeats[deviceId] !== undefined) {
+            this.heartbeats[deviceId].interval = this._consumerTime;
+            clearTimeout(this.timers[deviceId]);
         }
         else {
             this.heartbeats[deviceId] = {
