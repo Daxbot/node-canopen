@@ -95,7 +95,7 @@ class Nmt {
         const oldState = this.state;
         if(newState != oldState) {
             this._state = newState;
-            this.device.emit('nmtChangeState', newState, oldState);
+            this.device.emit('nmtChangeState', this.device.id, newState);
         }
     }
 
@@ -316,15 +316,19 @@ class Nmt {
         else if((message.id & 0x700) == 0x700) {
             const deviceId = message.id & 0x7F;
             if(deviceId in this.heartbeats) {
-                this.heartbeats[deviceId].state = message.data[0];
                 this.heartbeats[deviceId].last = Date.now();
+
+                const state = message.data[0];
+                if(state !== this.heartbeats[deviceId].state) {
+                    this.heartbeats[deviceId].state = state;
+                    this.device.emit('nmtChangeState', deviceId, state);
+                }
 
                 if(!this.timers[deviceId]) {
                     // First heartbeat - start timer.
                     const interval = this.heartbeats[deviceId].interval;
                     this.timers[deviceId] = setTimeout(() => {
-                        this.device.emit("nmtTimeout",
-                            deviceId, this.heartbeats[deviceId]);
+                        this.device.emit('nmtTimeout', deviceId);
                         this.timers[deviceId] = null;
                     }, interval);
                 }
