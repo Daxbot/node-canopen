@@ -184,15 +184,17 @@ class Nmt {
             });
         }
 
-        if(subIndex === undefined) {
+        if(!subIndex) {
             // Find first empty index
             for(let i = 1; i <= 255; ++i) {
-                if(obj1016[i] === undefined)
+                if(obj1016[i] === undefined) {
                     subIndex = i;
+                    break;
+                }
             }
         }
 
-        if(subIndex === undefined)
+        if(!subIndex)
             throw new EdsError('Failed to find empty sub-index');
 
         // Install sub entry
@@ -213,7 +215,7 @@ class Nmt {
     removeConsumer(deviceId) {
         const subEntry = this.getConsumer(deviceId);
         if(subEntry === null)
-            throw ReferenceError(`Entry for device ${deviceId} does not exist`);
+            throw new EdsError(`Entry for device ${deviceId} does not exist`);
 
         this.device.eds.removeSubEntry(0x1016, subEntry.subIndex);
     }
