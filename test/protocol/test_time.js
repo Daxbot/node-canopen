@@ -5,7 +5,7 @@ const { Device } = require('../../index');
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-describe('TIME', function() {
+describe('Time', function() {
     let device = null;
 
     beforeEach(function() {

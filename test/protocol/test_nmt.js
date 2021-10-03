@@ -5,7 +5,7 @@ const { Device, ObjectType, AccessType, DataType } = require('../../index');
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-describe('NMT', function() {
+describe('Nmt', function() {
     let device = null;
 
     beforeEach(function() {

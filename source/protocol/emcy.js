@@ -299,59 +299,7 @@ class Emcy {
         if(obj1003 === undefined)
             return [];
 
-        const history = [];
-        const errorCount = obj1003[0].value;
-        for(let i = 0; i < errorCount; ++i)
-            history[i] = obj1003[i+1].value;
-
-        return history;
-    }
-
-    /**
-     * Length of the error history (Object 0x1003).
-     *
-     * @type {number}
-     */
-    get historyLength() {
-        return this.history.length;
-    }
-
-    set historyLength(length) {
-        if(length === undefined || length < 0)
-            throw ReferenceError('Error field size must >= 0');
-
-        let obj1003 = this.device.eds.getEntry(0x1003);
-        if(obj1003 === undefined) {
-            obj1003 = this.device.eds.addEntry(0x1003, {
-                parameterName:  'Pre-defined error field',
-                objectType:     ObjectType.ARRAY,
-                subNumber:      1,
-            });
-        }
-
-        if(length == obj1003.subNumber - 1)
-            return; // Already configured
-
-        while(length < obj1003.subNumber - 1) {
-            // Remove extra entries
-            this.device.eds.removeSubEntry(0x1003, obj1003.subNumber);
-            obj1003.subNumber -= 1;
-        }
-
-        while(length > obj1003.subNumber - 1) {
-            // Add new entries
-            const index = obj1003.subNumber;
-            obj1003.subNumber += 1;
-
-            this.device.eds.addSubEntry(0x1003, index, {
-                parameterName:  `Standard error field ${index}`,
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-
-        obj1003[0].value = length;
+        return obj1003.value;
     }
 
     /**
@@ -379,7 +327,6 @@ class Emcy {
         else
             obj1014.value &= ~(1 << 31);
     }
-
 
     /**
      * Emcy COB-ID (Object 0x1014, bits 0-28).
@@ -427,6 +374,41 @@ class Emcy {
 
         time &= 0xFFFF;
         obj1015.value = time
+    }
+
+    /**
+     * Configures the number of sub-entries for 0x1003 (Pre-defined error field).
+     *
+     * @param {number} length - how many historical error events should be kept.
+     */
+    setHistoryLength(length) {
+        if(length === undefined || length < 0)
+            throw ReferenceError('Error field size must >= 0');
+
+        let obj1003 = this.device.eds.getEntry(0x1003);
+        if(obj1003 === undefined) {
+            obj1003 = this.device.eds.addEntry(0x1003, {
+                parameterName:  'Pre-defined error field',
+                objectType:     ObjectType.ARRAY,
+                subNumber:      1,
+            });
+        }
+
+        while(length < obj1003.subNumber - 1) {
+            // Remove extra entries
+            this.device.eds.removeSubEntry(0x1003, obj1003.subNumber - 1);
+        }
+
+        while(length > obj1003.subNumber - 1) {
+            // Add new entries
+            const index = obj1003.subNumber;
+            this.device.eds.addSubEntry(0x1003, index, {
+                parameterName:  `Standard error field ${index}`,
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
     }
 
     /** Initialize members and begin emergency monitoring. */

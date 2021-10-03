@@ -36,7 +36,7 @@ const longTypes = [
     ['TIME_DIFFERENCE', new Date()],
 ];
 
-describe('SDO', function() {
+describe('Sdo', function() {
     let device = null;
 
     beforeEach(function() {

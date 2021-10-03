@@ -5,7 +5,7 @@ const { Device } = require('../../index');
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-describe('EMCY', function() {
+describe('Emcy', function() {
     let device = null;
 
     describe('Module initialization', function() {
@@ -39,11 +39,11 @@ describe('EMCY', function() {
 
         it('should configure 0x1003', function(done) {
             // Configure 0x1003 for 10 sub-entries
-            device.emcy.historyLength = 10;
+            device.emcy.setHistoryLength(10);
             expect(device.eds.getEntry(0x1003).subNumber).to.equal(11);
 
             // Re-configure 0x1003 for 5 sub-entries
-            device.emcy.historyLength = 5;
+            device.emcy.setHistoryLength(5);
             expect(device.eds.getEntry(0x1003).subNumber).to.equal(6);
 
             done();
@@ -99,7 +99,7 @@ describe('EMCY', function() {
         });
 
         it('should track error history', function(done) {
-            device.emcy.historyLength = 1;
+            device.emcy.setHistoryLength(1);
             device.emcy.write(0x1234).then(() => {
                 setImmediate(() => {
                     expect(device.emcy.history[0]).to.equal(0x1234);
