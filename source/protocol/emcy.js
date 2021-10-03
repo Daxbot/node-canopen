@@ -271,11 +271,11 @@ class Emcy {
      *
      * @type {number}
      */
-    get errorRegister() {
+    get register() {
         return this.device.getValue(0x1001);
     }
 
-    set errorRegister(value) {
+    set register(value) {
         let obj1001 = this.device.eds.getEntry(0x1001);
         if(obj1001 === undefined) {
             obj1001 = this.device.eds.addEntry(0x1001, {
@@ -414,7 +414,7 @@ class Emcy {
     /** Initialize members and begin emergency monitoring. */
     init() {
         // Object 0x1001 - Error register.
-        this.errorRegister = 0;
+        this.register = 0;
 
         // Object 0x1014 - COB-ID EMCY.
         const obj1014 = this.device.eds.getEntry(0x1014);
@@ -448,7 +448,7 @@ class Emcy {
             return new Promise((resolve) => {
                 setTimeout(() => {
                     // Create emergency object.
-                    const em = new EmcyMessage(code, this.errorRegister, info);
+                    const em = new EmcyMessage(code, this.register, info);
 
                     let cobId = this.cobId;
                     if((cobId & 0xF) == 0)
@@ -492,7 +492,7 @@ class Emcy {
 
         if(deviceId == this.device.id) {
             // Object 0x1001 - Error register.
-            this.errorRegister = reg;
+            this.register = reg;
 
             // Object 0x1003 - Pre-defined error field.
             const obj1003 = this.device.eds.getEntry(0x1003);
