@@ -5,6 +5,9 @@ CANopen see http://www.can-cia.org/
 
 This library allows the manipulation of CANopen devices as defined in CiA 301.
 
+## Documentation
+Pre-built documentation is available here: https://daxbot.github.io/node-canopen/
+
 ## Protocols
 ### Emergency - EMCY
 The CANopen emergency protocol is used to indicate internal errors with a

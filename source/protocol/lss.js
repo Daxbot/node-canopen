@@ -68,7 +68,6 @@ class LssError extends Error {
  *
  * @param {Device} device - parent device.
  * @see CiA305 "Layer Settings Services and Protocol (LSS)"
- * @protected
  */
 class Lss {
     constructor(device) {

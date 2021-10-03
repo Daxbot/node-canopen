@@ -70,7 +70,21 @@ const NmtCommand = {
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Network management" (§7.2.8)
- * @protected
+ * @example
+ * const can = require('socketcan');
+ *
+ * const channel = can.createRawChannel('can0');
+ * const device = new Device({ id: 0xa });
+ *
+ * channel.addListener('onMessage', (message) => device.receive(message));
+ * device.setTransmitFunction((message) => channel.send(message));
+ *
+ * device.nmt.producerTime = 500;
+ *
+ * device.init();
+ * channel.start();
+ *
+ * device.nmt.start();
  */
 class Nmt {
     constructor(device) {
@@ -234,6 +248,10 @@ class Nmt {
         if(this.producerTime == 0)
             throw TypeError('Producer heartbeat time can not be 0.')
 
+        // Switch to NmtState.OPERATIONAL
+        this.startNode();
+
+        // Start heartbeat timer
         this.timers[this.device.id] = setInterval(() => {
             this._sendHeartbeat();
         }, this.producerTime);
@@ -249,7 +267,7 @@ class Nmt {
      *
      * Change the state of NMT slave(s) to NMT state operational.
      *
-     * @param {number} nodeId - id of node or 0 for broadcast.
+     * @param {number} [nodeId] - id of node or 0 for broadcast.
      * @see CiA301 "Service start remote node" (§7.2.8.2.1.2)
      */
     startNode(nodeId) {
@@ -261,7 +279,7 @@ class Nmt {
      *
      * Change the state of NMT slave(s) to NMT state stopped.
      *
-     * @param {number} nodeId - id of node or 0 for broadcast.
+     * @param {number} [nodeId] - id of node or 0 for broadcast.
      * @see CiA301 "Service stop remote node" (§7.2.8.2.1.3)
      */
     stopNode(nodeId) {
@@ -273,7 +291,7 @@ class Nmt {
      *
      * Change the state of NMT slave(s) to NMT state pre-operational.
      *
-     * @param {number} nodeId - id of node or 0 for broadcast.
+     * @param {number} [nodeId] - id of node or 0 for broadcast.
      * @see CiA301 "Service enter pre-operational" (§7.2.8.2.1.4)
      */
     enterPreOperational(nodeId) {
@@ -285,7 +303,7 @@ class Nmt {
      *
      * Reset the application of NMT slave(s).
      *
-     * @param {number} nodeId - id of node or 0 for broadcast.
+     * @param {number} [nodeId] - id of node or 0 for broadcast.
      * @see CiA301 "Service reset node" (§7.2.8.2.1.5)
      */
     resetNode(nodeId) {
@@ -297,7 +315,7 @@ class Nmt {
      *
      * Reset communication of NMT slave(s).
      *
-     * @param {number} nodeId - id of node or 0 for broadcast.
+     * @param {number} [nodeId] - id of node or 0 for broadcast.
      * @see CiA301 "Service reset communication" (§7.2.8.2.1.6)
      */
     resetCommunication(nodeId) {
@@ -312,8 +330,16 @@ class Nmt {
      * @private
      */
     _sendNmt(nodeId, command) {
-        if(nodeId == 0 || nodeId == this.device.id)
+        if(nodeId === undefined || nodeId === this.device.id) {
+            // Handle internally and return
             this._handleNmt(command);
+            return;
+        }
+
+        if(nodeId === 0) {
+            // Broadcast
+            this._handleNmt(command);
+        }
 
         this.device.send({
             id:     0x0,

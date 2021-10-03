@@ -688,7 +688,7 @@ class DataObject extends EventEmitter {
     }
 
     /**
-     * Size of the raw data including sub-entries.
+     * Size of the raw data in bytes including sub-entries.
      *
      * @type {number}
      */
@@ -810,6 +810,26 @@ class DataObject extends EventEmitter {
  * This class provides methods for loading and saving CANopen EDS v4.0 files.
  *
  * @see CiA306 "Electronic data sheet specification for CANopen"
+ * @example
+ * const eds = new Eds();
+ *
+ * eds.fileName = 'example.eds';
+ * eds.fileVersion = '1'
+ * eds.fileRevision = '1'
+ * eds.edsVersion = '4.0'
+ * eds.description = 'An example EDS file';
+ * eds.creationDate = new Date();
+ * eds.createdBy = 'node-canopen';
+ *
+ * eds.addEntry(0x1017, {
+ *     parameterName:  'Producer heartbeat timer',
+ *     objectType:     ObjectType.VAR,
+ *     dataType:       DataType.UNSIGNED32,
+ *     accessType:     AccessType.READ_WRITE,
+ *     defaultValue:   500,
+ * });
+ *
+ * eds.save();
  */
 class Eds {
     constructor() {
@@ -927,9 +947,12 @@ class Eds {
     /**
      * Write an EDS file.
      *
-     * @param {string} path - path to file.
+     * @param {string} [path] - path to file, defaults to fileName.
      */
     save(path) {
+        if(!path)
+            path = this.fileName;
+
         const fd = fs.openSync(path, 'w');
 
         // Write header fields

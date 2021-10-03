@@ -410,7 +410,6 @@ class Queue {
  *
  * @param {Device} device - parent device.
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
- * @protected
  */
 class SdoClient {
     constructor(device) {

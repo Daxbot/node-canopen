@@ -17,7 +17,6 @@ const { ObjectType, AccessType, DataType, EdsError, DataObject } = require('../e
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Process data objects (PDO)" (§7.2.2)
- * @protected
  */
 class Pdo {
     constructor(device) {

@@ -12,7 +12,7 @@ const { Pdo } = require('./protocol/pdo');
 const { SdoClient, SdoServer } = require('./protocol/sdo');
 const { Sync } = require('./protocol/sync');
 const { Time } = require('./protocol/time');
-const { Eds, DataObject } = require('./eds');
+const { Eds, EdsError, DataObject } = require('./eds');
 
 /**
  * A CANopen device.
@@ -33,6 +33,17 @@ const { Eds, DataObject } = require('./eds');
  * @fires 'sync' on consuming a synchronization object.
  * @fires 'time' on consuming a time stamp object.
  * @fires 'pdo' on updating a mapped pdo object.
+ * @example
+ * const can = require('socketcan');
+ *
+ * const channel = can.createRawChannel('can0');
+ * const device = new Device({ id: 0xa });
+ *
+ * channel.addListener('onMessage', (message) => device.receive(message));
+ * device.setTransmitFunction((message) => channel.send(message));
+ *
+ * device.init();
+ * channel.start();
  */
 class Device extends EventEmitter {
     constructor({ id, eds, loopback=false }) {
@@ -95,12 +106,14 @@ class Device extends EventEmitter {
     }
 
     /**
-     * Called with each outgoing CAN message.
+     * Called with each outgoing CAN message. This method should not be called
+     * directly - use the protocol objects instead.
      *
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @param {number} message.len - CAN message length in bytes.
+     * @protected
      */
     send(message) {
         if(this._send === undefined)
@@ -131,7 +144,7 @@ class Device extends EventEmitter {
     getValue(index) {
         const entry = this.eds.getEntry(index);
         if(!entry)
-            throw ReferenceError("Entry does not exist");
+            throw new EdsError("Entry does not exist");
 
         return entry.value;
     }
@@ -146,7 +159,7 @@ class Device extends EventEmitter {
     getValueArray(index, subIndex) {
         const entry = this.eds.getSubEntry(index, subIndex);
         if(!entry)
-            throw ReferenceError("Entry does not exist");
+            throw new EdsError("Entry does not exist");
 
         return entry.value;
     }
@@ -160,7 +173,7 @@ class Device extends EventEmitter {
     getRaw(index) {
         const entry = this.eds.getEntry(index);
         if(!entry)
-            throw ReferenceError("Entry does not exist");
+            throw new EdsError("Entry does not exist");
 
         return entry.raw;
     }
@@ -175,7 +188,7 @@ class Device extends EventEmitter {
     getRawArray(index, subIndex) {
         const entry = this.eds.getSubEntry(index, subIndex);
         if(!entry)
-            throw ReferenceError("Entry does not exist");
+            throw new EdsError("Entry does not exist");
 
         return entry.raw;
     }
@@ -189,7 +202,7 @@ class Device extends EventEmitter {
     setValue(index, value) {
         const entry = this.eds.getEntry(index);
         if(!entry)
-            throw ReferenceError("Entry does not exist");
+            throw new EdsError("Entry does not exist");
 
         entry.value = value;
     }
@@ -204,7 +217,7 @@ class Device extends EventEmitter {
     setValueArray(index, subIndex, value) {
         const entry = this.eds.getSubEntry(index, subIndex);
         if(!entry)
-            throw ReferenceError("Entry does not exist");
+            throw new EdsError("Entry does not exist");
 
         entry.value = value;
     }
@@ -218,7 +231,7 @@ class Device extends EventEmitter {
     setRaw(index, raw) {
         const entry = this.eds.getEntry(index);
         if(!entry)
-            throw ReferenceError("Entry does not exist");
+            throw new EdsError("Entry does not exist");
 
         entry.raw = raw;
     }
@@ -233,7 +246,7 @@ class Device extends EventEmitter {
     setRawArray(index, subIndex, raw) {
         const entry = this.eds.getSubEntry(index, subIndex);
         if(!entry)
-            throw ReferenceError("Entry does not exist");
+            throw new EdsError("Entry does not exist");
 
         entry.raw = raw;
     }

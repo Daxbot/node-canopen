@@ -16,7 +16,24 @@ const { ObjectType, AccessType, DataType, DataObject } = require('../eds');
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Synchronization object (SYNC)" (§7.2.5)
- * @protected
+ * @example
+ * const can = require('socketcan');
+ *
+ * const channel = can.createRawChannel('can0');
+ * const device = new Device({ id: 0xa });
+ *
+ * channel.addListener('onMessage', (message) => device.receive(message));
+ * device.setTransmitFunction((message) => channel.send(message));
+ *
+ * device.sync.cobId = 0x80;
+ * device.sync.cyclePeriod = 1e6; // 1 second
+ * device.sync.overflow = 10;
+ * device.sync.generate = true;
+ *
+ * device.init();
+ * channel.start();
+ *
+ * device.sync.start();
  */
 class Sync {
     constructor(device) {

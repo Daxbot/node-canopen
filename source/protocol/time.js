@@ -22,7 +22,22 @@ const {
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Time stamp object (TIME)" (§7.2.6)
- * @protected
+ * @example
+ * const can = require('socketcan');
+ *
+ * const channel = can.createRawChannel('can0');
+ * const device = new Device({ id: 0xa });
+ *
+ * channel.addListener('onMessage', (message) => device.receive(message));
+ * device.setTransmitFunction((message) => channel.send(message));
+ *
+ * device.time.cobId = 0x80 + device.id;
+ * device.time.produce = true;
+ *
+ * device.init();
+ * channel.start();
+ *
+ * device.time.write();
  */
 class Time {
     constructor(device) {

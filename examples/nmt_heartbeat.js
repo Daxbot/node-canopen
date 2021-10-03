@@ -23,12 +23,13 @@ channel.addListener('onMessage', (message) => device.receive(message));
 device.setTransmitFunction((message) => channel.send(message));
 
 device.init();
-device.nmt.start();
 channel.start();
 
-// Step 5: Stop the node using NMT commands.
+device.nmt.start();
+
 setTimeout(() => {
-    device.nmt.stopNode(device.id);
+    // Step 5: Stop the node using NMT broadcast.
+    device.nmt.stopNode(0);
     setTimeout(() => {
         device.nmt.stop();
         channel.stop();

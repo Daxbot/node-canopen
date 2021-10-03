@@ -255,7 +255,21 @@ class EmcyMessage {
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Emergency object" (§7.2.7)
- * @protected
+ * @example
+ * const can = require('socketcan');
+ *
+ * const channel = can.createRawChannel('can0');
+ * const device = new Device({ id: 0xa });
+ *
+ * channel.addListener('onMessage', (message) => device.receive(message));
+ * device.setTransmitFunction((message) => channel.send(message));
+ *
+ * device.emcy.cobId = 0x80;
+ *
+ * device.init();
+ * channel.start();
+ *
+ * device.emcy.write(0x1000);
  */
 class Emcy {
     constructor(device) {
