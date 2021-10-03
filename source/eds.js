@@ -455,7 +455,6 @@ class EdsError extends Error {
  * @param {number | string | Date} data.defaultValue - default value.
  * @fires 'update' on value change.
  * @see CiA306 "Object descriptions" (§4.6.3)
- * @private
  */
 class DataObject extends EventEmitter {
     constructor(index, subIndex, data, parent=null) {
@@ -494,6 +493,14 @@ class DataObject extends EventEmitter {
                 if(this.pdoMapping === undefined)
                     this.pdoMapping = false;
 
+                // Check limits
+                if(this.highLimit !== undefined && this.lowLimit !== undefined) {
+                    if(this.highLimit < this.lowLimit)
+                        throw new EdsError('highLimit may not be less lowLimit');
+                }
+
+                // Create raw data buffer
+                this._raw = typeToRaw(this.defaultValue, this.dataType);
                 break;
             case ObjectType.DEFSTRUCT:
             case ObjectType.ARRAY:
@@ -506,7 +513,7 @@ class DataObject extends EventEmitter {
                     if(this.accessType === undefined)
                         throw new EdsError(`accessType is mandatory for compact type ${this.objectTypeString}`);
 
-                    // Not supported data (Optionally may be zero)
+                    // Not supported args (Optionally may be zero)
                     if(this.subNumber)
                         throw new EdsError(`subNumber must be undefined or zero for compact type ${this.objectTypeString}`);
 
@@ -537,37 +544,24 @@ class DataObject extends EventEmitter {
 
                     if(this.highLimit !== undefined)
                         throw new EdsError(`highLimit is not supported for type ${this.objectTypeString}`);
-
-                    if(this.subNumber <= 0)
-                        throw new EdsError(`subNumber must be >= 0 for type ${this.objectTypeString}`);
-
-                    // Create sub-objects array
-                    this._subObjects = new Array(this.subNumber + 1);
-                    Object.defineProperty(this, '_subObjects', {
-                        enumerable: false
-                    });
-
-                    // Store max sub index at index 0
-                    this._subObjects[0] = new DataObject(index, 0, {
-                        parameterName:  'Max sub-index',
-                        objectType:     ObjectType.VAR,
-                        dataType:       DataType.UNSIGNED8,
-                        accessType:     AccessType.READ_WRITE,
-                        defaultValue:   this.subNumber - 1,
-                    });
-
-                    // Allow access to sub-objects using bracket notation
-                    for(let i = 0; i < (this.subNumber + 1); i++) {
-                        Object.defineProperty(this, i, {
-                            get: () => {
-                                return this._subObjects[i]
-                            },
-                            set: (data) => {
-                                this._setSubObject(i, data)
-                            },
-                        });
-                    }
                 }
+
+                if(this.subNumber < 1)
+                    throw new EdsError('subNumber must be >= 1');
+
+                // Create sub-objects array
+                this._subObjects = [];
+                Object.defineProperty(this, '_subObjects', {
+                    enumerable: false
+                });
+
+                // Store max sub index at index 0
+                this.addSubObject(0, {
+                    parameterName:  'Max sub-index',
+                    objectType:     ObjectType.VAR,
+                    dataType:       DataType.UNSIGNED8,
+                    accessType:     AccessType.READ_WRITE,
+                });
                 break;
 
             case ObjectType.DOMAIN:
@@ -599,14 +593,6 @@ class DataObject extends EventEmitter {
             default:
                 throw new EdsError(`objectType not supported (${this.objectType})`);
         }
-
-        if(this.highLimit !== undefined && this.lowLimit !== undefined) {
-            if(this.highLimit < this.lowLimit)
-                throw new EdsError('highLimit may not be less lowLimit');
-        }
-
-        // Create raw data buffer
-        this._raw = typeToRaw(this.defaultValue, this.dataType);
     }
 
     /**
@@ -711,13 +697,15 @@ class DataObject extends EventEmitter {
      * @type {number}
      */
     get size() {
+        if(!this.subNumber)
+            return this.raw.length;
+
         let size = 0;
-        if(this.subNumber > 0) {
-            for(let i = 1; i < this.subNumber + 1; ++i)
-                size += this._subObjects[i].size;
-        }
-        else {
-            size = this.raw.length;
+        for(let i = 1; i <= this._subObjects[0].value; ++i) {
+            if(this._subObjects[i] === undefined)
+                continue;
+
+            size += this._subObjects[i].size;
         }
 
         return size;
@@ -729,10 +717,24 @@ class DataObject extends EventEmitter {
      * @type {Buffer}
      */
     get raw() {
-        return this._raw;
+        if(!this.subNumber)
+            return this._raw;
+
+        const data = [];
+        for(let i = 1; i <= this._subObjects[0].value; ++i) {
+            if(this._subObjects[i] === undefined)
+                continue;
+
+            data.push(this._subObjects[i].raw);
+        }
+
+        return data;
     }
 
     set raw(raw) {
+        if(this.subNumber)
+            throw TypeError(`Not supported for type ${this.objectTypeString}`);
+
         if(raw === undefined || raw === null)
             raw = typeToRaw(0, this.dataType);
 
@@ -750,24 +752,35 @@ class DataObject extends EventEmitter {
      * @see {@link Eds.typeToRaw}
      */
     get value() {
-        return rawToType(this.raw, this.dataType);
+        if(!this.subNumber)
+            return rawToType(this.raw, this.dataType);
+
+        const data = [];
+        for(let i = 1; i <= this._subObjects[0].value; ++i) {
+            if(this._subObjects[i] === undefined)
+                continue;
+
+            data.push(this._subObjects[i].value);
+        }
+
+        return data;
     }
 
     set value(value) {
+        if(this.subNumber)
+            throw TypeError(`Not supported for type ${this.objectTypeString}`);
+
         this.raw = typeToRaw(value, this.dataType);
     }
 
     /**
-     * Create or add a new sub-entry to this {@link DataObject}.
+     * Create or add a new sub-entry.
      *
-     * @param {number} subIndex - sub-entry index.
+     * @param {number} subIndex - sub-entry index to add.
      * @param {DataObject | object} data - An existing {@link DataObject} or the data to create one.
      * @private
      */
-    _setSubObject(subIndex, data) {
-        if(subIndex > this.subNumber)
-            throw new EdsError(`subIndex must be >= ${this.subNumber}`)
-
+    addSubObject(subIndex, data) {
         if(data instanceof DataObject) {
             this._subObjects[subIndex] = data;
         }
@@ -775,6 +788,23 @@ class DataObject extends EventEmitter {
             this._subObjects[subIndex] = new DataObject(
                 this.index, subIndex, data, this);
         }
+
+        // Allow access to the sub-object using bracket notation
+        if(!Object.prototype.hasOwnProperty.call(this, subIndex)) {
+            Object.defineProperty(this, subIndex, {
+                get: () => this._subObjects[subIndex]
+            });
+        }
+    }
+
+    /**
+     * Delete a sub-entry.
+     *
+     * @param {number} subIndex - sub-entry index to remove.
+     * @private
+     */
+    removeSubObject(subIndex) {
+        delete this._subObjects[subIndex];
     }
 }
 
@@ -989,7 +1019,7 @@ class Eds {
     }
 
     /**
-     * Create a new data object.
+     * Create a new entry.
      *
      * @param {number} index - index of the data object.
      * @param {object} data - data passed to the {@link DataObject} constructor.
@@ -997,8 +1027,10 @@ class Eds {
      */
     addEntry(index, data) {
         let entry = this.dataObjects[index];
-        if(entry !== undefined)
-            throw new EdsError(`An entry already exists at 0x${index.toString(16)}`);
+        if(entry !== undefined) {
+            index = '0x' + index.toString(16);
+            throw new EdsError(`${index} already exists`);
+        }
 
         entry = new DataObject(index, null, data);
         this.dataObjects[index] = entry;
@@ -1012,14 +1044,16 @@ class Eds {
     }
 
     /**
-     * Remove a data object.
+     * Delete an entry.
      *
      * @param {number} index - index of the data object.
      */
     removeEntry(index) {
         const entry = this.dataObjects[index];
-        if(entry === undefined)
-            throw ReferenceError(`0x${index.toString(16)} does not exist`);
+        if(entry === undefined) {
+            index = '0x' + index.toString(16);
+            throw ReferenceError(`${index} does not exist`);
+        }
 
         this.nameLookup[entry.parameterName].splice(
             this.nameLookup[entry.parameterName].indexOf(entry), 1);
@@ -1031,29 +1065,30 @@ class Eds {
     }
 
     /**
-     * Get a data object.
+     * Get a sub-entry.
      *
      * @param {number | string} index - index or name of the data object.
      * @param {number} subIndex - subIndex of the data object.
-     * @returns {DataObject} - the sub-entry at index.
+     * @returns {DataObject | null} - the sub-entry or null.
      */
     getSubEntry(index, subIndex) {
         const entry = this.getEntry(index);
 
-        if(entry === undefined)
-            throw new EdsError(`0x${index.toString(16)} does not exist`);
+        if(entry === undefined) {
+            index = '0x' + index.toString(16);
+            throw new EdsError(`${index} does not exist`);
+        }
 
-        if(entry.subNumber === undefined)
-            throw new EdsError(`0x${index.toString(16)} does not support sub objects`);
+        if(entry.subNumber === undefined) {
+            index = '0x' + index.toString(16);
+            throw new EdsError(`${index} does not support sub objects`);
+        }
 
-        if(entry.subNumber < subIndex)
-            throw new EdsError(`0x${index.toString(16)}[${subIndex}] does not exist`);
-
-        return entry[subIndex];
+        return entry[subIndex] || null;
     }
 
     /**
-     * Create a new data object.
+     * Create a new sub-entry.
      *
      * @param {number} index - index of the data object.
      * @param {number} subIndex - subIndex of the data object.
@@ -1063,23 +1098,35 @@ class Eds {
     addSubEntry(index, subIndex, data) {
         const entry = this.dataObjects[index];
 
-        if(entry === undefined)
-            throw new EdsError(`0x${index.toString(16)} does not exist`);
+        if(entry === undefined) {
+            index = '0x' + index.toString(16);
+            throw new EdsError(`${index} does not exist`);
+        }
 
-        if(entry.subNumber === undefined)
-            throw new EdsError(`0x${index.toString(16)} does not support sub objects`);
+        if(entry.subNumber === undefined) {
+            index = '0x' + index.toString(16);
+            throw new EdsError(`${index} does not support sub objects`);
+        }
 
-        if(entry.subNumber < subIndex)
-            throw new EdsError(`0x${index.toString(16)}[${subIndex}] does not exist`);
+        // Add the new entry
+        entry.addSubObject(subIndex, data);
 
-        const subEntry = new DataObject(index, subIndex, data, entry);
-        entry[subIndex] = subEntry;
+        // Update max sub-index
+        if(entry[0].value < subIndex)
+            entry[0].value = subIndex
 
-        return subEntry;
+        // Update subNumber
+        entry.subNumber = 1;
+        for(let i = 1; i <= entry[0].value; ++i) {
+            if(entry[i] !== undefined)
+                entry.subNumber += 1;
+        }
+
+        return entry[subIndex];
     }
 
     /**
-     * Remove a data object.
+     * Delete a sub-entry.
      *
      * @param {number} index - index of the data object.
      * @param {number} subIndex - subIndex of the data object.
@@ -1087,16 +1134,42 @@ class Eds {
     removeSubEntry(index, subIndex) {
         const entry = this.dataObjects[index];
 
-        if(entry === undefined)
-            throw new EdsError(`0x${index.toString(16)} does not exist`);
+        if(subIndex < 1)
+            throw new EdsError('subIndex must be >= 1');
 
-        if(entry.subNumber === undefined)
-            throw new EdsError(`0x${index.toString(16)} does not support sub objects`);
+        if(entry === undefined) {
+            index = '0x' + index.toString(16);
+            throw new EdsError(`${index} does not exist`);
+        }
 
-        if(entry.subNumber < subIndex)
-            throw new EdsError(`0x${index.toString(16)}[${subIndex}] does not exist`);
+        if(entry.subNumber === undefined) {
+            index = '0x' + index.toString(16);
+            throw new EdsError(`${index} does not support sub objects`);
+        }
 
-        delete entry[subIndex];
+        if(entry[subIndex] === undefined)
+            return;
+
+        // Delete the entry
+        entry.removeSubObject(subIndex);
+
+        // Update max sub-index
+        if(subIndex >= entry[0].value) {
+            // Find the next highest sub-index
+            for(let i = subIndex; i >= 0; --i) {
+                if(entry[i] !== undefined) {
+                    entry[0].value = i;
+                    break;
+                }
+            }
+        }
+
+        // Update subNumber
+        entry.subNumber = 1;
+        for(let i = 1; i <= entry[0].value; ++i) {
+            if(entry[i] !== undefined)
+                entry.subNumber += 1;
+        }
     }
 
     /**

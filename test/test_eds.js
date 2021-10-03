@@ -6,7 +6,7 @@ const fs = require('fs');
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-describe('EDS', function() {
+describe('Eds', function() {
     it('should be constructable', function() {
         new Eds();
     });
@@ -353,6 +353,67 @@ describe('EDS', function() {
             expect(() => {
                 eds.removeEntry(0x2003);
             }).to.throw();
+        });
+    });
+
+    describe('Sub-entries', function() {
+        let eds;
+
+        before(function() {
+            eds = new Eds();
+        });
+
+        it('should create sub-entry 0', function() {
+            const entry = eds.addEntry(0x2000, {
+                parameterName:  'Test entry',
+                objectType:     ObjectType.ARRAY,
+                subNumber:      1
+            });
+
+            expect(entry[0]).to.exist;
+        });
+
+        it('should add sub-entires', function() {
+            const entry = eds.getEntry(0x2000);
+
+            expect(entry.subNumber).to.equal(1);
+            expect(entry[0].value).to.equal(0);
+
+            eds.addSubEntry(0x2000, 1, {
+                parameterName:  'Sub-entry 1',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED8,
+                accessType:     AccessType.READ_WRITE,
+            });
+
+            expect(entry.subNumber).to.equal(2);
+            expect(entry[0].value).to.equal(1);
+
+            eds.addSubEntry(0x2000, 10, {
+                parameterName:  'Sub-entry 10',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED8,
+                accessType:     AccessType.READ_WRITE,
+            });
+
+            expect(entry.subNumber).to.equal(3);
+            expect(entry[0].value).to.equal(10);
+        });
+
+        it('should remove sub-entries', function() {
+            const entry = eds.getEntry(0x2000);
+
+            eds.removeSubEntry(0x2000, 10);
+            expect(entry.subNumber).to.equal(2);
+            expect(entry[0].value).to.equal(1);
+
+            eds.removeSubEntry(0x2000, 1);
+            expect(entry.subNumber).to.equal(1);
+            expect(entry[0].value).to.equal(0);
+        });
+
+        it('should not remove sub-entry 0', function() {
+            expect(() => eds.removeSubEntry(0x2000, 0)).to.throw(EdsError);
         });
     });
 });
