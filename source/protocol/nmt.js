@@ -167,7 +167,6 @@ class Nmt {
             obj1016 = this.device.eds.addEntry(0x1016, {
                 parameterName:  'Consumer heartbeat time',
                 objectType:     ObjectType.ARRAY,
-                subNumber:      1
             });
         }
 

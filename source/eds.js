@@ -522,10 +522,6 @@ class DataObject extends EventEmitter {
                         this.pdoMapping = false;
                 }
                 else {
-                    // Mandatory data
-                    if(this.subNumber === undefined)
-                        throw new EdsError(`subNumber is mandatory for type ${this.objectTypeString}`);
-
                     // Not supported data
                     if(this.dataType !== undefined)
                         throw new EdsError(`dataType is not supported for type ${this.objectTypeString}`);
@@ -546,8 +542,8 @@ class DataObject extends EventEmitter {
                         throw new EdsError(`highLimit is not supported for type ${this.objectTypeString}`);
                 }
 
-                if(this.subNumber < 1)
-                    throw new EdsError('subNumber must be >= 1');
+                if(this.subNumber === undefined || this.subNumber < 1)
+                    this.subNumber = 1;
 
                 // Create sub-objects array
                 this._subObjects = [];
@@ -852,7 +848,6 @@ class Eds {
         this.addEntry(0x1018, {
             parameterName:  'Identity object',
             objectType:     ObjectType.RECORD,
-            subNumber:      4,
         });
 
         this.addSubEntry(0x1018, 1, {

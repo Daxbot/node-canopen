@@ -153,14 +153,6 @@ describe('Eds', function() {
 
         describe('ObjectType is DEFSTRUCT, ARRAY, or RECORD', function() {
             describe('compactSubObj is false', function() {
-                it('should require subNumber', function() {
-                    return expect(() => {
-                        eds.addEntry(0x2000, {
-                            parameterName:  'ARRAY',
-                            objectType:     ObjectType.ARRAY,
-                        });
-                    }).to.throw(EdsError);
-                });
                 it('should not allow dataType', function() {
                     return expect(() => {
                         eds.addEntry(0x2000, {

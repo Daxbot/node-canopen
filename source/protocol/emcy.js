@@ -390,7 +390,6 @@ class Emcy {
             obj1003 = this.device.eds.addEntry(0x1003, {
                 parameterName:  'Pre-defined error field',
                 objectType:     ObjectType.ARRAY,
-                subNumber:      1,
             });
         }
 

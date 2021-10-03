@@ -5,7 +5,7 @@
  */
 
 const Device = require('../device');
-const { DataObject } = require('../eds');
+const { ObjectType, AccessType, DataType, EdsError, DataObject } = require('../eds');
 
 /**
  * CANopen PDO protocol handler.
@@ -26,6 +26,224 @@ class Pdo {
         this.writeMap = {};
         this.eventTimers = {};
         this.events = [];
+    }
+
+    /**
+     * Get a RPDO communication parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the RPDO.
+     * @returns {DataObject | null} the matching entry.
+     */
+    getReceive(cobId) {
+        for(let [index, entry] of Object.entries(this.device.dataObjects)) {
+            index = parseInt(index);
+            if(index < 0x1400 || index > 0x15FF)
+                continue;
+
+            if(entry[1] !== undefined && entry[1].value === cobId)
+                return entry;
+        }
+
+        return null;
+    }
+
+    /**
+     * Create a new RPDO communication/mapping parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the RPDO.
+     * @param {Array<DataObject>} entries - entries to map.
+     * @param {number} type - transmission type.
+     */
+    addReceive(cobId, entries, type=254) {
+        if(this.getReceive(cobId) !== null) {
+            cobId = '0x' + cobId.toString(16);
+            throw new EdsError(`Entry for RPDO ${cobId} already exists`);
+        }
+
+        let index = 0x1400;
+        for(; index <= 0x15FF; ++index) {
+            if(this.device.eds.getEntry(index) === undefined)
+                break;
+        }
+
+        this.device.eds.addEntry(index, {
+            parameterName:  'RPDO communication parameter',
+            objectType:     ObjectType.RECORD,
+        });
+
+        this.device.eds.addSubEntry(index, 1, {
+            parameterName:  'COB-ID used by RPDO',
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   cobId
+        });
+
+        this.device.eds.addSubEntry(index, 2, {
+            parameterName:  'transmission type',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   type
+        });
+
+        this.device.eds.addEntry(index+0x200, {
+            parameterName:  'RPDO mapping parameter',
+            objectType:     ObjectType.RECORD,
+        });
+
+        for(let i = 0; i < entries.length; ++i) {
+            const entry = entries[i];
+            const value = (entry.index << 16)
+                        | (entry.subIndex << 8)
+                        | (entry.size << 3);
+
+            this.device.eds.addSubEntry(index+0x200, i+1, {
+                parameterName:  `Mapped object ${i+1}`,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+                defaultValue:   value
+            });
+        }
+    }
+
+    /**
+     * Remove a RPDO communication/mapping parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the RPDO.
+     */
+    removeReceive(cobId) {
+        const entry = this.getReceive(cobId);
+        if(entry === null)
+            throw ReferenceError(`Entry for RPDO ${cobId} does not exist`);
+
+        // RPDO communication parameter
+        this.device.eds.removeEntry(entry.index);
+
+        // RPDO mapping parameter
+        this.device.eds.removeEntry(entry.index+0x200);
+    }
+
+    /**
+     * Get a TPDO communication parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the TPDO.
+     * @returns {DataObject | null} the matching entry.
+     */
+    getTransmit(cobId) {
+        for(let [index, entry] of Object.entries(this.device.dataObjects)) {
+            index = parseInt(index);
+            if(index < 0x1800 || index > 0x19FF)
+                continue;
+
+            if(entry[1] !== undefined && entry[1].value === cobId)
+                return entry;
+        }
+
+        return null;
+    }
+
+    /**
+     * Create a new TPDO communication/mapping parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the TPDO.
+     * @param {Array<DataObject>} entries - entries to map.
+     * @param {number} type - transmission type.
+     * @param {number} inhibitTime - minimum time between writes.
+     * @param {number} eventTime - how often to send timer based PDOs.
+     * @param {number} syncStart - initial counter value for sync based PDOs.
+     */
+    addTransmit(cobId, entries, type=254, inhibitTime=0, eventTime=0, syncStart=0) {
+        if(this.getReceive(cobId) !== null) {
+            cobId = '0x' + cobId.toString(16);
+            throw new EdsError(`Entry for TPDO ${cobId} already exists`);
+        }
+
+        let index = 0x1800;
+        for(; index <= 0x19FF; ++index) {
+            if(this.device.eds.getEntry(index) === undefined)
+                break;
+        }
+
+        this.device.eds.addEntry(index, {
+            parameterName:  'TPDO communication parameter',
+            objectType:     ObjectType.RECORD,
+        });
+
+        this.device.eds.addSubEntry(index, 1, {
+            parameterName:  'COB-ID used by TPDO',
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   cobId
+        });
+
+        this.device.eds.addSubEntry(index, 2, {
+            parameterName:  'transmission type',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   type
+        });
+
+        this.device.eds.addSubEntry(index, 3, {
+            parameterName:  'inhibit time',
+            dataType:       DataType.UNSIGNED16,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   inhibitTime
+        });
+
+        this.device.eds.addSubEntry(index, 4, {
+            parameterName:  'compatibility entry',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
+        });
+
+        this.device.eds.addSubEntry(index, 5, {
+            parameterName:  'event timer',
+            dataType:       DataType.UNSIGNED16,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   eventTime
+        });
+
+        this.device.eds.addSubEntry(index, 6, {
+            parameterName:  'SYNC start value',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   syncStart
+        });
+
+        this.device.eds.addEntry(index+0x200, {
+            parameterName:  'TPDO mapping parameter',
+            objectType:     ObjectType.RECORD,
+        });
+
+        for(let i = 0; i < entries.length; ++i) {
+            const entry = entries[i];
+            const value = (entry.index << 16)
+                        | (entry.subIndex << 8)
+                        | (entry.size << 3);
+
+            this.device.eds.addSubEntry(index+0x200, i+1, {
+                parameterName:  `Mapped object ${i+1}`,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+                defaultValue:   value
+            });
+        }
+    }
+
+    /**
+     * Remove a TPDO communication/mapping parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the TPDO.
+     */
+    removeTransmit(cobId) {
+        const entry = this.getTransmit(cobId);
+        if(entry === null)
+            throw ReferenceError(`Entry for TPDO ${cobId} does not exist`);
+
+        // TPDO communication parameter
+        this.device.eds.removeEntry(entry.index);
+
+        // TPDO mapping parameter
+        this.device.eds.removeEntry(entry.index+0x200);
     }
 
     /** Initialize members and begin RPDO monitoring. */

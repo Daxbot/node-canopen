@@ -463,7 +463,6 @@ class SdoClient {
         this.device.eds.addEntry(index, {
             parameterName:  'SDO client parameter',
             objectType:     ObjectType.RECORD,
-            subNumber:      4,
         });
 
         this.device.eds.addSubEntry(index, 1, {
@@ -963,7 +962,6 @@ class SdoServer {
         this.device.eds.addEntry(index, {
             parameterName:  'SDO server parameter',
             objectType:     ObjectType.RECORD,
-            subNumber:      4,
         });
 
         this.device.eds.addSubEntry(index, 1, {
