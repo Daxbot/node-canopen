@@ -22,9 +22,7 @@ const device = new Device({ id: clientId });
 const channel = can.createRawChannel('can0');
 
 // Step 3: Configure the SDO client parameters.
-device.sdo.cobIdRx = 0x580;
-device.sdo.cobIdTx = 0x600;
-device.sdo.serverId = serverId;
+device.sdo.addServer(serverId);
 
 // Step 4: Initialize and start the device.
 channel.addListener('onMessage', (message) => device.receive(message));

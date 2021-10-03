@@ -5,7 +5,7 @@
  */
 
 const Device = require('../device');
-const { ObjectType, AccessType, DataType, rawToType, typeToRaw } = require('../eds');
+const { ObjectType, AccessType, DataType, rawToType, typeToRaw, EdsError, DataObject } = require('../eds');
 
 /**
  * CANopen abort codes.
@@ -420,190 +420,142 @@ class SdoClient {
     }
 
     /**
-     * Sdo client COB-ID for incoming messages (Object 0x1280.2).
+     * Get an SDO client parameter entry.
      *
-     * @type {number}
+     * @param {number} serverId - server COB-ID of the entry to get.
+     * @returns {DataObject | null} the matching entry.
      */
-    get cobIdRx() {
-        const obj1280 = this.device.eds.getEntry(0x1280);
-        if(obj1280 === undefined && obj1280[2] !== undefined)
-            return obj1280[2].value;
+    getServer(serverId) {
+        for(let [index, entry] of Object.entries(this.device.dataObjects)) {
+            index = parseInt(index);
+            if(index < 0x1280 || index > 0x12FF)
+                continue;
 
-        return null;
-    }
-
-    set cobIdRx(value) {
-        let obj1280 = this.device.eds.getEntry(0x1280);
-        if(obj1280 === undefined) {
-            obj1280 = this.device.eds.addEntry(0x1280, {
-                parameterName:  'SDO client parameter',
-                objectType:     ObjectType.RECORD,
-                subNumber:      4,
-            });
-
-            this.device.eds.addSubEntry(0x1280, 1, {
-                parameterName:  'COB-ID client to server',
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-
-            this.device.eds.addSubEntry(0x1280, 2, {
-                parameterName:  'COB-ID server to client',
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-
-            this.device.eds.addSubEntry(0x1280, 3, {
-                parameterName:  'Node-ID of the SDO server',
-                dataType:       DataType.UNSIGNED8,
-                accessType:     AccessType.READ_WRITE,
-            });
+            if(entry[3] !== undefined && entry[3].value === serverId)
+                return entry;
         }
 
-        obj1280[2].value = value;
+        return null;
     }
 
     /**
-     * Sdo client COB-ID for outgoing messages (Object 0x1280.1).
+     * Add an SDO client parameter entry.
      *
-     * @type {number}
+     * @param {number} serverId - server COB-ID to add.
+     * @param {number} cobIdTx - Sdo COB-ID for outgoing messages (to server).
+     * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from server).
      */
-    get cobIdTx() {
-        const obj1280 = this.device.eds.getEntry(0x1280);
-        if(obj1280 === undefined && obj1280[1] !== undefined)
-            return obj1280[1].value;
+    addServer(serverId, cobIdTx=0x600, cobIdRx=0x580) {
+        if(serverId < 1 || serverId > 0x7F)
+            throw RangeError('serverId must be in range 1-127');
 
-        return null;
-    }
-
-    set cobIdTx(value) {
-        let obj1280 = this.device.eds.getEntry(0x1280);
-        if(obj1280 === undefined) {
-            obj1280 = this.device.eds.addEntry(0x1280, {
-                parameterName:  'SDO client parameter',
-                objectType:     ObjectType.RECORD,
-                subNumber:      4,
-            });
-
-            this.device.eds.addSubEntry(0x1280, 1, {
-                parameterName:  'COB-ID client to server',
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-
-            this.device.eds.addSubEntry(0x1280, 2, {
-                parameterName:  'COB-ID server to client',
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-
-            this.device.eds.addSubEntry(0x1280, 3, {
-                parameterName:  'Node-ID of the SDO server',
-                dataType:       DataType.UNSIGNED8,
-                accessType:     AccessType.READ_WRITE,
-            });
+        if(this.getServer(serverId) !== null) {
+            serverId = '0x' + serverId.toString(16);
+            throw new EdsError(`Entry for server ${serverId} already exists`);
         }
 
-        obj1280[1].value = value;
+        let index = 0x1280;
+        for(; index <= 0x12FF; ++index) {
+            if(this.device.eds.getEntry(index) === undefined)
+                break;
+        }
+
+        this.device.eds.addEntry(index, {
+            parameterName:  'SDO client parameter',
+            objectType:     ObjectType.RECORD,
+            subNumber:      4,
+        });
+
+        this.device.eds.addSubEntry(index, 1, {
+            parameterName:  'COB-ID client to server',
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   cobIdTx
+        });
+
+        this.device.eds.addSubEntry(index, 2, {
+            parameterName:  'COB-ID server to client',
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   cobIdRx
+        });
+
+        this.device.eds.addSubEntry(index, 3, {
+            parameterName:  'Node-ID of the SDO server',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   serverId
+        });
     }
 
     /**
-     * COB-ID of the remote server.
+     * Remove an SDO client parameter entry.
      *
-     * @type {number}
+     * @param {number} serverId - server COB-ID of the entry to remove.
      */
-    get serverId() {
-        const obj1280 = this.device.eds.getEntry(0x1280);
-        if(obj1280 !== undefined && obj1280[3] !== undefined)
-            return obj1280[3].value;
+    removeServer(serverId) {
+        const entry = this.getServer(serverId);
+        if(entry === null)
+            throw ReferenceError(`Entry for server ${serverId} does not exist`);
 
-        return null;
-    }
-
-    set serverId(value) {
-        let obj1280 = this.device.eds.getEntry(0x1280);
-        if(obj1280 === undefined) {
-            obj1280 = this.device.eds.addEntry(0x1280, {
-                parameterName:  'SDO client parameter',
-                objectType:     ObjectType.RECORD,
-                subNumber:      4,
-            });
-
-            this.device.eds.addSubEntry(0x1280, 1, {
-                parameterName:  'COB-ID client to server',
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-
-            this.device.eds.addSubEntry(0x1280, 2, {
-                parameterName:  'COB-ID server to client',
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-
-            this.device.eds.addSubEntry(0x1280, 3, {
-                parameterName:  'Node-ID of the SDO server',
-                dataType:       DataType.UNSIGNED8,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-
-        obj1280[3].value = value;
+        this.device.eds.removeEntry(entry.index);
     }
 
     /** Initialize members and begin serving SDO transfers. */
     init() {
         for(let [index, entry] of Object.entries(this.device.dataObjects)) {
-            if(0x1280 <= index && index < 0x12FF) {
-                /* Object 0x1280..0x12FF - SDO client parameter.
-                 *   sub-index 1/2:
-                 *     bit 0..10      11-bit CAN base frame.
-                 *     bit 11..28     29-bit CAN extended frame.
-                 *     bit 29         Frame type (base or extended).
-                 *     bit 30         Dynamically allocated.
-                 *     bit 31         SDO exists / is valid.
-                 *
-                 *   sub-index 3:
-                 *     bit 0..7      Node-ID of the SDO server.
-                 */
-                const serverId = entry[3].value;
-                if(!serverId)
-                    throw new ReferenceError('ID of the SDO server is required.');
+            index = parseInt(index);
+            if(index < 0x1280 || index > 0x12FF)
+                continue;
 
-                let cobIdTx = entry[1].value;
-                if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
-                    continue;
+            /* Object 0x1280..0x12FF - SDO client parameter.
+             *   sub-index 1/2:
+             *     bit 0..10      11-bit CAN base frame.
+             *     bit 11..28     29-bit CAN extended frame.
+             *     bit 29         Frame type (base or extended).
+             *     bit 30         Dynamically allocated.
+             *     bit 31         SDO exists / is valid.
+             *
+             *   sub-index 3:
+             *     bit 0..7      Node-ID of the SDO server.
+             */
+            const serverId = entry[3].value;
+            if(!serverId)
+                throw new ReferenceError('ID of the SDO server is required.');
 
-                if(((cobIdTx >> 30) & 0x1) == 0x1)
-                    throw TypeError('Dynamic assignment is not supported.');
+            let cobIdTx = entry[1].value;
+            if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
+                continue;
 
-                if(((cobIdTx >> 29) & 0x1) == 0x1)
-                    throw TypeError('CAN extended frames are not supported.');
+            if(((cobIdTx >> 30) & 0x1) == 0x1)
+                throw TypeError('Dynamic assignment is not supported.');
 
-                cobIdTx &= 0x7FF;
-                if((cobIdTx & 0xF) == 0x0)
-                    cobIdTx |= serverId;
+            if(((cobIdTx >> 29) & 0x1) == 0x1)
+                throw TypeError('CAN extended frames are not supported.');
 
-                let cobIdRx = entry[2].value;
-                if(!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
-                    continue;
+            cobIdTx &= 0x7FF;
+            if((cobIdTx & 0xF) == 0x0)
+                cobIdTx |= serverId;
 
-                if(((cobIdRx >> 30) & 0x1) == 0x1)
-                    throw TypeError('Dynamic assignment is not supported.');
+            let cobIdRx = entry[2].value;
+            if(!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
+                continue;
 
-                if(((cobIdRx >> 29) & 0x1) == 0x1)
-                    throw TypeError('CAN extended frames are not supported.');
+            if(((cobIdRx >> 30) & 0x1) == 0x1)
+                throw TypeError('Dynamic assignment is not supported.');
 
-                cobIdRx &= 0x7FF;
-                if((cobIdRx & 0xF) == 0x0)
-                    cobIdRx |= serverId;
+            if(((cobIdRx >> 29) & 0x1) == 0x1)
+                throw TypeError('CAN extended frames are not supported.');
 
-                this.servers[serverId] = {
-                    cobIdTx:    cobIdTx,
-                    cobIdRx:    cobIdRx,
-                    queue:      new Queue(),
-                };
-            }
+            cobIdRx &= 0x7FF;
+            if((cobIdRx & 0xF) == 0x0)
+                cobIdRx |= serverId;
+
+            this.servers[serverId] = {
+                cobIdTx:    cobIdTx,
+                cobIdRx:    cobIdRx,
+                queue:      new Queue(),
+            };
         }
 
         this.device.addListener('message', this._onMessage.bind(this));
@@ -968,130 +920,137 @@ class SdoServer {
     }
 
     /**
-     * Sdo server COB-ID for incoming messages (Object 0x1200.1).
+     * Get an SDO server parameter entry.
      *
-     * @type {number}
+     * @param {number} clientId - client COB-ID of the entry to get.
+     * @returns {DataObject | null} the matching entry.
      */
-    get cobIdRx() {
-        const obj1200 = this.device.eds.getEntry(0x1200);
-        if(obj1200 === undefined && obj1200[1] !== undefined)
-            return obj1200[1].value;
+    getClient(clientId) {
+        for(let [index, entry] of Object.entries(this.device.dataObjects)) {
+            index = parseInt(index);
+            if(index < 0x1200 || index > 0x127F)
+                continue;
 
-        return null;
-    }
-
-    set cobIdRx(value) {
-        let obj1200 = this.device.eds.getEntry(0x1200);
-        if(obj1200 === undefined) {
-            obj1200 = this.device.eds.addEntry(0x1200, {
-                parameterName:  'SDO server parameter',
-                objectType:     ObjectType.RECORD,
-                subNumber:      3,
-            });
-
-            this.device.eds.addSubEntry(0x1200, 1, {
-                parameterName:  'COB-ID client to server',
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-
-            this.device.eds.addSubEntry(0x1200, 2, {
-                parameterName:  'COB-ID server to client',
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
+            if(entry[3] !== undefined && entry[3].value === clientId)
+                return entry;
         }
 
-        obj1200[1].value = value;
+        return null;
     }
 
     /**
-     * Sdo server COB-ID for outgoing messages (Object 0x1200.2).
+     * Add an SDO server parameter entry.
      *
-     * @type {number}
+     * @param {number} clientId - client COB-ID to add.
+     * @param {number} cobIdTx - Sdo COB-ID for outgoing messages (to client).
+     * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from client).
      */
-    get cobIdTx() {
-        const obj1200 = this.device.eds.getEntry(0x1200);
-        if(obj1200 === undefined && obj1200[2] !== undefined)
-            return obj1200[2].value;
+    addClient(clientId, cobIdTx=0x580, cobIdRx=0x600) {
+        if(clientId < 1 || clientId > 0x7F)
+            throw RangeError('clientId must be in range 1-127');
 
-        return null;
-    }
-
-    set cobIdTx(value) {
-        let obj1200 = this.device.eds.getEntry(0x1200);
-        if(obj1200 === undefined) {
-            obj1200 = this.device.eds.addEntry(0x1200, {
-                parameterName:  'SDO server parameter',
-                objectType:     ObjectType.RECORD,
-                subNumber:      3,
-            });
-
-            this.device.eds.addSubEntry(0x1200, 1, {
-                parameterName:  'COB-ID client to server',
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-
-            this.device.eds.addSubEntry(0x1200, 2, {
-                parameterName:  'COB-ID server to client',
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
+        if(this.getClient(clientId) !== null) {
+            clientId = '0x' + clientId.toString(16);
+            throw new EdsError(`Entry for client ${clientId} already exists`);
         }
 
-        obj1200[2].value = value;
+        let index = 0x1200;
+        for(; index <= 0x127F; ++index) {
+            if(this.device.eds.getEntry(index) === undefined)
+                break;
+        }
+
+        this.device.eds.addEntry(index, {
+            parameterName:  'SDO server parameter',
+            objectType:     ObjectType.RECORD,
+            subNumber:      4,
+        });
+
+        this.device.eds.addSubEntry(index, 1, {
+            parameterName:  'COB-ID client to server',
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   cobIdRx
+        });
+
+        this.device.eds.addSubEntry(index, 2, {
+            parameterName:  'COB-ID server to client',
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   cobIdTx
+        });
+
+        this.device.eds.addSubEntry(index, 3, {
+            parameterName:  'Node-ID of the SDO client',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   clientId
+        });
+    }
+
+    /**
+     * Remove an SDO server parameter entry.
+     *
+     * @param {number} clientId - client COB-ID of the entry to remove.
+     */
+    removeClient(clientId) {
+        const entry = this.getClient(clientId);
+        if(entry === null)
+            throw ReferenceError(`Entry for client ${clientId} does not exist`);
+
+        this.device.eds.removeEntry(entry.index);
     }
 
     /** Initialize members and begin serving SDO transfers. */
     init() {
         for(let [index, entry] of Object.entries(this.device.dataObjects)) {
             index = parseInt(index);
-            if(0x1200 <= index && index < 0x1280) {
-                /* Object 0x1200..0x127F - SDO server parameter.
-                 *   sub-index 1/2:
-                 *     bit 0..10      11-bit CAN base frame.
-                 *     bit 11..28     29-bit CAN extended frame.
-                 *     bit 29         Frame type (base or extended).
-                 *     bit 30         Dynamically allocated.
-                 *     bit 31         SDO exists / is valid.
-                 *
-                 *   sub-index 3 (optional):
-                 *     bit 0..7      Node-ID of the SDO client.
-                 */
-                let cobIdRx = entry[1].value;
-                if(!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
-                    continue;
+            if(index < 0x1200 || index > 0x127F)
+                continue;
 
-                if(((cobIdRx >> 30) & 0x1) == 0x1)
-                    throw TypeError('Dynamic assignment is not supported.');
+            /* Object 0x1200..0x127F - SDO server parameter.
+             *   sub-index 1/2:
+             *     bit 0..10      11-bit CAN base frame.
+             *     bit 11..28     29-bit CAN extended frame.
+             *     bit 29         Frame type (base or extended).
+             *     bit 30         Dynamically allocated.
+             *     bit 31         SDO exists / is valid.
+             *
+             *   sub-index 3 (optional):
+             *     bit 0..7      Node-ID of the SDO client.
+             */
+            let cobIdRx = entry[1].value;
+            if(!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
+                continue;
 
-                if(((cobIdRx >> 29) & 0x1) == 0x1)
-                    throw TypeError('CAN extended frames are not supported.');
+            if(((cobIdRx >> 30) & 0x1) == 0x1)
+                throw TypeError('Dynamic assignment is not supported.');
 
-                cobIdRx &= 0x7FF;
-                if((cobIdRx & 0xF) == 0x0)
-                    cobIdRx |= this.device.id;
+            if(((cobIdRx >> 29) & 0x1) == 0x1)
+                throw TypeError('CAN extended frames are not supported.');
 
-                let cobIdTx = entry[2].value;
-                if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
-                    continue;
+            cobIdRx &= 0x7FF;
+            if((cobIdRx & 0xF) == 0x0)
+                cobIdRx |= this.device.id;
 
-                if(((cobIdTx >> 30) & 0x1) == 0x1)
-                    throw TypeError('Dynamic assignment is not supported.');
+            let cobIdTx = entry[2].value;
+            if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
+                continue;
 
-                if(((cobIdTx >> 29) & 0x1) == 0x1)
-                    throw TypeError('CAN extended frames are not supported.');
+            if(((cobIdTx >> 30) & 0x1) == 0x1)
+                throw TypeError('Dynamic assignment is not supported.');
 
-                cobIdTx &= 0x7FF;
-                if((cobIdTx & 0xF) == 0x0)
-                    cobIdTx |= this.device.id;
+            if(((cobIdTx >> 29) & 0x1) == 0x1)
+                throw TypeError('CAN extended frames are not supported.');
 
-                this.clients[cobIdRx] = new Transfer({
-                    device: this.device,
-                    cobId: cobIdTx
-                });
-            }
+            cobIdTx &= 0x7FF;
+            if((cobIdTx & 0xF) == 0x0)
+                cobIdTx |= this.device.id;
+
+            this.clients[cobIdRx] = new Transfer({
+                device: this.device,
+                cobId: cobIdTx
+            });
         }
 
         this.device.addListener('message', this._onMessage.bind(this));

@@ -9,6 +9,7 @@
 
 /* eslint no-console: "off" */
 
+const clientId = 0xa;
 const serverId = 0xb;
 
 const { Device, ObjectType, AccessType, DataType } = require('../index.js');
@@ -21,8 +22,7 @@ const device = new Device({ id: serverId });
 const channel = can.createRawChannel('can0');
 
 // Step 3: Configure the SDO server parameters.
-device.sdoServer.cobIdRx = 0x600;
-device.sdoServer.cobIdTx = 0x580;
+device.sdoServer.addClient(clientId);
 
 // Step 4: Create an additional entry to be accessed by the SDO client.
 device.eds.addEntry(0x2000, {
