@@ -1,6 +1,6 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const { Device, ObjectType, AccessType, DataType } = require('../../index');
+const { Device } = require('../../index');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
@@ -43,43 +43,24 @@ describe('Nmt', function() {
             device.nmt.producerTime = 10;
             device.init();
 
-            device.addListener('message', () => {
-                done();
-            });
+            device.addListener('message', () => done());
             device.nmt._sendHeartbeat();
         });
     });
 
     describe('Consumer', function() {
         beforeEach(function() {
-            /* Consumer heartbeat time. */
-            device.eds.addEntry(0x1016, {
-                parameterName:  'Consumer heartbeat time',
-                objectType:     ObjectType.ARRAY,
-                subNumber:      2,
-            });
-            device.eds.addSubEntry(0x1016, 1, {
-                parameterName:  'Consumer 1',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-                defaultValue:   (device.id << 16) | 10,
-            });
-
+            device.nmt.addConsumer(device.id, 10);
             device.init();
         });
 
         it('should emit on heartbeat timeout', function(done) {
-            device.on('nmtTimeout', () => {
-                done();
-            });
+            device.on('nmtTimeout', () => done());
             device.nmt._sendHeartbeat();
         });
 
         it('should emit on NMT state change', function(done) {
-            device.on("nmtChangeState", () => {
-                done();
-            });
+            device.on("nmtChangeState", () => done());
             device.nmt.startNode(device.id);
         });
     });

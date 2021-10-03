@@ -5,7 +5,7 @@
  */
 
 const Device = require('../device');
-const { ObjectType, AccessType, DataType, DataObject } = require('../eds');
+const { ObjectType, AccessType, DataType, DataObject, EdsError} = require('../eds');
 
 /**
  * NMT internal states.
@@ -119,6 +119,90 @@ class Nmt {
         }
 
         obj1017.value = value;
+    }
+
+    /**
+     * Get an entry from 0x1016 (Consumer heartbeat time).
+     *
+     * @param {number} deviceId - device COB-ID of the entry to get.
+     * @returns {DataObject | null} the matching entry.
+     */
+    getConsumer(deviceId) {
+        const obj1016 = this.device.eds.getEntry(0x1016);
+        if(obj1016 !== undefined) {
+            for(let i = 1; i <= obj1016._subObjects[0].value; ++i) {
+                const subObject = obj1016._subObjects[i];
+                if(subObject === undefined)
+                    continue;
+
+                if(((subObject.value >> 16) & 0x7F) === deviceId)
+                    return subObject;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Add an entry to 0x1016 (Consumer heartbeat time).
+     *
+     * @param {number} deviceId - device COB-ID to add.
+     * @param {number} timeout - milliseconds before a timeout is reported.
+     * @param {number} [subIndex] - sub-index to store the entry, optional.
+     */
+    addConsumer(deviceId, timeout, subIndex) {
+        if(deviceId < 1 || deviceId > 0x7F)
+            throw RangeError('deviceId must be in range 1-127');
+
+        if(timeout < 0 || timeout > 0xffff)
+            throw RangeError('timeout must be in range 0-65535');
+
+        if(this.getConsumer(deviceId) !== null) {
+            deviceId = '0x' + deviceId.toString(16);
+            throw new EdsError(`Entry for device ${deviceId} already exists`);
+        }
+
+        let obj1016 = this.device.eds.getEntry(0x1016);
+        if(obj1016 === undefined) {
+            obj1016 = this.device.eds.addEntry(0x1016, {
+                parameterName:  'Consumer heartbeat time',
+                objectType:     ObjectType.ARRAY,
+                subNumber:      1
+            });
+        }
+
+        if(subIndex === undefined) {
+            // Find first empty index
+            for(let i = 1; i <= 255; ++i) {
+                if(obj1016[i] === undefined)
+                    subIndex = i;
+            }
+        }
+
+        if(subIndex === undefined)
+            throw new EdsError('Failed to find empty sub-index');
+
+        // Install sub entry
+        this.device.eds.addSubEntry(0x1016, subIndex, {
+            parameterName:  `Device 0x${deviceId.toString(16)}`,
+            objectType:     ObjectType.VAR,
+            dataType:       DataType.UNSIGNED32,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   (deviceId << 16) | timeout,
+        });
+    }
+
+    /**
+     * Remove an entry from 0x1016 (Consumer heartbeat time).
+     *
+     * @param {number} deviceId - device COB-ID of the entry to remove.
+     */
+    removeConsumer(deviceId) {
+        const subEntry = this.getConsumer(deviceId);
+        if(subEntry === null)
+            throw ReferenceError(`Entry for device ${deviceId} does not exist`);
+
+        this.device.eds.removeSubEntry(0x1016, subEntry.subIndex);
     }
 
     /** Initialize members and begin heartbeat monitoring. */
