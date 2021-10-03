@@ -38,7 +38,7 @@ class Device extends EventEmitter {
     constructor({ id, eds, loopback=false }) {
         super();
 
-        if(!id || id > 0x7F)
+        if(id < 1 || id > 0x7F)
             throw RangeError("ID must be in range 1-127");
 
         this.id = id;
