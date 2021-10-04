@@ -71,14 +71,13 @@ const { ObjectType, AccessType, DataType, DataObject } = require('../eds');
  * channel.addListener('onMessage', (message) => device.receive(message));
  * device.setTransmitFunction((message) => channel.send(message));
  *
+ * device.init();
+ * channel.start();
+ *
  * device.sync.cobId = 0x80;
  * device.sync.cyclePeriod = 1e6; // 1 second
  * device.sync.overflow = 10;
  * device.sync.generate = true;
- *
- * device.init();
- * channel.start();
- *
  * device.sync.start();
  */
 class Sync {
@@ -192,27 +191,52 @@ class Sync {
     /** Initialize members and begin consuming sync objects. */
     init() {
         // Object 0x1005 - COB-ID SYNC
-        const obj1005 = this.device.eds.getEntry(0x1005);
-        if(obj1005 !== undefined) {
+        let obj1005 = this.device.eds.getEntry(0x1005);
+        if(obj1005 === undefined) {
+            obj1005 = this.device.eds.addEntry(0x1005, {
+                parameterName:  'COB-ID SYNC',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+        else {
             this._parse1005(obj1005);
-            obj1005.addListener('update', this._parse1005.bind(this));
-
-            this.device.addListener('message', this._onMessage.bind(this));
         }
 
         // Object 0x1006 - Communication cycle period
-        const obj1006 = this.device.eds.getEntry(0x1006);
-        if(obj1006 !== undefined) {
+        let obj1006 = this.device.eds.getEntry(0x1006);
+        if(obj1006 === undefined) {
+            obj1006 = this.device.eds.addEntry(0x1006, {
+                parameterName:  'Communication cycle period',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+        else {
             this._parse1006(obj1006);
-            obj1006.addListener('update', this._parse1006.bind(this));
         }
 
         // Object 0x1019 - Synchronous counter overflow value
-        const obj1019 = this.device.eds.getEntry(0x1019);
-        if(obj1019 !== undefined) {
-            this._parse1019(obj1019);
-            obj1019.addListener('update', this._parse1019.bind(this));
+        let obj1019 = this.device.eds.getEntry(0x1019);
+        if(obj1019 === undefined) {
+            obj1019 = this.device.eds.addEntry(0x1019, {
+                parameterName:  'Synchronous counter overflow value',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED8,
+                accessType:     AccessType.READ_WRITE,
+            });
         }
+        else {
+            this._parse1019(obj1019);
+        }
+
+        obj1005.addListener('update', this._parse1005.bind(this));
+        obj1006.addListener('update', this._parse1006.bind(this));
+        obj1019.addListener('update', this._parse1019.bind(this));
+
+        this.device.addListener('message', this._onMessage.bind(this));
     }
 
     /** Begin producing sync objects. */
@@ -269,7 +293,7 @@ class Sync {
      * @private
      */
     _onMessage(message) {
-        if((message.id &amp; 0x7FF) != this._cobId)
+        if((message.id &amp; 0x7FF) !== this._cobId)
             return;
 
         if(message.data)

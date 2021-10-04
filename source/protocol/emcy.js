@@ -264,11 +264,10 @@ class EmcyMessage {
  * channel.addListener('onMessage', (message) => device.receive(message));
  * device.setTransmitFunction((message) => channel.send(message));
  *
- * device.emcy.cobId = 0x80;
- *
  * device.init();
  * channel.start();
  *
+ * device.emcy.cobId = 0x80;
  * device.emcy.write(0x1000);
  */
 class Emcy {
@@ -430,18 +429,35 @@ class Emcy {
         this.register = 0;
 
         // Object 0x1014 - COB-ID EMCY.
-        const obj1014 = this.device.eds.getEntry(0x1014);
-        if(obj1014 !== undefined) {
+        let obj1014 = this.device.eds.getEntry(0x1014);
+        if(obj1014 === undefined) {
+            obj1014 = this.device.eds.addEntry(0x1014, {
+                parameterName:  'COB-ID EMCY',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+        else {
             this._parse1014(obj1014);
-            obj1014.addListener('update', this._parse1014.bind(this));
         }
 
         // Object 0x1015 - Inhibit time EMCY.
-        const obj1015 = this.device.eds.getEntry(0x1015);
-        if(obj1015 !== undefined) {
-            this._parse1015(obj1015);
-            obj1015.addListener('update', this._parse1015.bind(this));
+        let obj1015 = this.device.eds.getEntry(0x1015);
+        if(obj1015 === undefined) {
+            obj1015 = this.device.eds.addEntry(0x1015, {
+                parameterName:  'Inhibit time EMCY',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED16,
+                accessType:     AccessType.READ_WRITE,
+            });
         }
+        else {
+            this._parse1015(obj1015);
+        }
+
+        obj1014.addListener('update', this._parse1014.bind(this));
+        obj1015.addListener('update', this._parse1015.bind(this));
 
         this.device.addListener('message', this._onMessage.bind(this));
     }

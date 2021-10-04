@@ -18,18 +18,18 @@ const device = new Device({ id: 0xa });
 // Step 2: Create a new socketcan RawChannel object.
 const channel = can.createRawChannel('can0');
 
-// Step 3: Configure the COB-ID and cycle period.
-device.sync.cobId = 0x80;
-device.sync.cyclePeriod = 1e6; // 1 second
-device.sync.overflow = 10;
-device.sync.generate = true;
-
-// Step 4: Initialize and start the node.
+// Step 3: Initialize and start the node.
 channel.addListener('onMessage', (message) => device.receive(message));
 device.setTransmitFunction((message) => channel.send(message));
 
 device.init();
-device.sync.start();
 channel.start();
+
+// Step 4: Configure the COB-ID and cycle period.
+device.sync.cobId = 0x80;
+device.sync.cyclePeriod = 1e6; // 1 second
+device.sync.overflow = 10;
+device.sync.generate = true;
+device.sync.start();
 
 console.log("Press Ctrl-C to quit");

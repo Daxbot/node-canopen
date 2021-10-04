@@ -11,6 +11,7 @@ describe('Nmt', function() {
     describe('Object dictionary', function() {
         before(function() {
             device = new Device({ id: 0xA, loopback: true });
+            device.init();
         });
 
         it('should add entries to 0x1016', function() {
@@ -36,14 +37,25 @@ describe('Nmt', function() {
             expect(() => device.nmt.removeConsumer(0xB)).to.throw(EdsError);
         });
 
+        it('should listen for updates to 0x1016', function(done) {
+            const obj1016 = device.eds.getEntry(0x1016);
+            obj1016.addListener('update', (entry) => {
+                setImmediate(() => {
+                    expect(entry[1].value & 0xFFFF).to.equal(200);
+                    done();
+                });
+            });
+
+            device.nmt.addConsumer(0xD, 200);
+        });
+
         it('should listen for updates to 0x1017', function(done) {
             device.nmt.producerTime = 100;
-            device.init();
 
             const obj1017 = device.eds.getEntry(0x1017);
-            obj1017.addListener('update', () => {
+            obj1017.addListener('update', (entry) => {
                 setImmediate(() => {
-                    expect(device.nmt.producerTime).to.equal(200);
+                    expect(entry.value).to.equal(200);
                     done();
                 });
             });
@@ -55,22 +67,17 @@ describe('Nmt', function() {
     describe('Producer', function() {
         beforeEach(function() {
             device = new Device({ id: 0xA, loopback: true });
+            device.init();
         });
 
         it('should throw if producer time is 0', function() {
             device.nmt.producerTime = 0;
-            device.init();
-
-            return expect(() => {
-                device.nmt.start();
-            }).to.throw(TypeError);
+            return expect(() => device.nmt.start()).to.throw(EdsError);
         });
 
         it('should produce a heartbeat object', function(done) {
-            device.nmt.producerTime = 10;
-            device.init();
-
             device.addListener('message', () => done());
+            device.nmt.producerTime = 10;
             device.nmt._sendHeartbeat();
         });
     });
@@ -78,17 +85,18 @@ describe('Nmt', function() {
     describe('Consumer', function() {
         beforeEach(function() {
             device = new Device({ id: 0xA, loopback: true });
-            device.nmt.addConsumer(device.id, 10);
             device.init();
         });
 
         it('should emit on heartbeat timeout', function(done) {
             device.on('nmtTimeout', () => done());
+            device.nmt.addConsumer(device.id, 10);
             device.nmt._sendHeartbeat();
         });
 
         it('should emit on NMT state change', function(done) {
             device.on("nmtChangeState", () => done());
+            device.nmt.addConsumer(device.id, 10);
             device.nmt.startNode(device.id);
         });
     });

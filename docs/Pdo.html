@@ -81,7 +81,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line21">line 21</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line42">line 42</a>
     </li></ul></dd>
     
 
@@ -133,6 +133,30 @@ protocol overhead.</p></div>
 
 
 
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const can = require('socketcan');
+
+const channel = can.createRawChannel('can0');
+const device = new Device({ id: 0xa });
+
+channel.addListener('onMessage', (message) => device.receive(message));
+device.setTransmitFunction((message) => channel.send(message));
+
+device.init();
+channel.start();
+
+const entry = device.eds.addEntry(0x2000, {
+    parameterName:  'Test object',
+    objectType:     ObjectType.VAR,
+    dataType:       DataType.UNSIGNED32,
+    accessType:     AccessType.READ_WRITE,
+});
+
+device.pdo.addTransmit(0x180, [entry]);
+device.pdo.write(0x180 + device.id);</code></pre>
 
 
 
@@ -241,7 +265,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line60">line 60</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line82">line 82</a>
     </li></ul></dd>
     
 
@@ -609,7 +633,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line190">line 190</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line212">line 212</a>
     </li></ul></dd>
     
 
@@ -977,7 +1001,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line36">line 36</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line58">line 58</a>
     </li></ul></dd>
     
 
@@ -1138,7 +1162,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line166">line 166</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line188">line 188</a>
     </li></ul></dd>
     
 
@@ -1299,7 +1323,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line290">line 290</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line315">line 315</a>
     </li></ul></dd>
     
 
@@ -1386,7 +1410,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line145">line 145</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line168">line 168</a>
     </li></ul></dd>
     
 
@@ -1522,7 +1546,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line275">line 275</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line300">line 300</a>
     </li></ul></dd>
     
 
@@ -1658,7 +1682,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line312">line 312</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line337">line 337</a>
     </li></ul></dd>
     
 
@@ -1745,7 +1769,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line318">line 318</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line345">line 345</a>
     </li></ul></dd>
     
 
@@ -1832,7 +1856,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line335">line 335</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line363">line 363</a>
     </li></ul></dd>
     
 

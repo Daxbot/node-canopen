@@ -80,7 +80,7 @@ producer on the network.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line42">line 42</a>
+        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line41">line 41</a>
     </li></ul></dd>
     
 
@@ -144,12 +144,11 @@ const device = new Device({ id: 0xa });
 channel.addListener('onMessage', (message) => device.receive(message));
 device.setTransmitFunction((message) => channel.send(message));
 
-device.time.cobId = 0x80 + device.id;
-device.time.produce = true;
-
 device.init();
 channel.start();
 
+device.time.cobId = 0x80 + device.id;
+device.time.produce = true;
 device.time.write();</code></pre>
 
 
@@ -253,7 +252,7 @@ device.time.write();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line110">line 110</a>
+        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line109">line 109</a>
     </li></ul></dd>
     
 
@@ -326,7 +325,7 @@ device.time.write();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line81">line 81</a>
+        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line80">line 80</a>
     </li></ul></dd>
     
 
@@ -399,7 +398,7 @@ device.time.write();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line55">line 55</a>
+        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line54">line 54</a>
     </li></ul></dd>
     
 
@@ -482,7 +481,7 @@ device.time.write();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line130">line 130</a>
+        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line129">line 129</a>
     </li></ul></dd>
     
 
@@ -569,7 +568,7 @@ device.time.write();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line146">line 146</a>
+        <a href="protocol_time.js.html">protocol/time.js</a>, <a href="protocol_time.js.html#line153">line 153</a>
     </li></ul></dd>
     
 

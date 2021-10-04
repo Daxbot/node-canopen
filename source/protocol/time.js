@@ -31,12 +31,11 @@ const {
  * channel.addListener('onMessage', (message) => device.receive(message));
  * device.setTransmitFunction((message) => channel.send(message));
  *
- * device.time.cobId = 0x80 + device.id;
- * device.time.produce = true;
- *
  * device.init();
  * channel.start();
  *
+ * device.time.cobId = 0x80 + device.id;
+ * device.time.produce = true;
  * device.time.write();
  */
 class Time {
@@ -129,13 +128,21 @@ class Time {
     /** Initialize members and begin consuming time stamp objects. */
     init() {
         // Object 0x1012 - COB-ID TIME
-        const obj1012 = this.device.eds.getEntry(0x1012);
-        if(obj1012 !== undefined) {
-            this._parse1012(obj1012);
-            obj1012.addListener('update', this._parse1012.bind(this));
-
-            this.device.addListener('message', this._onMessage.bind(this));
+        let obj1012 = this.device.eds.getEntry(0x1012);
+        if(obj1012 === undefined) {
+            obj1012 = this.device.eds.addEntry(0x1012, {
+                parameterName:  'COB-ID TIME',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
         }
+        else {
+            this._parse1012(obj1012);
+        }
+
+        obj1012.addListener('update', this._parse1012.bind(this));
+        this.device.addListener('message', this._onMessage.bind(this));
     }
 
     /**
@@ -164,7 +171,7 @@ class Time {
      * @private
      */
     _onMessage(message) {
-        if(!this.consume || (message.id & 0x7FF) != this.cobId)
+        if(!this.consume || (message.id & 0x7FF) !== this.cobId)
             return;
 
         const date = rawToType(message.data, DataType.TIME_OF_DAY);

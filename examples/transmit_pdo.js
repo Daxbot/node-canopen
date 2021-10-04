@@ -24,21 +24,18 @@ const entry = device.eds.addEntry(0x2000, {
     defaultValue:   0x12345678,
 });
 
-// Step 4: Configure the TPDO communication and mapping parameters.
-device.pdo.addTransmit(0x180, [entry]);
-
-// Step 5: Initialize and start the node.
+// Step 4: Initialize and start the node.
 channel.addListener('onMessage', (message) => device.receive(message));
 device.setTransmitFunction((message) => channel.send(message));
 
 device.init();
-device.pdo.start();
 channel.start();
+
+// Step 5: Configure the TPDO communication and mapping parameters.
+device.pdo.addTransmit(0x180, [entry]);
 
 // Step 6: Trigger the TPDO.
 device.pdo.write(0x180 + device.id);
 
-setTimeout(() => {
-    device.pdo.stop();
-    channel.stop();
-}, 1000);
+// Step 7: Cleanup
+channel.stop();

@@ -63,6 +63,27 @@ const { ObjectType, AccessType, DataType, EdsError, DataObject } = require('../e
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Process data objects (PDO)" (§7.2.2)
+ * @example
+ * const can = require('socketcan');
+ *
+ * const channel = can.createRawChannel('can0');
+ * const device = new Device({ id: 0xa });
+ *
+ * channel.addListener('onMessage', (message) => device.receive(message));
+ * device.setTransmitFunction((message) => channel.send(message));
+ *
+ * device.init();
+ * channel.start();
+ *
+ * const entry = device.eds.addEntry(0x2000, {
+ *     parameterName:  'Test object',
+ *     objectType:     ObjectType.VAR,
+ *     dataType:       DataType.UNSIGNED32,
+ *     accessType:     AccessType.READ_WRITE,
+ * });
+ *
+ * device.pdo.addTransmit(0x180, [entry]);
+ * device.pdo.write(0x180 + device.id);
  */
 class Pdo {
     constructor(device) {
@@ -71,6 +92,7 @@ class Pdo {
         this.writeMap = {};
         this.eventTimers = {};
         this.events = [];
+        this.started = false;
     }
 
     /**
@@ -180,7 +202,8 @@ class Pdo {
             });
         }
 
-        this.receiveMap[cobId] = this._parsePdo(index);
+        const pdo = this._parsePdo(index);
+        this.receiveMap[pdo.cobId] = pdo;
     }
 
     /**
@@ -191,7 +214,7 @@ class Pdo {
     removeReceive(cobId) {
         const entry = this.getReceive(cobId);
         if(entry === null)
-            throw ReferenceError(`Entry for RPDO ${cobId} does not exist`);
+            throw new EdsError(`Entry for RPDO ${cobId} does not exist`);
 
         delete this.receiveMap[cobId];
 
@@ -200,7 +223,6 @@ class Pdo {
 
         // RPDO mapping parameter
         this.device.eds.removeEntry(entry.index+0x200);
-
     }
 
     /**
@@ -310,7 +332,10 @@ class Pdo {
             });
         }
 
-        this.writeMap[cobId] = this._parsePdo(index);
+        const pdo = this._parsePdo(index);
+        this.writeMap[pdo.cobId] = pdo;
+        if(this.started)
+            this._startTpdo(pdo);
     }
 
     /**
@@ -321,7 +346,7 @@ class Pdo {
     removeTransmit(cobId) {
         const entry = this.getTransmit(cobId);
         if(entry === null)
-            throw ReferenceError(`Entry for TPDO ${cobId} does not exist`);
+            throw new EdsError(`Entry for TPDO ${cobId} does not exist`);
 
         delete this.writeMap[cobId];
 
@@ -358,6 +383,8 @@ class Pdo {
     start() {
         for(const pdo of Object.values(this.writeMap))
             this._startTpdo(pdo)
+
+        this.started = true;
     }
 
     /** Stop TPDO generation. */
@@ -368,6 +395,7 @@ class Pdo {
         for(const timer of Object.values(this.eventTimers))
             clearInterval(timer);
 
+        this.started = false;
         this.eventTimers = {};
         this.events = [];
     }
@@ -381,7 +409,7 @@ class Pdo {
     write(cobId, update=false) {
         const pdo = this.writeMap[cobId];
         if(!pdo)
-            throw ReferenceError(`TPDO 0x${cobId.toString(16)} not mapped.`);
+            throw new EdsError(`TPDO 0x${cobId.toString(16)} not mapped.`);
 
         const data = Buffer.alloc(pdo.dataSize);
         let dataOffset = 0;

@@ -17,6 +17,27 @@ const { ObjectType, AccessType, DataType, EdsError, DataObject } = require('../e
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Process data objects (PDO)" (§7.2.2)
+ * @example
+ * const can = require('socketcan');
+ *
+ * const channel = can.createRawChannel('can0');
+ * const device = new Device({ id: 0xa });
+ *
+ * channel.addListener('onMessage', (message) => device.receive(message));
+ * device.setTransmitFunction((message) => channel.send(message));
+ *
+ * device.init();
+ * channel.start();
+ *
+ * const entry = device.eds.addEntry(0x2000, {
+ *     parameterName:  'Test object',
+ *     objectType:     ObjectType.VAR,
+ *     dataType:       DataType.UNSIGNED32,
+ *     accessType:     AccessType.READ_WRITE,
+ * });
+ *
+ * device.pdo.addTransmit(0x180, [entry]);
+ * device.pdo.write(0x180 + device.id);
  */
 class Pdo {
     constructor(device) {

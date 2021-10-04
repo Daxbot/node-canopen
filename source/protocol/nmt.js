@@ -79,11 +79,10 @@ const NmtCommand = {
  * channel.addListener('onMessage', (message) => device.receive(message));
  * device.setTransmitFunction((message) => channel.send(message));
  *
- * device.nmt.producerTime = 500;
- *
  * device.init();
  * channel.start();
  *
+ * device.nmt.producerTime = 500;
  * device.nmt.start();
  */
 class Nmt {
@@ -91,8 +90,8 @@ class Nmt {
         this.device = device;
         this.heartbeats = {};
         this.timers = {};
-        this._producerTime = 0;
         this._state = NmtState.INITIALIZING;
+        this.started = false;
     }
 
     /**
@@ -118,7 +117,7 @@ class Nmt {
      * @type {number}
      */
     get producerTime() {
-        return this._producerTime;
+        return this.device.getValue(0x1017);
     }
 
     set producerTime(value) {
@@ -223,24 +222,34 @@ class Nmt {
     /** Initialize members and begin heartbeat monitoring. */
     init() {
         // Object 0x1016 - Consumer heartbeat time
-        const obj1016 = this.device.eds.getEntry(0x1016);
-        if(obj1016 !== undefined) {
-            for(let i = 1; i <= obj1016[0].value; ++i) {
-                const entry = obj1016[i];
-                if(entry === undefined)
-                    continue;
-
-                this._parse1016(entry);
-                entry.addListener('update', this._parse1016.bind(this));
-            }
+        let obj1016 = this.device.eds.getEntry(0x1016);
+        if(obj1016 === undefined) {
+            obj1016 = this.device.eds.addEntry(0x1016, {
+                parameterName:  'Consumer heartbeat time',
+                objectType:     ObjectType.ARRAY,
+            });
+        }
+        else {
+            this._parse1016(obj1016);
         }
 
         // Object 0x1017 - Producer heartbeat time
-        const obj1017 = this.device.eds.getEntry(0x1017);
-        if(obj1017 !== undefined) {
-            this._parse1017(obj1017);
-            obj1017.addListener('update', this._parse1017.bind(this));
+        let obj1017 = this.device.eds.getEntry(0x1017);
+        if(obj1017 === undefined) {
+            obj1017 = this.device.eds.addEntry(0x1017, {
+                parameterName:  'Producer heartbeat time',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
         }
+        else {
+            this._parse1017(obj1017);
+        }
+
+        obj1016.addListener('update', this._parse1016.bind(this));
+        obj1017.addListener('update', this._parse1017.bind(this));
+
 
         this.device.addListener('message', this._onMessage.bind(this));
     }
@@ -248,7 +257,7 @@ class Nmt {
     /** Begin heartbeat generation. */
     start() {
         if(this.producerTime == 0)
-            throw TypeError('Producer heartbeat time can not be 0.')
+            throw new EdsError('Producer heartbeat time can not be 0')
 
         // Switch to NmtState.OPERATIONAL
         this.startNode();
@@ -257,11 +266,15 @@ class Nmt {
         this.timers[this.device.id] = setInterval(() => {
             this._sendHeartbeat();
         }, this.producerTime);
+
+        this.started = true;
     }
 
     /** Stop heartbeat generation. */
     stop() {
         clearInterval(this.timers[this.device.id]);
+        delete this.timers[this.device.id]
+        this.started = false;
     }
 
     /**
@@ -429,27 +442,33 @@ class Nmt {
     /**
      * Called when 0x1016 (Consumer heartbeat time) is updated.
      *
-     * @param {DataObject} data - updated DataObject.
+     * @param {DataObject} entry - updated DataObject.
      * @private
      */
-    _parse1016(data) {
+    _parse1016(entry) {
         /* Object 0x1016 - Consumer heartbeat time.
          *   sub-index 1+:
          *     bit 0..15    Heartbeat time in ms.
          *     bit 16..23   Node-ID of producer.
          *     bit 24..31   Reserved (0x00);
          */
-        const heartbeatTime = data.raw.readUInt16LE(0);
-        const deviceId = data.raw.readUInt8(2);
+        for(let i = 1; i <= entry[0].value; ++i) {
+            const subEntry = entry[i];
+            if(subEntry === undefined)
+                continue;
 
-        if(this.heartbeats[deviceId] !== undefined) {
-            this.heartbeats[deviceId].interval = heartbeatTime;
-            clearTimeout(this.timers[deviceId]);
-        }
-        else {
-            this.heartbeats[deviceId] = {
-                state:      NmtState.INITIALIZING,
-                interval:   heartbeatTime,
+            const heartbeatTime = subEntry.raw.readUInt16LE(0);
+            const deviceId = subEntry.raw.readUInt8(2);
+
+            if(this.heartbeats[deviceId] !== undefined) {
+                this.heartbeats[deviceId].interval = heartbeatTime;
+                clearTimeout(this.timers[deviceId]);
+            }
+            else {
+                this.heartbeats[deviceId] = {
+                    state:      NmtState.INITIALIZING,
+                    interval:   heartbeatTime,
+                }
             }
         }
     }
@@ -457,11 +476,23 @@ class Nmt {
     /**
      * Called when 0x1017 (Producer heartbeat time) is updated.
      *
-     * @param {DataObject} data - updated DataObject.
+     * @param {DataObject} entry - updated DataObject.
      * @private
      */
-    _parse1017(data) {
-        this._producerTime = data.value;
+    _parse1017(entry) {
+        if(!this.started)
+            return;
+
+        // Clear old timer
+        this.stop();
+
+        // Start heartbeat timer with new interval
+        const producerTime = entry.value;
+        if(producerTime > 0) {
+            this.timers[this.device.id] = setInterval(() => {
+                this._sendHeartbeat();
+            }, producerTime);
+        }
     }
 }
 

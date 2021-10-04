@@ -410,12 +410,44 @@ class Queue {
  *
  * @param {Device} device - parent device.
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
+ * @example
+ * const can = require('socketcan');
+ *
+ * const channel = can.createRawChannel('can0');
+ * const device = new Device({ id: 0xA });
+ *
+ * channel.addListener('onMessage', (message) => device.receive(message));
+ * device.setTransmitFunction((message) => channel.send(message));
+ *
+ * device.init();
+ * channel.start();
+ *
+ * device.sdo.addServer(0xB);
+ * device.sdo.download({
+ *     serverId:    0xB,
+ *     data:        'Test string data',
+ *     dataType:    DataType.VISIBLE_STRING,
+ *     index:       0x2000
+ * });
  */
 class SdoClient {
     constructor(device) {
         this.device = device;
         this.servers = {};
         this.transfers = {};
+    }
+
+    /** Initialize members and begin serving SDO transfers. */
+    init() {
+        for(let index of Object.keys(this.device.dataObjects)) {
+            index = parseInt(index);
+            if(index < 0x1280 || index > 0x12FF)
+                continue;
+
+            this._parseSdo(index);
+        }
+
+        this.device.addListener('message', this._onMessage.bind(this));
     }
 
     /**
@@ -484,6 +516,8 @@ class SdoClient {
             accessType:     AccessType.READ_WRITE,
             defaultValue:   serverId
         });
+
+        this._parseSdo(index);
     }
 
     /**
@@ -497,66 +531,6 @@ class SdoClient {
             throw ReferenceError(`Entry for server ${serverId} does not exist`);
 
         this.device.eds.removeEntry(entry.index);
-    }
-
-    /** Initialize members and begin serving SDO transfers. */
-    init() {
-        for(let [index, entry] of Object.entries(this.device.dataObjects)) {
-            index = parseInt(index);
-            if(index < 0x1280 || index > 0x12FF)
-                continue;
-
-            /* Object 0x1280..0x12FF - SDO client parameter.
-             *   sub-index 1/2:
-             *     bit 0..10      11-bit CAN base frame.
-             *     bit 11..28     29-bit CAN extended frame.
-             *     bit 29         Frame type (base or extended).
-             *     bit 30         Dynamically allocated.
-             *     bit 31         SDO exists / is valid.
-             *
-             *   sub-index 3:
-             *     bit 0..7      Node-ID of the SDO server.
-             */
-            const serverId = entry[3].value;
-            if(!serverId)
-                throw new ReferenceError('ID of the SDO server is required.');
-
-            let cobIdTx = entry[1].value;
-            if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
-                continue;
-
-            if(((cobIdTx >> 30) & 0x1) == 0x1)
-                throw TypeError('Dynamic assignment is not supported.');
-
-            if(((cobIdTx >> 29) & 0x1) == 0x1)
-                throw TypeError('CAN extended frames are not supported.');
-
-            cobIdTx &= 0x7FF;
-            if((cobIdTx & 0xF) == 0x0)
-                cobIdTx |= serverId;
-
-            let cobIdRx = entry[2].value;
-            if(!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
-                continue;
-
-            if(((cobIdRx >> 30) & 0x1) == 0x1)
-                throw TypeError('Dynamic assignment is not supported.');
-
-            if(((cobIdRx >> 29) & 0x1) == 0x1)
-                throw TypeError('CAN extended frames are not supported.');
-
-            cobIdRx &= 0x7FF;
-            if((cobIdRx & 0xF) == 0x0)
-                cobIdRx |= serverId;
-
-            this.servers[serverId] = {
-                cobIdTx:    cobIdTx,
-                cobIdRx:    cobIdRx,
-                queue:      new Queue(),
-            };
-        }
-
-        this.device.addListener('message', this._onMessage.bind(this));
     }
 
     /**
@@ -721,6 +695,69 @@ class SdoClient {
                 });
             });
         });
+    }
+
+    /**
+     * Parse a SDO client parameter.
+     *
+     * @param {number} index - entry index.
+     * @private
+     */
+    _parseSdo(index) {
+        const entry = this.device.eds.getEntry(index);
+        if(!entry) {
+            index = '0x' + (index + 0x200).toString(16);
+            throw new EdsError(`Missing SDO client parameter (${index})`);
+        }
+
+        /* Object 0x1280..0x12FF - SDO client parameter.
+         *   sub-index 1/2:
+         *     bit 0..10      11-bit CAN base frame.
+         *     bit 11..28     29-bit CAN extended frame.
+         *     bit 29         Frame type (base or extended).
+         *     bit 30         Dynamically allocated.
+         *     bit 31         SDO exists / is valid.
+         *
+         *   sub-index 3:
+         *     bit 0..7      Node-ID of the SDO server.
+         */
+        const serverId = entry[3].value;
+        if(!serverId)
+            throw new ReferenceError('ID of the SDO server is required.');
+
+        let cobIdTx = entry[1].value;
+        if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
+            return;
+
+        if(((cobIdTx >> 30) & 0x1) == 0x1)
+            throw TypeError('Dynamic assignment is not supported.');
+
+        if(((cobIdTx >> 29) & 0x1) == 0x1)
+            throw TypeError('CAN extended frames are not supported.');
+
+        cobIdTx &= 0x7FF;
+        if((cobIdTx & 0xF) == 0x0)
+            cobIdTx |= serverId;
+
+        let cobIdRx = entry[2].value;
+        if(!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
+            return;
+
+        if(((cobIdRx >> 30) & 0x1) == 0x1)
+            throw TypeError('Dynamic assignment is not supported.');
+
+        if(((cobIdRx >> 29) & 0x1) == 0x1)
+            throw TypeError('CAN extended frames are not supported.');
+
+        cobIdRx &= 0x7FF;
+        if((cobIdRx & 0xF) == 0x0)
+            cobIdRx |= serverId;
+
+        this.servers[serverId] = {
+            cobIdTx:    cobIdTx,
+            cobIdRx:    cobIdRx,
+            queue:      new Queue(),
+        };
     }
 
     /**
@@ -909,12 +946,44 @@ class SdoClient {
  *
  * @param {Device} device - parent device.
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
- * @protected
+ * @example
+ * const can = require('socketcan');
+ *
+ * const channel = can.createRawChannel('can0');
+ * const device = new Device({ id: 0xB });
+ *
+ * channel.addListener('onMessage', (message) => device.receive(message));
+ * device.setTransmitFunction((message) => channel.send(message));
+ *
+ * device.init();
+ * channel.start();
+ *
+ * device.eds.addEntry(0x2000, {
+ *     parameterName:  'Test string',
+ *     objectType:     ObjectType.VAR,
+ *     dataType:       DataType.VISIBLE_STRING,
+ *     accessType:     AccessType.READ_WRITE,
+ * });
+ *
+ * device.sdoServer.addClient(0xA);
  */
 class SdoServer {
     constructor(device) {
         this.device = device;
         this.clients = {};
+    }
+
+    /** Initialize members and begin serving SDO transfers. */
+    init() {
+        for(let index of Object.keys(this.device.dataObjects)) {
+            index = parseInt(index);
+            if(index < 0x1200 || index > 0x127F)
+                continue;
+
+            this._parseSdo(index);
+        }
+
+        this.device.addListener('message', this._onMessage.bind(this));
     }
 
     /**
@@ -983,6 +1052,8 @@ class SdoServer {
             accessType:     AccessType.READ_WRITE,
             defaultValue:   clientId
         });
+
+        this._parseSdo(index);
     }
 
     /**
@@ -998,59 +1069,62 @@ class SdoServer {
         this.device.eds.removeEntry(entry.index);
     }
 
-    /** Initialize members and begin serving SDO transfers. */
-    init() {
-        for(let [index, entry] of Object.entries(this.device.dataObjects)) {
-            index = parseInt(index);
-            if(index < 0x1200 || index > 0x127F)
-                continue;
-
-            /* Object 0x1200..0x127F - SDO server parameter.
-             *   sub-index 1/2:
-             *     bit 0..10      11-bit CAN base frame.
-             *     bit 11..28     29-bit CAN extended frame.
-             *     bit 29         Frame type (base or extended).
-             *     bit 30         Dynamically allocated.
-             *     bit 31         SDO exists / is valid.
-             *
-             *   sub-index 3 (optional):
-             *     bit 0..7      Node-ID of the SDO client.
-             */
-            let cobIdRx = entry[1].value;
-            if(!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
-                continue;
-
-            if(((cobIdRx >> 30) & 0x1) == 0x1)
-                throw TypeError('Dynamic assignment is not supported.');
-
-            if(((cobIdRx >> 29) & 0x1) == 0x1)
-                throw TypeError('CAN extended frames are not supported.');
-
-            cobIdRx &= 0x7FF;
-            if((cobIdRx & 0xF) == 0x0)
-                cobIdRx |= this.device.id;
-
-            let cobIdTx = entry[2].value;
-            if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
-                continue;
-
-            if(((cobIdTx >> 30) & 0x1) == 0x1)
-                throw TypeError('Dynamic assignment is not supported.');
-
-            if(((cobIdTx >> 29) & 0x1) == 0x1)
-                throw TypeError('CAN extended frames are not supported.');
-
-            cobIdTx &= 0x7FF;
-            if((cobIdTx & 0xF) == 0x0)
-                cobIdTx |= this.device.id;
-
-            this.clients[cobIdRx] = new Transfer({
-                device: this.device,
-                cobId: cobIdTx
-            });
+    /**
+     * Parse a SDO client parameter.
+     *
+     * @param {number} index - entry index.
+     * @private
+     */
+    _parseSdo(index) {
+        const entry = this.device.eds.getEntry(index);
+        if(!entry) {
+            index = '0x' + (index + 0x200).toString(16);
+            throw new EdsError(`Missing SDO server parameter (${index})`);
         }
 
-        this.device.addListener('message', this._onMessage.bind(this));
+        /* Object 0x1200..0x127F - SDO server parameter.
+         *   sub-index 1/2:
+         *     bit 0..10      11-bit CAN base frame.
+         *     bit 11..28     29-bit CAN extended frame.
+         *     bit 29         Frame type (base or extended).
+         *     bit 30         Dynamically allocated.
+         *     bit 31         SDO exists / is valid.
+         *
+         *   sub-index 3 (optional):
+         *     bit 0..7      Node-ID of the SDO client.
+         */
+        let cobIdRx = entry[1].value;
+        if(!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
+            return;
+
+        if(((cobIdRx >> 30) & 0x1) == 0x1)
+            throw TypeError('Dynamic assignment is not supported.');
+
+        if(((cobIdRx >> 29) & 0x1) == 0x1)
+            throw TypeError('CAN extended frames are not supported.');
+
+        cobIdRx &= 0x7FF;
+        if((cobIdRx & 0xF) == 0x0)
+            cobIdRx |= this.device.id;
+
+        let cobIdTx = entry[2].value;
+        if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
+            return;
+
+        if(((cobIdTx >> 30) & 0x1) == 0x1)
+            throw TypeError('Dynamic assignment is not supported.');
+
+        if(((cobIdTx >> 29) & 0x1) == 0x1)
+            throw TypeError('CAN extended frames are not supported.');
+
+        cobIdTx &= 0x7FF;
+        if((cobIdTx & 0xF) == 0x0)
+            cobIdTx |= this.device.id;
+
+        this.clients[cobIdRx] = new Transfer({
+            device: this.device,
+            cobId: cobIdTx
+        });
     }
 
     /**

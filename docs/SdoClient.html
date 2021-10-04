@@ -81,7 +81,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line414">line 414</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line433">line 433</a>
     </li></ul></dd>
     
 
@@ -133,6 +133,28 @@ error checking.</p></div>
 
 
 
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const can = require('socketcan');
+
+const channel = can.createRawChannel('can0');
+const device = new Device({ id: 0xA });
+
+channel.addListener('onMessage', (message) => device.receive(message));
+device.setTransmitFunction((message) => channel.send(message));
+
+device.init();
+channel.start();
+
+device.sdo.addServer(0xB);
+device.sdo.download({
+    serverId:    0xB,
+    data:        'Test string data',
+    dataType:    DataType.VISIBLE_STRING,
+    index:       0x2000
+});</code></pre>
 
 
 
@@ -241,7 +263,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line447">line 447</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line479">line 479</a>
     </li></ul></dd>
     
 
@@ -441,7 +463,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line647">line 647</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line621">line 621</a>
     </li></ul></dd>
     
 
@@ -764,7 +786,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line427">line 427</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line459">line 459</a>
     </li></ul></dd>
     
 
@@ -925,7 +947,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line503">line 503</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line441">line 441</a>
     </li></ul></dd>
     
 
@@ -1012,7 +1034,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line494">line 494</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line528">line 528</a>
     </li></ul></dd>
     
 
@@ -1148,7 +1170,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line575">line 575</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line549">line 549</a>
     </li></ul></dd>
     
 

@@ -739,6 +739,9 @@ class DataObject extends EventEmitter {
 
         this._raw = raw;
         this.emit('update', this);
+
+        if(this.parent)
+            this.parent.emit('update', this.parent);
     }
 
     /**
@@ -777,13 +780,8 @@ class DataObject extends EventEmitter {
      * @private
      */
     addSubObject(subIndex, data) {
-        if(data instanceof DataObject) {
-            this._subObjects[subIndex] = data;
-        }
-        else {
-            this._subObjects[subIndex] = new DataObject(
-                this.index, subIndex, data, this);
-        }
+        this._subObjects[subIndex] = new DataObject(
+            this.index, subIndex, data, this);
 
         // Allow access to the sub-object using bracket notation
         if(!Object.prototype.hasOwnProperty.call(this, subIndex)) {
@@ -791,6 +789,19 @@ class DataObject extends EventEmitter {
                 get: () => this._subObjects[subIndex]
             });
         }
+
+        // Update max sub-index
+        if(this._subObjects[0].value < subIndex)
+            this._subObjects[0]._raw.writeUInt8(subIndex);
+
+        // Update subNumber
+        this.subNumber = 1;
+        for(let i = 1; i <= this._subObjects[0].value; ++i) {
+            if(this._subObjects[i] !== undefined)
+                this.subNumber += 1;
+        }
+
+        this.emit('update', this);
     }
 
     /**
@@ -801,6 +812,26 @@ class DataObject extends EventEmitter {
      */
     removeSubObject(subIndex) {
         delete this._subObjects[subIndex];
+
+        // Update max sub-index
+        if(subIndex >= this._subObjects[0].value) {
+            // Find the next highest sub-index
+            for(let i = subIndex; i >= 0; --i) {
+                if(this._subObjects[i] !== undefined) {
+                    this._subObjects[0]._raw.writeUInt8(i);
+                    break;
+                }
+            }
+        }
+
+        // Update subNumber
+        this.subNumber = 1;
+        for(let i = 1; i <= this._subObjects[0].value; ++i) {
+            if(this._subObjects[i] !== undefined)
+                this.subNumber += 1;
+        }
+
+        this.emit('update', this);
     }
 }
 
@@ -1129,17 +1160,6 @@ class Eds {
         // Add the new entry
         entry.addSubObject(subIndex, data);
 
-        // Update max sub-index
-        if(entry[0].value < subIndex)
-            entry[0].value = subIndex
-
-        // Update subNumber
-        entry.subNumber = 1;
-        for(let i = 1; i <= entry[0].value; ++i) {
-            if(entry[i] !== undefined)
-                entry.subNumber += 1;
-        }
-
         return entry[subIndex];
     }
 
@@ -1170,24 +1190,6 @@ class Eds {
 
         // Delete the entry
         entry.removeSubObject(subIndex);
-
-        // Update max sub-index
-        if(subIndex >= entry[0].value) {
-            // Find the next highest sub-index
-            for(let i = subIndex; i >= 0; --i) {
-                if(entry[i] !== undefined) {
-                    entry[0].value = i;
-                    break;
-                }
-            }
-        }
-
-        // Update subNumber
-        entry.subNumber = 1;
-        for(let i = 1; i <= entry[0].value; ++i) {
-            if(entry[i] !== undefined)
-                entry.subNumber += 1;
-        }
     }
 
     /**

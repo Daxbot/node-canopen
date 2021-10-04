@@ -69,7 +69,7 @@ error checking.</p></div>
     <h2>Constructor</h2>
     
 
-    <h4 class="name" id="SdoServer"><span class="type-signature">(protected) </span>new SdoServer<span class="signature">(device)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="SdoServer"><span class="type-signature"></span>new SdoServer<span class="signature">(device)</span><span class="type-signature"></span></h4>
 
     
 
@@ -81,7 +81,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line914">line 914</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line970">line 970</a>
     </li></ul></dd>
     
 
@@ -133,6 +133,29 @@ error checking.</p></div>
 
 
 
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const can = require('socketcan');
+
+const channel = can.createRawChannel('can0');
+const device = new Device({ id: 0xB });
+
+channel.addListener('onMessage', (message) => device.receive(message));
+device.setTransmitFunction((message) => channel.send(message));
+
+device.init();
+channel.start();
+
+device.eds.addEntry(0x2000, {
+    parameterName:  'Test string',
+    objectType:     ObjectType.VAR,
+    dataType:       DataType.VISIBLE_STRING,
+    accessType:     AccessType.READ_WRITE,
+});
+
+device.sdoServer.addClient(0xA);</code></pre>
 
 
 
@@ -241,7 +264,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line946">line 946</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line1015">line 1015</a>
     </li></ul></dd>
     
 
@@ -441,7 +464,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line926">line 926</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line995">line 995</a>
     </li></ul></dd>
     
 
@@ -602,7 +625,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line1002">line 1002</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line977">line 977</a>
     </li></ul></dd>
     
 
@@ -689,7 +712,7 @@ error checking.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line993">line 993</a>
+        <a href="protocol_sdo.js.html">protocol/sdo.js</a>, <a href="protocol_sdo.js.html#line1064">line 1064</a>
     </li></ul></dd>
     
 
