@@ -51,9 +51,13 @@ class Pdo {
      *
      * @param {number} cobId - COB-ID used by the RPDO.
      * @param {Array<DataObject>} entries - entries to map.
-     * @param {number} type - transmission type.
+     * @param {object} args - optional arguments.
+     * @param {number} [args.type=254] - transmission type.
+     * @param {number} [args.inhibitTime=0] - minimum time between writes.
+     * @param {number} [args.eventTime=0] - how often to send timer based PDOs.
+     * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
      */
-    addReceive(cobId, entries, type=254) {
+    addReceive(cobId, entries, args={}) {
         if(this.getReceive(cobId) !== null) {
             cobId = '0x' + cobId.toString(16);
             throw new EdsError(`Entry for RPDO ${cobId} already exists`);
@@ -81,7 +85,34 @@ class Pdo {
             parameterName:  'transmission type',
             dataType:       DataType.UNSIGNED8,
             accessType:     AccessType.READ_WRITE,
-            defaultValue:   type
+            defaultValue:   args.type || 254
+        });
+
+        this.device.eds.addSubEntry(index, 3, {
+            parameterName:  'inhibit time',
+            dataType:       DataType.UNSIGNED16,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   args.inhibitTime || 0
+        });
+
+        this.device.eds.addSubEntry(index, 4, {
+            parameterName:  'compatibility entry',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
+        });
+
+        this.device.eds.addSubEntry(index, 5, {
+            parameterName:  'event timer',
+            dataType:       DataType.UNSIGNED16,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   args.eventTime || 0
+        });
+
+        this.device.eds.addSubEntry(index, 6, {
+            parameterName:  'SYNC start value',
+            dataType:       DataType.UNSIGNED8,
+            accessType:     AccessType.READ_WRITE,
+            defaultValue:   args.syncStart || 0
         });
 
         this.device.eds.addEntry(index+0x200, {
@@ -145,12 +176,13 @@ class Pdo {
      *
      * @param {number} cobId - COB-ID used by the TPDO.
      * @param {Array<DataObject>} entries - entries to map.
-     * @param {number} type - transmission type.
-     * @param {number} inhibitTime - minimum time between writes.
-     * @param {number} eventTime - how often to send timer based PDOs.
-     * @param {number} syncStart - initial counter value for sync based PDOs.
+     * @param {object} args - optional arguments.
+     * @param {number} [args.type=254] - transmission type.
+     * @param {number} [args.inhibitTime=0] - minimum time between writes.
+     * @param {number} [args.eventTime=0] - how often to send timer based PDOs.
+     * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
      */
-    addTransmit(cobId, entries, type=254, inhibitTime=0, eventTime=0, syncStart=0) {
+    addTransmit(cobId, entries, args={}) {
         if(this.getReceive(cobId) !== null) {
             cobId = '0x' + cobId.toString(16);
             throw new EdsError(`Entry for TPDO ${cobId} already exists`);
@@ -178,14 +210,14 @@ class Pdo {
             parameterName:  'transmission type',
             dataType:       DataType.UNSIGNED8,
             accessType:     AccessType.READ_WRITE,
-            defaultValue:   type
+            defaultValue:   args.type || 254
         });
 
         this.device.eds.addSubEntry(index, 3, {
             parameterName:  'inhibit time',
             dataType:       DataType.UNSIGNED16,
             accessType:     AccessType.READ_WRITE,
-            defaultValue:   inhibitTime
+            defaultValue:   args.inhibitTime || 0
         });
 
         this.device.eds.addSubEntry(index, 4, {
@@ -198,14 +230,14 @@ class Pdo {
             parameterName:  'event timer',
             dataType:       DataType.UNSIGNED16,
             accessType:     AccessType.READ_WRITE,
-            defaultValue:   eventTime
+            defaultValue:   args.eventTime || 0
         });
 
         this.device.eds.addSubEntry(index, 6, {
             parameterName:  'SYNC start value',
             dataType:       DataType.UNSIGNED8,
             accessType:     AccessType.READ_WRITE,
-            defaultValue:   syncStart
+            defaultValue:   args.syncStart || 0
         });
 
         this.device.eds.addEntry(index+0x200, {

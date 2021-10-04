@@ -229,7 +229,7 @@ protocol overhead.</p></div>
 
     
 
-    <h4 class="name" id="addReceive"><span class="type-signature"></span>addReceive<span class="signature">(cobId, entries, type)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="addReceive"><span class="type-signature"></span>addReceive<span class="signature">(cobId, entries, args)</span><span class="type-signature"></span></h4>
 
     
 
@@ -241,7 +241,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line56">line 56</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line60">line 60</a>
     </li></ul></dd>
     
 
@@ -309,8 +309,6 @@ protocol overhead.</p></div>
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
@@ -336,10 +334,6 @@ protocol overhead.</p></div>
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
             <td class="description last"><p>COB-ID used by the RPDO.</p></td>
         </tr>
@@ -363,14 +357,56 @@ protocol overhead.</p></div>
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
             <td class="description last"><p>entries to map.</p></td>
         </tr>
 
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>optional arguments.</p>
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
     
 
         <tr>
@@ -388,6 +424,16 @@ protocol overhead.</p></div>
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
 
             
                 <td class="default">
@@ -398,6 +444,130 @@ protocol overhead.</p></div>
             
 
             <td class="description last"><p>transmission type.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>inhibitTime</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>0</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>minimum time between writes.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>eventTime</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>0</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>how often to send timer based PDOs.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>syncStart</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>0</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>initial counter value for sync based PDOs.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -427,7 +597,7 @@ protocol overhead.</p></div>
 
     
 
-    <h4 class="name" id="addTransmit"><span class="type-signature"></span>addTransmit<span class="signature">(cobId, entries, type, inhibitTime, eventTime, syncStart)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="addTransmit"><span class="type-signature"></span>addTransmit<span class="signature">(cobId, entries, args<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -439,7 +609,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line153">line 153</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line185">line 185</a>
     </li></ul></dd>
     
 
@@ -505,9 +675,9 @@ protocol overhead.</p></div>
         <th>Type</th>
 
         
-
+        <th>Attributes</th>
         
-        <th>Default</th>
+
         
 
         <th class="last">Description</th>
@@ -532,11 +702,15 @@ protocol overhead.</p></div>
             </td>
 
             
+                <td class="attributes">
+                
 
-            
-                <td class="default">
+                
+
                 
                 </td>
+            
+
             
 
             <td class="description last"><p>COB-ID used by the TPDO.</p></td>
@@ -559,16 +733,74 @@ protocol overhead.</p></div>
             </td>
 
             
+                <td class="attributes">
+                
 
-            
-                <td class="default">
+                
+
                 
                 </td>
+            
+
             
 
             <td class="description last"><p>entries to map.</p></td>
         </tr>
 
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>optional arguments.</p>
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
     
 
         <tr>
@@ -586,13 +818,17 @@ protocol overhead.</p></div>
             </td>
 
             
-
-            
-                <td class="default">
+                <td class="attributes">
                 
-                    <code>254</code>
+                    &lt;optional><br>
+                
+
+                
+
                 
                 </td>
+            
+
             
 
             <td class="description last"><p>transmission type.</p></td>
@@ -615,13 +851,17 @@ protocol overhead.</p></div>
             </td>
 
             
-
-            
-                <td class="default">
+                <td class="attributes">
                 
-                    <code>0</code>
+                    &lt;optional><br>
+                
+
+                
+
                 
                 </td>
+            
+
             
 
             <td class="description last"><p>minimum time between writes.</p></td>
@@ -644,13 +884,17 @@ protocol overhead.</p></div>
             </td>
 
             
-
-            
-                <td class="default">
+                <td class="attributes">
                 
-                    <code>0</code>
+                    &lt;optional><br>
+                
+
+                
+
                 
                 </td>
+            
+
             
 
             <td class="description last"><p>how often to send timer based PDOs.</p></td>
@@ -673,16 +917,27 @@ protocol overhead.</p></div>
             </td>
 
             
-
-            
-                <td class="default">
+                <td class="attributes">
                 
-                    <code>0</code>
+                    &lt;optional><br>
+                
+
+                
+
                 
                 </td>
             
 
+            
+
             <td class="description last"><p>initial counter value for sync based PDOs.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -885,7 +1140,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line130">line 130</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line161">line 161</a>
     </li></ul></dd>
     
 
@@ -1046,7 +1301,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line249">line 249</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line281">line 281</a>
     </li></ul></dd>
     
 
@@ -1133,7 +1388,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line255">line 255</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line287">line 287</a>
     </li></ul></dd>
     
 
@@ -1220,7 +1475,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line112">line 112</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line143">line 143</a>
     </li></ul></dd>
     
 
@@ -1356,7 +1611,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line236">line 236</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line268">line 268</a>
     </li></ul></dd>
     
 
@@ -1492,7 +1747,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line301">line 301</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line333">line 333</a>
     </li></ul></dd>
     
 
@@ -1579,7 +1834,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line382">line 382</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line414">line 414</a>
     </li></ul></dd>
     
 
@@ -1666,7 +1921,7 @@ protocol overhead.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line399">line 399</a>
+        <a href="protocol_pdo.js.html">protocol/pdo.js</a>, <a href="protocol_pdo.js.html#line431">line 431</a>
     </li></ul></dd>
     
 
