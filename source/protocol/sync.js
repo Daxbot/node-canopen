@@ -1,4 +1,11 @@
-const { ObjectType, AccessType, DataType } = require('../eds');
+/**
+ * @file Implements the CANopen Synchronization (SYNC) protocol.
+ * @author Wilkins White
+ * @copyright 2021 Nova Dynamics LLC
+ */
+
+const Device = require('../device');
+const { ObjectType, AccessType, DataType, DataObject } = require('../eds');
 
 /**
  * CANopen SYNC protocol handler.
@@ -9,6 +16,23 @@ const { ObjectType, AccessType, DataType } = require('../eds');
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Synchronization object (SYNC)" (§7.2.5)
+ * @example
+ * const can = require('socketcan');
+ *
+ * const channel = can.createRawChannel('can0');
+ * const device = new Device({ id: 0xa });
+ *
+ * channel.addListener('onMessage', (message) => device.receive(message));
+ * device.setTransmitFunction((message) => channel.send(message));
+ *
+ * device.init();
+ * channel.start();
+ *
+ * device.sync.cobId = 0x80;
+ * device.sync.cyclePeriod = 1e6; // 1 second
+ * device.sync.overflow = 10;
+ * device.sync.generate = true;
+ * device.sync.start();
  */
 class Sync {
     constructor(device) {
@@ -22,17 +46,22 @@ class Sync {
     }
 
     /**
-     * Set the sync generation enable bit.
-     * @param {boolean} gen - enable flag.
+     * Sync generation enable bit (Object 0x1005, bit 30).
+     *
+     * @type {boolean}
      */
+    get generate() {
+        return this._generate;
+    }
+
     set generate(gen) {
         let obj1005 = this.device.eds.getEntry(0x1005);
         if(obj1005 === undefined) {
             obj1005 = this.device.eds.addEntry(0x1005, {
-                'ParameterName':    'COB-ID SYNC',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED32,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'COB-ID SYNC',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -43,25 +72,22 @@ class Sync {
     }
 
     /**
-     * Get the sync generation enable bit.
-     * @return {boolean} - enable flag.
+     * Sync COB-ID (Object 0x1005, bits 0-28).
+     *
+     * @type {number}
      */
-    get generate() {
-        return this._generate;
+    get cobId() {
+        return this._cobId;
     }
 
-    /**
-     * Set the COB-ID.
-     * @param {number} cobId - COB-ID.
-     */
     set cobId(cobId) {
         let obj1005 = this.device.eds.getEntry(0x1005);
         if(obj1005 === undefined) {
             obj1005 = this.device.eds.addEntry(0x1005, {
-                'ParameterName':    'COB-ID SYNC',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED32,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'COB-ID SYNC',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -70,25 +96,22 @@ class Sync {
     }
 
     /**
-     * Get the COB-ID.
-     * @return {number} - COB-ID.
+     * Sync interval in μs (Object 0x1006).
+     *
+     * @type {number}
      */
-    get cobId() {
-        return this._cobId;
+    get cyclePeriod() {
+        return this._cyclePeriod;
     }
 
-    /**
-     * Set the sync interval.
-     * @param {number} period - cycle period (μs).
-     */
     set cyclePeriod(period) {
         let obj1006 = this.device.eds.getEntry(0x1006);
         if(obj1006 === undefined) {
             obj1006 = this.device.eds.addEntry(0x1006, {
-                'ParameterName':    'Communication cycle period',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED32,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'Communication cycle period',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -96,25 +119,22 @@ class Sync {
     }
 
     /**
-     * Get the sync interval.
-     * @return {number} - cycle period (μs)
+     * Sync counter overflow value (Object 0x1019).
+     *
+     * @type {number}
      */
-    get cyclePeriod() {
-        return this._cyclePeriod;
+    get overflow() {
+        return this._overflow;
     }
 
-    /**
-     * Set the sync counter overflow value.
-     * @param {number} overflow - overflow value.
-     */
     set overflow(overflow) {
         let obj1019 = this.device.eds.getEntry(0x1019);
         if(obj1019 === undefined) {
             obj1019 = this.device.eds.addEntry(0x1019, {
-                'ParameterName':    'Synchronous counter overflow value',
-                'ObjectType':       ObjectType.VAR,
-                'DataType':         DataType.UNSIGNED8,
-                'AccessType':       AccessType.READ_WRITE,
+                parameterName:  'Synchronous counter overflow value',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED8,
+                accessType:     AccessType.READ_WRITE,
             });
         }
 
@@ -122,38 +142,55 @@ class Sync {
         obj1019.value = overflow;
     }
 
-    /**
-     * Get the sync counter overflow value.
-     * @return {number} - overflow value.
-     */
-    get overflow() {
-        return this._overflow;
-    }
-
     /** Initialize members and begin consuming sync objects. */
     init() {
         // Object 0x1005 - COB-ID SYNC
-        const obj1005 = this.device.eds.getEntry(0x1005);
-        if(obj1005 !== undefined) {
+        let obj1005 = this.device.eds.getEntry(0x1005);
+        if(obj1005 === undefined) {
+            obj1005 = this.device.eds.addEntry(0x1005, {
+                parameterName:  'COB-ID SYNC',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+        else {
             this._parse1005(obj1005);
-            obj1005.addListener('update', this._parse1005.bind(this));
-
-            this.device.addListener('message', this._onMessage.bind(this));
         }
 
         // Object 0x1006 - Communication cycle period
-        const obj1006 = this.device.eds.getEntry(0x1006);
-        if(obj1006 !== undefined) {
+        let obj1006 = this.device.eds.getEntry(0x1006);
+        if(obj1006 === undefined) {
+            obj1006 = this.device.eds.addEntry(0x1006, {
+                parameterName:  'Communication cycle period',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+                accessType:     AccessType.READ_WRITE,
+            });
+        }
+        else {
             this._parse1006(obj1006);
-            obj1006.addListener('update', this._parse1006.bind(this));
         }
 
         // Object 0x1019 - Synchronous counter overflow value
-        const obj1019 = this.device.eds.getEntry(0x1019);
-        if(obj1019 !== undefined) {
-            this._parse1019(obj1019);
-            obj1019.addListener('update', this._parse1019.bind(this));
+        let obj1019 = this.device.eds.getEntry(0x1019);
+        if(obj1019 === undefined) {
+            obj1019 = this.device.eds.addEntry(0x1019, {
+                parameterName:  'Synchronous counter overflow value',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED8,
+                accessType:     AccessType.READ_WRITE,
+            });
         }
+        else {
+            this._parse1019(obj1019);
+        }
+
+        obj1005.addListener('update', this._parse1005.bind(this));
+        obj1006.addListener('update', this._parse1006.bind(this));
+        obj1019.addListener('update', this._parse1019.bind(this));
+
+        this.device.addListener('message', this._onMessage.bind(this));
     }
 
     /** Begin producing sync objects. */
@@ -163,12 +200,12 @@ class Sync {
 
         if(this._overflow) {
             this.syncTimer = setInterval(() => {
-                    this.syncCounter += 1;
-                    if(this.syncCounter > this._overflow)
-                        this.syncCounter = 1;
+                this.syncCounter += 1;
+                if(this.syncCounter > this._overflow)
+                    this.syncCounter = 1;
 
-                    this.write(this.syncCounter);
-                }, this._cyclePeriod / 1000);
+                this.write(this.syncCounter);
+            }, this._cyclePeriod / 1000);
         }
         else {
             this.syncTimer = setInterval(() => {
@@ -186,6 +223,7 @@ class Sync {
 
     /**
      * Service: SYNC write.
+     *
      * @param {number | null} counter - sync counter;
      */
     write(counter=null) {
@@ -201,11 +239,15 @@ class Sync {
 
     /**
      * Called when a new CAN message is received.
-     * @param {Object} message - CAN frame.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
      * @private
      */
     _onMessage(message) {
-        if((message.id & 0x7FF) != this._cobId)
+        if((message.id & 0x7FF) !== this._cobId)
             return;
 
         if(message.data)
@@ -216,6 +258,7 @@ class Sync {
 
     /**
      * Called when 0x1005 (COB-ID SYNC) is updated.
+     *
      * @param {DataObject} data - updated DataObject.
      * @private
      */
@@ -243,6 +286,7 @@ class Sync {
 
     /**
      * Called when 0x1006 (Communication cycle period) is updated.
+     *
      * @param {DataObject} data - updated DataObject.
      * @private
      */
@@ -256,6 +300,7 @@ class Sync {
 
     /**
      * Called when 0x1019 (Synchronous counter overflow value) is updated.
+     *
      * @param {DataObject} data - updated DataObject.
      * @private
      */

@@ -1,51 +1,52 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const { Device, ObjectType, AccessType, DataType } = require('../../index');
+const { Device } = require('../../index');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-describe('EMCY', function() {
+describe('Emcy', function() {
     let device = null;
 
-    beforeEach(function() {
-        device = new Device({ id: 0xA, loopback: true });
-
-        /* Pre-defined error field. */
-        device.eds.addEntry(0x1003, {
-            'ParameterName':    'Pre-defined error field',
-            'ObjectType':       ObjectType.ARRAY,
-            'SubNumber':        2,
-        });
-        device.eds.addSubEntry(0x1003, 1, {
-            'ParameterName':    'Standard error field',
-            'ObjectType':       ObjectType.VAR,
-            'DataType':         DataType.UNSIGNED32,
-            'AccessType':       AccessType.READ_WRITE,
-        });
-    });
-
-    afterEach(function() {
-        delete device;
-    });
-
     describe('Module initialization', function() {
-        it('should require 0x1001', function() {
+        beforeEach(function() {
+            device = new Device({ id: 0xA, loopback: true });
+        });
+
+        it('should create 0x1001', function() {
             device.eds.removeEntry(0x1001);
-            return expect(() => { device.emcy.init(); }).to.throw(ReferenceError);
+            expect(device.eds.getEntry(0x1001)).to.not.exist;
+
+            device.emcy.init();
+            expect(device.eds.getEntry(0x1001)).to.exist;
         });
 
         it('should throw if cobId is 0', function() {
             device.emcy.cobId = 0;
-            return expect(() => { device.emcy.init(); }).to.throw(TypeError);
+            return expect(() => {
+                device.emcy.init();
+            }).to.throw(TypeError);
         });
     });
 
-    describe('Object dictionary updates', function() {
+    describe('Object dictionary', function() {
         beforeEach(function() {
+            device = new Device({ id: 0xA, loopback: true });
             device.emcy.cobId = 0x80;
             device.emcy.inhibitTime = 100;
             device.init();
+        });
+
+        it('should configure 0x1003', function(done) {
+            // Configure 0x1003 for 10 sub-entries
+            device.emcy.setHistoryLength(10);
+            expect(device.eds.getEntry(0x1003).subNumber).to.equal(11);
+
+            // Re-configure 0x1003 for 5 sub-entries
+            device.emcy.setHistoryLength(5);
+            expect(device.eds.getEntry(0x1003).subNumber).to.equal(6);
+
+            done();
         });
 
         it('should listen for updates to 0x1014', function(done) {
@@ -74,32 +75,38 @@ describe('EMCY', function() {
     });
 
     describe('Producer', function() {
-        beforeEach(function() {
+        it('should produce an emergency object', function(done) {
+            device = new Device({ id: 0xA, loopback: true });
             device.emcy.cobId = 0x80;
             device.init();
-        });
-
-        it('should produce an emergency object', function(done) {
-            device.addListener('message', () => { done(); });
+            device.addListener('message', () => done());
             device.emcy.write(0x1000);
         });
     });
 
     describe('Consumer', function() {
         beforeEach(function() {
+            device = new Device({ id: 0xA, loopback: true });
             device.emcy.cobId = 0x80;
             device.init();
         });
 
         it('should emit on consuming an emergency object', function(done) {
-            device.on('emergency', () => { done(); });
+            device.on('emergency', () => {
+                done();
+            });
             device.emcy.write(0x1000);
         });
 
-        it('should track error history', function() {
-            return device.emcy.write(0x1234).then(() => {
-                return expect(device.eds.getSubEntry(0x1003, 1).value).to.equal(0x1234);
-            });
+        it('should track error history', function(done) {
+            device.emcy.setHistoryLength(1);
+            device.emcy.write(0x1234).then(() => {
+                setImmediate(() => {
+                    expect(device.emcy.history[0]).to.equal(0x1234);
+                    done();
+                });
+            })
+            .catch((e) => done(e));
         });
     });
 });

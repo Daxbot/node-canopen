@@ -1,14 +1,15 @@
 {
   "name": "canopen",
-  "version": "2.8.2",
+  "version": "3.1.0",
   "description": "CANopen implementation for Javascript",
   "main": "index.js",
   "scripts": {
     "test": "mocha ./test/test*.js ./test/protocol/test*.js",
-    "lint": "documentation lint src/* src/protocol/*",
-    "document": "documentation build -f html -o docs"
+    "jsdoc": "jsdoc -c .jsdoc.json -R README.md source",
+    "lint": "eslint index.js examples source test || true",
+    "lint:fix": "eslint --fix index.js examples source test || true"
   },
-  "author": "Wilkins White <ww@novadynamics.com>",
+  "author": "Wilkins White <wilkins.white@daxbot.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -23,13 +24,19 @@
     "can-bus"
   ],
   "dependencies": {
-    "ini": "^1.3.5",
-    "package-lock": "^1.0.5"
+    "ini": "^1.3.5"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "documentation": "^13.2.5",
+    "docdash": "^1.2.0",
+    "eslint": "^7.32.0",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-jsdoc": "^36.1.0",
+    "eslint-plugin-mocha": "^9.0.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "jsdoc": "^3.6.7",
     "mocha": "^8.1.3",
     "socketcan": "^2.7.1"
   },
