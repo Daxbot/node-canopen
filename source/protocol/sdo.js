@@ -1013,8 +1013,8 @@ class SdoServer {
      * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from client).
      */
     addClient(clientId, cobIdTx=0x580, cobIdRx=0x600) {
-        if(clientId < 1 || clientId > 0x7F)
-            throw RangeError('clientId must be in range 1-127');
+        if(clientId < 0 || clientId > 0x7F)
+            throw RangeError('clientId must be in range 0-127');
 
         if(this.getClient(clientId) !== null) {
             clientId = '0x' + clientId.toString(16);
