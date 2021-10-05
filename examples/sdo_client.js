@@ -41,13 +41,17 @@ device.sdo.download({
     index:      0x2000
 })
 .then(() => {
-    device.sdo.upload({
+    return device.sdo.upload({
         serverId:   serverId,
         index:      0x2000,
         dataType:   DataType.VISIBLE_STRING
-    })
-    .then((value) => {
-        console.log(value);
-        channel.stop();
     });
+})
+.then((value) => console.log(value))
+.catch((e) => {
+    console.error(e.message);
+    console.log('Did you run examples/sdo_server.js first?');
+})
+.finally(() => {
+    channel.stop();
 });
