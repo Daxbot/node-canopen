@@ -520,7 +520,7 @@ class Pdo {
         if(mapEntry[0].value > 0x40)
             throw TypeError(`Invalid PDO mapping value (${mapEntry[0].value})`);
 
-        for(let i = 1; i < mapEntry[0].value + 1; ++i) {
+        for(let i = 1; i <= mapEntry[0].value; ++i) {
             if(mapEntry[i].raw.length == 0)
                 continue;
 
