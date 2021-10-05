@@ -460,11 +460,11 @@ class DataObject extends EventEmitter {
     constructor(index, subIndex, data, parent=null) {
         super();
 
+        Object.assign(this, data);
+
         this.index = index;
         this.subIndex = subIndex;
         this.parent = parent;
-
-        Object.assign(this, data);
 
         if(this.parameterName === undefined)
             throw new EdsError('parameterName is mandatory for DataObject');
