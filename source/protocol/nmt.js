@@ -429,6 +429,7 @@ class Nmt {
                     const interval = this.heartbeats[deviceId].interval;
                     this.timers[deviceId] = setTimeout(() => {
                         this.device.emit('nmtTimeout', deviceId);
+                        this.heartbeats[deviceId].state = null;
                         this.timers[deviceId] = null;
                     }, interval);
                 }
@@ -461,12 +462,16 @@ class Nmt {
             const deviceId = subEntry.raw.readUInt8(2);
 
             if(this.heartbeats[deviceId] !== undefined) {
+                /* Clear the timer - it will be re-initialized with the new
+                 * interval on the next heartbeat message.
+                 */
                 this.heartbeats[deviceId].interval = heartbeatTime;
                 clearTimeout(this.timers[deviceId]);
+                this.timers[deviceId] = null;
             }
             else {
                 this.heartbeats[deviceId] = {
-                    state:      NmtState.INITIALIZING,
+                    state:      null,
                     interval:   heartbeatTime,
                 }
             }

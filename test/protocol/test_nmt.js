@@ -95,9 +95,18 @@ describe('Nmt', function() {
         });
 
         it('should emit on NMT state change', function(done) {
-            device.on("nmtChangeState", () => done());
+            device.on('nmtChangeState', () => done());
             device.nmt.addConsumer(device.id, 10);
             device.nmt.startNode(device.id);
+        });
+
+        it('should emit on the next heartbeat after timeout', function(done) {
+            device.on('nmtTimeout', () => {
+                device.on('nmtChangeState', () => done());
+            });
+            device.nmt.addConsumer(device.id, 10);
+            device.nmt._sendHeartbeat();
+            setTimeout(() => device.nmt._sendHeartbeat(), 30);
         });
     });
 });
