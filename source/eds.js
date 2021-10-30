@@ -1456,11 +1456,11 @@ class Eds {
      * @type {boolean}
      */
     get simpleBootUpMaster() {
-        return parseInt(this.deviceInfo['SimpleBootUpMaster']);
+        return !!parseInt(this.deviceInfo['SimpleBootUpMaster']);
     }
 
     set simpleBootUpMaster(value) {
-        this.deviceInfo['SimpleBootUpMaster'] = value;
+        this.deviceInfo['SimpleBootUpMaster'] = (value) ? 1 : 0;
     }
 
     /**
@@ -1469,11 +1469,11 @@ class Eds {
      * @type {boolean}
      */
     get simpleBootUpSlave() {
-        return parseInt(this.deviceInfo['SimpleBootUpSlave']);
+        return !!parseInt(this.deviceInfo['SimpleBootUpSlave']);
     }
 
     set simpleBootUpSlave(value) {
-        this.deviceInfo['SimpleBootUpSlave'] = value;
+        this.deviceInfo['SimpleBootUpSlave'] = (value) ? 1 : 0;
     }
 
     /**
@@ -1497,11 +1497,11 @@ class Eds {
      * @see CiA302
      */
     get dynamicChannelsSupported() {
-        return parseInt(this.deviceInfo['DynamicChannelsSupported']);
+        return !!parseInt(this.deviceInfo['DynamicChannelsSupported']);
     }
 
     set dynamicChannelsSupported(value) {
-        this.deviceInfo['DynamicChannelsSupported'] = value;
+        this.deviceInfo['DynamicChannelsSupported'] = (value) ? 1 : 0;
     }
 
     /**
@@ -1511,11 +1511,11 @@ class Eds {
      * @see CiA301
      */
     get groupMessaging() {
-        return parseInt(this.deviceInfo['GroupMessaging']);
+        return !!parseInt(this.deviceInfo['GroupMessaging']);
     }
 
     set groupMessaging(value) {
-        this.deviceInfo['GroupMessaging'] = value;
+        this.deviceInfo['GroupMessaging'] = (value) ? 1 : 0;
     }
 
     /**
@@ -1550,11 +1550,11 @@ class Eds {
      * @type {boolean}
      */
     get lssSupported() {
-        return parseInt(this.deviceInfo['LSS_Supported']);
+        return !!parseInt(this.deviceInfo['LSS_Supported']);
     }
 
     set lssSupported(value) {
-        this.deviceInfo['LSS_Supported'] = value;
+        this.deviceInfo['LSS_Supported'] = (value) ? 1 : 0;
     }
 
     /**
