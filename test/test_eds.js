@@ -58,6 +58,30 @@ describe('Eds', function() {
             const entry = loadFile.getSubEntry('DeviceInfo', 0)
             expect(entry.raw).to.not.be.undefined
         });
+
+        it('should properly convert a boolean values', function() {
+            const eds = new Eds();
+            expect(eds.simpleBootUpMaster).to.equal(false);
+            expect(eds.simpleBootUpSlave).to.equal(false);
+            expect(eds.dynamicChannelsSupported).to.equal(false);
+            expect(eds.groupMessaging).to.equal(false);
+            expect(eds.lssSupported).to.equal(false);
+
+            eds.simpleBootUpMaster = true;
+            expect(eds.simpleBootUpMaster).to.equal(true);
+
+            eds.simpleBootUpSlave = true;
+            expect(eds.simpleBootUpSlave).to.equal(true);
+
+            eds.dynamicChannelsSupported = true;
+            expect(eds.dynamicChannelsSupported).to.equal(true);
+
+            eds.groupMessaging = true;
+            expect(eds.groupMessaging).to.equal(true);
+
+            eds.lssSupported = true;
+            expect(eds.lssSupported).to.equal(true);
+        });
     });
 
     describe('Data types', function() {
