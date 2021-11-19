@@ -200,7 +200,7 @@ class Lss {
         // Verify vendor-id
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new Error('Failed to verify vendorId'));
+                reject(new Error('failed to verify vendorId'));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -238,7 +238,7 @@ class Lss {
         // Verify product-code
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new Error('Failed to verify productCode'));
+                reject(new Error('failed to verify productCode'));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -276,7 +276,7 @@ class Lss {
         // Verify revision-number
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new Error('Failed to verify revisionNumber'));
+                reject(new Error('failed to verify revisionNumber'));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -314,7 +314,7 @@ class Lss {
         // Verify serial-number
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new Error('Failed to verify serialNumber'));
+                reject(new Error('failed to verify serialNumber'));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -338,7 +338,7 @@ class Lss {
      */
     switchModeGlobal(mode) {
         if(mode === undefined)
-            throw ReferenceError("Parameter 'mode' undefined");
+            throw ReferenceError("mode cannot be undefined");
 
         this._sendLssRequest(
             LssCommand.SWITCH_MODE_GLOBAL, Buffer.from([mode]));

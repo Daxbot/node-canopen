@@ -396,7 +396,7 @@ class Emcy {
      */
     setHistoryLength(length) {
         if(length === undefined || length < 0)
-            throw ReferenceError('Error field size must >= 0');
+            throw ReferenceError('error field size must >= 0');
 
         let obj1003 = this.device.eds.getEntry(0x1003);
         if(obj1003 === undefined) {

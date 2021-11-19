@@ -172,7 +172,7 @@ class Nmt {
 
         if(this.getConsumer(deviceId) !== null) {
             deviceId = '0x' + deviceId.toString(16);
-            throw new EdsError(`Entry for device ${deviceId} already exists`);
+            throw new EdsError(`entry for device ${deviceId} already exists`);
         }
 
         let obj1016 = this.device.eds.getEntry(0x1016);
@@ -194,7 +194,7 @@ class Nmt {
         }
 
         if(!subIndex)
-            throw new EdsError('Failed to find empty sub-index');
+            throw new EdsError('failed to find empty sub-index');
 
         // Install sub entry
         this.device.eds.addSubEntry(0x1016, subIndex, {
@@ -214,7 +214,7 @@ class Nmt {
     removeConsumer(deviceId) {
         const subEntry = this.getConsumer(deviceId);
         if(subEntry === null)
-            throw new EdsError(`Entry for device ${deviceId} does not exist`);
+            throw new EdsError(`entry for device ${deviceId} does not exist`);
 
         this.device.eds.removeSubEntry(0x1016, subEntry.subIndex);
     }
@@ -257,7 +257,7 @@ class Nmt {
     /** Begin heartbeat generation. */
     start() {
         if(this.producerTime == 0)
-            throw new EdsError('Producer heartbeat time can not be 0')
+            throw new EdsError('producer heartbeat time can not be 0')
 
         // Switch to NmtState.OPERATIONAL
         this.startNode();

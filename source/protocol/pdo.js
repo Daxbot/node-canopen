@@ -82,7 +82,7 @@ class Pdo {
     addReceive(cobId, entries, args={}) {
         if(this.getReceive(cobId) !== null) {
             cobId = '0x' + cobId.toString(16);
-            throw new EdsError(`Entry for RPDO ${cobId} already exists`);
+            throw new EdsError(`entry for RPDO ${cobId} already exists`);
         }
 
         let index = 0x1400;
@@ -168,7 +168,7 @@ class Pdo {
     removeReceive(cobId) {
         const entry = this.getReceive(cobId);
         if(entry === null)
-            throw new EdsError(`Entry for RPDO ${cobId} does not exist`);
+            throw new EdsError(`entry for RPDO ${cobId} does not exist`);
 
         delete this.receiveMap[cobId];
 
@@ -212,7 +212,7 @@ class Pdo {
     addTransmit(cobId, entries, args={}) {
         if(this.getReceive(cobId) !== null) {
             cobId = '0x' + cobId.toString(16);
-            throw new EdsError(`Entry for TPDO ${cobId} already exists`);
+            throw new EdsError(`entry for TPDO ${cobId} already exists`);
         }
 
         let index = 0x1800;
@@ -300,7 +300,7 @@ class Pdo {
     removeTransmit(cobId) {
         const entry = this.getTransmit(cobId);
         if(entry === null)
-            throw new EdsError(`Entry for TPDO ${cobId} does not exist`);
+            throw new EdsError(`entry for TPDO ${cobId} does not exist`);
 
         delete this.writeMap[cobId];
 
@@ -441,13 +441,13 @@ class Pdo {
         const entry = this.device.eds.getEntry(index);
         if(!entry) {
             index = '0x' + (index + 0x200).toString(16);
-            throw new EdsError(`Missing PDO communication parameter (${index})`);
+            throw new EdsError(`missing PDO communication parameter (${index})`);
         }
 
         const mapEntry = this.device.eds.getEntry(index + 0x200);
         if(!mapEntry) {
             index = '0x' + (index + 0x200).toString(16);
-            throw new EdsError(`Missing PDO mapping parameter (${index})`);
+            throw new EdsError(`missing PDO mapping parameter (${index})`);
         }
 
         /* sub-index 1 (mandatory):
@@ -459,7 +459,7 @@ class Pdo {
          */
         if(entry[1] === undefined) {
             index = '0x' + index.toString(16);
-            throw new EdsError(`Missing PDO COB-ID (${index})`);
+            throw new EdsError(`missing PDO COB-ID (${index})`);
         }
 
         let cobId = entry[1].value;
@@ -480,7 +480,7 @@ class Pdo {
          */
         if(entry[2] === undefined) {
             index = '0x' + index.toString(16);
-            throw new EdsError(`Missing PDO transmission type (${index})`);
+            throw new EdsError(`missing PDO transmission type (${index})`);
         }
 
         const transmissionType = entry[2].value;
@@ -518,7 +518,7 @@ class Pdo {
             throw new EdsError('DAM-MPDO not supported');
 
         if(mapEntry[0].value > 0x40)
-            throw TypeError(`Invalid PDO mapping value (${mapEntry[0].value})`);
+            throw TypeError(`invalid PDO mapping value (${mapEntry[0].value})`);
 
         for(let i = 1; i <= mapEntry[0].value; ++i) {
             if(mapEntry[i].raw.length == 0)
@@ -627,7 +627,7 @@ class Pdo {
             }
         }
         else {
-            throw TypeError(`Unsupported TPDO type (${pdo.type}).`);
+            throw TypeError(`unsupported TPDO type (${pdo.type}).`);
         }
     }
 }

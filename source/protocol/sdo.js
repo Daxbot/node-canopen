@@ -707,7 +707,7 @@ class SdoClient {
         const entry = this.device.eds.getEntry(index);
         if(!entry) {
             index = '0x' + (index + 0x200).toString(16);
-            throw new EdsError(`Missing SDO client parameter (${index})`);
+            throw new EdsError(`missing SDO client parameter (${index})`);
         }
 
         /* Object 0x1280..0x12FF - SDO client parameter.
@@ -730,7 +730,7 @@ class SdoClient {
             return;
 
         if(((cobIdTx >> 30) & 0x1) == 0x1)
-            throw TypeError('Dynamic assignment is not supported.');
+            throw TypeError('dynamic assignment is not supported.');
 
         if(((cobIdTx >> 29) & 0x1) == 0x1)
             throw TypeError('CAN extended frames are not supported.');
@@ -744,7 +744,7 @@ class SdoClient {
             return;
 
         if(((cobIdRx >> 30) & 0x1) == 0x1)
-            throw TypeError('Dynamic assignment is not supported.');
+            throw TypeError('dynamic assignment is not supported.');
 
         if(((cobIdRx >> 29) & 0x1) == 0x1)
             throw TypeError('CAN extended frames are not supported.');
@@ -1018,7 +1018,7 @@ class SdoServer {
 
         if(this.getClient(clientId) !== null) {
             clientId = '0x' + clientId.toString(16);
-            throw new EdsError(`Entry for client ${clientId} already exists`);
+            throw new EdsError(`entry for client ${clientId} already exists`);
         }
 
         let index = 0x1200;
@@ -1064,7 +1064,7 @@ class SdoServer {
     removeClient(clientId) {
         const entry = this.getClient(clientId);
         if(entry === null)
-            throw ReferenceError(`Entry for client ${clientId} does not exist`);
+            throw ReferenceError(`entry for client ${clientId} does not exist`);
 
         this.device.eds.removeEntry(entry.index);
     }
@@ -1079,7 +1079,7 @@ class SdoServer {
         const entry = this.device.eds.getEntry(index);
         if(!entry) {
             index = '0x' + (index + 0x200).toString(16);
-            throw new EdsError(`Missing SDO server parameter (${index})`);
+            throw new EdsError(`missing SDO server parameter (${index})`);
         }
 
         /* Object 0x1200..0x127F - SDO server parameter.
@@ -1098,7 +1098,7 @@ class SdoServer {
             return;
 
         if(((cobIdRx >> 30) & 0x1) == 0x1)
-            throw TypeError('Dynamic assignment is not supported.');
+            throw TypeError('dynamic assignment is not supported.');
 
         if(((cobIdRx >> 29) & 0x1) == 0x1)
             throw TypeError('CAN extended frames are not supported.');
@@ -1112,7 +1112,7 @@ class SdoServer {
             return;
 
         if(((cobIdTx >> 30) & 0x1) == 0x1)
-            throw TypeError('Dynamic assignment is not supported.');
+            throw TypeError('dynamic assignment is not supported.');
 
         if(((cobIdTx >> 29) & 0x1) == 0x1)
             throw TypeError('CAN extended frames are not supported.');
