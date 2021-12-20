@@ -28,7 +28,7 @@ Supported Features:
 
 ### Layer Setting Services - LSS
 The CANopen layer setting services protocol allows the CAN-ID and bitrate of
-an LSS slave device to be modified. This allows for setting up a network of
+an LSS consumer device to be modified. This allows for setting up a network of
 identical devices without relying on physical dip switches or non-volatile
 storage to distinguish between them.
 
@@ -37,12 +37,12 @@ storage to distinguish between them.
   0x1018  | Identity object         | Required.
 
 Supported Features:
- - LSS master :heavy_check_mark:
- - LSS slave :x:
+ - LSS producer :heavy_check_mark:
+ - LSS consumer :heavy_check_mark:
 
 ### Network Management - NMT
 The CANopen network management protocol is used to manipulate the state of
-NMT slave devices on the network and is responsible for the device heartbeat.
+NMT consumer devices on the network and is responsible for the device heartbeat.
 Call [Nmt.start][2] to begin heartbeat generation.
 
  OD Entry | Description             | Notes

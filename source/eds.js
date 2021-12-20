@@ -729,7 +729,7 @@ class DataObject extends EventEmitter {
 
     set raw(raw) {
         if(this.subNumber)
-            throw TypeError(`not supported for type ${this.objectTypeString}`);
+            throw new EdsError(`not supported for type ${this.objectTypeString}`);
 
         if(raw === undefined || raw === null)
             raw = typeToRaw(0, this.dataType);
@@ -767,7 +767,7 @@ class DataObject extends EventEmitter {
 
     set value(value) {
         if(this.subNumber)
-            throw TypeError(`not supported for type ${this.objectTypeString}`);
+            throw new EdsError(`not supported for type ${this.objectTypeString}`);
 
         this.raw = typeToRaw(value, this.dataType);
     }

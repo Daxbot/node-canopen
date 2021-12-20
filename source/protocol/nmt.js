@@ -5,7 +5,7 @@
  */
 
 const Device = require('../device');
-const { ObjectType, AccessType, DataType, DataObject, EdsError} = require('../eds');
+const { ObjectType, AccessType, DataType, DataObject, EdsError } = require('../eds');
 
 /**
  * NMT internal states.
@@ -60,13 +60,13 @@ const NmtCommand = {
 /**
  * CANopen NMT protocol handler.
  *
- * The network management (NMT) protocol follows a master-slave structure where
- * NMT objects are used to initialze, start, monitor, reset, or stop nodes. All
- * CANopen devices are considered NMT slaves with one device fulfilling the
- * role of NMT master.
+ * The network management (NMT) protocol follows a producer-consumer structure
+ * where NMT objects are used to initialze, start, monitor, reset, or stop
+ * nodes. All CANopen devices are considered NMT consumers with one device
+ * fulfilling the role of NMT producer.
  *
  * This class implements the NMT node control services and tracks the device's
- * current NMT slave state.
+ * current NMT consumer state.
  *
  * @param {Device} device - parent device.
  * @see CiA301 "Network management" (§7.2.8)
@@ -105,7 +105,7 @@ class Nmt {
 
     set state(newState) {
         const oldState = this.state;
-        if(newState != oldState) {
+        if(newState !== oldState) {
             this._state = newState;
             this.device.emit('nmtChangeState', this.device.id, newState);
         }
@@ -280,7 +280,7 @@ class Nmt {
     /**
      * Service: start remote node.
      *
-     * Change the state of NMT slave(s) to NMT state operational.
+     * Change the state of NMT consumer(s) to NMT state operational.
      *
      * @param {number} [nodeId] - id of node or 0 for broadcast.
      * @see CiA301 "Service start remote node" (§7.2.8.2.1.2)
@@ -292,7 +292,7 @@ class Nmt {
     /**
      * Service: stop remote node.
      *
-     * Change the state of NMT slave(s) to NMT state stopped.
+     * Change the state of NMT consumer(s) to NMT state stopped.
      *
      * @param {number} [nodeId] - id of node or 0 for broadcast.
      * @see CiA301 "Service stop remote node" (§7.2.8.2.1.3)
@@ -304,7 +304,7 @@ class Nmt {
     /**
      * Service: enter pre-operational.
      *
-     * Change the state of NMT slave(s) to NMT state pre-operational.
+     * Change the state of NMT consumer(s) to NMT state pre-operational.
      *
      * @param {number} [nodeId] - id of node or 0 for broadcast.
      * @see CiA301 "Service enter pre-operational" (§7.2.8.2.1.4)
@@ -316,7 +316,7 @@ class Nmt {
     /**
      * Service: reset node.
      *
-     * Reset the application of NMT slave(s).
+     * Reset the application of NMT consumer(s).
      *
      * @param {number} [nodeId] - id of node or 0 for broadcast.
      * @see CiA301 "Service reset node" (§7.2.8.2.1.5)
@@ -328,7 +328,7 @@ class Nmt {
     /**
      * Service: reset communication.
      *
-     * Reset communication of NMT slave(s).
+     * Reset communication of NMT consumer(s).
      *
      * @param {number} [nodeId] - id of node or 0 for broadcast.
      * @see CiA301 "Service reset communication" (§7.2.8.2.1.6)

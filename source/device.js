@@ -20,12 +20,14 @@ const { Eds, EdsError, DataObject } = require('./eds');
  * This class represents a single addressable device (or node) on the bus and
  * provides methods for manipulating the object dictionary.
  *
- * @param {object} args
+ * @param {object} args - arguments.
  * @param {number} args.id - device identifier [1-127].
  * @param {Eds} args.eds - the device's electronic data sheet.
  * @param {boolean} args.loopback - enable loopback mode.
  * @fires 'message' on receiving a CAN message.
  * @fires 'emergency' on consuming an emergency object.
+ * @fires 'lssChangeMode' on change of LSS mode.
+ * @fires 'lssChangeDeviceId' on change of device id.
  * @fires 'nmtTimeout' on missing a tracked heartbeat.
  * @fires 'nmtChangeState' on change of NMT state.
  * @fires 'nmtResetNode' on NMT reset node.
@@ -46,16 +48,16 @@ const { Eds, EdsError, DataObject } = require('./eds');
  * channel.start();
  */
 class Device extends EventEmitter {
-    constructor({ id, eds, loopback=false }) {
+    constructor(args={}) {
         super();
 
-        if(id < 1 || id > 0x7F)
-            throw RangeError("id must be in range 1-127");
+        this._id = null;
+        if(args.id !== undefined)
+            this.id = args.id;
 
-        this.id = id;
-        this._send = undefined;
+        this._send = null;
 
-        if(loopback) {
+        if(args.loopback) {
             this.setTransmitFunction((message) => {
                 /* We use setImmediate here to allow the method that called
                  * send() to run to completion before receive() is processed.
@@ -64,7 +66,7 @@ class Device extends EventEmitter {
             });
         }
 
-        this.eds = (eds) ? eds : new Eds();
+        this.eds = args.eds || new Eds();
         this.emcy = new Emcy(this);
         this.lss = new Lss(this);
         this.nmt = new Nmt(this);
@@ -73,6 +75,22 @@ class Device extends EventEmitter {
         this.sdoServer = new SdoServer(this);
         this.sync = new Sync(this);
         this.time = new Time(this);
+    }
+
+    /**
+     * The device id.
+     *
+     * @type {number}
+     */
+    get id() {
+        return this._id;
+    }
+
+    set id(value) {
+        if(value < 1 || value > 0x7F)
+            throw RangeError("id must be in range 1-127");
+
+        this._id = value;
     }
 
     /**
@@ -116,7 +134,7 @@ class Device extends EventEmitter {
      * @protected
      */
     send(message) {
-        if(this._send === undefined)
+        if(this._send === null)
             throw ReferenceError("please call setTransmitFunction() first");
 
         this._send(message);

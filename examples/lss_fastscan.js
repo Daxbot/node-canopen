@@ -40,6 +40,12 @@ async function main() {
             break;
         }
 
+        console.log('Node found:');
+        console.log(`  Vendor id: 0x${result.vendorId.toString(16)}`);
+        console.log(`  Product code: 0x${result.productCode.toString(16)}`);
+        console.log(`  Revision number: 0x${result.revisionNumber.toString(16)}`);
+        console.log(`  Serial number: 0x${result.serialNumber.toString(16)}`);
+
         /** Step 5b:  Set the new node id. */
         console.log(`Setting node to id 0x${nodeId}`);
         await device.lss.configureNodeId(nodeId++);
