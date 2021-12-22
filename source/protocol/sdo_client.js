@@ -397,7 +397,7 @@ class SdoClient {
                 else {
                     // Expedited transfer
                     const header = (ClientCommand.DOWNLOAD_INITIATE << 5)
-                        | ((4-data.length) << 2)    // Number of empty bytes
+                        | ((4 - data.length) << 2)  // Number of empty bytes
                         | (1 << 1)                  // Expedited transfer
                         | (1 << 0);                 // Data size indicated
 
@@ -702,7 +702,7 @@ class SdoClient {
             if(transfer.blockFinished) {
                 // End block download
                 const sendBuffer = Buffer.alloc(8);
-                const empty = 8 - (transfer.data.length % 7);
+                const empty = (8 - (transfer.data.length % 7)) & 0x7;
                 const header = (ClientCommand.BLOCK_DOWNLOAD << 5)
                     | (empty << 2)  // Number of empty bytes in last transfer
                     | (1 << 0);     // End block download

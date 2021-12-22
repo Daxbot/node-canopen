@@ -604,7 +604,7 @@ class SdoServer {
             if(client.blockFinished) {
                 // End block upload
                 const sendBuffer = Buffer.alloc(8);
-                const empty = 8 - (client.data.length % 7);
+                const empty = (8 - (client.data.length % 7)) & 0x7;
                 const header = (ServerCommand.BLOCK_UPLOAD << 5)
                     | (empty << 2)  // Number of empty bytes in last transfer
                     | (1 << 0);     // End block upload
