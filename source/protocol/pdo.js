@@ -1,11 +1,12 @@
 /**
  * @file Implements the CANopen Process Data Object (PDO) protocol.
  * @author Wilkins White
- * @copyright 2021 Nova Dynamics LLC
+ * @copyright 2021 Daxbot
  */
 
 const Device = require('../device');
-const { ObjectType, AccessType, DataType, EdsError, DataObject } = require('../eds');
+const { EdsError, DataObject } = require('../eds');
+const { ObjectType, AccessType, DataType } = require('../types');
 
 /**
  * CANopen PDO protocol handler.

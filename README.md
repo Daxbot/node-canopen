@@ -100,7 +100,7 @@ initate a transfer.
 Supported Features:
  - Expedited Transfer :heavy_check_mark:
  - Segmented Transfer :heavy_check_mark:
- - Block Transfer :x:
+ - Block Transfer :heavy_check_mark:
 
 [5]: https://daxbot.github.io/node-canopen/#sdoupload
 [6]: https://daxbot.github.io/node-canopen/#sdodownload

@@ -1,7 +1,7 @@
 /**
  * @file Implements a CANopen device
  * @author Wilkins White
- * @copyright 2021 Nova Dynamics LLC
+ * @copyright 2021 Daxbot
  */
 
 const EventEmitter = require('events');
@@ -9,7 +9,8 @@ const { Emcy } = require('./protocol/emcy');
 const { Lss } = require('./protocol/lss');
 const { Nmt } = require ('./protocol/nmt');
 const { Pdo } = require('./protocol/pdo');
-const { SdoClient, SdoServer } = require('./protocol/sdo');
+const SdoClient = require('./protocol/sdo_client');
+const SdoServer = require('./protocol/sdo_server');
 const { Sync } = require('./protocol/sync');
 const { Time } = require('./protocol/time');
 const { Eds, EdsError, DataObject } = require('./eds');

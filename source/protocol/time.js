@@ -1,17 +1,14 @@
 /**
  * @file Implements the CANopen Time Stamp (TIME) protocol.
  * @author Wilkins White
- * @copyright 2021 Nova Dynamics LLC
+ * @copyright 2021 Daxbot
  */
 
 const Device = require('../device');
-const {
-    ObjectType,
-    AccessType,
-    DataType,
-    typeToRaw,
-    rawToType,
-    DataObject } = require('../eds');
+const { DataObject } = require('../eds');
+const { ObjectType, AccessType, DataType } = require('../types');
+const rawToType = require('../functions/raw_to_type');
+const typeToRaw = require('../functions/type_to_raw');
 
 /**
  * CANopen TIME protocol handler.

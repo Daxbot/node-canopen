@@ -1,11 +1,12 @@
 /**
  * @file Implements the CANopen Emergency (EMCY) protocol.
  * @author Wilkins White
- * @copyright 2021 Nova Dynamics LLC
+ * @copyright 2021 Daxbot
  */
 
 const Device = require('../device');
-const { ObjectType, AccessType, DataType, DataObject } = require('../eds');
+const { DataObject } = require('../eds');
+const { ObjectType, AccessType, DataType } = require('../types');
 
 /**
  * CANopen emergency error code classes.

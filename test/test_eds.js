@@ -1,6 +1,6 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const { DataType, AccessType, ObjectType, typeToRaw, EdsError, Eds} = require('../index');
+const { DataType, AccessType, ObjectType, EdsError, Eds} = require('../index');
 const fs = require('fs');
 
 const expect = chai.expect;
@@ -81,14 +81,6 @@ describe('Eds', function() {
 
             eds.lssSupported = true;
             expect(eds.lssSupported).to.equal(true);
-        });
-    });
-
-    describe('Data types', function() {
-        it('should reference time from January 1, 1984', function() {
-            const date = new Date('1984-01-01');
-            const raw = typeToRaw(date, DataType.TIME_OF_DAY);
-            expect(raw.compare(Buffer.alloc(6))).to.be.equal(0);
         });
     });
 

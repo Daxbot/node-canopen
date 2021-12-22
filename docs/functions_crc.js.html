@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>LssError - Documentation</title>
+    <title>functions/crc.js - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -34,236 +34,33 @@
 
 <div id="main">
     
-    <h1 class="page-title">LssError</h1>
+    <h1 class="page-title">functions/crc.js</h1>
     
 
     
 
 
 
-
-<section>
-
-<header>
     
-        <h2>
-        LssError
-        </h2>
-        
-            <div class="class-description usertext"><p>Errors generated during LSS services.</p></div>
-        
-    
-</header>
-
-<article>
-    
-        <div class="container-overview">
-        
-            
-
-    
-    <h2>Constructor</h2>
-    
-
-    <h4 class="name" id="LssError"><span class="type-signature"></span>new LssError<span class="signature">(message, code, info)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_lss.js.html">protocol/lss.js</a>, <a href="protocol_lss.js.html#line55">line 55</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>message</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>error message.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>code</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>error code.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>info</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>error info code.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-        </div>
-    
-
-    
-
-    
-
-    
-    
-    
-
-     
-
-    
-
-    
-
-    
-
-    
-
-    
-</article>
-
-</section>
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const { crc } = require('node-crc');
+
+/**
+ * Calculates a CRC16 on a block of data.
+ *
+ * @param {Buffer} data - data block.
+ * @returns {number} crc value.
+ */
+function calculateCrc(data) {
+    const result = crc(16, false, 0x1021, 0, 0, 0, 0, 0, data);
+    return result.readUInt16BE();
+}
+
+module.exports=exports=calculateCrc;
+</code></pre>
+        </article>
+    </section>
 
 
 

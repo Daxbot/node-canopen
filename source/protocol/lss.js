@@ -1,7 +1,7 @@
 /**
  * @file Implements the CANopen Layer Setting Services (LSS) protocol.
  * @author Wilkins White
- * @copyright 2021 Nova Dynamics LLC
+ * @copyright 2021 Daxbot
  */
 
 const Device = require('../device');

@@ -31,20 +31,22 @@ channel.start();
 // Step 4: Configure the SDO client parameters.
 device.sdo.addServer(serverId);
 
-// Step 5: Write data to the server then read it back.
+// Step 5: Write date to the server then read it back.
 const date = new Date();
 
 device.sdo.download({
     serverId:   serverId,
     data:       date.toString(),
     dataType:   DataType.VISIBLE_STRING,
-    index:      0x2000
+    index:      0x2000,
+    blockTransfer: true,
 })
 .then(() => {
     return device.sdo.upload({
         serverId:   serverId,
+        dataType:   DataType.VISIBLE_STRING,
         index:      0x2000,
-        dataType:   DataType.VISIBLE_STRING
+        blockTransfer: true,
     });
 })
 .then((value) => console.log(value))

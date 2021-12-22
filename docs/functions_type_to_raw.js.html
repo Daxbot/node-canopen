@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>LssError - Documentation</title>
+    <title>functions/type_to_raw.js - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -34,236 +34,178 @@
 
 <div id="main">
     
-    <h1 class="page-title">LssError</h1>
+    <h1 class="page-title">functions/type_to_raw.js</h1>
     
 
     
 
 
 
-
-<section>
-
-<header>
     
-        <h2>
-        LssError
-        </h2>
-        
-            <div class="class-description usertext"><p>Errors generated during LSS services.</p></div>
-        
-    
-</header>
-
-<article>
-    
-        <div class="container-overview">
-        
-            
-
-    
-    <h2>Constructor</h2>
-    
-
-    <h4 class="name" id="LssError"><span class="type-signature"></span>new LssError<span class="signature">(message, code, info)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_lss.js.html">protocol/lss.js</a>, <a href="protocol_lss.js.html#line55">line 55</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>message</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>error message.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>code</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>error code.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>info</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>error info code.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-        </div>
-    
-
-    
-
-    
-
-    
-    
-    
-
-     
-
-    
-
-    
-
-    
-
-    
-
-    
-</article>
-
-</section>
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const util = require('util');
+const { DataType } = require('../types');
+
+/** Time offset in milliseconds between January 1, 1970 and January 1, 1984. */
+const EPOCH_OFFSET = 441763200 * 1000;
+
+/**
+ * Convert a string to a Buffer.
+ *
+ * @param {string} value - data to convert.
+ * @returns {Buffer} converted Buffer.
+ * @private
+ */
+function stringToRaw(value) {
+    let raw = (value) ? Buffer.from(value) : Buffer.alloc(0);
+
+    const end = raw.indexOf('\0');
+    if(end != -1)
+        raw = raw.subarray(0, end);
+
+    return raw;
+}
+
+/**
+ * Convert a Date to a Buffer.
+ *
+ * @param {Date} value - data to convert.
+ * @returns {Buffer} converted Buffer.
+ * @private
+ */
+function dateToRaw(value) {
+    let raw = Buffer.alloc(6);
+    if(!util.types.isDate(value))
+        value = new Date(value);
+
+    // Milliseconds since January 1, 1984
+    let time = value.getTime() - EPOCH_OFFSET;
+    if(time &lt; 0)
+        time = 0;
+
+    // Days since epoch
+    const days = Math.floor(time / 8.64e7);
+    raw.writeUInt16LE(days, 4);
+
+    // Milliseconds since midnight
+    const ms = time - (days * 8.64e7);
+    raw.writeUInt32LE(ms, 0);
+
+    return raw;
+}
+
+/**
+ * Convert a value to a Buffer based on type.
+ *
+ * @param {number | bigint | string | Date} value - data to convert.
+ * @param {DataType | string} type - how to interpret the data.
+ * @returns {Buffer} converted Buffer.
+ */
+function typeToRaw(value, type) {
+    if(value === undefined || value === null)
+        value = 0;
+
+    if(typeof type === 'string')
+        type = DataType[type];
+
+    let raw;
+    switch(type) {
+        case DataType.BOOLEAN:
+            raw = Buffer.from(value ? [1] : [0] );
+            break;
+        case DataType.INTEGER8:
+            raw = Buffer.alloc(1);
+            raw.writeInt8(value)
+            break;
+        case DataType.UNSIGNED8:
+            raw = Buffer.alloc(1);
+            raw.writeUInt8(value)
+            break;
+        case DataType.INTEGER16:
+            raw = Buffer.alloc(2);
+            raw.writeInt16LE(value);
+            break;
+        case DataType.UNSIGNED16:
+            raw = Buffer.alloc(2);
+            raw.writeUInt16LE(value);
+            break;
+        case DataType.INTEGER24:
+            raw = Buffer.alloc(3);
+            raw.writeIntLE(value, 0, 3);
+            break;
+        case DataType.UNSIGNED24:
+            raw = Buffer.alloc(3);
+            raw.writeUIntLE(value, 0, 3);
+            break;
+        case DataType.INTEGER32:
+            raw = Buffer.alloc(4);
+            raw.writeInt32LE(value);
+            break;
+        case DataType.UNSIGNED32:
+            raw = Buffer.alloc(4);
+            raw.writeUInt32LE(value);
+            break;
+        case DataType.INTEGER40:
+            raw = Buffer.alloc(5);
+            raw.writeIntLE(value, 0, 5);
+            break;
+        case DataType.UNSIGNED40:
+            raw = Buffer.alloc(5);
+            raw.writeUIntLE(value, 0, 5);
+            break;
+        case DataType.INTEGER48:
+            raw = Buffer.alloc(6);
+            raw.writeIntLE(value, 0, 6);
+            break;
+        case DataType.UNSIGNED48:
+            raw = Buffer.alloc(6);
+            raw.writeUIntLE(value, 0, 6);
+            break;
+        case DataType.INTEGER56:
+        case DataType.INTEGER64:
+            if(typeof value != 'bigint')
+                value = BigInt(value);
+
+            raw = Buffer.alloc(8);
+            raw.writeBigInt64LE(value);
+            break;
+        case DataType.UNSIGNED56:
+        case DataType.UNSIGNED64:
+            if(typeof value != 'bigint')
+                value = BigInt(value);
+
+            raw = Buffer.alloc(8);
+            raw.writeBigUInt64LE(value);
+            break;
+        case DataType.REAL32:
+            raw = Buffer.alloc(4);
+            raw.writeFloatLE(value);
+            break;
+        case DataType.REAL64:
+            raw = Buffer.alloc(8);
+            raw.writeDoubleLE(value);
+            break;
+        case DataType.VISIBLE_STRING:
+            raw = stringToRaw(value);
+            break;
+        case DataType.OCTET_STRING:
+        case DataType.UNICODE_STRING:
+            raw = (value) ? Buffer.from(value) : Buffer.alloc(0);
+            break;
+        case DataType.TIME_OF_DAY:
+        case DataType.TIME_DIFFERENCE:
+            raw = dateToRaw(value);
+            break;
+    }
+
+    return raw;
+}
+
+module.exports=exports=typeToRaw;
+</code></pre>
+        </article>
+    </section>
 
 
 
