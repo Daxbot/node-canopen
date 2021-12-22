@@ -381,7 +381,7 @@ class SdoClient {
                     // Block transfer
                     const header = (ClientCommand.BLOCK_DOWNLOAD << 5)
                         | (1 << 2)                  // CRC supported
-                        | (1 << 0);                 // Data size indicated
+                        | (1 << 1);                 // Data size indicated
 
                     sendBuffer.writeUInt8(header);
                     sendBuffer.writeUInt32LE(data.length, 4);
