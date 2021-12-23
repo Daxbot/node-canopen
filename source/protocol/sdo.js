@@ -67,7 +67,7 @@ const SdoCode = {
     DATA_LONG: 0x06070012,
 
     /** Data type does not match: length of service parameter too short. */
-    DATA_SHORT: 0x06070012,
+    DATA_SHORT: 0x06070013,
 
     /** Sub index does not exist. */
     BAD_SUB_INDEX: 0x06090011,
@@ -219,7 +219,7 @@ function codeToString(code) {
         case SdoCode.NO_DATA:
             return 'No data available';
         default:
-            return 'Unknown error';
+            return `Unknown error (0x${code.toString(16).padStart(8, '0')})`;
     }
 }
 

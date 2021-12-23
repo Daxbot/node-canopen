@@ -1,6 +1,6 @@
 {
   "name": "canopen",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "description": "CANopen implementation for Javascript",
   "main": "index.js",
   "scripts": {
