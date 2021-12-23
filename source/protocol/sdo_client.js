@@ -702,10 +702,13 @@ class SdoClient {
             if(transfer.blockFinished) {
                 // End block download
                 const sendBuffer = Buffer.alloc(8);
-                const empty = (8 - (transfer.data.length % 7)) & 0x7;
-                const header = (ClientCommand.BLOCK_DOWNLOAD << 5)
-                    | (empty << 2)  // Number of empty bytes in last transfer
-                    | (1 << 0);     // End block download
+
+                let header = (ClientCommand.BLOCK_DOWNLOAD << 5)
+                    | (1 << 0); // End block download
+
+                const emptyBytes = transfer.data.length % 7;
+                if(emptyBytes)
+                    header |= (7 - emptyBytes) << 2;
 
                 sendBuffer.writeUInt8(header);
 
@@ -755,7 +758,18 @@ class SdoClient {
             const count = (data[0] >> 2) & 7;
             if(count) {
                 const size = transfer.data.length - count;
-                transfer.data = transfer.data.slice(0, size + 1);
+                transfer.data = transfer.data.slice(0, size);
+            }
+
+            // Check size
+            if(transfer.data.length < transfer.size) {
+                transfer.abort(SdoCode.DATA_SHORT);
+                return;
+            }
+
+            if(transfer.data.length > transfer.size) {
+                transfer.abort(SdoCode.DATA_LONG);
+                return;
             }
 
             // Check CRC (if supported)
@@ -835,7 +849,7 @@ class SdoClient {
             // Awknowledge block
             if(transfer.blockFinished || transfer.blockSequence == this.blockSize) {
                 const header = (ClientCommand.BLOCK_UPLOAD << 5)
-                | (2 << 0); // Block upload response
+                    | (2 << 0); // Block upload response
 
                 const sendBuffer = Buffer.alloc(8);
                 sendBuffer.writeUInt8(header);

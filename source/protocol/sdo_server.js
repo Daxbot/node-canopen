@@ -604,10 +604,13 @@ class SdoServer {
             if(client.blockFinished) {
                 // End block upload
                 const sendBuffer = Buffer.alloc(8);
-                const empty = (8 - (client.data.length % 7)) & 0x7;
-                const header = (ServerCommand.BLOCK_UPLOAD << 5)
-                    | (empty << 2)  // Number of empty bytes in last transfer
-                    | (1 << 0);     // End block upload
+
+                let header = (ServerCommand.BLOCK_UPLOAD << 5)
+                    | (1 << 0); // End block upload
+
+                const emptyBytes = client.data.length % 7;
+                if(emptyBytes)
+                    header |= (7 - emptyBytes) << 2;
 
                 sendBuffer.writeUInt8(header);
 
@@ -661,7 +664,18 @@ class SdoServer {
             const count = (data[0] >> 2) & 7;
             if(count) {
                 const size = client.data.length - count;
-                client.data = client.data.slice(0, size + 1);
+                client.data = client.data.slice(0, size);
+            }
+
+            // Check size
+            if(client.data.length < client.size) {
+                client.abort(SdoCode.DATA_SHORT);
+                return;
+            }
+
+            if(client.data.length > client.size) {
+                client.abort(SdoCode.DATA_LONG);
+                return;
             }
 
             // Check CRC (if supported)
