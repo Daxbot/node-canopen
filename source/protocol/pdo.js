@@ -211,7 +211,7 @@ class Pdo {
      * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
      */
     addTransmit(cobId, entries, args={}) {
-        if(this.getReceive(cobId) !== null) {
+        if(this.getTransmit(cobId) !== null) {
             cobId = '0x' + cobId.toString(16);
             throw new EdsError(`entry for TPDO ${cobId} already exists`);
         }
