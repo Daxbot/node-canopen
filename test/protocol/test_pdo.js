@@ -24,7 +24,7 @@ describe('Pdo', function() {
         device.pdo.write(0x18A);
     });
 
-    it('cannot add two RPDOs', function(done) {
+    it('should throw on repeated RPDO', function(done) {
         const entry = device.eds.getEntry(0x05);
 
         device.init();
@@ -37,7 +37,7 @@ describe('Pdo', function() {
     });
 
 
-    it('cannot add two TPDOs', function(done) {
+    it('should throw on repeated TPDO', function(done) {
         const entry = device.eds.getEntry(0x05);
 
         device.init();
