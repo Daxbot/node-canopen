@@ -254,7 +254,7 @@ class Sync {
         if(message.data)
             this.device.emit('sync', message.data[1]);
         else
-            this.device.emit('sync');
+            this.device.emit('sync', null);
     }
 
     /**

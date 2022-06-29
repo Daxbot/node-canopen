@@ -576,6 +576,11 @@ class Pdo {
                 }
             }
 
+            if(!pdo.syncStart) {
+                pdo.started = true;
+                pdo.counter = 0;
+            }
+
             this.events.push([this.device, 'sync', listener]);
             this.device.on('sync', listener);
         }
