@@ -132,7 +132,7 @@ class Device extends EventEmitter {
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @param {number} message.len - CAN message length in bytes.
-     * @return {number} number of bytes sent or -1 for error
+     * @returns {number} number of bytes sent or -1 for error
      * @protected
      */
     send(message) {

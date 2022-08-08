@@ -96,6 +96,8 @@ class SdoClient {
         this.servers = {};
         this.transfers = {};
         this._blockSize = 127;
+        // Minimum timeout for the sdo block download.
+        this._blockDownloadTimeout = 1;
     }
 
     /**
@@ -619,11 +621,6 @@ class SdoClient {
     }
 
     /**
-     * Minimum timeout for the sdo block download.
-    */
-    blockDownloadTimeout = 1
-
-    /**
      * Download a data block.
      *
      * Sub-blocks are scheduled using setInterval to avoid blocking during
@@ -646,8 +643,8 @@ class SdoClient {
                 return;
             }
 
-            if(this.blockDownloadTimeout > 1){
-                this.blockDownloadTimeout = this.blockDownloadTimeout >> 1;
+            if(this._blockDownloadTimeout > 1){
+                this._blockDownloadTimeout = this._blockDownloadTimeout >> 1;
             }
 
             const sendBuffer = Buffer.alloc(8);
@@ -663,7 +660,7 @@ class SdoClient {
             transfer.data.copy(sendBuffer, 1, offset, offset + 7);
             const ret = transfer.send(sendBuffer);
             if(ret < 0 ){
-                this.blockDownloadTimeout = this.blockDownloadTimeout << 8;
+                this._blockDownloadTimeout = this._blockDownloadTimeout << 8;
                 transfer.blockSequence -= 1
             }
             transfer.refresh();
@@ -673,7 +670,7 @@ class SdoClient {
                 clearInterval(transfer.blockInterval);
                 transfer.blockInterval = null;
             }
-        }, this.blockDownloadTimeout);
+        }, this._blockDownloadTimeout);
     }
 
     /**
