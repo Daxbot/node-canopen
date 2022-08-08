@@ -311,9 +311,10 @@ class SdoTransfer {
      * Send a data buffer.
      *
      * @param {Buffer} data - data to send.
+     * @return {number} Number of bits sent or -1 for error
      */
     send(data) {
-        this.device.send({
+        return this.device.send({
             id: this.cobId,
             data: data,
         });
