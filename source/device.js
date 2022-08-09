@@ -132,13 +132,14 @@ class Device extends EventEmitter {
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @param {number} message.len - CAN message length in bytes.
+     * @returns {number} number of bytes sent or -1 for error
      * @protected
      */
     send(message) {
         if(this._send === null)
             throw ReferenceError("please call setTransmitFunction() first");
 
-        this._send(message);
+        return this._send(message);
     }
 
     /**
