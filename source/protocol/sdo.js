@@ -301,7 +301,7 @@ class SdoTransfer {
 
     /** Refresh the transfer timeout. */
     refresh() {
-        if(!this.timeout)
+        if(!this.timeout || this.timer == null)
             return;
 
         this.timer.refresh();
