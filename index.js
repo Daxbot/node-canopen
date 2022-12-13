@@ -1,5 +1,5 @@
 const Device = require('./source/device');
-const { EdsError, Eds } = require('./source/eds');
+const { EdsError, DataObject, Eds } = require('./source/eds');
 const { ObjectType, AccessType, DataType } = require('./source/types');
 const { EmcyType, EmcyCode, EmcyMessage } = require('./source/protocol/emcy');
 const { LssMode } = require('./source/protocol/lss');
@@ -9,6 +9,7 @@ const { calculateCrc, typeToRaw, rawToType } = require('./source/functions');
 
 module.exports=exports={
     Device,
+    DataObject,
     Eds,
     EdsError,
     SdoError,
