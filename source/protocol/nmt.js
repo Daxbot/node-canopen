@@ -139,7 +139,7 @@ class Nmt {
      * Get an entry from 0x1016 (Consumer heartbeat time).
      *
      * @param {number} deviceId - device COB-ID of the entry to get.
-     * @returns {DataObject | null} the matching entry.
+     * @returns {DataObject | null} the matching entry or null.
      */
     getConsumer(deviceId) {
         const obj1016 = this.device.eds.getEntry(0x1016);
@@ -153,6 +153,20 @@ class Nmt {
                     return subObject;
             }
         }
+
+        return null;
+    }
+
+    /**
+     * Get the consumer heartbeat time for a device.
+     *
+     * @param {number} deviceId - device COB-ID to get.
+     * @returns {number | null} the consumer heartbeat time or null.
+     */
+    getConsumerTime(deviceId) {
+        const subObject = this.getConsumer(deviceId);
+        if(subObject !== null)
+            return subObject.value & 0xffff;
 
         return null;
     }

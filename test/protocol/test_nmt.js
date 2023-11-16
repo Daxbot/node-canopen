@@ -20,12 +20,17 @@ describe('Nmt', function() {
         });
 
         it('should throw on repeated add', function() {
-            expect(() => device.nmt.addConsumer(0xB, 100)).to.throw(EdsError);
+            expect(() => device.nmt.addConsumer(0xB, 1000)).to.throw(EdsError);
         });
 
         it('should get entries from 0x1016', function() {
             expect(device.nmt.getConsumer(0xB)).to.exist;
             expect(device.nmt.getConsumer(0xC)).to.be.null;
+        });
+
+        it('should get the consumer heartbeat time', function() {
+            expect(device.nmt.getConsumerTime(0xB)).to.equal(1000);
+            expect(device.nmt.getConsumerTime(0xC)).to.be.null;
         });
 
         it('should remove entries from 0x1016', function() {
