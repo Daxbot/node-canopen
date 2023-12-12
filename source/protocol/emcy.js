@@ -233,6 +233,8 @@ class EmcyMessage {
             case EmcyType.DEVICE_SPECIFIC:
                 return 'CANopen device specific';
         }
+
+        return `Unknown error (0x${this.code.toString(16)})`;
     }
 
     toBuffer() {
