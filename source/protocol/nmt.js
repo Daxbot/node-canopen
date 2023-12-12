@@ -293,6 +293,48 @@ class Nmt {
     }
 
     /**
+     * Get a device's NMT state.
+     *
+     * @param {number} deviceId - CAN identifier.
+     * @param {number} [timeout] - How long to wait (ms).
+     * @returns {Promise<NmtState | null>} The node NMT state.
+     */
+    async getNodeState(deviceId, timeout) {
+        let interval = this.getConsumerTime(deviceId);
+        if(interval === null)
+            throw new ReferenceError(`Failed to find entry for ${deviceId}`);
+
+        if(!timeout)
+            timeout = (interval * 2);
+
+        return new Promise((resolve) => {
+            const start = Date.now();
+
+            let timeoutTimer = null;
+            let intervalTimer = null;
+
+            timeoutTimer = setTimeout(() => {
+                const heartbeat = this.heartbeats[deviceId];
+                if(heartbeat && heartbeat.last > start)
+                    resolve(heartbeat.state);
+                else
+                    resolve(null);
+
+                clearInterval(intervalTimer);
+            }, timeout);
+
+            intervalTimer = setInterval(() => {
+                const heartbeat = this.heartbeats[deviceId];
+                if(heartbeat && heartbeat.last > start) {
+                    clearTimeout(timeoutTimer);
+                    clearInterval(intervalTimer);
+                    resolve(heartbeat.state);
+                }
+            }, (interval / 2));
+        });
+    }
+
+    /**
      * Service: start remote node.
      *
      * Change the state of NMT consumer(s) to NMT state operational.
