@@ -14,6 +14,7 @@ const SdoServer = require('./protocol/sdo_server');
 const { Sync } = require('./protocol/sync');
 const { Time } = require('./protocol/time');
 const { Eds, EdsError, DataObject } = require('./eds');
+const { DataType } = require('./types');
 
 /**
  * A CANopen device.
@@ -153,6 +154,91 @@ class Device extends EventEmitter {
     receive(message) {
         if(message)
             this.emit('message', message);
+    }
+
+    /**
+     * Get "Device type" (0x1000).
+     *
+     * @param {number} [deviceId] - CAN identifier
+     * @returns {Promise<string>} Device name string.
+     */
+    async getDeviceType(deviceId) {
+        if(!deviceId || deviceId == this.id)
+            return this.getValue(0x1000);
+
+        return this.sdo.upload({
+            serverId: deviceId,
+            index: 0x1000,
+            dataType: DataType.UNSIGNED32,
+        });
+    }
+
+    /**
+     * Get "Manufacturer status register" (0x1002).
+     *
+     * @param {number} [deviceId] - CAN identifier
+     * @returns {Promise<string>} Device name string.
+     */
+    async getStatusRegister(deviceId) {
+        if(!deviceId || deviceId == this.id)
+            return this.getValue(0x1002);
+
+        return this.sdo.upload({
+            serverId: deviceId,
+            index: 0x1002,
+            dataType: DataType.UNSIGNED32,
+        });
+    }
+
+    /**
+     * Get "Manufacturer device name" (0x1008).
+     *
+     * @param {number} [deviceId] - CAN identifier
+     * @returns {Promise<string>} Device name string.
+     */
+    async getDeviceName(deviceId) {
+        if(!deviceId || deviceId == this.id)
+            return this.getValue(0x1008);
+
+        return this.sdo.upload({
+            serverId: deviceId,
+            index: 0x1008,
+            dataType: DataType.VISIBLE_STRING,
+        });
+    }
+
+    /**
+     * Get "Manufacturer hardware version" (0x1009).
+     *
+     * @param {number} [deviceId] - CAN identifier.
+     * @returns {Promise<string>} Hardware version string.
+     */
+    async getHardwareVersion(deviceId) {
+        if(!deviceId || deviceId == this.id)
+            return this.getValue(0x1009);
+
+        return this.sdo.upload({
+            serverId: deviceId,
+            index: 0x1009,
+            dataType: DataType.VISIBLE_STRING,
+        });
+    }
+
+    /**
+     * Get "Manufacturer software version" (0x100A).
+     *
+     * @param {number} [deviceId] - CAN identifier.
+     * @returns {Promise<string>} Software version string.
+     */
+    async getSoftwareVersion(deviceId) {
+        if(!deviceId || deviceId == this.id)
+            return this.getValue(0x100A);
+
+        return this.sdo.upload({
+            serverId: deviceId,
+            index: 0x100A,
+            dataType: DataType.VISIBLE_STRING,
+        });
     }
 
     /**

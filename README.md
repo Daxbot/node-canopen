@@ -8,6 +8,18 @@ This library allows the manipulation of CANopen devices as defined in CiA 301.
 ## Documentation
 Pre-built documentation is available here: https://daxbot.github.io/node-canopen/
 
+## Device
+The Device class represents a CANopen device and provides context for the
+protocol objects as well as access methods for the manufacturer data fields.
+
+ OD Entry | Description                   | Notes
+ -------- | ----------------------------- | ------------------------
+  0x1000  | Device type                   | :heavy_check_mark:
+  0x1002  | Manufacturer status register  | :heavy_check_mark:
+  0x1008  | Manufacturer device name      | :heavy_check_mark:
+  0x1009  | Manufacturer hardware version | :heavy_check_mark:
+  0x100A  | Manufacturer software version | :heavy_check_mark:
+
 ## Protocols
 ### Emergency - EMCY
 The CANopen emergency protocol is used to indicate internal errors with a
