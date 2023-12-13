@@ -157,7 +157,13 @@ class SdoClient {
      */
     addServer(serverId, cobIdTx=0x600, cobIdRx=0x580) {
         if(serverId < 1 || serverId > 0x7F)
-            throw RangeError('serverId must be in range 1-127');
+            throw new RangeError('serverId must be in range 1-127');
+
+        if(typeof cobIdTx !== 'number')
+            throw new Error('cobIdTx must be a number');
+
+        if(typeof cobIdRx !== 'number')
+            throw new Error('cobIdRx must be a number');
 
         if(this.getServer(serverId) !== null) {
             serverId = '0x' + serverId.toString(16);

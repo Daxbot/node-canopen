@@ -249,8 +249,12 @@ class Device extends EventEmitter {
      */
     getValue(index) {
         const entry = this.eds.getEntry(index);
-        if(!entry)
-            throw new EdsError("entry does not exist");
+        if(!entry) {
+            if(typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index} does not exist`);
+        }
 
         return entry.value;
     }
@@ -264,8 +268,12 @@ class Device extends EventEmitter {
      */
     getValueArray(index, subIndex) {
         const entry = this.eds.getSubEntry(index, subIndex);
-        if(!entry)
-            throw new EdsError("entry does not exist");
+        if(!entry) {
+            if(typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index}[${subIndex}] does not exist`);
+        }
 
         return entry.value;
     }
@@ -278,8 +286,12 @@ class Device extends EventEmitter {
      */
     getRaw(index) {
         const entry = this.eds.getEntry(index);
-        if(!entry)
-            throw new EdsError("entry does not exist");
+        if(!entry) {
+            if(typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index} does not exist`);
+        }
 
         return entry.raw;
     }
@@ -293,8 +305,12 @@ class Device extends EventEmitter {
      */
     getRawArray(index, subIndex) {
         const entry = this.eds.getSubEntry(index, subIndex);
-        if(!entry)
-            throw new EdsError("entry does not exist");
+        if(!entry) {
+            if(typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index}[${subIndex}] does not exist`);
+        }
 
         return entry.raw;
     }
@@ -307,8 +323,12 @@ class Device extends EventEmitter {
      */
     setValue(index, value) {
         const entry = this.eds.getEntry(index);
-        if(!entry)
-            throw new EdsError("entry does not exist");
+        if(!entry) {
+            if(typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index} does not exist`);
+        }
 
         entry.value = value;
     }
@@ -322,8 +342,12 @@ class Device extends EventEmitter {
      */
     setValueArray(index, subIndex, value) {
         const entry = this.eds.getSubEntry(index, subIndex);
-        if(!entry)
-            throw new EdsError("entry does not exist");
+        if(!entry) {
+            if(typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index}[${subIndex}] does not exist`);
+        }
 
         entry.value = value;
     }
@@ -336,8 +360,12 @@ class Device extends EventEmitter {
      */
     setRaw(index, raw) {
         const entry = this.eds.getEntry(index);
-        if(!entry)
-            throw new EdsError("entry does not exist");
+        if(!entry) {
+            if(typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index} does not exist`);
+        }
 
         entry.raw = raw;
     }
@@ -351,8 +379,12 @@ class Device extends EventEmitter {
      */
     setRawArray(index, subIndex, raw) {
         const entry = this.eds.getSubEntry(index, subIndex);
-        if(!entry)
-            throw new EdsError("entry does not exist");
+        if(!entry) {
+            if(typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index}[${subIndex}] does not exist`);
+        }
 
         entry.raw = raw;
     }
