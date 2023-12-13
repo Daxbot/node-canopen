@@ -435,6 +435,7 @@ class DataObject extends EventEmitter {
  *
  * This class provides methods for loading and saving CANopen EDS v4.0 files.
  *
+ * @param {string} [path] - path to EDS file.
  * @see CiA306 "Electronic data sheet specification for CANopen"
  * @example
  * const eds = new Eds();
@@ -458,7 +459,7 @@ class DataObject extends EventEmitter {
  * eds.save();
  */
 class Eds {
-    constructor() {
+    constructor(path) {
         this.fileInfo = {};
         this.deviceInfo = {};
         this.dummyUsage = {};
@@ -523,6 +524,9 @@ class Eds {
             dataType:       DataType.UNSIGNED32,
             accessType:     AccessType.READ_ONLY,
         });
+
+        if(path)
+            this.load(path);
     }
 
     /**

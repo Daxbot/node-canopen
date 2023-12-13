@@ -68,7 +68,11 @@ class Device extends EventEmitter {
             });
         }
 
-        this.eds = args.eds || new Eds();
+        if(typeof args.eds === 'string')
+            this.eds = new Eds(args.eds);
+        else
+            this.eds = args.eds || new Eds();
+
         this.emcy = new Emcy(this);
         this.lss = new Lss(this);
         this.nmt = new Nmt(this);
