@@ -160,6 +160,117 @@ class Device extends EventEmitter {
             this.emit('message', message);
     }
 
+    /*
+     * Map another node's EDS file on to this Device.
+     *
+     * This method provides an easy way to set up communication with a remote
+     * node. Most EDS transmit/producer entries will be mapped to their local
+     * receive/consumer analogues. Note that this method will heavily modify
+     * the Device's internal EDS file.
+     *
+     * This may be called multiple times to map more than one EDS.
+     *
+     * @param {object} obj - function arguments.
+     * @param {Eds | string} obj.eds - the server's EDS.
+     * @param {number} [obj.serverId] - the server's CAN identifier.
+     * @param {number} [obj.dataStart] - start index for created SDO entries.
+     * @param {boolean} [obj.mapNmt] - Map NMT producer -> consumer.
+     * @param {boolean} [obj.mapSdo] - Map SDO server -> client.
+     * @param {boolean} [obj.mapPdo] - Map TPDO -> RPDO.
+     */
+    mapEds({
+        eds, serverId, dataStart, mapNmt=true, mapSdo=true, mapPdo=true }) {
+
+        if(!eds)
+            throw new ReferenceError('Must provide eds');
+
+        if(typeof eds === 'string')
+            eds = new Eds(eds);
+
+        let dataIndex = dataStart || 0x2000;
+        if(dataIndex < 0x2000)
+            throw new RangeError('dataStart must be >= 0x2000');
+
+        if(mapNmt) {
+            // Map heartbeat producer -> consumer
+            const obj1017 = eds.getEntry(0x1017);
+            if(obj1017 !== undefined) {
+                if(!serverId)
+                    throw new Error('Cannot map NMT without serverId');
+
+                this.nmt.addConsumer(serverId, obj1017.value * 10);
+            }
+        }
+
+        for(let [index, entry] of Object.entries(eds.dataObjects)) {
+            index = parseInt(index);
+            if((index & 0xFF80) == 0x1200) {
+                if(!mapSdo)
+                    continue;
+
+                // Parse SDO servers [0x1200, 0x127F]
+                const cobIdTx = entry[1].value;
+                const cobIdRx = entry[2].value;
+
+                if(!cobIdTx || !cobIdRx)
+                    throw new Error('Invalid SDO server parameter');
+
+                if(!serverId)
+                    throw new Error('Cannot map SDO without serverId');
+
+                this.sdo.addServer(serverId, cobIdTx, cobIdRx);
+            }
+            else if((index & 0xFF00) == 0x1800 || (index & 0xFF00) == 0x1900) {
+                if(!mapPdo)
+                    continue;
+
+                // Parse TPDO communication parameters [0x1800, 0x19FF]
+                const cobId = entry[1].value;
+                const entries = [];
+
+                const map = eds.getEntry(index + 0x200);
+                for(let i=1; i <= map[0].value; ++i) {
+                    if(!map[i].value)
+                        continue; // Empty entry
+
+                    // Parse TPDO mapping parameters [0x1A00, 0x1BFFF]
+                    const value = map[i].value;
+                    const index = (value >> 16) & 0xFFFF;
+                    const subIndex = (value >> 8) & 0xFF;
+
+                    // Get data object from input EDS
+                    const mapped = eds.getEntry(index);
+
+                    // Find the next open index
+                    while(this.eds.dataObjects[dataIndex] !== undefined) {
+                        if(dataIndex >= 0xFFFF)
+                            throw new RangeError('dataIndex out of range');
+
+                        dataIndex += 1;
+                    }
+
+                    // Add data object to device EDS
+                    this.eds.addEntry(dataIndex, mapped);
+                    for(let j = 1; j < mapped.subNumber; ++j)
+                        this.eds.addSubEntry(dataIndex, j, mapped[j]);
+
+                    // Prepare to map the new data object
+                    if(subIndex)
+                        entries.push(this.eds.getSubEntry(dataIndex, subIndex));
+                    else
+                        entries.push(this.eds.getEntry(dataIndex));
+                }
+
+                this.pdo.addReceive(cobId, entries, {
+                    type:           entry[2].value,
+                    inhibitTime:    entry[3].value,
+                    eventTime:      entry[5].value,
+                    syncStart:      entry[6].value,
+                });
+            }
+        }
+    }
+
     /**
      * Get "Device type" (0x1000).
      *
