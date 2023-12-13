@@ -1,7 +1,5 @@
 const { DataType } = require('../types');
-
-/** Time offset in milliseconds between January 1, 1970 and January 1, 1984. */
-const EPOCH_OFFSET = 441763200 * 1000;
+const { timeToDate } = require('./date');
 
 /**
  * Convert a Buffer to a string.
@@ -30,7 +28,7 @@ function rawToString(raw) {
 function rawToDate(raw) {
     const ms = raw.readUInt32LE(0);
     const days = raw.readUInt16LE(4);
-    return new Date((days * 8.64e7) + ms + EPOCH_OFFSET);
+    return timeToDate(days, ms);
 }
 
 /**

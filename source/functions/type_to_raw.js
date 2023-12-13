@@ -1,8 +1,5 @@
-const util = require('util');
 const { DataType } = require('../types');
-
-/** Time offset in milliseconds between January 1, 1970 and January 1, 1984. */
-const EPOCH_OFFSET = 441763200 * 1000;
+const { dateToTime } = require('./date');
 
 /**
  * Convert a string to a Buffer.
@@ -29,23 +26,10 @@ function stringToRaw(value) {
  * @private
  */
 function dateToRaw(value) {
-    let raw = Buffer.alloc(6);
-    if(!util.types.isDate(value))
-        value = new Date(value);
-
-    // Milliseconds since January 1, 1984
-    let time = value.getTime() - EPOCH_OFFSET;
-    if(time < 0)
-        time = 0;
-
-    // Days since epoch
-    const days = Math.floor(time / 8.64e7);
+    const raw = Buffer.alloc(6);
+    const { days, ms } = dateToTime(value);
     raw.writeUInt16LE(days, 4);
-
-    // Milliseconds since midnight
-    const ms = time - (days * 8.64e7);
     raw.writeUInt32LE(ms, 0);
-
     return raw;
 }
 
