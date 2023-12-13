@@ -31,7 +31,7 @@ CANopen device. Call [Emcy.write][1] to produce an emergency object.
   0x1003  | Pre-defined error field   | :heavy_check_mark:
   0x1014  | COB_ID EMCY               | :heavy_check_mark:
   0x1015  | Inhibit time EMCY         | :heavy_check_mark:
-  0x1028  | Emergency consumer object | :x:
+  0x1028  | Emergency consumer object | :heavy_check_mark:
   0x1029  | Error behavior object     | :x:
 
 [1]: https://daxbot.github.io/node-canopen/#emcywrite

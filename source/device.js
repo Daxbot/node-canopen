@@ -174,12 +174,20 @@ class Device extends EventEmitter {
      * @param {Eds | string} obj.eds - the server's EDS.
      * @param {number} [obj.serverId] - the server's CAN identifier.
      * @param {number} [obj.dataStart] - start index for created SDO entries.
+     * @param {boolean} [obj.mapNmt] - Map EMCY producer -> consumer.
      * @param {boolean} [obj.mapNmt] - Map NMT producer -> consumer.
+     * @param {boolean} [obj.mapPdo] - Map PDO transmit -> receive.
      * @param {boolean} [obj.mapSdo] - Map SDO server -> client.
-     * @param {boolean} [obj.mapPdo] - Map TPDO -> RPDO.
      */
     mapEds({
-        eds, serverId, dataStart, mapNmt=true, mapSdo=true, mapPdo=true }) {
+        eds,
+        serverId,
+        dataStart,
+        mapEmcy=true,
+        mapNmt=true,
+        mapPdo=true,
+        mapSdo=true,
+    }) {
 
         if(!eds)
             throw new ReferenceError('Must provide eds');
@@ -190,6 +198,13 @@ class Device extends EventEmitter {
         let dataIndex = dataStart || 0x2000;
         if(dataIndex < 0x2000)
             throw new RangeError('dataStart must be >= 0x2000');
+
+        if(mapEmcy) {
+            // Map EMCY producer -> consumer
+            const obj1014 = eds.getEntry(0x1014);
+            if(obj1014 !== undefined)
+                this.emcy.addConsumer(obj1014.value);
+        }
 
         if(mapNmt) {
             // Map heartbeat producer -> consumer

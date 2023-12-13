@@ -1,6 +1,6 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const { Device } = require('../../index');
+const { Device, EdsError } = require('../../index');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
@@ -35,6 +35,32 @@ describe('Emcy', function() {
             device.emcy.cobId = 0x80;
             device.emcy.inhibitTime = 100;
             device.init();
+        });
+
+        it('should add entries to 0x1028', function() {
+            device.emcy.addConsumer(0x8B);
+            expect(device.eds.getSubEntry(0x1028, 1)).to.exist;
+        });
+
+        it('should throw on repeated add', function() {
+            device.emcy.addConsumer(0x8B);
+            expect(() => device.emcy.addConsumer(0x8B)).to.throw(EdsError);
+        });
+
+        it('should get entries from 0x1028', function() {
+            device.emcy.addConsumer(0x8B);
+            expect(device.emcy.getConsumer(0x8B)).to.exist;
+            expect(device.emcy.getConsumer(0x8C)).to.be.null;
+        });
+
+        it('should remove entries from 0x1028', function() {
+            device.emcy.addConsumer(0x8B);
+            device.emcy.removeConsumer(0x8B);
+            expect(device.emcy.getConsumer(0x8B)).to.be.null;
+        });
+
+        it('should throw on repeated remove', function() {
+            expect(() => device.emcy.removeConsumer(0x8B)).to.throw(EdsError);
         });
 
         it('should configure 0x1003', function(done) {
@@ -72,6 +98,18 @@ describe('Emcy', function() {
 
             obj1015.value = 200;
         });
+
+        it('should listen for updates to 0x1028', function(done) {
+            const obj1028 = device.eds.getEntry(0x1028);
+            obj1028.addListener('update', (entry) => {
+                setImmediate(() => {
+                    expect(entry[1].value & 0x7FF).to.equal(0x8A);
+                    done();
+                });
+            });
+
+            device.emcy.addConsumer(0x8A);
+        });
     });
 
     describe('Producer', function() {
@@ -87,7 +125,8 @@ describe('Emcy', function() {
     describe('Consumer', function() {
         beforeEach(function() {
             device = new Device({ id: 0xA, loopback: true });
-            device.emcy.cobId = 0x80;
+            device.emcy.cobId = 0x8A;
+            device.emcy.addConsumer(0x8A);
             device.init();
         });
 
