@@ -197,7 +197,7 @@ class Sync {
     /** Begin producing sync objects. */
     start() {
         if(!this.generate)
-            throw TypeError('SYNC generation is disabled.');
+            throw TypeError('SYNC generation is disabled');
 
         if(this._overflow) {
             this.syncTimer = setInterval(() => {
@@ -229,7 +229,7 @@ class Sync {
      */
     write(counter=null) {
         if(!this.generate)
-            throw TypeError('SYNC generation is disabled.');
+            throw TypeError('SYNC generation is disabled');
 
         const data = (counter) ? Buffer.from([counter]) : Buffer.alloc(0);
         this.device.send({
@@ -276,10 +276,10 @@ class Sync {
         const cobId = value & 0x7FF;
 
         if(rtr == 0x1)
-            throw TypeError("CAN extended frames are not supported.")
+            throw TypeError("CAN extended frames are not supported")
 
         if(cobId == 0)
-            throw TypeError('COB-ID SYNC can not be 0.');
+            throw TypeError('COB-ID SYNC must not be 0');
 
         this._generate = !!gen;
         this._cobId = cobId;
@@ -294,7 +294,7 @@ class Sync {
     _parse1006(data) {
         const cyclePeriod = data.value;
         if(cyclePeriod == 0)
-            throw TypeError('communication cycle period can not be 0.')
+            throw TypeError('communication cycle period must not be 0')
 
         this._cyclePeriod = cyclePeriod;
     }

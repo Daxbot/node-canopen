@@ -234,7 +234,7 @@ class Lss {
         // Verify vendor-id
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssError('failed to verify vendorId', 255, 0));
+                reject(new LssError('unverified vendorId', 255, 0));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -273,7 +273,7 @@ class Lss {
         // Verify product-code
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssError('failed to verify productCode', 255, 0));
+                reject(new LssError('unverified productCode', 255, 0));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -312,7 +312,7 @@ class Lss {
         // Verify revision-number
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssError('failed to verify revisionNumber', 255, 0));
+                reject(new LssError('unverified revisionNumber', 255, 0));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -351,7 +351,7 @@ class Lss {
         // Verify serial-number
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssError('failed to verify serialNumber', 255, 0));
+                reject(new LssError('unverified serialNumber', 255, 0));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -375,7 +375,7 @@ class Lss {
      */
     switchModeGlobal(mode) {
         if(mode === undefined)
-            throw ReferenceError("mode cannot be undefined");
+            throw ReferenceError('mode not defined');
 
         this._sendLssRequest(
             LssCommand.SWITCH_MODE_GLOBAL, Buffer.from([mode]));

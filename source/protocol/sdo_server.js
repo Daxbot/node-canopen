@@ -60,7 +60,7 @@ class SdoServer {
 
     set blockSize(value) {
         if(value < 1 || value > 127)
-            throw RangeError('blockSize must be in range 1-127');
+            throw RangeError('blockSize must be in range [1-127]');
 
         this._blockSize = value;
     }
@@ -106,11 +106,11 @@ class SdoServer {
      */
     addClient(clientId, cobIdTx=0x580, cobIdRx=0x600) {
         if(clientId < 0 || clientId > 0x7F)
-            throw RangeError('clientId must be in range 0-127');
+            throw RangeError('clientId must be in range [0-127]');
 
         if(this.getClient(clientId) !== null) {
             clientId = '0x' + clientId.toString(16);
-            throw new EdsError(`entry for client ${clientId} already exists`);
+            throw new EdsError(`SDO client ${clientId} already exists`);
         }
 
         let index = 0x1200;
@@ -156,7 +156,7 @@ class SdoServer {
     removeClient(clientId) {
         const entry = this.getClient(clientId);
         if(entry === null)
-            throw ReferenceError(`entry for client ${clientId} does not exist`);
+            throw ReferenceError(`SDO client ${clientId} does not exist`);
 
         this.device.eds.removeEntry(entry.index);
     }
@@ -171,7 +171,7 @@ class SdoServer {
         const entry = this.device.eds.getEntry(index);
         if(!entry) {
             index = '0x' + (index + 0x200).toString(16);
-            throw new EdsError(`missing SDO server parameter (${index})`);
+            throw new EdsError(`SDO server parameter does not exist (${index})`);
         }
 
         /* Object 0x1200..0x127F - SDO server parameter.
@@ -190,10 +190,10 @@ class SdoServer {
             return;
 
         if(((cobIdRx >> 30) & 0x1) == 0x1)
-            throw TypeError('dynamic assignment is not supported.');
+            throw TypeError('dynamic assignment is not supported');
 
         if(((cobIdRx >> 29) & 0x1) == 0x1)
-            throw TypeError('CAN extended frames are not supported.');
+            throw TypeError('CAN extended frames are not supported');
 
         cobIdRx &= 0x7FF;
         if((cobIdRx & 0xF) == 0x0)
@@ -204,10 +204,10 @@ class SdoServer {
             return;
 
         if(((cobIdTx >> 30) & 0x1) == 0x1)
-            throw TypeError('dynamic assignment is not supported.');
+            throw TypeError('dynamic assignment is not supported');
 
         if(((cobIdTx >> 29) & 0x1) == 0x1)
-            throw TypeError('CAN extended frames are not supported.');
+            throw TypeError('CAN extended frames are not supported');
 
         cobIdTx &= 0x7FF;
         if((cobIdTx & 0xF) == 0x0)

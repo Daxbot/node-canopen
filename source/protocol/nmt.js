@@ -180,14 +180,14 @@ class Nmt {
      */
     addConsumer(deviceId, timeout, subIndex) {
         if(deviceId < 1 || deviceId > 0x7F)
-            throw RangeError('deviceId must be in range 1-127');
+            throw RangeError('deviceId must be in range [1-127]');
 
         if(timeout < 0 || timeout > 0xffff)
-            throw RangeError('timeout must be in range 0-65535');
+            throw RangeError('timeout must be in range [0-65535]');
 
         if(this.getConsumer(deviceId) !== null) {
             deviceId = '0x' + deviceId.toString(16);
-            throw new EdsError(`entry for device ${deviceId} already exists`);
+            throw new EdsError(`NMT consumer ${deviceId} already exists`);
         }
 
         let obj1016 = this.device.eds.getEntry(0x1016);
@@ -209,7 +209,7 @@ class Nmt {
         }
 
         if(!subIndex)
-            throw new EdsError('failed to find empty sub-index');
+            throw new EdsError('NMT consumer entry full');
 
         // Install sub entry
         this.device.eds.addSubEntry(0x1016, subIndex, {
@@ -229,7 +229,7 @@ class Nmt {
     removeConsumer(deviceId) {
         const subEntry = this.getConsumer(deviceId);
         if(subEntry === null)
-            throw new EdsError(`entry for device ${deviceId} does not exist`);
+            throw new EdsError(`NMT consumer ${deviceId} does not exist`);
 
         this.device.eds.removeSubEntry(0x1016, subEntry.subIndex);
     }
@@ -272,7 +272,7 @@ class Nmt {
     /** Begin heartbeat generation. */
     start() {
         if(this.producerTime == 0)
-            throw new EdsError('producer heartbeat time can not be 0')
+            throw new EdsError('producerTime must not be 0')
 
         // Switch to NmtState.OPERATIONAL
         this.startNode();
@@ -302,7 +302,7 @@ class Nmt {
     async getNodeState(deviceId, timeout) {
         let interval = this.getConsumerTime(deviceId);
         if(interval === null)
-            throw new ReferenceError(`Failed to find entry for ${deviceId}`);
+            throw new ReferenceError(`NMT consumer ${deviceId} does not exist`);
 
         if(!timeout)
             timeout = (interval * 2);

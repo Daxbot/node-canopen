@@ -7,7 +7,7 @@
 const EventEmitter = require('events');
 const { Emcy } = require('./protocol/emcy');
 const { Lss } = require('./protocol/lss');
-const { Nmt } = require ('./protocol/nmt');
+const { Nmt } = require('./protocol/nmt');
 const { Pdo } = require('./protocol/pdo');
 const SdoClient = require('./protocol/sdo_client');
 const SdoServer = require('./protocol/sdo_server');
@@ -50,16 +50,16 @@ const { DataType } = require('./types');
  * channel.start();
  */
 class Device extends EventEmitter {
-    constructor(args={}) {
+    constructor(args = {}) {
         super();
 
         this._id = null;
-        if(args.id !== undefined)
+        if (args.id !== undefined)
             this.id = args.id;
 
         this._send = null;
 
-        if(args.loopback) {
+        if (args.loopback) {
             this.setTransmitFunction((message) => {
                 /* We use setImmediate here to allow the method that called
                  * send() to run to completion before receive() is processed.
@@ -68,7 +68,7 @@ class Device extends EventEmitter {
             });
         }
 
-        if(typeof args.eds === 'string')
+        if (typeof args.eds === 'string')
             this.eds = new Eds(args.eds);
         else
             this.eds = args.eds || new Eds();
@@ -93,8 +93,8 @@ class Device extends EventEmitter {
     }
 
     set id(value) {
-        if(value < 1 || value > 0x7F)
-            throw RangeError("id must be in range 1-127");
+        if (value < 1 || value > 0x7F)
+            throw RangeError("id must be in range [1-127]");
 
         this._id = value;
     }
@@ -141,8 +141,8 @@ class Device extends EventEmitter {
      * @protected
      */
     send(message) {
-        if(this._send === null)
-            throw ReferenceError("please call setTransmitFunction() first");
+        if (this._send === null)
+            throw ReferenceError("call setTransmitFunction() first");
 
         return this._send(message);
     }
@@ -156,7 +156,7 @@ class Device extends EventEmitter {
      * @param {number} message.len - CAN message length in bytes.
      */
     receive(message) {
-        if(message)
+        if (message)
             this.emit('message', message);
     }
 
@@ -183,60 +183,60 @@ class Device extends EventEmitter {
         eds,
         serverId,
         dataStart,
-        mapEmcy=true,
-        mapNmt=true,
-        mapPdo=true,
-        mapSdo=true,
+        mapEmcy = true,
+        mapNmt = true,
+        mapPdo = true,
+        mapSdo = true,
     }) {
 
-        if(!eds)
-            throw new ReferenceError('Must provide eds');
+        if (!eds)
+            throw new ReferenceError('eds not defined');
 
-        if(typeof eds === 'string')
+        if (typeof eds === 'string')
             eds = new Eds(eds);
 
         let dataIndex = dataStart || 0x2000;
-        if(dataIndex < 0x2000)
+        if (dataIndex < 0x2000)
             throw new RangeError('dataStart must be >= 0x2000');
 
-        if(mapEmcy) {
+        if (mapEmcy) {
             // Map EMCY producer -> consumer
             const obj1014 = eds.getEntry(0x1014);
-            if(obj1014 !== undefined)
+            if (obj1014 !== undefined)
                 this.emcy.addConsumer(obj1014.value);
         }
 
-        if(mapNmt) {
+        if (mapNmt) {
             // Map heartbeat producer -> consumer
             const obj1017 = eds.getEntry(0x1017);
-            if(obj1017 !== undefined) {
-                if(!serverId)
-                    throw new Error('Cannot map NMT without serverId');
+            if (obj1017 !== undefined) {
+                if (!serverId)
+                    throw new Error('serverId not defined');
 
                 this.nmt.addConsumer(serverId, obj1017.value * 10);
             }
         }
 
-        for(let [index, entry] of Object.entries(eds.dataObjects)) {
+        for (let [index, entry] of Object.entries(eds.dataObjects)) {
             index = parseInt(index);
-            if((index & 0xFF80) == 0x1200) {
-                if(!mapSdo)
+            if ((index & 0xFF80) == 0x1200) {
+                if (!mapSdo)
                     continue;
 
                 // Parse SDO servers [0x1200, 0x127F]
                 const cobIdTx = entry[1].value;
                 const cobIdRx = entry[2].value;
 
-                if(!cobIdTx || !cobIdRx)
-                    throw new Error('Invalid SDO server parameter');
+                if (!cobIdTx || !cobIdRx)
+                    throw new Error('invalid SDO server parameter');
 
-                if(!serverId)
-                    throw new Error('Cannot map SDO without serverId');
+                if (!serverId)
+                    throw new Error('serverId not defined');
 
                 this.sdo.addServer(serverId, cobIdTx, cobIdRx);
             }
-            else if((index & 0xFF00) == 0x1800 || (index & 0xFF00) == 0x1900) {
-                if(!mapPdo)
+            else if ((index & 0xFF00) == 0x1800 || (index & 0xFF00) == 0x1900) {
+                if (!mapPdo)
                     continue;
 
                 // Parse TPDO communication parameters [0x1800, 0x19FF]
@@ -244,8 +244,8 @@ class Device extends EventEmitter {
                 const entries = [];
 
                 const map = eds.getEntry(index + 0x200);
-                for(let i=1; i <= map[0].value; ++i) {
-                    if(!map[i].value)
+                for (let i = 1; i <= map[0].value; ++i) {
+                    if (!map[i].value)
                         continue; // Empty entry
 
                     // Parse TPDO mapping parameters [0x1A00, 0x1BFFF]
@@ -257,30 +257,30 @@ class Device extends EventEmitter {
                     const mapped = eds.getEntry(index);
 
                     // Find the next open index
-                    while(this.eds.dataObjects[dataIndex] !== undefined) {
-                        if(dataIndex >= 0xFFFF)
-                            throw new RangeError('dataIndex out of range');
+                    while (this.eds.dataObjects[dataIndex] !== undefined) {
+                        if (dataIndex >= 0xFFFF)
+                            throw new RangeError('dataIndex must be <= 0xFFFF');
 
                         dataIndex += 1;
                     }
 
                     // Add data object to device EDS
                     this.eds.addEntry(dataIndex, mapped);
-                    for(let j = 1; j < mapped.subNumber; ++j)
+                    for (let j = 1; j < mapped.subNumber; ++j)
                         this.eds.addSubEntry(dataIndex, j, mapped[j]);
 
                     // Prepare to map the new data object
-                    if(subIndex)
+                    if (subIndex)
                         entries.push(this.eds.getSubEntry(dataIndex, subIndex));
                     else
                         entries.push(this.eds.getEntry(dataIndex));
                 }
 
                 this.pdo.addReceive(cobId, entries, {
-                    type:           entry[2].value,
-                    inhibitTime:    entry[3].value,
-                    eventTime:      entry[5].value,
-                    syncStart:      entry[6].value,
+                    type: entry[2].value,
+                    inhibitTime: entry[3].value,
+                    eventTime: entry[5].value,
+                    syncStart: entry[6].value,
                 });
             }
         }
@@ -293,7 +293,7 @@ class Device extends EventEmitter {
      * @returns {Promise<string>} Device name string.
      */
     async getDeviceType(deviceId) {
-        if(!deviceId || deviceId == this.id)
+        if (!deviceId || deviceId == this.id)
             return this.getValue(0x1000);
 
         return this.sdo.upload({
@@ -310,7 +310,7 @@ class Device extends EventEmitter {
      * @returns {Promise<string>} Device name string.
      */
     async getStatusRegister(deviceId) {
-        if(!deviceId || deviceId == this.id)
+        if (!deviceId || deviceId == this.id)
             return this.getValue(0x1002);
 
         return this.sdo.upload({
@@ -327,7 +327,7 @@ class Device extends EventEmitter {
      * @returns {Promise<string>} Device name string.
      */
     async getDeviceName(deviceId) {
-        if(!deviceId || deviceId == this.id)
+        if (!deviceId || deviceId == this.id)
             return this.getValue(0x1008);
 
         return this.sdo.upload({
@@ -344,7 +344,7 @@ class Device extends EventEmitter {
      * @returns {Promise<string>} Hardware version string.
      */
     async getHardwareVersion(deviceId) {
-        if(!deviceId || deviceId == this.id)
+        if (!deviceId || deviceId == this.id)
             return this.getValue(0x1009);
 
         return this.sdo.upload({
@@ -361,7 +361,7 @@ class Device extends EventEmitter {
      * @returns {Promise<string>} Software version string.
      */
     async getSoftwareVersion(deviceId) {
-        if(!deviceId || deviceId == this.id)
+        if (!deviceId || deviceId == this.id)
             return this.getValue(0x100A);
 
         return this.sdo.upload({
@@ -379,8 +379,8 @@ class Device extends EventEmitter {
      */
     getValue(index) {
         const entry = this.eds.getEntry(index);
-        if(!entry) {
-            if(typeof index === 'number')
+        if (!entry) {
+            if (typeof index === 'number')
                 index = '0x' + index.toString(16);
 
             throw new EdsError(`entry ${index} does not exist`);
@@ -398,8 +398,8 @@ class Device extends EventEmitter {
      */
     getValueArray(index, subIndex) {
         const entry = this.eds.getSubEntry(index, subIndex);
-        if(!entry) {
-            if(typeof index === 'number')
+        if (!entry) {
+            if (typeof index === 'number')
                 index = '0x' + index.toString(16);
 
             throw new EdsError(`entry ${index}[${subIndex}] does not exist`);
@@ -416,8 +416,8 @@ class Device extends EventEmitter {
      */
     getRaw(index) {
         const entry = this.eds.getEntry(index);
-        if(!entry) {
-            if(typeof index === 'number')
+        if (!entry) {
+            if (typeof index === 'number')
                 index = '0x' + index.toString(16);
 
             throw new EdsError(`entry ${index} does not exist`);
@@ -435,8 +435,8 @@ class Device extends EventEmitter {
      */
     getRawArray(index, subIndex) {
         const entry = this.eds.getSubEntry(index, subIndex);
-        if(!entry) {
-            if(typeof index === 'number')
+        if (!entry) {
+            if (typeof index === 'number')
                 index = '0x' + index.toString(16);
 
             throw new EdsError(`entry ${index}[${subIndex}] does not exist`);
@@ -453,8 +453,8 @@ class Device extends EventEmitter {
      */
     setValue(index, value) {
         const entry = this.eds.getEntry(index);
-        if(!entry) {
-            if(typeof index === 'number')
+        if (!entry) {
+            if (typeof index === 'number')
                 index = '0x' + index.toString(16);
 
             throw new EdsError(`entry ${index} does not exist`);
@@ -472,8 +472,8 @@ class Device extends EventEmitter {
      */
     setValueArray(index, subIndex, value) {
         const entry = this.eds.getSubEntry(index, subIndex);
-        if(!entry) {
-            if(typeof index === 'number')
+        if (!entry) {
+            if (typeof index === 'number')
                 index = '0x' + index.toString(16);
 
             throw new EdsError(`entry ${index}[${subIndex}] does not exist`);
@@ -490,8 +490,8 @@ class Device extends EventEmitter {
      */
     setRaw(index, raw) {
         const entry = this.eds.getEntry(index);
-        if(!entry) {
-            if(typeof index === 'number')
+        if (!entry) {
+            if (typeof index === 'number')
                 index = '0x' + index.toString(16);
 
             throw new EdsError(`entry ${index} does not exist`);
@@ -509,8 +509,8 @@ class Device extends EventEmitter {
      */
     setRawArray(index, subIndex, raw) {
         const entry = this.eds.getSubEntry(index, subIndex);
-        if(!entry) {
-            if(typeof index === 'number')
+        if (!entry) {
+            if (typeof index === 'number')
                 index = '0x' + index.toString(16);
 
             throw new EdsError(`entry ${index}[${subIndex}] does not exist`);
@@ -520,4 +520,4 @@ class Device extends EventEmitter {
     }
 }
 
-module.exports=exports=Device;
+module.exports = exports = Device;

@@ -151,7 +151,7 @@ class EmcyMessage {
 
         if(info) {
             if(!Buffer.isBuffer(info) || info.length > 5)
-                throw TypeError("info must be a Buffer of length 0-5");
+                throw TypeError("info must be a Buffer of length [0-5]");
 
             info.copy(this.info);
         }
@@ -467,7 +467,7 @@ class Emcy {
 
         if(this.getConsumer(cobId) !== null) {
             cobId = '0x' + cobId.toString(16);
-            throw new EdsError(`entry for device ${cobId} already exists`);
+            throw new EdsError(`EMCY consumer ${cobId} already exists`);
         }
 
         let obj1028 = this.device.eds.getEntry(0x1028);
@@ -488,7 +488,7 @@ class Emcy {
             }
         }
         if(!subIndex)
-            throw new EdsError('failed to find empty sub-index');
+            throw new EdsError('entry full');
 
         // Install sub entry
         this.device.eds.addSubEntry(0x1028, subIndex, {
@@ -510,7 +510,7 @@ class Emcy {
     removeConsumer(cobId) {
         const subEntry = this.getConsumer(cobId);
         if(subEntry === null)
-            throw new EdsError(`entry for device ${cobId} does not exist`);
+            throw new EdsError(`EMCY consumer ${cobId} does not exist`);
 
         this.device.eds.removeSubEntry(0x1028, subEntry.subIndex);
     }
@@ -684,10 +684,10 @@ class Emcy {
         const cobId = value & 0x7FF;
 
         if(rtr == 0x1)
-            throw TypeError("CAN extended frames are not supported.")
+            throw TypeError("CAN extended frames are not supported")
 
         if(cobId == 0)
-            throw TypeError('COB-ID EMCY can not be 0.');
+            throw TypeError('COB-ID EMCY must not be 0');
 
         this._valid = !valid;
         this._cobId = cobId;

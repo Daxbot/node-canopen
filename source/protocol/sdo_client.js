@@ -111,7 +111,7 @@ class SdoClient {
 
     set blockSize(value) {
         if(value < 1 || value > 127)
-            throw RangeError('blockSize must be in range 1-127');
+            throw RangeError('blockSize must be in range [1-127]');
 
         this._blockSize = value;
     }
@@ -157,7 +157,7 @@ class SdoClient {
      */
     addServer(serverId, cobIdTx=0x600, cobIdRx=0x580) {
         if(serverId < 1 || serverId > 0x7F)
-            throw new RangeError('serverId must be in range 1-127');
+            throw new RangeError('serverId must be in range [1-127]');
 
         if(typeof cobIdTx !== 'number')
             throw new Error('cobIdTx must be a number');
@@ -167,7 +167,7 @@ class SdoClient {
 
         if(this.getServer(serverId) !== null) {
             serverId = '0x' + serverId.toString(16);
-            throw new EdsError(`Entry for server ${serverId} already exists`);
+            throw new EdsError(`SDO server ${serverId} already exists`);
         }
 
         let index = 0x1280;
@@ -213,7 +213,7 @@ class SdoClient {
     removeServer(serverId) {
         const entry = this.getServer(serverId);
         if(entry === null)
-            throw ReferenceError(`Entry for server ${serverId} does not exist`);
+            throw ReferenceError(`SDO server ${serverId} does not exist`);
 
         this.device.eds.removeEntry(entry.index);
     }
@@ -245,7 +245,7 @@ class SdoClient {
             // Attempt to use default server
             if(this.servers[0] === undefined) {
                 const id = serverId.toString(16);
-                throw new ReferenceError(`SDO server 0x${id} not mapped.`);
+                throw new ReferenceError(`SDO server 0x${id} not mapped`);
             }
 
             let cobIdRx = this.servers[0].cobIdRx;
@@ -265,7 +265,7 @@ class SdoClient {
         }
 
         if(index === undefined)
-            throw ReferenceError("Must provide an index.");
+            throw ReferenceError('index must be defined');
 
         return server.queue.push(() => {
             return new Promise((resolve, reject) => {
@@ -337,7 +337,7 @@ class SdoClient {
             // Attempt to use default server
             if(this.servers[0] === undefined) {
                 const id = serverId.toString(16);
-                throw new ReferenceError(`SDO server 0x${id} not mapped.`);
+                throw new ReferenceError(`SDO server 0x${id} not mapped`);
             }
 
             let cobIdRx = this.servers[0].cobIdRx;
@@ -357,15 +357,15 @@ class SdoClient {
         }
 
         if(index === undefined)
-            throw ReferenceError("Must provide an index.");
+            throw ReferenceError('index must be defined');
 
         if(!Buffer.isBuffer(data)) {
             if(!dataType)
-                throw ReferenceError("Must provide dataType.");
+                throw ReferenceError('dataType must be defined');
 
             data = typeToRaw(data, dataType);
             if(data === undefined)
-                throw TypeError(`Failed to convert data to type ${dataType}`);
+                throw TypeError(`unknown dataType ${dataType}`);
         }
 
         return server.queue.push(() => {
@@ -433,7 +433,7 @@ class SdoClient {
         const entry = this.device.eds.getEntry(index);
         if(!entry) {
             index = '0x' + (index + 0x200).toString(16);
-            throw new EdsError(`missing SDO client parameter (${index})`);
+            throw new EdsError(`SDO client parameter does not exist (${index})`);
         }
 
         /* Object 0x1280..0x12FF - SDO client parameter.
@@ -449,17 +449,17 @@ class SdoClient {
          */
         const serverId = entry[3].value;
         if(!serverId)
-            throw new ReferenceError('ID of the SDO server is required.');
+            throw new ReferenceError('SDO server id must be defined');
 
         let cobIdTx = entry[1].value;
         if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
             return;
 
         if(((cobIdTx >> 30) & 0x1) == 0x1)
-            throw TypeError('dynamic assignment is not supported.');
+            throw TypeError('dynamic assignment is not supported');
 
         if(((cobIdTx >> 29) & 0x1) == 0x1)
-            throw TypeError('CAN extended frames are not supported.');
+            throw TypeError('CAN extended frames are not supported');
 
         cobIdTx &= 0x7FF;
         if((cobIdTx & 0xF) == 0x0)
@@ -470,10 +470,10 @@ class SdoClient {
             return;
 
         if(((cobIdRx >> 30) & 0x1) == 0x1)
-            throw TypeError('dynamic assignment is not supported.');
+            throw TypeError('dynamic assignment is not supported');
 
         if(((cobIdRx >> 29) & 0x1) == 0x1)
-            throw TypeError('CAN extended frames are not supported.');
+            throw TypeError('CAN extended frames are not supported');
 
         cobIdRx &= 0x7FF;
         if((cobIdRx & 0xF) == 0x0)

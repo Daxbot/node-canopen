@@ -149,7 +149,7 @@ class Time {
      */
     write(date=new Date()) {
         if(!this.produce)
-            throw TypeError('TIME production is disabled.');
+            throw TypeError('TIME production is disabled');
 
         const data = typeToRaw(date, DataType.TIME_OF_DAY);
         this.device.send({
@@ -196,10 +196,10 @@ class Time {
         const cobId = value & 0x7FF;
 
         if(rtr == 0x1)
-            throw TypeError("CAN extended frames are not supported.")
+            throw TypeError("CAN extended frames are not supported")
 
         if(cobId == 0)
-            throw TypeError('COB-ID TIME can not be 0.');
+            throw TypeError('COB-ID TIME must not be 0');
 
         this._consume = !!consume;
         this._produce = !!produce;

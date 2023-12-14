@@ -83,7 +83,7 @@ class Pdo {
     addReceive(cobId, entries, args={}) {
         if(this.getReceive(cobId) !== null) {
             cobId = '0x' + cobId.toString(16);
-            throw new EdsError(`entry for RPDO ${cobId} already exists`);
+            throw new EdsError(`RPDO ${cobId} already exists`);
         }
 
         let index = 0x1400;
@@ -169,7 +169,7 @@ class Pdo {
     removeReceive(cobId) {
         const entry = this.getReceive(cobId);
         if(entry === null)
-            throw new EdsError(`entry for RPDO ${cobId} does not exist`);
+            throw new EdsError(`RPDO ${cobId} does not exist`);
 
         delete this.receiveMap[cobId];
 
@@ -213,7 +213,7 @@ class Pdo {
     addTransmit(cobId, entries, args={}) {
         if(this.getTransmit(cobId) !== null) {
             cobId = '0x' + cobId.toString(16);
-            throw new EdsError(`entry for TPDO ${cobId} already exists`);
+            throw new EdsError(`TPDO ${cobId} already exists`);
         }
 
         let index = 0x1800;
@@ -301,7 +301,7 @@ class Pdo {
     removeTransmit(cobId) {
         const entry = this.getTransmit(cobId);
         if(entry === null)
-            throw new EdsError(`entry for TPDO ${cobId} does not exist`);
+            throw new EdsError(`TPDO ${cobId} does not exist`);
 
         delete this.writeMap[cobId];
 
@@ -633,7 +633,7 @@ class Pdo {
             }
         }
         else {
-            throw TypeError(`unsupported TPDO type (${pdo.type}).`);
+            throw TypeError(`unsupported TPDO type (${pdo.type})`);
         }
     }
 }
