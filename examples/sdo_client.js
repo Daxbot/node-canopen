@@ -35,25 +35,25 @@ device.sdo.addServer(serverId);
 const date = new Date();
 
 device.sdo.download({
-    serverId:   serverId,
-    data:       date.toString(),
-    dataType:   DataType.VISIBLE_STRING,
-    index:      0x2000,
+    serverId: serverId,
+    data: date.toString(),
+    dataType: DataType.VISIBLE_STRING,
+    index: 0x2000,
     blockTransfer: true,
 })
-.then(() => {
-    return device.sdo.upload({
-        serverId:   serverId,
-        dataType:   DataType.VISIBLE_STRING,
-        index:      0x2000,
-        blockTransfer: true,
+    .then(() => {
+        return device.sdo.upload({
+            serverId: serverId,
+            dataType: DataType.VISIBLE_STRING,
+            index: 0x2000,
+            blockTransfer: true,
+        });
+    })
+    .then((value) => console.log(value))
+    .catch((e) => {
+        console.error(e.message);
+        console.log('Did you run examples/sdo_server.js first?');
+    })
+    .finally(() => {
+        channel.stop();
     });
-})
-.then((value) => console.log(value))
-.catch((e) => {
-    console.error(e.message);
-    console.log('Did you run examples/sdo_server.js first?');
-})
-.finally(() => {
-    channel.stop();
-});

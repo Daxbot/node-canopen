@@ -32,10 +32,10 @@ channel.start();
 async function main() {
     let nodeId = 0x20;
 
-    while(true) {
+    while (true) {
         /** Step 5a: Set exactly 1 node into configuration mode. */
         const result = await device.lss.fastscan();
-        if(result === null) {
+        if (result === null) {
             console.log('All nodes configured!');
             break;
         }

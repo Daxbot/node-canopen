@@ -21,12 +21,12 @@ function timeToDate(days, ms) {
  * @returns {object} CANopen timestamp { days, ms }
  */
 function dateToTime(date) {
-    if(!util.types.isDate(date))
+    if (!util.types.isDate(date))
         date = new Date(date);
 
     // Milliseconds since January 1, 1984
     let time = date.getTime() - EPOCH_OFFSET;
-    if(time < 0)
+    if (time < 0)
         time = 0;
 
     // Days since epoch
@@ -38,4 +38,4 @@ function dateToTime(date) {
     return { days, ms };
 }
 
-module.exports=exports={ timeToDate, dateToTime };
+module.exports = exports = { timeToDate, dateToTime };

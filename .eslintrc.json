@@ -29,7 +29,9 @@
         "no-control-regex": "off",
         "no-unused-vars": "error",
         "no-console": "error",
-        "camelcase": "error"
+        "camelcase": "error",
+        "jsdoc/tag-lines": "off",
+        "jsdoc/require-returns-check": "off"
     },
     "plugins": [
         "mocha",

@@ -5,15 +5,15 @@ const { Device } = require('../../index');
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-describe('Time', function() {
+describe('Time', function () {
     let device = null;
 
-    beforeEach(function() {
+    beforeEach(function () {
         device = new Device({ id: 0xA, loopback: true });
     });
 
-    describe('Module initialization', function() {
-        it('should throw if cobId is 0', function() {
+    describe('Module initialization', function () {
+        it('should throw if cobId is 0', function () {
             device.time.cobId = 0;
             return expect(() => {
                 device.time.init();
@@ -21,8 +21,8 @@ describe('Time', function() {
         });
     });
 
-    describe('Object dictionary updates', function() {
-        it('should listen for updates to 0x1012', function(done) {
+    describe('Object dictionary updates', function () {
+        it('should listen for updates to 0x1012', function (done) {
             device.time.cobId = 0x80;
             device.time.produce = true;
             device.time.consume = true;
@@ -42,8 +42,8 @@ describe('Time', function() {
         });
     });
 
-    describe('Producer', function() {
-        it('should throw if produce is false', function() {
+    describe('Producer', function () {
+        it('should throw if produce is false', function () {
             device.time.cobId = 0x80;
             device.time.produce = false;
             device.time.consume = true;
@@ -54,7 +54,7 @@ describe('Time', function() {
             }).to.throw(TypeError);
         });
 
-        it('should produce a time object', function(done) {
+        it('should produce a time object', function (done) {
             device.time.cobId = 0x80;
             device.time.produce = true;
             device.time.consume = true;
@@ -67,8 +67,8 @@ describe('Time', function() {
         });
     });
 
-    describe('Consumer', function() {
-        it('should emit on consuming a time object', function(done) {
+    describe('Consumer', function () {
+        it('should emit on consuming a time object', function (done) {
             device.time.cobId = 0x80;
             device.time.produce = true;
             device.time.consume = true;

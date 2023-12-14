@@ -6,14 +6,14 @@ const { EdsError } = require('../../source/eds');
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-describe('Pdo', function() {
+describe('Pdo', function () {
     let device = null;
 
-    beforeEach(function() {
+    beforeEach(function () {
         device = new Device({ id: 0xA, loopback: true });
     });
 
-    it('should produce a PDO object', function(done) {
+    it('should produce a PDO object', function (done) {
         const entry = device.eds.getEntry(0x05);
 
         device.init();
@@ -24,7 +24,7 @@ describe('Pdo', function() {
         device.pdo.write(0x18A);
     });
 
-    it('should throw on repeated RPDO', function(done) {
+    it('should throw on repeated RPDO', function (done) {
         const entry = device.eds.getEntry(0x05);
 
         device.init();
@@ -37,7 +37,7 @@ describe('Pdo', function() {
     });
 
 
-    it('should throw on repeated TPDO', function(done) {
+    it('should throw on repeated TPDO', function (done) {
         const entry = device.eds.getEntry(0x05);
 
         device.init();
@@ -50,7 +50,7 @@ describe('Pdo', function() {
     });
 
 
-    it('should emit on consuming a PDO object', function(done) {
+    it('should emit on consuming a PDO object', function (done) {
         const entry = device.eds.getEntry(0x05);
         device.init();
 

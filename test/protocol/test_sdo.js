@@ -36,18 +36,18 @@ const longTypes = [
     ['TIME_DIFFERENCE', new Date()],
 ];
 
-describe('Sdo', function() {
+describe('Sdo', function () {
     let device = null;
 
-    beforeEach(function() {
+    beforeEach(function () {
         device = new Device({ id: 0xA, loopback: true });
         device.sdo.addServer(device.id);
         device.sdoServer.addClient(device.id);
     });
 
-    describe('Expediated transfer', function() {
-        for(let [type, value] of shortTypes) {
-            it("should transfer " + type, function() {
+    describe('Expediated transfer', function () {
+        for (let [type, value] of shortTypes) {
+            it("should transfer " + type, function () {
                 device.init();
 
                 const index = DataType[type];
@@ -57,26 +57,26 @@ describe('Sdo', function() {
                     dataType: type,
                     index: index,
                 })
-                .then(() => {
-                    return device.sdo.upload({
-                        serverId: device.id,
-                        index: index,
-                        dataType: type,
+                    .then(() => {
+                        return device.sdo.upload({
+                            serverId: device.id,
+                            index: index,
+                            dataType: type,
+                        });
+                    })
+                    .then((result) => {
+                        if (Buffer.isBuffer(result))
+                            expect(Buffer.compare(result, value)).to.equal(0);
+                        else
+                            expect(result).to.equal(value);
                     });
-                })
-                .then((result) => {
-                    if(Buffer.isBuffer(result))
-                        expect(Buffer.compare(result, value)).to.equal(0);
-                    else
-                        expect(result).to.equal(value);
-                });
             });
         }
     });
 
-    describe('Segmented transfer', function() {
-        for(let [type, value] of longTypes) {
-            it("should transfer " + type, function() {
+    describe('Segmented transfer', function () {
+        for (let [type, value] of longTypes) {
+            it("should transfer " + type, function () {
                 device.init();
 
                 const index = DataType[type];
@@ -86,39 +86,39 @@ describe('Sdo', function() {
                     dataType: type,
                     index: index,
                 })
-                .then(() => {
-                    return device.sdo.upload({
-                        serverId: device.id,
-                        index: index,
-                        dataType: type,
+                    .then(() => {
+                        return device.sdo.upload({
+                            serverId: device.id,
+                            index: index,
+                            dataType: type,
+                        });
+                    })
+                    .then((result) => {
+                        if (result instanceof Date)
+                            expect(result.getTime()).to.equal(value.getTime());
+                        else if (Buffer.isBuffer(result))
+                            expect(Buffer.compare(result, value)).to.equal(0);
+                        else if (typeof result == 'bigint')
+                            expect(Number(result)).to.equal(Number(value));
+                        else
+                            expect(result).to.equal(value);
                     });
-                })
-                .then((result) => {
-                    if(result instanceof Date)
-                        expect(result.getTime()).to.equal(value.getTime());
-                    else if(Buffer.isBuffer(result))
-                        expect(Buffer.compare(result, value)).to.equal(0);
-                    else if(typeof result == 'bigint')
-                        expect(Number(result)).to.equal(Number(value));
-                    else
-                        expect(result).to.equal(value);
-                });
             });
         }
 
-        it('should transfer subindexes >= 1', async function() {
+        it('should transfer subindexes >= 1', async function () {
             const testString = 'I am a long string that will take multiple messages to transfer'
             device.init();
             device.eds.addEntry(0x1234, {
-                parameterName:  'Test entry',
-                objectType:     6,
-                subNumber:      1
+                parameterName: 'Test entry',
+                objectType: 6,
+                subNumber: 1
             });
             device.eds.addSubEntry(0x1234, 0, {
-                parameterName:  'A long name',
-                dataType:       DataType.VISIBLE_STRING,
-                accessType:     AccessType.READ_WRITE,
-                defaultValue:   testString,
+                parameterName: 'A long name',
+                dataType: DataType.VISIBLE_STRING,
+                accessType: AccessType.READ_WRITE,
+                defaultValue: testString,
             });
 
             const result = await device.sdo.upload({
@@ -140,9 +140,9 @@ describe('Sdo', function() {
         });
     });
 
-    describe('Block transfer', function() {
-        for(let [type, value] of shortTypes) {
-            it("should transfer " + type, function() {
+    describe('Block transfer', function () {
+        for (let [type, value] of shortTypes) {
+            it("should transfer " + type, function () {
                 device.init();
 
                 const index = DataType[type];
@@ -153,25 +153,25 @@ describe('Sdo', function() {
                     index: index,
                     blockTransfer: true,
                 })
-                .then(() => {
-                    return device.sdo.upload({
-                        serverId: device.id,
-                        index: index,
-                        dataType: type,
-                        blockTransfer: true,
+                    .then(() => {
+                        return device.sdo.upload({
+                            serverId: device.id,
+                            index: index,
+                            dataType: type,
+                            blockTransfer: true,
+                        });
+                    })
+                    .then((result) => {
+                        if (Buffer.isBuffer(result))
+                            expect(Buffer.compare(result, value)).to.equal(0);
+                        else
+                            expect(result).to.equal(value);
                     });
-                })
-                .then((result) => {
-                    if(Buffer.isBuffer(result))
-                        expect(Buffer.compare(result, value)).to.equal(0);
-                    else
-                        expect(result).to.equal(value);
-                });
             });
         }
 
-        for(let [type, value] of longTypes) {
-            it("should transfer " + type, function() {
+        for (let [type, value] of longTypes) {
+            it("should transfer " + type, function () {
                 device.init();
 
                 const index = DataType[type];
@@ -182,30 +182,30 @@ describe('Sdo', function() {
                     index: index,
                     blockTransfer: true,
                 })
-                .then(() => {
-                    return device.sdo.upload({
-                        serverId: device.id,
-                        index: index,
-                        dataType: type,
-                        blockTransfer: true,
+                    .then(() => {
+                        return device.sdo.upload({
+                            serverId: device.id,
+                            index: index,
+                            dataType: type,
+                            blockTransfer: true,
+                        });
+                    })
+                    .then((result) => {
+                        if (result instanceof Date)
+                            expect(result.getTime()).to.equal(value.getTime());
+                        else if (Buffer.isBuffer(result))
+                            expect(Buffer.compare(result, value)).to.equal(0);
+                        else if (typeof result == 'bigint')
+                            expect(Number(result)).to.equal(Number(value));
+                        else
+                            expect(result).to.equal(value);
                     });
-                })
-                .then((result) => {
-                    if(result instanceof Date)
-                        expect(result.getTime()).to.equal(value.getTime());
-                    else if(Buffer.isBuffer(result))
-                        expect(Buffer.compare(result, value)).to.equal(0);
-                    else if(typeof result == 'bigint')
-                        expect(Number(result)).to.equal(Number(value));
-                    else
-                        expect(result).to.equal(value);
-                });
             });
         }
 
-        it('should use multiple blocks', function() {
+        it('should use multiple blocks', function () {
             const data = Buffer.alloc(64);
-            for(let i = 0; i < data.length; ++i)
+            for (let i = 0; i < data.length; ++i)
                 data[i] = Math.floor(Math.random() * 0xff);
 
             device.init();
@@ -213,9 +213,9 @@ describe('Sdo', function() {
             device.sdoServer.blockSize = 1;
 
             device.eds.addEntry(0x1234, {
-                parameterName:  'A long buffer',
-                dataType:       DataType.DOMAIN,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'A long buffer',
+                dataType: DataType.DOMAIN,
+                accessType: AccessType.READ_WRITE,
             });
 
             return device.sdo.download({
@@ -225,22 +225,22 @@ describe('Sdo', function() {
                 index: 0x1234,
                 blockTransfer: true,
             })
-            .then(() => {
-                return device.sdo.upload({
-                    serverId: device.id,
-                    dataType: DataType.DOMAIN,
-                    index: 0x1234,
-                    blockTransfer: true,
+                .then(() => {
+                    return device.sdo.upload({
+                        serverId: device.id,
+                        dataType: DataType.DOMAIN,
+                        index: 0x1234,
+                        blockTransfer: true,
+                    });
+                })
+                .then((result) => {
+                    expect(Buffer.compare(data, result)).to.equal(0);
                 });
-            })
-            .then((result) => {
-                expect(Buffer.compare(data, result)).to.equal(0);
-            });
         });
     });
 
-    describe('Error handling', function() {
-        it('should abort if timeout is exceeded', function() {
+    describe('Error handling', function () {
+        it('should abort if timeout is exceeded', function () {
             // Set server to non-existant COB-ID
             device.setValueArray(0x1280, 3, 0x1);
             device.init();

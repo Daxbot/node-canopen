@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>LssTimeout - Documentation</title>
+    <title>functions/date.js - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -37,192 +37,59 @@
 
 <div id="main">
     
-    <h1 class="page-title">LssTimeout</h1>
+    <h1 class="page-title">functions/date.js</h1>
     
 
     
 
 
 
-
-<section>
-
-<header>
     
-        <h2>
-        
-            LssTimeout
-        
-        </h2>
-        
-            <div class="class-description usertext"><p>Errors generated from LSS service timeouts.</p></div>
-        
-    
-</header>
-
-<article>
-    
-        <div class="container-overview">
-        
-            
-
-    
-    <h2>Constructor</h2>
-    
-
-    <h4 class="name" id="LssTimeout"><span class="type-signature"></span>new LssTimeout<span class="signature">(message)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="protocol_lss.js.html">protocol/lss.js</a>, <a href="protocol_lss.js.html#line71">line 71</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <h5 class="h5-parameters">Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>message</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>error message.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-        </div>
-    
-
-    
-
-    
-
-    
-    
-    
-
-     
-
-    
-
-    
-
-    
-
-    
-
-    
-</article>
-
-</section>
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const util = require('util');
+
+/** Time offset in milliseconds between January 1, 1970 and January 1, 1984. */
+const EPOCH_OFFSET = 441763200 * 1000;
+
+/**
+ * Construct a Date object from a CANopen timestamp.
+ *
+ * @param {number} days - days since Jan 1, 1984
+ * @param {number} ms - milliseconds since midnight.
+ * @returns {Date} converted Date.
+ */
+function timeToDate(days, ms) {
+    return new Date((days * 8.64e7) + ms + EPOCH_OFFSET);
+}
+
+/**
+ * Deconstruct a Date object into a CANopen timestamp.
+ *
+ * @param {Date} date - Date object.
+ * @returns {object} CANopen timestamp { days, ms }
+ */
+function dateToTime(date) {
+    if (!util.types.isDate(date))
+        date = new Date(date);
+
+    // Milliseconds since January 1, 1984
+    let time = date.getTime() - EPOCH_OFFSET;
+    if (time &lt; 0)
+        time = 0;
+
+    // Days since epoch
+    const days = Math.floor(time / 8.64e7);
+
+    // Milliseconds since midnight
+    const ms = time - (days * 8.64e7);
+
+    return { days, ms };
+}
+
+module.exports = exports = { timeToDate, dateToTime };</code></pre>
+        </article>
+    </section>
 
 
 

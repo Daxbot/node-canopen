@@ -62,8 +62,7 @@ const AccessType = {
     READ_ONLY: 'ro',
 
     /**
-     * Read only access, values marked constant may only be changed in
-     * {@link Nmt.NmtState.INITIALIZING}.
+     * Read only access. Contents should not change after initialization.
      */
     CONSTANT: 'const',
 };
@@ -168,4 +167,4 @@ const DataType = {
     IDENTITY: 35,
 };
 
-module.exports=exports={ ObjectType, AccessType, DataType };
+module.exports = exports = { ObjectType, AccessType, DataType };

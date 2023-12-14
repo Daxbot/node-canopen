@@ -11,4 +11,4 @@ function calculateCrc(data) {
     return result.readUInt16BE();
 }
 
-module.exports=exports=calculateCrc;
+module.exports = exports = calculateCrc;

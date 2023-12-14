@@ -15,9 +15,9 @@ function randomId() {
     return Math.floor(Math.random() * 0xffffffff);
 }
 
-describe('Lss', function() {
-    describe('Mode switching', function() {
-        it('should change mode (global)', function(done) {
+describe('Lss', function () {
+    describe('Mode switching', function () {
+        it('should change mode (global)', function (done) {
             const device = new Device({ id: 0xA, loopback: true });
             device.eds.lssSupported = true;
             device.init();
@@ -29,7 +29,7 @@ describe('Lss', function() {
             }, 10);
         });
 
-        it('should change mode (selective)', function(done) {
+        it('should change mode (selective)', function (done) {
             const device = new Device({ id: 0xA, loopback: true });
             device.eds.lssSupported = true;
             device.lss.vendorId = 1;
@@ -45,7 +45,7 @@ describe('Lss', function() {
             }, 10);
         });
 
-        it('should emit on mode change', function(done) {
+        it('should emit on mode change', function (done) {
             const device = new Device({ id: 0xA, loopback: true });
             device.eds.lssSupported = true;
             device.init();
@@ -59,10 +59,10 @@ describe('Lss', function() {
         });
     });
 
-    describe('Inquire', function() {
+    describe('Inquire', function () {
         let device;
 
-        before(function() {
+        before(function () {
             device = new Device({ id: 0xA, loopback: true });
             device.eds.lssSupported = true;
             device.lss.vendorId = 1;
@@ -73,39 +73,39 @@ describe('Lss', function() {
             device.init();
         });
 
-        it('should inquire vendor-id', async function() {
+        it('should inquire vendor-id', async function () {
             const vendorId = await device.lss.inquireVendorId();
             expect(vendorId).to.equal(device.lss.vendorId);
         });
 
-        it('should inquire product-code', async function() {
+        it('should inquire product-code', async function () {
             const productCode = await device.lss.inquireProductCode();
             expect(productCode).to.equal(device.lss.productCode);
         });
 
-        it('should inquire revision-number', async function() {
+        it('should inquire revision-number', async function () {
             const revisionNumber = await device.lss.inquireRevisionNumber();
             expect(revisionNumber).to.equal(device.lss.revisionNumber);
         });
 
-        it('should inquire serial-number', async function() {
+        it('should inquire serial-number', async function () {
             const serialNumber = await device.lss.inquireSerialNumber();
             expect(serialNumber).to.equal(device.lss.serialNumber);
         });
     });
 
-    describe('Fastscan', function() {
+    describe('Fastscan', function () {
         let device;
 
-        before(function() {
+        before(function () {
             device = new Device({ id: 0xA, loopback: true });
             device.eds.lssSupported = true;
             device.lss._mode = LssMode.CONFIGURATION;
             device.init();
         });
 
-        it('should scan vendorId', async function() {
-            for(let i = 0; i < 10; ++i) {
+        it('should scan vendorId', async function () {
+            for (let i = 0; i < 10; ++i) {
                 device.lss.vendorId = randomId();
                 await device.lss.fastscan({ timeout: 2 });
                 expect(device.lss.mode).to.equal(LssMode.CONFIGURATION);
@@ -113,8 +113,8 @@ describe('Lss', function() {
             }
         });
 
-        it('should scan productCode', async function() {
-            for(let i = 0; i < 10; ++i) {
+        it('should scan productCode', async function () {
+            for (let i = 0; i < 10; ++i) {
                 device.lss.productCode = randomId();
                 await device.lss.fastscan({ timeout: 2 });
                 expect(device.lss.mode).to.equal(LssMode.CONFIGURATION);
@@ -122,8 +122,8 @@ describe('Lss', function() {
             }
         });
 
-        it('should scan revisionNumber', async function() {
-            for(let i = 0; i < 10; ++i) {
+        it('should scan revisionNumber', async function () {
+            for (let i = 0; i < 10; ++i) {
                 device.lss.revisionNumber = randomId();
                 await device.lss.fastscan({ timeout: 2 });
                 expect(device.lss.mode).to.equal(LssMode.CONFIGURATION);
@@ -131,8 +131,8 @@ describe('Lss', function() {
             }
         });
 
-        it('should scan serialNumber', async function() {
-            for(let i = 0; i < 10; ++i) {
+        it('should scan serialNumber', async function () {
+            for (let i = 0; i < 10; ++i) {
                 device.lss.serialNumber = randomId();
                 await device.lss.fastscan({ timeout: 2 });
                 expect(device.lss.mode).to.equal(LssMode.CONFIGURATION);

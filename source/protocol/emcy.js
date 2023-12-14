@@ -149,8 +149,8 @@ class EmcyMessage {
         this.register = register;
         this.info = Buffer.alloc(5);
 
-        if(info) {
-            if(!Buffer.isBuffer(info) || info.length > 5)
+        if (info) {
+            if (!Buffer.isBuffer(info) || info.length > 5)
                 throw TypeError("info must be a Buffer of length [0-5]");
 
             info.copy(this.info);
@@ -159,7 +159,7 @@ class EmcyMessage {
 
     toString() {
         // Check codes
-        switch(this.code) {
+        switch (this.code) {
             case EmcyCode.CAN_OVERRUN:
                 return 'CAN overrun';
             case EmcyCode.BUS_PASSIVE:
@@ -185,7 +185,7 @@ class EmcyMessage {
         }
 
         // Check class
-        switch(this.code & 0xff00) {
+        switch (this.code & 0xff00) {
             case EmcyType.ERROR_RESET:
                 return 'Error reset';
             case EmcyType.GENERIC_ERROR:
@@ -296,12 +296,12 @@ class Emcy {
 
     set register(value) {
         let obj1001 = this.device.eds.getEntry(0x1001);
-        if(obj1001 === undefined) {
+        if (obj1001 === undefined) {
             obj1001 = this.device.eds.addEntry(0x1001, {
-                parameterName:  'Error register',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED8,
-                accessType:     AccessType.READ_ONLY,
+                parameterName: 'Error register',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED8,
+                accessType: AccessType.READ_ONLY,
             });
         }
 
@@ -315,7 +315,7 @@ class Emcy {
      */
     get history() {
         const obj1003 = this.device.eds.getEntry(0x1003);
-        if(obj1003 === undefined)
+        if (obj1003 === undefined)
             return [];
 
         return obj1003.value;
@@ -332,16 +332,16 @@ class Emcy {
 
     set valid(valid) {
         let obj1014 = this.device.eds.getEntry(0x1014);
-        if(obj1014 === undefined) {
+        if (obj1014 === undefined) {
             obj1014 = this.device.eds.addEntry(0x1014, {
-                parameterName:  'COB-ID EMCY',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'COB-ID EMCY',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
 
-        if(valid)
+        if (valid)
             obj1014.value |= (1 << 31);
         else
             obj1014.value &= ~(1 << 31);
@@ -358,12 +358,12 @@ class Emcy {
 
     set cobId(cobId) {
         let obj1014 = this.device.eds.getEntry(0x1014);
-        if(obj1014 === undefined) {
+        if (obj1014 === undefined) {
             obj1014 = this.device.eds.addEntry(0x1014, {
-                parameterName:  'COB-ID EMCY',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'COB-ID EMCY',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
 
@@ -382,12 +382,12 @@ class Emcy {
 
     set inhibitTime(time) {
         let obj1015 = this.device.eds.getEntry(0x1015);
-        if(obj1015 === undefined) {
+        if (obj1015 === undefined) {
             obj1015 = this.device.eds.addEntry(0x1015, {
-                parameterName:  'Inhibit time EMCY',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED16,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'Inhibit time EMCY',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED16,
+                accessType: AccessType.READ_WRITE,
             });
         }
 
@@ -401,30 +401,30 @@ class Emcy {
      * @param {number} length - how many historical error events should be kept.
      */
     setHistoryLength(length) {
-        if(length === undefined || length < 0)
+        if (length === undefined || length < 0)
             throw ReferenceError('error field size must >= 0');
 
         let obj1003 = this.device.eds.getEntry(0x1003);
-        if(obj1003 === undefined) {
+        if (obj1003 === undefined) {
             obj1003 = this.device.eds.addEntry(0x1003, {
-                parameterName:  'Pre-defined error field',
-                objectType:     ObjectType.ARRAY,
+                parameterName: 'Pre-defined error field',
+                objectType: ObjectType.ARRAY,
             });
         }
 
-        while(length < obj1003.subNumber - 1) {
+        while (length < obj1003.subNumber - 1) {
             // Remove extra entries
             this.device.eds.removeSubEntry(0x1003, obj1003.subNumber - 1);
         }
 
-        while(length > obj1003.subNumber - 1) {
+        while (length > obj1003.subNumber - 1) {
             // Add new entries
             const index = obj1003.subNumber;
             this.device.eds.addSubEntry(0x1003, index, {
-                parameterName:  `Standard error field ${index}`,
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: `Standard error field ${index}`,
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
     }
@@ -437,17 +437,17 @@ class Emcy {
      */
     getConsumer(cobId) {
         const obj1028 = this.device.eds.getEntry(0x1028);
-        if(obj1028 !== undefined) {
-            for(let i = 1; i <= obj1028._subObjects[0].value; ++i) {
+        if (obj1028 !== undefined) {
+            for (let i = 1; i <= obj1028._subObjects[0].value; ++i) {
                 const subObject = obj1028._subObjects[i];
-                if(subObject === undefined)
+                if (subObject === undefined)
                     continue;
 
                 const value = subObject.value;
-                if(value >> 31)
+                if (value >> 31)
                     continue; // Invalid
 
-                if((value & 0x7FF) === cobId)
+                if ((value & 0x7FF) === cobId)
                     return subObject;
             }
         }
@@ -462,41 +462,41 @@ class Emcy {
      * @param {number} [subIndex] - sub-index to store the entry, optional.
      */
     addConsumer(cobId, subIndex) {
-        if(cobId > 0x7FF)
+        if (cobId > 0x7FF)
             throw RangeError('CAN extended frames not supported');
 
-        if(this.getConsumer(cobId) !== null) {
+        if (this.getConsumer(cobId) !== null) {
             cobId = '0x' + cobId.toString(16);
             throw new EdsError(`EMCY consumer ${cobId} already exists`);
         }
 
         let obj1028 = this.device.eds.getEntry(0x1028);
-        if(obj1028 === undefined) {
+        if (obj1028 === undefined) {
             obj1028 = this.device.eds.addEntry(0x1028, {
-                parameterName:  'Emergency consumer object',
-                objectType:     ObjectType.ARRAY,
+                parameterName: 'Emergency consumer object',
+                objectType: ObjectType.ARRAY,
             });
         }
 
-        if(!subIndex) {
+        if (!subIndex) {
             // Find first empty index
-            for(let i = 1; i <= 255; ++i) {
-                if(obj1028[i] === undefined) {
+            for (let i = 1; i <= 255; ++i) {
+                if (obj1028[i] === undefined) {
                     subIndex = i;
                     break;
                 }
             }
         }
-        if(!subIndex)
+        if (!subIndex)
             throw new EdsError('entry full');
 
         // Install sub entry
         this.device.eds.addSubEntry(0x1028, subIndex, {
-            parameterName:  `Emergency consumer ${subIndex}`,
-            objectType:     ObjectType.VAR,
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_WRITE,
-            defaultValue:   cobId,
+            parameterName: `Emergency consumer ${subIndex}`,
+            objectType: ObjectType.VAR,
+            dataType: DataType.UNSIGNED32,
+            accessType: AccessType.READ_WRITE,
+            defaultValue: cobId,
         });
 
         this._parse1028(obj1028);
@@ -509,7 +509,7 @@ class Emcy {
      */
     removeConsumer(cobId) {
         const subEntry = this.getConsumer(cobId);
-        if(subEntry === null)
+        if (subEntry === null)
             throw new EdsError(`EMCY consumer ${cobId} does not exist`);
 
         this.device.eds.removeSubEntry(0x1028, subEntry.subIndex);
@@ -522,12 +522,12 @@ class Emcy {
 
         // Object 0x1014 - COB-ID EMCY.
         let obj1014 = this.device.eds.getEntry(0x1014);
-        if(obj1014 === undefined) {
+        if (obj1014 === undefined) {
             obj1014 = this.device.eds.addEntry(0x1014, {
-                parameterName:  'COB-ID EMCY',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'COB-ID EMCY',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
         else {
@@ -536,12 +536,12 @@ class Emcy {
 
         // Object 0x1015 - Inhibit time EMCY.
         let obj1015 = this.device.eds.getEntry(0x1015);
-        if(obj1015 === undefined) {
+        if (obj1015 === undefined) {
             obj1015 = this.device.eds.addEntry(0x1015, {
-                parameterName:  'Inhibit time EMCY',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED16,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'Inhibit time EMCY',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED16,
+                accessType: AccessType.READ_WRITE,
             });
         }
         else {
@@ -550,10 +550,10 @@ class Emcy {
 
         // Object 0x1028 - Emergency consumer object
         let obj1028 = this.device.eds.getEntry(0x1028);
-        if(obj1028 === undefined) {
+        if (obj1028 === undefined) {
             obj1028 = this.device.eds.addEntry(0x1028, {
-                parameterName:  'Emergency consumer object',
-                objectType:     ObjectType.ARRAY,
+                parameterName: 'Emergency consumer object',
+                objectType: ObjectType.ARRAY,
             });
         }
         else {
@@ -574,8 +574,8 @@ class Emcy {
      * @param {Buffer} info - error info.
      * @returns {Promise} resolves once the message has been sent.
      */
-    write(code, info=null) {
-        if(!this.valid)
+    write(code, info = null) {
+        if (!this.valid)
             throw TypeError('EMCY is disabled');
 
         this.pending = this.pending.then(() => {
@@ -583,7 +583,7 @@ class Emcy {
                 setTimeout(() => {
                     // Create emergency object.
                     let cobId = this.cobId;
-                    if((cobId & 0xF) == 0)
+                    if ((cobId & 0xF) == 0)
                         cobId |= this.device.id;
 
                     const em = new EmcyMessage({
@@ -595,8 +595,8 @@ class Emcy {
 
                     // Send object.
                     this.device.send({
-                        id:     cobId,
-                        data:   em.toBuffer(),
+                        id: cobId,
+                        data: em.toBuffer(),
                     });
 
                     resolve();
@@ -617,18 +617,18 @@ class Emcy {
      * @private
      */
     _onMessage(message) {
-        if(message.data.length != 8)
+        if (message.data.length != 8)
             return;
 
         let match = false;
-        for(let id of this.consumers) {
-            if(id == message.id) {
+        for (let id of this.consumers) {
+            if (id == message.id) {
                 match = true;
                 break;
             }
         }
 
-        if(!match)
+        if (!match)
             return;
 
         const code = message.data.readUInt16LE(0);
@@ -647,17 +647,17 @@ class Emcy {
 
         // Object 0x1003 - Pre-defined error field.
         const obj1003 = this.device.eds.getEntry(0x1003);
-        if(obj1003) {
+        if (obj1003) {
             // Shift out oldest value.
             const errorCount = obj1003[0].value;
-            for(let i = errorCount; i > 1; --i)
-                obj1003[i-1].raw.copy(obj1003[i].raw);
+            for (let i = errorCount; i > 1; --i)
+                obj1003[i - 1].raw.copy(obj1003[i].raw);
 
             // Set new code at sub-index 1.
             obj1003[1].raw.writeUInt16LE(code);
 
             // Update error count.
-            if(errorCount < (obj1003.subNumber - 1))
+            if (errorCount < (obj1003.subNumber - 1))
                 obj1003[0].raw.writeUInt8(errorCount + 1);
         }
 
@@ -683,10 +683,10 @@ class Emcy {
         const rtr = (value >> 29) & 0x1;
         const cobId = value & 0x7FF;
 
-        if(rtr == 0x1)
+        if (rtr == 0x1)
             throw TypeError("CAN extended frames are not supported")
 
-        if(cobId == 0)
+        if (cobId == 0)
             throw TypeError('COB-ID EMCY must not be 0');
 
         this._valid = !valid;
@@ -718,12 +718,12 @@ class Emcy {
          */
 
         this.consumers = [];
-        for(let i = 1; i <= entry[0].value; ++i) {
+        for (let i = 1; i <= entry[0].value; ++i) {
             const subEntry = entry[i];
-            if(subEntry === undefined)
+            if (subEntry === undefined)
                 continue;
 
-            if(subEntry.value >> 31)
+            if (subEntry.value >> 31)
                 continue;
 
             const cobId = subEntry.value & 0x7ff;
@@ -732,4 +732,4 @@ class Emcy {
     }
 }
 
-module.exports=exports={ EmcyType, EmcyCode, EmcyMessage, Emcy };
+module.exports = exports = { EmcyType, EmcyCode, EmcyMessage, Emcy };

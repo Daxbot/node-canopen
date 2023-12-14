@@ -33,10 +33,10 @@ device.sdoServer.addClient(clientId);
 
 // Step 5: Create an additional entry to be accessed by the SDO client.
 device.eds.addEntry(0x2000, {
-    parameterName:  'Test string',
-    objectType:     ObjectType.VAR,
-    dataType:       DataType.VISIBLE_STRING,
-    accessType:     AccessType.READ_WRITE,
+    parameterName: 'Test string',
+    objectType: ObjectType.VAR,
+    dataType: DataType.VISIBLE_STRING,
+    accessType: AccessType.READ_WRITE,
 });
 
 // Step 6: Register a callback to print changes to 0x2000.

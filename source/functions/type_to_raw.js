@@ -12,7 +12,7 @@ function stringToRaw(value) {
     let raw = (value) ? Buffer.from(value) : Buffer.alloc(0);
 
     const end = raw.indexOf('\0');
-    if(end != -1)
+    if (end != -1)
         raw = raw.subarray(0, end);
 
     return raw;
@@ -41,16 +41,16 @@ function dateToRaw(value) {
  * @returns {Buffer} converted Buffer.
  */
 function typeToRaw(value, type) {
-    if(value === undefined || value === null)
+    if (value === undefined || value === null)
         value = 0;
 
-    if(typeof type === 'string')
+    if (typeof type === 'string')
         type = DataType[type];
 
     let raw;
-    switch(type) {
+    switch (type) {
         case DataType.BOOLEAN:
-            raw = Buffer.from(value ? [1] : [0] );
+            raw = Buffer.from(value ? [1] : [0]);
             break;
         case DataType.INTEGER8:
             raw = Buffer.alloc(1);
@@ -102,7 +102,7 @@ function typeToRaw(value, type) {
             break;
         case DataType.INTEGER56:
         case DataType.INTEGER64:
-            if(typeof value != 'bigint')
+            if (typeof value != 'bigint')
                 value = BigInt(value);
 
             raw = Buffer.alloc(8);
@@ -110,7 +110,7 @@ function typeToRaw(value, type) {
             break;
         case DataType.UNSIGNED56:
         case DataType.UNSIGNED64:
-            if(typeof value != 'bigint')
+            if (typeof value != 'bigint')
                 value = BigInt(value);
 
             raw = Buffer.alloc(8);
@@ -140,4 +140,4 @@ function typeToRaw(value, type) {
     return raw;
 }
 
-module.exports=exports=typeToRaw;
+module.exports = exports = typeToRaw;

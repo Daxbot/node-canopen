@@ -52,7 +52,7 @@ class EdsError extends Error {
  * @see CiA306 "Object descriptions" (§4.6.3)
  */
 class DataObject extends EventEmitter {
-    constructor(index, subIndex, data, parent=null) {
+    constructor(index, subIndex, data, parent = null) {
         super();
 
         Object.assign(this, data);
@@ -61,36 +61,36 @@ class DataObject extends EventEmitter {
         this.subIndex = subIndex;
         this.parent = parent;
 
-        if(this.parameterName === undefined)
+        if (this.parameterName === undefined)
             throw new EdsError('parameterName is mandatory for DataObject');
 
-        if(this.objectType === undefined)
+        if (this.objectType === undefined)
             this.objectType = ObjectType.VAR;
 
-        switch(this.objectType) {
+        switch (this.objectType) {
             case ObjectType.DEFTYPE:
             case ObjectType.VAR:
                 // Mandatory data
-                if(this.dataType === undefined)
+                if (this.dataType === undefined)
                     throw new EdsError(`dataType is mandatory for type ${this.objectTypeString}`);
 
-                if(this.accessType === undefined)
+                if (this.accessType === undefined)
                     throw new EdsError(`accessType is mandatory for type ${this.objectTypeString}`);
 
                 // Not supported data
-                if(this.subNumber !== undefined)
+                if (this.subNumber !== undefined)
                     throw new EdsError(`subNumber is not supported for type ${this.objectTypeString}`);
 
-                if(this.compactSubObj !== undefined)
+                if (this.compactSubObj !== undefined)
                     throw new EdsError(`compactSubObj is not supported for type ${this.objectTypeString}`);
 
                 // Optional data
-                if(this.pdoMapping === undefined)
+                if (this.pdoMapping === undefined)
                     this.pdoMapping = false;
 
                 // Check limits
-                if(this.highLimit !== undefined && this.lowLimit !== undefined) {
-                    if(this.highLimit < this.lowLimit)
+                if (this.highLimit !== undefined && this.lowLimit !== undefined) {
+                    if (this.highLimit < this.lowLimit)
                         throw new EdsError('highLimit may not be less lowLimit');
                 }
 
@@ -100,44 +100,44 @@ class DataObject extends EventEmitter {
             case ObjectType.DEFSTRUCT:
             case ObjectType.ARRAY:
             case ObjectType.RECORD:
-                if(this.compactSubObj) {
+                if (this.compactSubObj) {
                     // Mandatory data
-                    if(this.dataType === undefined)
+                    if (this.dataType === undefined)
                         throw new EdsError(`dataType is mandatory for compact type ${this.objectTypeString}`);
 
-                    if(this.accessType === undefined)
+                    if (this.accessType === undefined)
                         throw new EdsError(`accessType is mandatory for compact type ${this.objectTypeString}`);
 
                     // Not supported args (Optionally may be zero)
-                    if(this.subNumber)
+                    if (this.subNumber)
                         throw new EdsError(`subNumber must be undefined or zero for compact type ${this.objectTypeString}`);
 
                     // Optional data
-                    if(this.pdoMapping === undefined)
+                    if (this.pdoMapping === undefined)
                         this.pdoMapping = false;
                 }
                 else {
                     // Not supported data
-                    if(this.dataType !== undefined)
+                    if (this.dataType !== undefined)
                         throw new EdsError(`dataType is not supported for type ${this.objectTypeString}`);
 
-                    if(this.accessType !== undefined)
+                    if (this.accessType !== undefined)
                         throw new EdsError(`accessType is not supported for type ${this.objectTypeString}`);
 
-                    if(this.defaultValue !== undefined)
+                    if (this.defaultValue !== undefined)
                         throw new EdsError(`defaultValue is not supported for type ${this.objectTypeString}`);
 
-                    if(this.pdoMapping !== undefined)
+                    if (this.pdoMapping !== undefined)
                         throw new EdsError(`pdoMapping is not supported for type ${this.objectTypeString}`);
 
-                    if(this.lowLimit !== undefined)
+                    if (this.lowLimit !== undefined)
                         throw new EdsError(`lowLimit is not supported for type ${this.objectTypeString}`);
 
-                    if(this.highLimit !== undefined)
+                    if (this.highLimit !== undefined)
                         throw new EdsError(`highLimit is not supported for type ${this.objectTypeString}`);
                 }
 
-                if(this.subNumber === undefined || this.subNumber < 1)
+                if (this.subNumber === undefined || this.subNumber < 1)
                     this.subNumber = 1;
 
                 // Create sub-objects array
@@ -148,35 +148,35 @@ class DataObject extends EventEmitter {
 
                 // Store max sub index at index 0
                 this.addSubObject(0, {
-                    parameterName:  'Max sub-index',
-                    objectType:     ObjectType.VAR,
-                    dataType:       DataType.UNSIGNED8,
-                    accessType:     AccessType.READ_WRITE,
+                    parameterName: 'Max sub-index',
+                    objectType: ObjectType.VAR,
+                    dataType: DataType.UNSIGNED8,
+                    accessType: AccessType.READ_WRITE,
                 });
                 break;
 
             case ObjectType.DOMAIN:
                 // Not supported data
-                if(this.pdoMapping !== undefined)
+                if (this.pdoMapping !== undefined)
                     throw new EdsError(`pdoMapping is not supported for type ${this.objectTypeString}`);
 
-                if(this.lowLimit !== undefined)
+                if (this.lowLimit !== undefined)
                     throw new EdsError(`lowLimit is not supported for type ${this.objectTypeString}`);
 
-                if(this.highLimit !== undefined)
+                if (this.highLimit !== undefined)
                     throw new EdsError(`highLimit is not supported for type ${this.objectTypeString}`);
 
-                if(this.subNumber !== undefined)
+                if (this.subNumber !== undefined)
                     throw new EdsError(`subNumber is not supported for type ${this.objectTypeString}`);
 
-                if(this.compactSubObj !== undefined)
+                if (this.compactSubObj !== undefined)
                     throw new EdsError(`compactSubObj is not supported for type ${this.objectTypeString}`);
 
                 // Optional data
-                if(this.dataType === undefined)
+                if (this.dataType === undefined)
                     this.dataType = DataType.DOMAIN;
 
-                if(this.accessType === undefined)
+                if (this.accessType === undefined)
                     this.accessType = AccessType.READ_WRITE;
 
                 break;
@@ -192,7 +192,7 @@ class DataObject extends EventEmitter {
      * @type {string}
      */
     get objectTypeString() {
-        switch(this.objectType) {
+        switch (this.objectType) {
             case ObjectType.NULL:
                 return 'NULL';
             case ObjectType.DOMAIN:
@@ -218,7 +218,7 @@ class DataObject extends EventEmitter {
      * @type {string}
      */
     get dataTypeString() {
-        switch(this.dataType) {
+        switch (this.dataType) {
             case DataType.BOOLEAN:
                 return 'BOOLEAN';
             case DataType.INTEGER8:
@@ -288,12 +288,12 @@ class DataObject extends EventEmitter {
      * @type {number}
      */
     get size() {
-        if(!this.subNumber)
+        if (!this.subNumber)
             return this.raw.length;
 
         let size = 0;
-        for(let i = 1; i <= this._subObjects[0].value; ++i) {
-            if(this._subObjects[i] === undefined)
+        for (let i = 1; i <= this._subObjects[0].value; ++i) {
+            if (this._subObjects[i] === undefined)
                 continue;
 
             size += this._subObjects[i].size;
@@ -308,12 +308,12 @@ class DataObject extends EventEmitter {
      * @type {Buffer}
      */
     get raw() {
-        if(!this.subNumber)
+        if (!this.subNumber)
             return this._raw;
 
         const data = [];
-        for(let i = 1; i <= this._subObjects[0].value; ++i) {
-            if(this._subObjects[i] === undefined)
+        for (let i = 1; i <= this._subObjects[0].value; ++i) {
+            if (this._subObjects[i] === undefined)
                 continue;
 
             data.push(this._subObjects[i].raw);
@@ -323,19 +323,19 @@ class DataObject extends EventEmitter {
     }
 
     set raw(raw) {
-        if(this.subNumber)
+        if (this.subNumber)
             throw new EdsError(`not supported for type ${this.objectTypeString}`);
 
-        if(raw === undefined || raw === null)
+        if (raw === undefined || raw === null)
             raw = typeToRaw(0, this.dataType);
 
-        if(this.raw && Buffer.compare(raw, this.raw) == 0)
+        if (this.raw && Buffer.compare(raw, this.raw) == 0)
             return;
 
         this._raw = raw;
         this.emit('update', this);
 
-        if(this.parent)
+        if (this.parent)
             this.parent.emit('update', this.parent);
     }
 
@@ -346,12 +346,12 @@ class DataObject extends EventEmitter {
      * @see {@link Eds.typeToRaw}
      */
     get value() {
-        if(!this.subNumber)
+        if (!this.subNumber)
             return rawToType(this.raw, this.dataType);
 
         const data = [];
-        for(let i = 1; i <= this._subObjects[0].value; ++i) {
-            if(this._subObjects[i] === undefined)
+        for (let i = 1; i <= this._subObjects[0].value; ++i) {
+            if (this._subObjects[i] === undefined)
                 continue;
 
             data.push(this._subObjects[i].value);
@@ -361,7 +361,7 @@ class DataObject extends EventEmitter {
     }
 
     set value(value) {
-        if(this.subNumber)
+        if (this.subNumber)
             throw new EdsError(`not supported for type ${this.objectTypeString}`);
 
         this.raw = typeToRaw(value, this.dataType);
@@ -379,20 +379,20 @@ class DataObject extends EventEmitter {
             this.index, subIndex, data, this);
 
         // Allow access to the sub-object using bracket notation
-        if(!Object.prototype.hasOwnProperty.call(this, subIndex)) {
+        if (!Object.prototype.hasOwnProperty.call(this, subIndex)) {
             Object.defineProperty(this, subIndex, {
                 get: () => this._subObjects[subIndex]
             });
         }
 
         // Update max sub-index
-        if(this._subObjects[0].value < subIndex)
+        if (this._subObjects[0].value < subIndex)
             this._subObjects[0]._raw.writeUInt8(subIndex);
 
         // Update subNumber
         this.subNumber = 1;
-        for(let i = 1; i <= this._subObjects[0].value; ++i) {
-            if(this._subObjects[i] !== undefined)
+        for (let i = 1; i <= this._subObjects[0].value; ++i) {
+            if (this._subObjects[i] !== undefined)
                 this.subNumber += 1;
         }
 
@@ -409,10 +409,10 @@ class DataObject extends EventEmitter {
         delete this._subObjects[subIndex];
 
         // Update max sub-index
-        if(subIndex >= this._subObjects[0].value) {
+        if (subIndex >= this._subObjects[0].value) {
             // Find the next highest sub-index
-            for(let i = subIndex; i >= 0; --i) {
-                if(this._subObjects[i] !== undefined) {
+            for (let i = subIndex; i >= 0; --i) {
+                if (this._subObjects[i] !== undefined) {
                     this._subObjects[0]._raw.writeUInt8(i);
                     break;
                 }
@@ -421,8 +421,8 @@ class DataObject extends EventEmitter {
 
         // Update subNumber
         this.subNumber = 1;
-        for(let i = 1; i <= this._subObjects[0].value; ++i) {
-            if(this._subObjects[i] !== undefined)
+        for (let i = 1; i <= this._subObjects[0].value; ++i) {
+            if (this._subObjects[i] !== undefined)
                 this.subNumber += 1;
         }
 
@@ -468,64 +468,64 @@ class Eds {
         this.nameLookup = {};
 
         // Add default data types
-        for(const [name, index] of Object.entries(DataType)) {
+        for (const [name, index] of Object.entries(DataType)) {
             this.addEntry(index, {
-                parameterName:  name,
-                objectType:     ObjectType.DEFTYPE,
-                dataType:       DataType[name],
-                accessType:     AccessType.READ_WRITE,
+                parameterName: name,
+                objectType: ObjectType.DEFTYPE,
+                dataType: DataType[name],
+                accessType: AccessType.READ_WRITE,
             });
         }
 
         // Add mandatory objects
         this.addEntry(0x1000, {
-            parameterName:  'Device type',
-            objectType:     ObjectType.VAR,
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_ONLY,
+            parameterName: 'Device type',
+            objectType: ObjectType.VAR,
+            dataType: DataType.UNSIGNED32,
+            accessType: AccessType.READ_ONLY,
         });
 
         this.addEntry(0x1001, {
-            parameterName:  'Error register',
-            objectType:     ObjectType.VAR,
-            dataType:       DataType.UNSIGNED8,
-            accessType:     AccessType.READ_ONLY,
+            parameterName: 'Error register',
+            objectType: ObjectType.VAR,
+            dataType: DataType.UNSIGNED8,
+            accessType: AccessType.READ_ONLY,
         });
 
         this.addEntry(0x1018, {
-            parameterName:  'Identity object',
-            objectType:     ObjectType.RECORD,
+            parameterName: 'Identity object',
+            objectType: ObjectType.RECORD,
         });
 
         this.addSubEntry(0x1018, 1, {
-            parameterName:  'Vendor-ID',
-            objectType:     ObjectType.VAR,
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_ONLY,
+            parameterName: 'Vendor-ID',
+            objectType: ObjectType.VAR,
+            dataType: DataType.UNSIGNED32,
+            accessType: AccessType.READ_ONLY,
         });
 
         this.addSubEntry(0x1018, 2, {
-            parameterName:  'Product code',
-            objectType:     ObjectType.VAR,
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_ONLY,
+            parameterName: 'Product code',
+            objectType: ObjectType.VAR,
+            dataType: DataType.UNSIGNED32,
+            accessType: AccessType.READ_ONLY,
         });
 
         this.addSubEntry(0x1018, 3, {
-            parameterName:  'Revision number',
-            objectType:     ObjectType.VAR,
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_ONLY,
+            parameterName: 'Revision number',
+            objectType: ObjectType.VAR,
+            dataType: DataType.UNSIGNED32,
+            accessType: AccessType.READ_ONLY,
         });
 
         this.addSubEntry(0x1018, 4, {
-            parameterName:  'Serial number',
-            objectType:     ObjectType.VAR,
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_ONLY,
+            parameterName: 'Serial number',
+            objectType: ObjectType.VAR,
+            dataType: DataType.UNSIGNED32,
+            accessType: AccessType.READ_ONLY,
         });
 
-        if(path)
+        if (path)
             this.load(path);
     }
 
@@ -580,7 +580,7 @@ class Eds {
      * @param {string} [path] - path to file, defaults to fileName.
      */
     save(path) {
-        if(!path)
+        if (!path)
             path = this.fileName;
 
         const fd = fs.openSync(path, 'w');
@@ -601,22 +601,22 @@ class Eds {
         let mfrObjects = {};
         let mfrCount = 0;
 
-        for(const key of Object.keys(this.dataObjects)) {
+        for (const key of Object.keys(this.dataObjects)) {
             let index = parseInt(key);
 
-            if([0x1000, 0x1001, 0x1018].includes(index)) {
+            if ([0x1000, 0x1001, 0x1018].includes(index)) {
                 mandCount += 1;
                 mandObjects[mandCount] = '0x' + index.toString(16);
             }
-            else if(index >= 0x1000 && index < 0x1FFF) {
+            else if (index >= 0x1000 && index < 0x1FFF) {
                 optCount += 1;
                 optObjects[optCount] = '0x' + index.toString(16);
             }
-            else if(index >= 0x2000 && index < 0x5FFF) {
+            else if (index >= 0x2000 && index < 0x5FFF) {
                 mfrCount += 1;
                 mfrObjects[mfrCount] = '0x' + index.toString(16);
             }
-            else if(index >= 0x6000 && index < 0xFFFF) {
+            else if (index >= 0x6000 && index < 0xFFFF) {
                 optCount += 1;
                 optObjects[optCount] = '0x' + index.toString(16);
             }
@@ -652,10 +652,10 @@ class Eds {
      */
     getEntry(index) {
         let entry;
-        if(typeof index == 'string') {
+        if (typeof index == 'string') {
             // Name lookup
             entry = this.nameLookup[index];
-            if(entry && entry.length == 1)
+            if (entry && entry.length == 1)
                 entry = entry[0];
         }
         else {
@@ -675,7 +675,7 @@ class Eds {
      */
     addEntry(index, data) {
         let entry = this.dataObjects[index];
-        if(entry !== undefined) {
+        if (entry !== undefined) {
             index = '0x' + index.toString(16);
             throw new EdsError(`${index} already exists`);
         }
@@ -683,7 +683,7 @@ class Eds {
         entry = new DataObject(index, null, data);
         this.dataObjects[index] = entry;
 
-        if(this.nameLookup[entry.parameterName] === undefined)
+        if (this.nameLookup[entry.parameterName] === undefined)
             this.nameLookup[entry.parameterName] = [];
 
         this.nameLookup[entry.parameterName].push(entry);
@@ -698,7 +698,7 @@ class Eds {
      */
     removeEntry(index) {
         const entry = this.dataObjects[index];
-        if(entry === undefined) {
+        if (entry === undefined) {
             index = '0x' + index.toString(16);
             throw ReferenceError(`${index} does not exist`);
         }
@@ -706,7 +706,7 @@ class Eds {
         this.nameLookup[entry.parameterName].splice(
             this.nameLookup[entry.parameterName].indexOf(entry), 1);
 
-        if(this.nameLookup[entry.parameterName].length == 0)
+        if (this.nameLookup[entry.parameterName].length == 0)
             delete this.nameLookup[entry.parameterName];
 
         delete this.dataObjects[entry.index];
@@ -722,12 +722,12 @@ class Eds {
     getSubEntry(index, subIndex) {
         const entry = this.getEntry(index);
 
-        if(entry === undefined) {
+        if (entry === undefined) {
             index = '0x' + index.toString(16);
             throw new EdsError(`${index} does not exist`);
         }
 
-        if(entry.subNumber === undefined) {
+        if (entry.subNumber === undefined) {
             index = '0x' + index.toString(16);
             throw new EdsError(`${index} does not support sub objects`);
         }
@@ -746,12 +746,12 @@ class Eds {
     addSubEntry(index, subIndex, data) {
         const entry = this.dataObjects[index];
 
-        if(entry === undefined) {
+        if (entry === undefined) {
             index = '0x' + index.toString(16);
             throw new EdsError(`${index} does not exist`);
         }
 
-        if(entry.subNumber === undefined) {
+        if (entry.subNumber === undefined) {
             index = '0x' + index.toString(16);
             throw new EdsError(`${index} does not support sub objects`);
         }
@@ -771,20 +771,20 @@ class Eds {
     removeSubEntry(index, subIndex) {
         const entry = this.dataObjects[index];
 
-        if(subIndex < 1)
+        if (subIndex < 1)
             throw new EdsError('subIndex must be >= 1');
 
-        if(entry === undefined) {
+        if (entry === undefined) {
             index = '0x' + index.toString(16);
             throw new EdsError(`${index} does not exist`);
         }
 
-        if(entry.subNumber === undefined) {
+        if (entry.subNumber === undefined) {
             index = '0x' + index.toString(16);
             throw new EdsError(`${index} does not support sub objects`);
         }
 
-        if(entry[subIndex] === undefined)
+        if (entry[subIndex] === undefined)
             return;
 
         // Delete the entry
@@ -1018,21 +1018,21 @@ class Eds {
     get baudRates() {
         let rates = [];
 
-        if(parseInt(this.deviceInfo['BaudRate_10']))
+        if (parseInt(this.deviceInfo['BaudRate_10']))
             rates.push(10000);
-        if(parseInt(this.deviceInfo['BaudRate_20']))
+        if (parseInt(this.deviceInfo['BaudRate_20']))
             rates.push(20000);
-        if(parseInt(this.deviceInfo['BaudRate_50']))
+        if (parseInt(this.deviceInfo['BaudRate_50']))
             rates.push(50000);
-        if(parseInt(this.deviceInfo['BaudRate_125']))
+        if (parseInt(this.deviceInfo['BaudRate_125']))
             rates.push(125000);
-        if(parseInt(this.deviceInfo['BaudRate_250']))
+        if (parseInt(this.deviceInfo['BaudRate_250']))
             rates.push(250000);
-        if(parseInt(this.deviceInfo['BaudRate_500']))
+        if (parseInt(this.deviceInfo['BaudRate_500']))
             rates.push(500000);
-        if(parseInt(this.deviceInfo['BaudRate_800']))
+        if (parseInt(this.deviceInfo['BaudRate_800']))
             rates.push(800000);
-        if(parseInt(this.deviceInfo['BaudRate_1000']))
+        if (parseInt(this.deviceInfo['BaudRate_1000']))
             rates.push(1000000);
 
         return rates;
@@ -1180,7 +1180,7 @@ class Eds {
         day = parseInt(day);
         year = parseInt(year);
 
-        if(postMeridiem)
+        if (postMeridiem)
             hours += 12;
 
         return new Date(year, month - 1, day, hours, minutes)
@@ -1222,31 +1222,31 @@ class Eds {
         data['ParameterName'] = entry.parameterName;
         data['ObjectType'] = `0x${entry.objectType.toString(16)}`;
 
-        if(entry.subNumber !== undefined)
+        if (entry.subNumber !== undefined)
             data['SubNumber'] = `0x${entry.subNumber.toString(16)}`;
 
-        if(entry.dataType !== undefined)
+        if (entry.dataType !== undefined)
             data['DataType'] = `0x${entry.dataType.toString(16)}`;
 
-        if(entry.lowLimit !== undefined)
+        if (entry.lowLimit !== undefined)
             data['LowLimit'] = entry.lowLimit.toString();
 
-        if(entry.highLimit !== undefined)
+        if (entry.highLimit !== undefined)
             data['HighLimit'] = entry.highLimit.toString();
 
-        if(entry.accessType !== undefined)
+        if (entry.accessType !== undefined)
             data['AccessType'] = entry.accessType;
 
-        if(entry.defaultValue !== undefined)
+        if (entry.defaultValue !== undefined)
             data['DefaultValue'] = entry.defaultValue.toString();
 
-        if(entry.pdoMapping !== undefined)
+        if (entry.pdoMapping !== undefined)
             data['PDOMapping'] = (entry.pdoMapping) ? '1' : '0';
 
-        if(entry.objFlags !== undefined)
+        if (entry.objFlags !== undefined)
             data['ObjFlags'] = entry.objFlags.toString();
 
-        if(entry.compactSubObj !== undefined)
+        if (entry.compactSubObj !== undefined)
             data['CompactSubObj'] = (entry.compactSubObj) ? '1' : '0';
 
         return data;
@@ -1262,7 +1262,7 @@ class Eds {
     _write(fd, data) {
         const nullMatch = new RegExp('=null', 'g');
         data = data.replace(nullMatch, '=');
-        if(data.length > 0)
+        if (data.length > 0)
             fs.writeSync(fd, data + EOL);
     }
 
@@ -1274,8 +1274,8 @@ class Eds {
      * @private
      */
     _writeObjects(fd, objects) {
-        for(const [key, value] of Object.entries(objects)) {
-            if(key == 'SupportedObjects')
+        for (const [key, value] of Object.entries(objects)) {
+            if (key == 'SupportedObjects')
                 continue;
 
             const index = parseInt(value);
@@ -1287,8 +1287,8 @@ class Eds {
                 this._entryToEds(dataObject), { section: section }));
 
             // Write sub-objects
-            for(let i = 0; i < dataObject.subNumber; i++) {
-                if(dataObject[i]) {
+            for (let i = 0; i < dataObject.subNumber; i++) {
+                if (dataObject[i]) {
                     const subSection = section + 'sub' + i;
                     const subObject = dataObject[i];
                     this._write(fd, ini.encode(
@@ -1299,4 +1299,4 @@ class Eds {
     }
 }
 
-module.exports=exports={ EdsError, DataObject, Eds };
+module.exports = exports = { EdsError, DataObject, Eds };

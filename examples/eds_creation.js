@@ -24,33 +24,33 @@ eds.createdBy = os.userInfo().username;
 
 // Step 3: Add entries.
 eds.addEntry(0x1016, {
-    parameterName:  'Consumer heartbeat time',
-    objectType:     ObjectType.ARRAY,
-    subNumber:      2,
+    parameterName: 'Consumer heartbeat time',
+    objectType: ObjectType.ARRAY,
+    subNumber: 2,
 });
 
 eds.addSubEntry(0x1016, 1, {
-    parameterName:  'Consumer 1',
-    objectType:     ObjectType.VAR,
-    dataType:       DataType.UNSIGNED32,
-    accessType:     AccessType.READ_WRITE,
-    defaultValue:   (0x3 << 16) | 10,
+    parameterName: 'Consumer 1',
+    objectType: ObjectType.VAR,
+    dataType: DataType.UNSIGNED32,
+    accessType: AccessType.READ_WRITE,
+    defaultValue: (0x3 << 16) | 10,
 });
 
 eds.addEntry(0x1017, {
-    parameterName:  'Producer heartbeat timer',
-    objectType:     ObjectType.VAR,
-    dataType:       DataType.UNSIGNED32,
-    accessType:     AccessType.READ_WRITE,
-    defaultValue:   500,
+    parameterName: 'Producer heartbeat timer',
+    objectType: ObjectType.VAR,
+    dataType: DataType.UNSIGNED32,
+    accessType: AccessType.READ_WRITE,
+    defaultValue: 500,
 });
 
 eds.addEntry(0x2000, {
-    parameterName:  'Error status bits',
-    objectType:     ObjectType.VAR,
-    dataType:       DataType.OCTET_STRING,
-    accessType:     AccessType.READ_WRITE,
-    defaultValue:   '00000000000000000000',
+    parameterName: 'Error status bits',
+    objectType: ObjectType.VAR,
+    dataType: DataType.OCTET_STRING,
+    accessType: AccessType.READ_WRITE,
+    defaultValue: '00000000000000000000',
 });
 
 // Step 4: Write to disk.

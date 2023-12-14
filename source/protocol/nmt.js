@@ -106,7 +106,7 @@ class Nmt {
 
     set state(newState) {
         const oldState = this.state;
-        if(newState !== oldState) {
+        if (newState !== oldState) {
             this._state = newState;
             this.device.emit('nmtChangeState', this.device.id, newState);
         }
@@ -123,12 +123,12 @@ class Nmt {
 
     set producerTime(value) {
         let obj1017 = this.device.eds.getEntry(0x1017);
-        if(obj1017 === undefined) {
+        if (obj1017 === undefined) {
             obj1017 = this.device.eds.addEntry(0x1017, {
-                parameterName:  'Producer heartbeat time',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'Producer heartbeat time',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
 
@@ -143,13 +143,13 @@ class Nmt {
      */
     getConsumer(deviceId) {
         const obj1016 = this.device.eds.getEntry(0x1016);
-        if(obj1016 !== undefined) {
-            for(let i = 1; i <= obj1016._subObjects[0].value; ++i) {
+        if (obj1016 !== undefined) {
+            for (let i = 1; i <= obj1016._subObjects[0].value; ++i) {
                 const subObject = obj1016._subObjects[i];
-                if(subObject === undefined)
+                if (subObject === undefined)
                     continue;
 
-                if(((subObject.value >> 16) & 0x7F) === deviceId)
+                if (((subObject.value >> 16) & 0x7F) === deviceId)
                     return subObject;
             }
         }
@@ -165,7 +165,7 @@ class Nmt {
      */
     getConsumerTime(deviceId) {
         const subObject = this.getConsumer(deviceId);
-        if(subObject !== null)
+        if (subObject !== null)
             return subObject.value & 0xffff;
 
         return null;
@@ -179,45 +179,45 @@ class Nmt {
      * @param {number} [subIndex] - sub-index to store the entry, optional.
      */
     addConsumer(deviceId, timeout, subIndex) {
-        if(deviceId < 1 || deviceId > 0x7F)
+        if (deviceId < 1 || deviceId > 0x7F)
             throw RangeError('deviceId must be in range [1-127]');
 
-        if(timeout < 0 || timeout > 0xffff)
+        if (timeout < 0 || timeout > 0xffff)
             throw RangeError('timeout must be in range [0-65535]');
 
-        if(this.getConsumer(deviceId) !== null) {
+        if (this.getConsumer(deviceId) !== null) {
             deviceId = '0x' + deviceId.toString(16);
             throw new EdsError(`NMT consumer ${deviceId} already exists`);
         }
 
         let obj1016 = this.device.eds.getEntry(0x1016);
-        if(obj1016 === undefined) {
+        if (obj1016 === undefined) {
             obj1016 = this.device.eds.addEntry(0x1016, {
-                parameterName:  'Consumer heartbeat time',
-                objectType:     ObjectType.ARRAY,
+                parameterName: 'Consumer heartbeat time',
+                objectType: ObjectType.ARRAY,
             });
         }
 
-        if(!subIndex) {
+        if (!subIndex) {
             // Find first empty index
-            for(let i = 1; i <= 255; ++i) {
-                if(obj1016[i] === undefined) {
+            for (let i = 1; i <= 255; ++i) {
+                if (obj1016[i] === undefined) {
                     subIndex = i;
                     break;
                 }
             }
         }
 
-        if(!subIndex)
+        if (!subIndex)
             throw new EdsError('NMT consumer entry full');
 
         // Install sub entry
         this.device.eds.addSubEntry(0x1016, subIndex, {
-            parameterName:  `Device 0x${deviceId.toString(16)}`,
-            objectType:     ObjectType.VAR,
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_WRITE,
-            defaultValue:   (deviceId << 16) | timeout,
+            parameterName: `Device 0x${deviceId.toString(16)}`,
+            objectType: ObjectType.VAR,
+            dataType: DataType.UNSIGNED32,
+            accessType: AccessType.READ_WRITE,
+            defaultValue: (deviceId << 16) | timeout,
         });
     }
 
@@ -228,7 +228,7 @@ class Nmt {
      */
     removeConsumer(deviceId) {
         const subEntry = this.getConsumer(deviceId);
-        if(subEntry === null)
+        if (subEntry === null)
             throw new EdsError(`NMT consumer ${deviceId} does not exist`);
 
         this.device.eds.removeSubEntry(0x1016, subEntry.subIndex);
@@ -238,10 +238,10 @@ class Nmt {
     init() {
         // Object 0x1016 - Consumer heartbeat time
         let obj1016 = this.device.eds.getEntry(0x1016);
-        if(obj1016 === undefined) {
+        if (obj1016 === undefined) {
             obj1016 = this.device.eds.addEntry(0x1016, {
-                parameterName:  'Consumer heartbeat time',
-                objectType:     ObjectType.ARRAY,
+                parameterName: 'Consumer heartbeat time',
+                objectType: ObjectType.ARRAY,
             });
         }
         else {
@@ -250,12 +250,12 @@ class Nmt {
 
         // Object 0x1017 - Producer heartbeat time
         let obj1017 = this.device.eds.getEntry(0x1017);
-        if(obj1017 === undefined) {
+        if (obj1017 === undefined) {
             obj1017 = this.device.eds.addEntry(0x1017, {
-                parameterName:  'Producer heartbeat time',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'Producer heartbeat time',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
         else {
@@ -271,7 +271,7 @@ class Nmt {
 
     /** Begin heartbeat generation. */
     start() {
-        if(this.producerTime == 0)
+        if (this.producerTime == 0)
             throw new EdsError('producerTime must not be 0')
 
         // Switch to NmtState.OPERATIONAL
@@ -301,10 +301,10 @@ class Nmt {
      */
     async getNodeState(deviceId, timeout) {
         let interval = this.getConsumerTime(deviceId);
-        if(interval === null)
+        if (interval === null)
             throw new ReferenceError(`NMT consumer ${deviceId} does not exist`);
 
-        if(!timeout)
+        if (!timeout)
             timeout = (interval * 2);
 
         return new Promise((resolve) => {
@@ -315,7 +315,7 @@ class Nmt {
 
             timeoutTimer = setTimeout(() => {
                 const heartbeat = this.heartbeats[deviceId];
-                if(heartbeat && heartbeat.last > start)
+                if (heartbeat && heartbeat.last > start)
                     resolve(heartbeat.state);
                 else
                     resolve(null);
@@ -325,7 +325,7 @@ class Nmt {
 
             intervalTimer = setInterval(() => {
                 const heartbeat = this.heartbeats[deviceId];
-                if(heartbeat && heartbeat.last > start) {
+                if (heartbeat && heartbeat.last > start) {
                     clearTimeout(timeoutTimer);
                     clearInterval(intervalTimer);
                     resolve(heartbeat.state);
@@ -402,20 +402,20 @@ class Nmt {
      * @private
      */
     _sendNmt(nodeId, command) {
-        if(nodeId === undefined || nodeId === this.device.id) {
+        if (nodeId === undefined || nodeId === this.device.id) {
             // Handle internally and return
             this._handleNmt(command);
             return;
         }
 
-        if(nodeId === 0) {
+        if (nodeId === 0) {
             // Broadcast
             this._handleNmt(command);
         }
 
         this.device.send({
-            id:     0x0,
-            data:   Buffer.from([command, nodeId]),
+            id: 0x0,
+            data: Buffer.from([command, nodeId]),
         });
     }
 
@@ -438,7 +438,7 @@ class Nmt {
      * @private
      */
     _handleNmt(command) {
-        switch(command) {
+        switch (command) {
             case NmtCommand.ENTER_OPERATIONAL:
                 this.state = NmtState.OPERATIONAL;
                 break;
@@ -465,23 +465,23 @@ class Nmt {
      * @private
      */
     _onMessage(message) {
-        if((message.id & 0x7FF) == 0x0) {
+        if ((message.id & 0x7FF) == 0x0) {
             const nodeId = message.data[1];
-            if(nodeId == 0 || nodeId == this.device.id)
+            if (nodeId == 0 || nodeId == this.device.id)
                 this._handleNmt(message.data[0]);
         }
-        else if((message.id & 0x700) == 0x700) {
+        else if ((message.id & 0x700) == 0x700) {
             const deviceId = message.id & 0x7F;
-            if(deviceId in this.heartbeats) {
+            if (deviceId in this.heartbeats) {
                 this.heartbeats[deviceId].last = Date.now();
 
                 const state = message.data[0];
-                if(state !== this.heartbeats[deviceId].state) {
+                if (state !== this.heartbeats[deviceId].state) {
                     this.heartbeats[deviceId].state = state;
                     this.device.emit('nmtChangeState', deviceId, state);
                 }
 
-                if(!this.timers[deviceId]) {
+                if (!this.timers[deviceId]) {
                     // First heartbeat - start timer.
                     const interval = this.heartbeats[deviceId].interval;
                     this.timers[deviceId] = setTimeout(() => {
@@ -510,15 +510,15 @@ class Nmt {
          *     bit 16..23   Node-ID of producer.
          *     bit 24..31   Reserved (0x00);
          */
-        for(let i = 1; i <= entry[0].value; ++i) {
+        for (let i = 1; i <= entry[0].value; ++i) {
             const subEntry = entry[i];
-            if(subEntry === undefined)
+            if (subEntry === undefined)
                 continue;
 
             const heartbeatTime = subEntry.raw.readUInt16LE(0);
             const deviceId = subEntry.raw.readUInt8(2);
 
-            if(this.heartbeats[deviceId] !== undefined) {
+            if (this.heartbeats[deviceId] !== undefined) {
                 /* Clear the timer - it will be re-initialized with the new
                  * interval on the next heartbeat message.
                  */
@@ -528,8 +528,8 @@ class Nmt {
             }
             else {
                 this.heartbeats[deviceId] = {
-                    state:      null,
-                    interval:   heartbeatTime,
+                    state: null,
+                    interval: heartbeatTime,
                 }
             }
         }
@@ -542,7 +542,7 @@ class Nmt {
      * @private
      */
     _parse1017(entry) {
-        if(!this.started)
+        if (!this.started)
             return;
 
         // Clear old timer
@@ -550,7 +550,7 @@ class Nmt {
 
         // Start heartbeat timer with new interval
         const producerTime = entry.value;
-        if(producerTime > 0) {
+        if (producerTime > 0) {
             this.timers[this.device.id] = setInterval(() => {
                 this._sendHeartbeat();
             }, producerTime);
@@ -558,4 +558,4 @@ class Nmt {
     }
 }
 
-module.exports=exports={ NmtState, Nmt };
+module.exports = exports = { NmtState, Nmt };

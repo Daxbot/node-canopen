@@ -12,7 +12,7 @@ function rawToString(raw) {
     raw = raw.toString();
 
     const end = raw.indexOf('\0');
-    if(end != -1)
+    if (end != -1)
         raw = raw.substring(0, end);
 
     return raw;
@@ -39,10 +39,10 @@ function rawToDate(raw) {
  * @returns {number | bigint | string | Date} converted data.
  */
 function rawToType(raw, type) {
-    if(typeof type === 'string')
+    if (typeof type === 'string')
         type = DataType[type];
 
-    switch(type) {
+    switch (type) {
         case DataType.BOOLEAN:
             return !!raw.readUInt8();
         case DataType.INTEGER8:
@@ -88,4 +88,4 @@ function rawToType(raw, type) {
     }
 }
 
-module.exports=exports=rawToType;
+module.exports = exports = rawToType;

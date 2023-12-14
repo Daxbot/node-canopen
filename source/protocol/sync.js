@@ -57,16 +57,16 @@ class Sync {
 
     set generate(gen) {
         let obj1005 = this.device.eds.getEntry(0x1005);
-        if(obj1005 === undefined) {
+        if (obj1005 === undefined) {
             obj1005 = this.device.eds.addEntry(0x1005, {
-                parameterName:  'COB-ID SYNC',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'COB-ID SYNC',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
 
-        if(gen)
+        if (gen)
             obj1005.value |= (1 << 30);
         else
             obj1005.value &= ~(1 << 30);
@@ -83,12 +83,12 @@ class Sync {
 
     set cobId(cobId) {
         let obj1005 = this.device.eds.getEntry(0x1005);
-        if(obj1005 === undefined) {
+        if (obj1005 === undefined) {
             obj1005 = this.device.eds.addEntry(0x1005, {
-                parameterName:  'COB-ID SYNC',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'COB-ID SYNC',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
 
@@ -107,12 +107,12 @@ class Sync {
 
     set cyclePeriod(period) {
         let obj1006 = this.device.eds.getEntry(0x1006);
-        if(obj1006 === undefined) {
+        if (obj1006 === undefined) {
             obj1006 = this.device.eds.addEntry(0x1006, {
-                parameterName:  'Communication cycle period',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'Communication cycle period',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
 
@@ -130,12 +130,12 @@ class Sync {
 
     set overflow(overflow) {
         let obj1019 = this.device.eds.getEntry(0x1019);
-        if(obj1019 === undefined) {
+        if (obj1019 === undefined) {
             obj1019 = this.device.eds.addEntry(0x1019, {
-                parameterName:  'Synchronous counter overflow value',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED8,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'Synchronous counter overflow value',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED8,
+                accessType: AccessType.READ_WRITE,
             });
         }
 
@@ -147,12 +147,12 @@ class Sync {
     init() {
         // Object 0x1005 - COB-ID SYNC
         let obj1005 = this.device.eds.getEntry(0x1005);
-        if(obj1005 === undefined) {
+        if (obj1005 === undefined) {
             obj1005 = this.device.eds.addEntry(0x1005, {
-                parameterName:  'COB-ID SYNC',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'COB-ID SYNC',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
         else {
@@ -161,12 +161,12 @@ class Sync {
 
         // Object 0x1006 - Communication cycle period
         let obj1006 = this.device.eds.getEntry(0x1006);
-        if(obj1006 === undefined) {
+        if (obj1006 === undefined) {
             obj1006 = this.device.eds.addEntry(0x1006, {
-                parameterName:  'Communication cycle period',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'Communication cycle period',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
         else {
@@ -175,12 +175,12 @@ class Sync {
 
         // Object 0x1019 - Synchronous counter overflow value
         let obj1019 = this.device.eds.getEntry(0x1019);
-        if(obj1019 === undefined) {
+        if (obj1019 === undefined) {
             obj1019 = this.device.eds.addEntry(0x1019, {
-                parameterName:  'Synchronous counter overflow value',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED8,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'Synchronous counter overflow value',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED8,
+                accessType: AccessType.READ_WRITE,
             });
         }
         else {
@@ -196,13 +196,13 @@ class Sync {
 
     /** Begin producing sync objects. */
     start() {
-        if(!this.generate)
+        if (!this.generate)
             throw TypeError('SYNC generation is disabled');
 
-        if(this._overflow) {
+        if (this._overflow) {
             this.syncTimer = setInterval(() => {
                 this.syncCounter += 1;
-                if(this.syncCounter > this._overflow)
+                if (this.syncCounter > this._overflow)
                     this.syncCounter = 1;
 
                 this.write(this.syncCounter);
@@ -227,14 +227,14 @@ class Sync {
      *
      * @param {number | null} counter - sync counter;
      */
-    write(counter=null) {
-        if(!this.generate)
+    write(counter = null) {
+        if (!this.generate)
             throw TypeError('SYNC generation is disabled');
 
         const data = (counter) ? Buffer.from([counter]) : Buffer.alloc(0);
         this.device.send({
-            id:     this.cobId,
-            data:   data,
+            id: this.cobId,
+            data: data,
         });
     }
 
@@ -248,10 +248,10 @@ class Sync {
      * @private
      */
     _onMessage(message) {
-        if((message.id & 0x7FF) !== this._cobId)
+        if ((message.id & 0x7FF) !== this._cobId)
             return;
 
-        if(message.data)
+        if (message.data)
             this.device.emit('sync', message.data[1]);
         else
             this.device.emit('sync', null);
@@ -275,10 +275,10 @@ class Sync {
         const rtr = (value >> 29) & 0x1;
         const cobId = value & 0x7FF;
 
-        if(rtr == 0x1)
+        if (rtr == 0x1)
             throw TypeError("CAN extended frames are not supported")
 
-        if(cobId == 0)
+        if (cobId == 0)
             throw TypeError('COB-ID SYNC must not be 0');
 
         this._generate = !!gen;
@@ -293,7 +293,7 @@ class Sync {
      */
     _parse1006(data) {
         const cyclePeriod = data.value;
-        if(cyclePeriod == 0)
+        if (cyclePeriod == 0)
             throw TypeError('communication cycle period must not be 0')
 
         this._cyclePeriod = cyclePeriod;
@@ -310,4 +310,4 @@ class Sync {
     }
 }
 
-module.exports=exports={ Sync };
+module.exports = exports = { Sync };

@@ -17,11 +17,11 @@ const channel = can.createRawChannel('can0');
 
 // Step 3: Create an entry to be mapped.
 const entry = device.eds.addEntry(0x2000, {
-    parameterName:  'Test object',
-    objectType:     ObjectType.VAR,
-    dataType:       DataType.UNSIGNED32,
-    accessType:     AccessType.READ_WRITE,
-    defaultValue:   0x12345678,
+    parameterName: 'Test object',
+    objectType: ObjectType.VAR,
+    dataType: DataType.UNSIGNED32,
+    accessType: AccessType.READ_WRITE,
+    defaultValue: 0x12345678,
 });
 
 // Step 4: Initialize and start the node.

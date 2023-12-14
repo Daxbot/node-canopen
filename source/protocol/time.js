@@ -54,16 +54,16 @@ class Time {
 
     set produce(produce) {
         let obj1012 = this.device.eds.getEntry(0x1012);
-        if(obj1012 === undefined) {
+        if (obj1012 === undefined) {
             obj1012 = this.device.eds.addEntry(0x1012, {
-                parameterName:  'COB-ID TIME',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'COB-ID TIME',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
 
-        if(produce)
+        if (produce)
             obj1012.value |= (1 << 30);
         else
             obj1012.value &= ~(1 << 30);
@@ -80,17 +80,17 @@ class Time {
 
     set consume(consume) {
         let obj1012 = this.device.eds.getEntry(0x1012);
-        if(obj1012 === undefined) {
+        if (obj1012 === undefined) {
             obj1012 = this.device.eds.addEntry(0x1012, {
-                parameterName:  'COB-ID TIME',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'COB-ID TIME',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
 
         let raw = obj1012.raw;
-        if(consume)
+        if (consume)
             raw[3] |= (1 << 7); // bit 31
         else
             raw[3] &= ~(1 << 7); // bit 31
@@ -109,12 +109,12 @@ class Time {
 
     set cobId(cobId) {
         let obj1012 = this.device.eds.getEntry(0x1012);
-        if(obj1012 === undefined) {
+        if (obj1012 === undefined) {
             obj1012 = this.device.eds.addEntry(0x1012, {
-                parameterName:  'COB-ID TIME',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'COB-ID TIME',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
 
@@ -126,12 +126,12 @@ class Time {
     init() {
         // Object 0x1012 - COB-ID TIME
         let obj1012 = this.device.eds.getEntry(0x1012);
-        if(obj1012 === undefined) {
+        if (obj1012 === undefined) {
             obj1012 = this.device.eds.addEntry(0x1012, {
-                parameterName:  'COB-ID TIME',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'COB-ID TIME',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_WRITE,
             });
         }
         else {
@@ -147,14 +147,14 @@ class Time {
      *
      * @param {Date} date - date to write.
      */
-    write(date=new Date()) {
-        if(!this.produce)
+    write(date = new Date()) {
+        if (!this.produce)
             throw TypeError('TIME production is disabled');
 
         const data = typeToRaw(date, DataType.TIME_OF_DAY);
         this.device.send({
-            id:     this.cobId,
-            data:   data,
+            id: this.cobId,
+            data: data,
         });
     }
 
@@ -168,7 +168,7 @@ class Time {
      * @private
      */
     _onMessage(message) {
-        if(!this.consume || (message.id & 0x7FF) !== this.cobId)
+        if (!this.consume || (message.id & 0x7FF) !== this.cobId)
             return;
 
         const date = rawToType(message.data, DataType.TIME_OF_DAY);
@@ -195,10 +195,10 @@ class Time {
         const rtr = (value >> 29) & 0x1;
         const cobId = value & 0x7FF;
 
-        if(rtr == 0x1)
+        if (rtr == 0x1)
             throw TypeError("CAN extended frames are not supported")
 
-        if(cobId == 0)
+        if (cobId == 0)
             throw TypeError('COB-ID TIME must not be 0');
 
         this._consume = !!consume;
@@ -207,4 +207,4 @@ class Time {
     }
 }
 
-module.exports=exports={ Time };
+module.exports = exports = { Time };

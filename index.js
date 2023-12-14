@@ -7,7 +7,7 @@ const { NmtState } = require('./source/protocol/nmt');
 const { SdoCode, SdoError } = require('./source/protocol/sdo');
 const { calculateCrc, typeToRaw, rawToType } = require('./source/functions');
 
-module.exports=exports={
+module.exports = exports = {
     Device,
     DataObject,
     Eds,
