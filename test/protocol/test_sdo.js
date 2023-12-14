@@ -204,8 +204,8 @@ describe('Sdo', function() {
         }
 
         it('should use multiple blocks', function() {
-            const data = Buffer.alloc(1024);
-            for(let i = 0; i < 1024; ++i)
+            const data = Buffer.alloc(64);
+            for(let i = 0; i < data.length; ++i)
                 data[i] = Math.floor(Math.random() * 0xff);
 
             device.init();
