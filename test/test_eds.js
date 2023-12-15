@@ -424,4 +424,35 @@ describe('Eds', function () {
             expect(() => eds.removeSubEntry(0x2000, 0)).to.throw(EdsError);
         });
     });
+
+    describe('Scaling', function () {
+        let eds;
+
+        before(function () {
+            eds = new Eds();
+        });
+
+        it('should scale numeric values', function () {
+            const obj = eds.addEntry(0x2000, {
+                parameterName: 'VAR',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED8,
+                accessType: AccessType.READ_WRITE,
+                defaultValue: 2,
+            });
+
+            // 2 * 10 = 20
+            obj.scaleFactor = 10;
+            expect(obj.value).to.equal(20);
+
+            // 2 * 0.5 = 1
+            obj.scaleFactor = 0.5;
+            expect(obj.value).to.equal(1);
+
+            // 5 / 0.5 = 10
+            obj.value = 5;
+            obj.scaleFactor = 1;
+            expect(obj.value).to.equal(10);
+        });
+    });
 });

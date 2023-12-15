@@ -48,6 +48,7 @@ class EdsError extends Error {
  * @param {boolean} data.pdoMapping - enable PDO mapping.
  * @param {boolean} data.compactSubObj - use the compact sub-object format.
  * @param {number | string | Date} data.defaultValue - default value.
+ * @param {number} data.scaleFactor - optional multiplier for numeric types.
  * @fires 'update' on value change.
  * @see CiA306 "Object descriptions" (§4.6.3)
  */
@@ -347,7 +348,7 @@ class DataObject extends EventEmitter {
      */
     get value() {
         if (!this.subNumber)
-            return rawToType(this.raw, this.dataType);
+            return rawToType(this.raw, this.dataType, this.scaleFactor);
 
         const data = [];
         for (let i = 1; i <= this._subObjects[0].value; ++i) {
@@ -364,7 +365,7 @@ class DataObject extends EventEmitter {
         if (this.subNumber)
             throw new EdsError(`not supported for type ${this.objectTypeString}`);
 
-        this.raw = typeToRaw(value, this.dataType);
+        this.raw = typeToRaw(value, this.dataType, this.scaleFactor);
     }
 
     /**

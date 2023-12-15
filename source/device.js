@@ -409,6 +409,43 @@ class Device extends EventEmitter {
     }
 
     /**
+     * Get the scale factor of an EDS entry.
+     *
+     * @param {number | string} index - index or name of the entry.
+     * @returns {number | bigint | string | Date} entry value.
+     */
+    getScale(index) {
+        const entry = this.eds.getEntry(index);
+        if (!entry) {
+            if (typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index} does not exist`);
+        }
+
+        return entry.scaleFactor;
+    }
+
+    /**
+     * Get the scale factor of an EDS sub-entry.
+     *
+     * @param {number | string} index - index or name of the entry.
+     * @param {number} subIndex - sub-object index.
+     * @returns {number | bigint | string | Date} entry value.
+     */
+    getScaleArray(index, subIndex) {
+        const entry = this.eds.getSubEntry(index, subIndex);
+        if (!entry) {
+            if (typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index}[${subIndex}] does not exist`);
+        }
+
+        return entry.scaleFactor;
+    }
+
+    /**
      * Get the raw value of an EDS entry.
      *
      * @param {number | string} index - index or name of the entry.
@@ -517,6 +554,43 @@ class Device extends EventEmitter {
         }
 
         entry.raw = raw;
+    }
+
+    /**
+     * Set the scale factor of an EDS entry.
+     *
+     * @param {number | string} index - index or name of the entry.
+     * @param {number} scaleFactor - value to set.
+     */
+    setScale(index, scaleFactor) {
+        const entry = this.eds.getEntry(index);
+        if (!entry) {
+            if (typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index} does not exist`);
+        }
+
+        entry.scaleFactor = scaleFactor;
+    }
+
+    /**
+     * Set the scale factor of an EDS sub-entry.
+     *
+     * @param {number | string} index - index or name of the entry.
+     * @param {number} subIndex - array sub-index to set;
+     * @param {number} scaleFactor - value to set.
+     */
+    setScaleArray(index, subIndex, scaleFactor) {
+        const entry = this.eds.getSubEntry(index, subIndex);
+        if (!entry) {
+            if (typeof index === 'number')
+                index = '0x' + index.toString(16);
+
+            throw new EdsError(`entry ${index}[${subIndex}] does not exist`);
+        }
+
+        entry.scaleFactor = scaleFactor;
     }
 }
 
