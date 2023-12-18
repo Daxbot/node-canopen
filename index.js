@@ -5,7 +5,13 @@ const { EmcyType, EmcyCode, EmcyMessage } = require('./source/protocol/emcy');
 const { LssMode } = require('./source/protocol/lss');
 const { NmtState } = require('./source/protocol/nmt');
 const { SdoCode, SdoError } = require('./source/protocol/sdo');
-const { calculateCrc, typeToRaw, rawToType } = require('./source/functions');
+const {
+    calculateCrc,
+    typeToRaw,
+    rawToType,
+    dateToTime,
+    timeToDate
+} = require('./source/functions');
 
 module.exports = exports = {
     Device,
@@ -25,4 +31,6 @@ module.exports = exports = {
     calculateCrc,
     typeToRaw,
     rawToType,
+    dateToTime,
+    timeToDate,
 };
