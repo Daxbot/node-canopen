@@ -7,8 +7,7 @@
     "test": "mocha ./test/test*.js ./test/**/test*.js",
     "jsdoc": "jsdoc -c .jsdoc.json -R README.md source",
     "lint": "eslint index.js examples source test",
-    "lint:fix": "npm run lint -- --fix",
-    "prepare": "npm run lint && npm test"
+    "lint:fix": "npm run lint -- --fix"
   },
   "author": "Wilkins White <wilkins.white@daxbot.com>",
   "license": "MIT",
