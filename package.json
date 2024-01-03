@@ -24,7 +24,7 @@
     "can-bus"
   ],
   "dependencies": {
-    "ini": "^4.1.1",
+    "ini": "^3.0.1",
     "node-crc": "^1.3.2"
   },
   "devDependencies": {
@@ -33,13 +33,13 @@
     "docdash": "^2.0.2",
     "eslint": "^8.55.0",
     "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-jsdoc": "^46.9.1",
-    "eslint-plugin-mocha": "^10.2.0",
+    "eslint-plugin-jsdoc": "^38.1.6",
+    "eslint-plugin-mocha": "^9.0.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.1",
     "jsdoc": "^4.0.2",
-    "mocha": "^10.2.0",
-    "socketcan": "^4.0.4"
+    "mocha": "^9.2.2",
+    "socketcan": "^3.0.0"
   },
   "engines": {
     "node": ">=12"
