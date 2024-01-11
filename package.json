@@ -9,7 +9,7 @@
     "lint": "eslint index.js examples source test",
     "lint:fix": "npm run lint -- --fix"
   },
-  "author": "Wilkins White <wilkins.white@daxbot.com>",
+  "author": "Wilkins White <ww@novadynamics.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
