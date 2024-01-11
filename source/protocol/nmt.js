@@ -1,7 +1,7 @@
 /**
  * @file Implements the CANopen Network Managements (NMT) protocol.
  * @author Wilkins White
- * @copyright 2021 Daxbot
+ * @copyright 2024 Daxbot
  */
 
 const Device = require('../device');

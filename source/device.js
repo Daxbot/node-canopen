@@ -1,7 +1,7 @@
 /**
  * @file Implements a CANopen device
  * @author Wilkins White
- * @copyright 2021 Daxbot
+ * @copyright 2024 Daxbot
  */
 
 const EventEmitter = require('events');

@@ -1,7 +1,7 @@
 /**
  * @file Implements the CANopen Service Data Object (SDO) protocol client.
  * @author Wilkins White
- * @copyright 2021 Daxbot
+ * @copyright 2024 Daxbot
  */
 
 const Device = require('../device');

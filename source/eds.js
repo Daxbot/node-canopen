@@ -1,7 +1,7 @@
 /**
  * @file Implements a CANopen Electronic Data Sheet (EDS)
  * @author Wilkins White
- * @copyright 2021 Daxbot
+ * @copyright 2024 Daxbot
  */
 
 // External modules

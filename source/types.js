@@ -1,7 +1,7 @@
 /**
  * @file CANopen type definitions.
  * @author Wilkins White
- * @copyright 2021 DaxBot
+ * @copyright 2024 Daxbot
  */
 
 /**
