@@ -55,11 +55,11 @@ function typeToRaw(value, type, scaleFactor=1.0) {
             break;
         case DataType.INTEGER8:
             raw = Buffer.alloc(1);
-            raw.writeInt8(value / scaleFactor)
+            raw.writeInt8(value / scaleFactor);
             break;
         case DataType.UNSIGNED8:
             raw = Buffer.alloc(1);
-            raw.writeUInt8(value / scaleFactor)
+            raw.writeUInt8(value / scaleFactor);
             break;
         case DataType.INTEGER16:
             raw = Buffer.alloc(2);

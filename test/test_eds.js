@@ -25,7 +25,7 @@ describe('Eds', function () {
                 }
                 while (fs.existsSync(testFile));
             }
-        })
+        });
 
         after(function () {
             // Delete the generated EDS file.
@@ -34,64 +34,41 @@ describe('Eds', function () {
         });
 
         it('should save to and load from a file', function () {
-            const saveFile = new Eds();
-            const loadFile = new Eds();
             const date = new Date(0);
+            const saveFile = new Eds({
+                fileName: testFile,
+                creationDate: date,
+                baudRates: [500000],
+            });
 
-            saveFile.fileName = 'Test file';
-            saveFile.creationDate = date;
-            saveFile.baudRates = [500000];
             saveFile.save(testFile);
 
-            loadFile.load(testFile);
+            const loadFile = Eds.load(testFile);
             return Promise.all([
-                expect(loadFile.fileName).to.equal('Test file'),
+                expect(loadFile.fileName).to.equal(testFile),
                 expect(loadFile.baudRates).to.include(500000),
-                expect(loadFile.creationDate.getTime()).to.equal(date.getTime()),
-            ])
+                expect(loadFile.creationDate.getTime())
+                    .to.equal(date.getTime()),
+            ]);
         });
 
         it('should create a raw entry if there is a defaultValue', function () {
-            const loadFile = new Eds();
-            loadFile.load('test/sample.eds');
-
-            const entry = loadFile.getSubEntry('DeviceInfo', 0)
-            expect(entry.raw).to.not.be.undefined
+            const loadFile = Eds.load('test/sample.eds');
+            const entry = loadFile.getSubEntry('DeviceInfo', 0);
+            expect(entry.raw).to.not.be.undefined;
         });
 
         it('should properly convert a boolean values', function () {
             const eds = new Eds();
-            expect(eds.simpleBootUpMaster).to.equal(false);
-            expect(eds.simpleBootUpSlave).to.equal(false);
-            expect(eds.dynamicChannelsSupported).to.equal(false);
-            expect(eds.groupMessaging).to.equal(false);
             expect(eds.lssSupported).to.equal(false);
-
-            eds.simpleBootUpMaster = true;
-            expect(eds.simpleBootUpMaster).to.equal(true);
-
-            eds.simpleBootUpSlave = true;
-            expect(eds.simpleBootUpSlave).to.equal(true);
-
-            eds.dynamicChannelsSupported = true;
-            expect(eds.dynamicChannelsSupported).to.equal(true);
-
-            eds.groupMessaging = true;
-            expect(eds.groupMessaging).to.equal(true);
-
             eds.lssSupported = true;
             expect(eds.lssSupported).to.equal(true);
         });
     });
 
     describe('Add entry', function () {
-        let eds;
-
-        beforeEach(function () {
-            eds = new Eds();
-        });
-
         it('should require parameterName', function () {
+            const eds = new Eds();
             return expect(() => {
                 eds.addEntry(0x2000, {
                     dataType: DataType.UNSIGNED8,
@@ -101,6 +78,7 @@ describe('Eds', function () {
         });
 
         it('should not allow an unknown objectType', function () {
+            const eds = new Eds();
             return expect(() => {
                 eds.addEntry(0x2000, {
                     parameterName: 'DataObject',
@@ -113,6 +91,7 @@ describe('Eds', function () {
 
         describe('ObjectType is DEFTYPE or VAR', function () {
             it('should require dataType', function () {
+                const eds = new Eds();
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         parameterName: 'VAR',
@@ -120,28 +99,9 @@ describe('Eds', function () {
                         accessType: AccessType.READ_WRITE,
                     });
                 }).to.throw(EdsError);
-            });
-            it('should require accessType', function () {
-                return expect(() => {
-                    eds.addEntry(0x2000, {
-                        parameterName: 'VAR',
-                        objectType: ObjectType.VAR,
-                        dataType: DataType.UNSIGNED8,
-                    });
-                }).to.throw(EdsError);
-            });
-            it('should not allow subNumber', function () {
-                return expect(() => {
-                    eds.addEntry(0x2000, {
-                        parameterName: 'VAR',
-                        objectType: ObjectType.VAR,
-                        dataType: DataType.UNSIGNED8,
-                        accessType: AccessType.READ_WRITE,
-                        subNumber: 1,
-                    }).to.throw(EdsError);
-                })
             });
             it('should not allow compactSubObj', function () {
+                const eds = new Eds();
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         parameterName: 'VAR',
@@ -150,9 +110,10 @@ describe('Eds', function () {
                         accessType: AccessType.READ_WRITE,
                         compactSubObj: true, // Not allowed
                     }).to.throw(EdsError);
-                })
+                });
             });
             it('should emit on value update', function (done) {
+                const eds = new Eds();
                 const obj = eds.addEntry(0x2000, {
                     parameterName: 'VAR',
                     objectType: ObjectType.VAR,
@@ -170,68 +131,59 @@ describe('Eds', function () {
         describe('ObjectType is DEFSTRUCT, ARRAY, or RECORD', function () {
             describe('compactSubObj is false', function () {
                 it('should not allow dataType', function () {
+                    const eds = new Eds();
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             parameterName: 'ARRAY',
                             objectType: ObjectType.ARRAY,
                             dataType: DataType.UNSIGNED8,
-                            subNumber: 1,
                         }).to.throw(EdsError);
-                    })
-                });
-                it('should not allow accessType', function () {
-                    return expect(() => {
-                        eds.addEntry(0x2000, {
-                            parameterName: 'ARRAY',
-                            objectType: ObjectType.ARRAY,
-                            accessType: AccessType.READ_WRITE,
-                            subNumber: 1,
-                        }).to.throw(EdsError);
-                    })
+                    });
                 });
                 it('should not allow defaultValue', function () {
+                    const eds = new Eds();
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             parameterName: 'ARRAY',
                             objectType: ObjectType.ARRAY,
                             defaultValue: 0,
-                            subNumber: 1,
                         }).to.throw(EdsError);
-                    })
+                    });
                 });
                 it('should not allow pdoMapping', function () {
+                    const eds = new Eds();
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             parameterName: 'ARRAY',
                             objectType: ObjectType.ARRAY,
                             pdoMapping: false,
-                            subNumber: 1,
                         }).to.throw(EdsError);
-                    })
+                    });
                 });
                 it('should not allow lowLimit', function () {
+                    const eds = new Eds();
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             parameterName: 'ARRAY',
                             objectType: ObjectType.ARRAY,
                             lowLimit: null,
-                            subNumber: 1,
                         }).to.throw(EdsError);
-                    })
+                    });
                 });
                 it('should not allow highLimit', function () {
+                    const eds = new Eds();
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             parameterName: 'ARRAY',
                             objectType: ObjectType.ARRAY,
                             highLimit: null,
-                            subNumber: 1,
                         }).to.throw(EdsError);
-                    })
+                    });
                 });
             });
             describe('CompactSubObj is true', function () {
                 it('should require dataType', function () {
+                    const eds = new Eds();
                     return expect(() => {
                         eds.addEntry(0x2000, {
                             parameterName: 'ARRAY',
@@ -240,86 +192,68 @@ describe('Eds', function () {
                             compactSubObj: true,
                         });
                     }).to.throw(EdsError);
-                });
-                it('should require accessType', function () {
-                    return expect(() => {
-                        eds.addEntry(0x2000, {
-                            parameterName: 'ARRAY',
-                            objectType: ObjectType.ARRAY,
-                            dataType: DataType.UNSIGNED8,
-                            compactSubObj: true,
-                        });
-                    }).to.throw(EdsError);
-                });
-                it('should not allow subNumber', function () {
-                    return expect(() => {
-                        eds.addEntry(0x2000, {
-                            parameterName: 'ARRAY',
-                            objectType: ObjectType.ARRAY,
-                            dataType: DataType.UNSIGNED8,
-                            accessType: AccessType.READ_WRITE,
-                            subNumber: 1,
-                            compactSubObj: true,
-                        }).to.throw(EdsError);
-                    });
                 });
             });
         });
 
         describe('ObjectType is DOMAIN', function () {
             it('should not allow pdoMapping', function () {
+                const eds = new Eds();
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         parameterName: 'ARRAY',
                         objectType: ObjectType.ARRAY,
                         pdoMapping: false,
                     }).to.throw(EdsError);
-                })
+                });
             });
             it('should not allow lowLimit', function () {
+                const eds = new Eds();
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         parameterName: 'DOMAIN',
                         objectType: ObjectType.DOMAIN,
                         lowLimit: null,
                     }).to.throw(EdsError);
-                })
+                });
             });
             it('should not allow highLimit', function () {
+                const eds = new Eds();
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         parameterName: 'DOMAIN',
                         objectType: ObjectType.DOMAIN,
                         highLimit: null,
                     }).to.throw(EdsError);
-                })
-            });
-            it('should not allow subNumber', function () {
-                return expect(() => {
-                    eds.addEntry(0x2000, {
-                        parameterName: 'DOMAIN',
-                        objectType: ObjectType.DOMAIN,
-                        subNumber: 1,
-                    }).to.throw(EdsError);
-                })
+                });
             });
             it('should not allow compactSubObj', function () {
+                const eds = new Eds();
                 return expect(() => {
                     eds.addEntry(0x2000, {
                         parameterName: 'DOMAIN',
                         objectType: ObjectType.DOMAIN,
                         compactSubObj: false,
                     }).to.throw(EdsError);
-                })
+                });
             });
         });
     });
 
     describe('Remove entry', function () {
-        let eds;
+        it('should remove an entry', function () {
+            const eds = new Eds();
+            eds.addEntry(0x2000, {
+                parameterName: 'Test entry',
+                dataType: DataType.UNSIGNED8,
+            });
 
-        beforeEach(function () {
-            eds = new Eds();
+            eds.removeEntry(0x2000);
+            return expect(eds.getEntry(0x2000)).to.equal(undefined);
+        });
+
+        it('should remove exactly one entry from the name lookup', function () {
+            const eds = new Eds();
             eds.addEntry(0x2000, {
                 parameterName: 'Test entry',
                 objectType: ObjectType.VAR,
@@ -338,14 +272,7 @@ describe('Eds', function () {
                 dataType: DataType.UNSIGNED8,
                 accessType: AccessType.READ_WRITE,
             });
-        });
 
-        it('should remove an entry', function () {
-            eds.removeEntry(0x2000);
-            return expect(eds.getEntry(0x2000)).to.equal(undefined);
-        });
-
-        it('should remove exactly one entry from the name lookup', function () {
             expect(eds.getEntry('Test entry').length).to.equal(3);
             eds.removeEntry(0x2000);
 
@@ -358,31 +285,28 @@ describe('Eds', function () {
         });
 
         it('should throw if an entry does not exist', function () {
-            expect(() => {
-                eds.removeEntry(0x2003);
-            }).to.throw();
+            const eds = new Eds();
+            expect(() => eds.removeEntry(0x2003)).to.throw(EdsError);
         });
     });
 
     describe('Sub-entries', function () {
-        let eds;
-
-        before(function () {
-            eds = new Eds();
-        });
-
         it('should create sub-entry 0', function () {
+            const eds = new Eds();
             const entry = eds.addEntry(0x2000, {
                 parameterName: 'Test entry',
                 objectType: ObjectType.ARRAY,
-                subNumber: 1
             });
 
             expect(entry[0]).to.exist;
         });
 
         it('should add sub-entires', function () {
-            const entry = eds.getEntry(0x2000);
+            const eds = new Eds();
+            const entry = eds.addEntry(0x2000, {
+                parameterName: 'Test entry',
+                objectType: ObjectType.ARRAY,
+            });
 
             expect(entry.subNumber).to.equal(1);
             expect(entry[0].value).to.equal(0);
@@ -409,7 +333,25 @@ describe('Eds', function () {
         });
 
         it('should remove sub-entries', function () {
-            const entry = eds.getEntry(0x2000);
+            const eds = new Eds();
+            const entry = eds.addEntry(0x2000, {
+                parameterName: 'Test entry',
+                objectType: ObjectType.ARRAY,
+            });
+
+            eds.addSubEntry(0x2000, 1, {
+                parameterName: 'Sub-entry 1',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED8,
+                accessType: AccessType.READ_WRITE,
+            });
+
+            eds.addSubEntry(0x2000, 10, {
+                parameterName: 'Sub-entry 10',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED8,
+                accessType: AccessType.READ_WRITE,
+            });
 
             eds.removeSubEntry(0x2000, 10);
             expect(entry.subNumber).to.equal(2);
@@ -421,18 +363,14 @@ describe('Eds', function () {
         });
 
         it('should not remove sub-entry 0', function () {
+            const eds = new Eds();
             expect(() => eds.removeSubEntry(0x2000, 0)).to.throw(EdsError);
         });
     });
 
     describe('Scaling', function () {
-        let eds;
-
-        before(function () {
-            eds = new Eds();
-        });
-
         it('should scale numeric values', function () {
+            const eds = new Eds();
             const obj = eds.addEntry(0x2000, {
                 parameterName: 'VAR',
                 objectType: ObjectType.VAR,

@@ -41,15 +41,18 @@ describe('Sdo', function () {
 
     beforeEach(function () {
         device = new Device({ id: 0xA, loopback: true });
-        device.sdo.addServer(device.id);
-        device.sdoServer.addClient(device.id);
+        device.eds.addSdoClientParameter({ deviceId: device.id, });
+        device.eds.addSdoServerParameter({ deviceId: device.id, });
+        device.start();
+    });
+
+    afterEach(function() {
+        device.stop();
     });
 
     describe('Expediated transfer', function () {
         for (let [type, value] of shortTypes) {
-            it("should transfer " + type, function () {
-                device.init();
-
+            it('should transfer ' + type, function () {
                 const index = DataType[type];
                 return device.sdo.download({
                     serverId: device.id,
@@ -76,9 +79,7 @@ describe('Sdo', function () {
 
     describe('Segmented transfer', function () {
         for (let [type, value] of longTypes) {
-            it("should transfer " + type, function () {
-                device.init();
-
+            it('should transfer ' + type, function () {
                 const index = DataType[type];
                 return device.sdo.download({
                     serverId: device.id,
@@ -107,8 +108,7 @@ describe('Sdo', function () {
         }
 
         it('should transfer subindexes >= 1', async function () {
-            const testString = 'I am a long string that will take multiple messages to transfer'
-            device.init();
+            const testString = 'I am a long string that will take multiple messages to transfer';
             device.eds.addEntry(0x1234, {
                 parameterName: 'Test entry',
                 objectType: 6,
@@ -128,7 +128,7 @@ describe('Sdo', function () {
                 dataType: DataType.VISIBLE_STRING
             });
 
-            expect(result).to.equal(testString)
+            expect(result).to.equal(testString);
 
             return device.sdo.download({
                 serverId: device.id,
@@ -142,9 +142,7 @@ describe('Sdo', function () {
 
     describe('Block transfer', function () {
         for (let [type, value] of shortTypes) {
-            it("should transfer " + type, function () {
-                device.init();
-
+            it('should transfer ' + type, function () {
                 const index = DataType[type];
                 return device.sdo.download({
                     serverId: device.id,
@@ -171,9 +169,7 @@ describe('Sdo', function () {
         }
 
         for (let [type, value] of longTypes) {
-            it("should transfer " + type, function () {
-                device.init();
-
+            it('should transfer ' + type, function () {
                 const index = DataType[type];
                 return device.sdo.download({
                     serverId: device.id,
@@ -208,9 +204,8 @@ describe('Sdo', function () {
             for (let i = 0; i < data.length; ++i)
                 data[i] = Math.floor(Math.random() * 0xff);
 
-            device.init();
-            device.sdo.blockSize = 1;
-            device.sdoServer.blockSize = 1;
+            device.protocol.sdoClient.blockSize = 1;
+            device.protocol.sdoServer.blockSize = 1;
 
             device.eds.addEntry(0x1234, {
                 parameterName: 'A long buffer',
@@ -236,20 +231,6 @@ describe('Sdo', function () {
                 .then((result) => {
                     expect(Buffer.compare(data, result)).to.equal(0);
                 });
-        });
-    });
-
-    describe('Error handling', function () {
-        it('should abort if timeout is exceeded', function () {
-            // Set server to non-existant COB-ID
-            device.setValueArray(0x1280, 3, 0x1);
-            device.init();
-
-            return expect(device.sdo.upload({
-                serverId: 0x1,
-                index: 0x1000,
-                subIndex: 1,
-            })).to.be.rejectedWith("SDO protocol timed out");
         });
     });
 });

@@ -25,13 +25,36 @@
             "error",
             "stroustrup"
         ],
+        "curly": [
+            "error",
+            "multi-or-nest",
+            "consistent"
+        ],
+        "max-len": [
+            "warn",
+            {
+                "code": 80,
+                "tabWidth": 4,
+                "comments": 120,
+                "ignoreUrls": true,
+                "ignoreStrings": true,
+                "ignoreRegExpLiterals": true
+            }
+        ],
+        "quotes": [
+            "warn",
+            "single",
+            {
+                "avoidEscape": true,
+                "allowTemplateLiterals": true
+            }
+        ],
         "no-trailing-spaces": "error",
         "no-control-regex": "off",
         "no-unused-vars": "error",
         "no-console": "error",
         "camelcase": "error",
-        "jsdoc/tag-lines": "off",
-        "jsdoc/require-returns-check": "off"
+        "semi": "error"
     },
     "plugins": [
         "mocha",

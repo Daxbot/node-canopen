@@ -4,9 +4,8 @@
  * @copyright 2024 Daxbot
  */
 
-const Device = require('../device');
-const { EdsError, DataObject } = require('../eds');
-const { ObjectType, AccessType, DataType } = require('../types');
+const EventEmitter = require('events');
+const { Eds, EdsError } = require('../eds');
 
 /**
  * NMT internal states.
@@ -69,30 +68,25 @@ const NmtCommand = {
  * This class implements the NMT node control services and tracks the device's
  * current NMT consumer state.
  *
- * @param {Device} device - parent device.
+ * @param {Eds} eds - Eds object.
  * @see CiA301 "Network management" (§7.2.8)
- * @example
- * const can = require('socketcan');
- *
- * const channel = can.createRawChannel('can0');
- * const device = new Device({ id: 0xa });
- *
- * channel.addListener('onMessage', (message) => device.receive(message));
- * device.setTransmitFunction((message) => channel.send(message));
- *
- * device.init();
- * channel.start();
- *
- * device.nmt.producerTime = 500;
- * device.nmt.start();
+ * @fires 'message' on preparing a CAN message to send.
+ * @fires 'nmtTimeout' on missing a consumer heartbeat.
+ * @fires 'nmtChangeState' on change of NMT state.
+ * @fires 'nmtReset' on an NMT reset command.
  */
-class Nmt {
-    constructor(device) {
-        this.device = device;
-        this.heartbeats = {};
-        this.timers = {};
+class Nmt extends EventEmitter {
+    constructor(eds) {
+        super();
+
+        if(!Eds.isEds(eds))
+            throw new TypeError('not an Eds');
+
+        this.eds = eds;
+        this.deviceId = null;
+        this.heartbeatMap = {};
+        this.heartbeatTimers = {};
         this._state = NmtState.INITIALIZING;
-        this.started = false;
     }
 
     /**
@@ -105,10 +99,15 @@ class Nmt {
     }
 
     set state(newState) {
-        const oldState = this.state;
-        if (newState !== oldState) {
+        if (newState !== this.state) {
+            const deviceId = this.deviceId;
+            const oldState = this.state;
             this._state = newState;
-            this.device.emit('nmtChangeState', this.device.id, newState);
+            this.emit('nmtChangeState', {
+                deviceId,
+                newState,
+                oldState,
+            });
         }
     }
 
@@ -118,188 +117,73 @@ class Nmt {
      * @type {number}
      */
     get producerTime() {
-        return this.device.getValue(0x1017);
-    }
-
-    set producerTime(value) {
-        let obj1017 = this.device.eds.getEntry(0x1017);
-        if (obj1017 === undefined) {
-            obj1017 = this.device.eds.addEntry(0x1017, {
-                parameterName: 'Producer heartbeat time',
-                objectType: ObjectType.VAR,
-                dataType: DataType.UNSIGNED32,
-                accessType: AccessType.READ_WRITE,
-            });
-        }
-
-        obj1017.value = value;
-    }
-
-    /**
-     * Get an entry from 0x1016 (Consumer heartbeat time).
-     *
-     * @param {number} deviceId - device COB-ID of the entry to get.
-     * @returns {DataObject | null} the matching entry or null.
-     */
-    getConsumer(deviceId) {
-        const obj1016 = this.device.eds.getEntry(0x1016);
-        if (obj1016 !== undefined) {
-            for (let i = 1; i <= obj1016._subObjects[0].value; ++i) {
-                const subObject = obj1016._subObjects[i];
-                if (subObject === undefined)
-                    continue;
-
-                if (((subObject.value >> 16) & 0x7F) === deviceId)
-                    return subObject;
-            }
-        }
+        const obj1017 = this.eds.getEntry(0x1017);
+        if (obj1017)
+            return obj1017.value;
 
         return null;
     }
 
     /**
-     * Get the consumer heartbeat time for a device.
+     * Consumer heartbeat time (Object 0x1016).
      *
-     * @param {number} deviceId - device COB-ID to get.
-     * @returns {number | null} the consumer heartbeat time or null.
+     * @type {Array<object>} [{ deviceId, heartbeatTime } ... ]
      */
-    getConsumerTime(deviceId) {
-        const subObject = this.getConsumer(deviceId);
-        if (subObject !== null)
-            return subObject.value & 0xffff;
-
-        return null;
+    get consumers() {
+        return this.eds.getHeartbeatConsumers();
     }
 
     /**
-     * Add an entry to 0x1016 (Consumer heartbeat time).
-     *
-     * @param {number} deviceId - device COB-ID to add.
-     * @param {number} timeout - milliseconds before a timeout is reported.
-     * @param {number} [subIndex] - sub-index to store the entry, optional.
+     * Begin heartbeat generation.
      */
-    addConsumer(deviceId, timeout, subIndex) {
-        if (deviceId < 1 || deviceId > 0x7F)
-            throw RangeError('deviceId must be in range [1-127]');
-
-        if (timeout < 0 || timeout > 0xffff)
-            throw RangeError('timeout must be in range [0-65535]');
-
-        if (this.getConsumer(deviceId) !== null) {
-            deviceId = '0x' + deviceId.toString(16);
-            throw new EdsError(`NMT consumer ${deviceId} already exists`);
-        }
-
-        let obj1016 = this.device.eds.getEntry(0x1016);
-        if (obj1016 === undefined) {
-            obj1016 = this.device.eds.addEntry(0x1016, {
-                parameterName: 'Consumer heartbeat time',
-                objectType: ObjectType.ARRAY,
-            });
-        }
-
-        if (!subIndex) {
-            // Find first empty index
-            for (let i = 1; i <= 255; ++i) {
-                if (obj1016[i] === undefined) {
-                    subIndex = i;
-                    break;
-                }
-            }
-        }
-
-        if (!subIndex)
-            throw new EdsError('NMT consumer entry full');
-
-        // Install sub entry
-        this.device.eds.addSubEntry(0x1016, subIndex, {
-            parameterName: `Device 0x${deviceId.toString(16)}`,
-            objectType: ObjectType.VAR,
-            dataType: DataType.UNSIGNED32,
-            accessType: AccessType.READ_WRITE,
-            defaultValue: (deviceId << 16) | timeout,
-        });
-    }
-
-    /**
-     * Remove an entry from 0x1016 (Consumer heartbeat time).
-     *
-     * @param {number} deviceId - device COB-ID of the entry to remove.
-     */
-    removeConsumer(deviceId) {
-        const subEntry = this.getConsumer(deviceId);
-        if (subEntry === null)
-            throw new EdsError(`NMT consumer ${deviceId} does not exist`);
-
-        this.device.eds.removeSubEntry(0x1016, subEntry.subIndex);
-    }
-
-    /** Initialize members and begin heartbeat monitoring. */
-    init() {
-        // Object 0x1016 - Consumer heartbeat time
-        let obj1016 = this.device.eds.getEntry(0x1016);
-        if (obj1016 === undefined) {
-            obj1016 = this.device.eds.addEntry(0x1016, {
-                parameterName: 'Consumer heartbeat time',
-                objectType: ObjectType.ARRAY,
-            });
-        }
-        else {
-            this._parse1016(obj1016);
-        }
-
-        // Object 0x1017 - Producer heartbeat time
-        let obj1017 = this.device.eds.getEntry(0x1017);
-        if (obj1017 === undefined) {
-            obj1017 = this.device.eds.addEntry(0x1017, {
-                parameterName: 'Producer heartbeat time',
-                objectType: ObjectType.VAR,
-                dataType: DataType.UNSIGNED32,
-                accessType: AccessType.READ_WRITE,
-            });
-        }
-        else {
-            this._parse1017(obj1017);
-        }
-
-        obj1016.addListener('update', this._parse1016.bind(this));
-        obj1017.addListener('update', this._parse1017.bind(this));
-
-
-        this.device.addListener('message', this._onMessage.bind(this));
-    }
-
-    /** Begin heartbeat generation. */
     start() {
-        if (this.producerTime == 0)
-            throw new EdsError('producerTime must not be 0')
+        if(this.state !== NmtState.INITIALIZING)
+            return;
 
-        // Switch to NmtState.OPERATIONAL
-        this.startNode();
+        this.heartbeatMap = {};
+        for(const { deviceId, heartbeatTime } of this.consumers) {
+            this.heartbeatMap[deviceId] = {
+                state: null,
+                interval: heartbeatTime,
+            };
+        }
 
-        // Start heartbeat timer
-        this.timers[this.device.id] = setInterval(() => {
-            this._sendHeartbeat();
-        }, this.producerTime);
+        const producerTime = this.producerTime;
+        if(producerTime !== null) {
+            if (producerTime === 0)
+                throw new EdsError('producerTime must not be 0');
 
+            // Start heartbeat timer
+            this.heartbeatTimers[0] = setInterval(() => {
+                if(this.deviceId)
+                    this._sendHeartbeat(this.deviceId);
+            }, producerTime);
+        }
+
+        this.state = NmtState.PRE_OPERATIONAL;
         this.started = true;
     }
 
     /** Stop heartbeat generation. */
     stop() {
-        clearInterval(this.timers[this.device.id]);
-        delete this.timers[this.device.id]
-        this.started = false;
+        for(const timer of Object.values(this.heartbeatTimers))
+            clearTimeout(timer);
+
+        this.state = NmtState.INITIALIZING;
+        this.heartbeatTimers = {};
     }
 
     /**
      * Get a device's NMT state.
      *
-     * @param {number} deviceId - CAN identifier.
+     * @param {number} [deviceId] - CAN identifier.
      * @param {number} [timeout] - How long to wait (ms).
      * @returns {Promise<NmtState | null>} The node NMT state.
      */
     async getNodeState(deviceId, timeout) {
+        if(!deviceId)
+            return this.state;
+
         let interval = this.getConsumerTime(deviceId);
         if (interval === null)
             throw new ReferenceError(`NMT consumer ${deviceId} does not exist`);
@@ -314,7 +198,7 @@ class Nmt {
             let intervalTimer = null;
 
             timeoutTimer = setTimeout(() => {
-                const heartbeat = this.heartbeats[deviceId];
+                const heartbeat = this.heartbeatMap[deviceId];
                 if (heartbeat && heartbeat.last > start)
                     resolve(heartbeat.state);
                 else
@@ -324,7 +208,7 @@ class Nmt {
             }, timeout);
 
             intervalTimer = setInterval(() => {
-                const heartbeat = this.heartbeats[deviceId];
+                const heartbeat = this.heartbeatMap[deviceId];
                 if (heartbeat && heartbeat.last > start) {
                     clearTimeout(timeoutTimer);
                     clearInterval(intervalTimer);
@@ -402,18 +286,18 @@ class Nmt {
      * @private
      */
     _sendNmt(nodeId, command) {
-        if (nodeId === undefined || nodeId === this.device.id) {
+        if (nodeId === undefined) {
             // Handle internally and return
             this._handleNmt(command);
             return;
         }
 
-        if (nodeId === 0) {
+        if (!nodeId) {
             // Broadcast
             this._handleNmt(command);
         }
 
-        this.device.send({
+        this.emit('message', {
             id: 0x0,
             data: Buffer.from([command, nodeId]),
         });
@@ -422,11 +306,12 @@ class Nmt {
     /**
      * Serve a Heartbeat object.
      *
+     * @param {number} deviceId - device identifier [1-127].
      * @private
      */
-    _sendHeartbeat() {
-        this.device.send({
-            id: 0x700 + this.device.id,
+    _sendHeartbeat(deviceId) {
+        this.emit('message', {
+            id: 0x700 + deviceId,
             data: Buffer.from([this.state])
         });
     }
@@ -449,111 +334,59 @@ class Nmt {
                 this.state = NmtState.PRE_OPERATIONAL;
                 break;
             case NmtCommand.RESET_NODE:
+                this.emit('nmtReset', true);
+                this.state = NmtState.INITIALIZING;
+                break;
             case NmtCommand.RESET_COMMUNICATION:
+                this.emit('nmtReset', false);
                 this.state = NmtState.INITIALIZING;
                 break;
         }
     }
 
     /**
-     * Called when a new CAN message is received.
+     * Call when a new CAN message is received.
      *
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @param {number} message.len - CAN message length in bytes.
-     * @private
      */
-    _onMessage(message) {
+    receive(message) {
         if ((message.id & 0x7FF) == 0x0) {
             const nodeId = message.data[1];
-            if (nodeId == 0 || nodeId == this.device.id)
+            if (nodeId == 0 || nodeId == this.deviceId)
                 this._handleNmt(message.data[0]);
         }
         else if ((message.id & 0x700) == 0x700) {
             const deviceId = message.id & 0x7F;
-            if (deviceId in this.heartbeats) {
-                this.heartbeats[deviceId].last = Date.now();
+            if (deviceId in this.heartbeatMap) {
+                this.heartbeatMap[deviceId].last = Date.now();
 
-                const state = message.data[0];
-                if (state !== this.heartbeats[deviceId].state) {
-                    this.heartbeats[deviceId].state = state;
-                    this.device.emit('nmtChangeState', deviceId, state);
+                const newState = message.data[0];
+                const oldState = this.heartbeatMap[deviceId].state;
+                if (newState !== oldState) {
+                    this.heartbeatMap[deviceId].state = newState;
+                    this.emit('nmtChangeState', {
+                        deviceId,
+                        newState,
+                        oldState,
+                    });
                 }
 
-                if (!this.timers[deviceId]) {
+                if (!this.heartbeatTimers[deviceId]) {
                     // First heartbeat - start timer.
-                    const interval = this.heartbeats[deviceId].interval;
-                    this.timers[deviceId] = setTimeout(() => {
-                        this.device.emit('nmtTimeout', deviceId);
-                        this.heartbeats[deviceId].state = null;
-                        this.timers[deviceId] = null;
+                    const interval = this.heartbeatMap[deviceId].interval;
+                    this.heartbeatTimers[deviceId] = setTimeout(() => {
+                        this.emit('nmtTimeout', deviceId);
+                        this.heartbeatMap[deviceId].state = null;
+                        this.heartbeatTimers[deviceId] = null;
                     }, interval);
                 }
                 else {
-                    this.timers[deviceId].refresh();
+                    this.heartbeatTimers[deviceId].refresh();
                 }
             }
-        }
-    }
-
-    /**
-     * Called when 0x1016 (Consumer heartbeat time) is updated.
-     *
-     * @param {DataObject} entry - updated DataObject.
-     * @private
-     */
-    _parse1016(entry) {
-        /* Object 0x1016 - Consumer heartbeat time.
-         *   sub-index 1+:
-         *     bit 0..15    Heartbeat time in ms.
-         *     bit 16..23   Node-ID of producer.
-         *     bit 24..31   Reserved (0x00);
-         */
-        for (let i = 1; i <= entry[0].value; ++i) {
-            const subEntry = entry[i];
-            if (subEntry === undefined)
-                continue;
-
-            const heartbeatTime = subEntry.raw.readUInt16LE(0);
-            const deviceId = subEntry.raw.readUInt8(2);
-
-            if (this.heartbeats[deviceId] !== undefined) {
-                /* Clear the timer - it will be re-initialized with the new
-                 * interval on the next heartbeat message.
-                 */
-                this.heartbeats[deviceId].interval = heartbeatTime;
-                clearTimeout(this.timers[deviceId]);
-                this.timers[deviceId] = null;
-            }
-            else {
-                this.heartbeats[deviceId] = {
-                    state: null,
-                    interval: heartbeatTime,
-                }
-            }
-        }
-    }
-
-    /**
-     * Called when 0x1017 (Producer heartbeat time) is updated.
-     *
-     * @param {DataObject} entry - updated DataObject.
-     * @private
-     */
-    _parse1017(entry) {
-        if (!this.started)
-            return;
-
-        // Clear old timer
-        this.stop();
-
-        // Start heartbeat timer with new interval
-        const producerTime = entry.value;
-        if (producerTime > 0) {
-            this.timers[this.device.id] = setInterval(() => {
-                this._sendHeartbeat();
-            }, producerTime);
         }
     }
 }

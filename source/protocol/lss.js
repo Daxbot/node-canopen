@@ -4,7 +4,8 @@
  * @copyright 2024 Daxbot
  */
 
-const Device = require('../device');
+const EventEmitter = require('events');
+const { Eds } = require('../eds');
 
 /**
  * CANopen LSS command specifiers.
@@ -29,7 +30,7 @@ const LssCommand = {
     INQUIRE_PRODUCT_CODE: 91,
     INQUIRE_REVISION_NUMBER: 92,
     INQUIRE_SERIAL_NUMBER: 93,
-}
+};
 
 /**
  * CANopen LSS modes.
@@ -43,7 +44,7 @@ const LssMode = {
 
     /** All LSS services are available. */
     CONFIGURATION: 1,
-}
+};
 
 /**
  * Errors generated during LSS services.
@@ -80,93 +81,72 @@ class LssTimeout extends Error {
 /**
  * CANopen LSS protocol handler.
  *
- * @param {Device} device - parent device.
+ * @param {Eds} eds - Eds object.
  * @see CiA305 "Layer Settings Services and Protocol (LSS)"
+ * @fires 'message' on preparing a CAN message to send.
+ * @fires 'lssChangeDeviceId' on change of device id.
+ * @fires 'lssChangeMode' on change of LSS mode.
  */
-class Lss {
-    constructor(device) {
-        this.device = device;
-        this._mode = LssMode.OPERATION;
+class Lss extends EventEmitter {
+    constructor(eds) {
+        super();
+
+        if(!Eds.isEds(eds))
+            throw new TypeError('not an Eds');
+
+        this.eds = eds;
+        this.mode = LssMode.OPERATION;
         this.pending = {};
         this.select = [];
         this.scanState = 0;
     }
 
     /**
-     * Device identity vendor id (Object 0x1018.1).
+     * Vendor id.
      *
      * @type {number}
      */
     get vendorId() {
-        return this.device.getValueArray(0x1018, 1);
-    }
-
-    set vendorId(value) {
-        this.device.setValueArray(0x1018, 1, value);
+        return this.eds.getValueArray(0x1018, 1);
     }
 
     /**
-     * Device identity product code (Object 0x1018.2).
+     * Product code.
      *
      * @type {number}
      */
     get productCode() {
-        return this.device.getValueArray(0x1018, 2);
-    }
-
-    set productCode(value) {
-        this.device.setValueArray(0x1018, 2, value);
+        return this.eds.getValueArray(0x1018, 2);
     }
 
     /**
-     * Device identity revision number (Object 0x1018.3).
+     * Revision number.
      *
      * @type {number}
      */
     get revisionNumber() {
-        return this.device.getValueArray(0x1018, 3);
-    }
-
-    set revisionNumber(value) {
-        this.device.setValueArray(0x1018, 3, value);
+        return this.eds.getValueArray(0x1018, 3);
     }
 
     /**
-     * Device identity serial number (Object 0x1018.4).
+     * Serial number.
      *
      * @type {number}
      */
     get serialNumber() {
-        return this.device.getValueArray(0x1018, 4);
-    }
-
-    set serialNumber(value) {
-        this.device.setValueArray(0x1018, 4, value);
+        return this.eds.getValueArray(0x1018, 4);
     }
 
     /**
-     * Device LSS mode.
-     *
-     * @type {LssMode}
+     * Start the module.
      */
-    get mode() {
-        return this._mode;
+    start() {
     }
 
-    set mode(newMode) {
-        const oldMode = this.mode;
-        if (newMode !== oldMode) {
-            this._mode = newMode;
-            this.device.emit('lssChangeMode', newMode);
-        }
-    }
-
-    /** Begin listening for LSS command responses. */
-    init() {
-        if (!this.device.eds.lssSupported)
-            return;
-
-        this.device.addListener('message', this._onMessage.bind(this));
+    /**
+     * Stop the module.
+     */
+    stop() {
     }
 
     /**
@@ -175,24 +155,25 @@ class Lss {
      * Identifies exactly one LSS consumer device and switches it to
      * configuration mode.
      *
-     * @param {object} args - arguments.
-     * @param {number} args.vendorId - vendor-id hint (optional).
-     * @param {number} args.productCode - product-code hint (optional).
-     * @param {number} args.revisionNumber - revision-number hint (optional).
-     * @param {number} args.serialNumber - serial-number hint (optional).
-     * @param {number} args.timeout - how long to wait for nodes to respond.
+     * @param {object} [identity] - device identity hint.
+     * @param {number} [identity.vendorId] - vendor-id hint (optional).
+     * @param {number} [identity.productCode] - product-code hint (optional).
+     * @param {number} [identity.revisionNumber] - revision-number hint (optional).
+     * @param {number} [identity.serialNumber] - serial-number hint (optional).
+     * @param {number} [timeout] - how long to wait for nodes to respond.
      * @returns {Promise<null | object>} resolves to the discovered device's id (or null).
      * @see https://www.can-cia.org/fileadmin/resources/documents/proceedings/2008_pfeiffer.pdf
      */
-    async fastscan(args = {}) {
-        let vendorId = args.vendorId || null;
-        let productCode = args.productCode || null;
-        let revisionNumber = args.revisionNumber || null;
-        let serialNumber = args.serialNumber || null;
-        let timeout = args.timeout || 20;
-        let timeoutFlag = false;
+    async fastscan(identity={}, timeout = 20) {
+        let {
+            vendorId,
+            productCode,
+            revisionNumber,
+            serialNumber
+        } = identity;
 
         // Initiate fastscan
+        let timeoutFlag = false;
         await new Promise((resolve) => {
             const timer = setTimeout(() => {
                 timeoutFlag = true;
@@ -209,7 +190,7 @@ class Lss {
             return null; // No devices
 
         // Find vendor-id
-        if (vendorId === null) {
+        if (vendorId === undefined) {
             vendorId = 0;
             for (let i = 31; i >= 0; --i) {
                 await new Promise((resolve) => {
@@ -248,7 +229,7 @@ class Lss {
         });
 
         // Find product-code
-        if (productCode === null) {
+        if (productCode === undefined) {
             productCode = 0;
             for (let i = 31; i >= 0; --i) {
                 await new Promise((resolve) => {
@@ -287,7 +268,7 @@ class Lss {
         });
 
         // Find revision-number
-        if (revisionNumber === null) {
+        if (revisionNumber === undefined) {
             revisionNumber = 0;
             for (let i = 31; i >= 0; --i) {
                 await new Promise((resolve) => {
@@ -326,7 +307,7 @@ class Lss {
         });
 
         // Find serial-number
-        if (serialNumber === null) {
+        if (serialNumber === undefined) {
             serialNumber = 0;
             for (let i = 31; i >= 0; --i) {
                 await new Promise((resolve) => {
@@ -384,16 +365,16 @@ class Lss {
     /**
      * Service: switch mode selective.
      *
-     * @param {number} vendorId - LSS consumer vendor-id.
-     * @param {number} productCode - LSS consumer product-code.
-     * @param {number} revisionNumber - LSS consumer revision-number.
-     * @param {number} serialNumber - LSS consumer serial-number.
-     * @param {number} timeout - time until promise is rejected.
+     * @param {object} identity - target device identity.
+     * @param {number} identity.vendorId - LSS consumer vendor-id.
+     * @param {number} identity.productCode - LSS consumer product-code.
+     * @param {number} identity.revisionNumber - LSS consumer revision-number.
+     * @param {number} identity.serialNumber - LSS consumer serial-number.
+     * @param {number} [timeout] - time until promise is rejected.
      * @returns {Promise<LssMode>} - the actual mode of the LSS consumer.
      * @see CiA305 "Switch Mode Selective" (§3.9.2)
      */
-    switchModeSelective(
-        vendorId, productCode, revisionNumber, serialNumber, timeout = 20) {
+    switchModeSelective(identity, timeout = 20) {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
                 reject(new LssTimeout());
@@ -402,19 +383,19 @@ class Lss {
             const data = Buffer.alloc(4);
 
             // Send vendor-id
-            data.writeUInt32LE(vendorId);
+            data.writeUInt32LE(identity.vendorId);
             this._sendLssRequest(LssCommand.SWITCH_MODE_VENDOR_ID, data);
 
             // Send product-code
-            data.writeUInt32LE(productCode);
+            data.writeUInt32LE(identity.productCode);
             this._sendLssRequest(LssCommand.SWITCH_MODE_PRODUCT_CODE, data);
 
             // Send revision-number
-            data.writeUInt32LE(revisionNumber);
+            data.writeUInt32LE(identity.revisionNumber);
             this._sendLssRequest(LssCommand.SWITCH_MODE_REVISION_NUMBER, data);
 
             // Send serial-number
-            data.writeUInt32LE(serialNumber);
+            data.writeUInt32LE(identity.serialNumber);
             this._sendLssRequest(LssCommand.SWITCH_MODE_SERIAL_NUMBER, data);
 
             this.pending[68] = { resolve, timer };
@@ -429,8 +410,8 @@ class Lss {
      * @returns {Promise} resolves when the service is finished.
      * @see CiA305 "Configure Node-ID Protocol" (§3.10.1)
      */
-    configureNodeId(nodeId, timeout = 20) {
-        return new Promise((resolve, reject) => {
+    async configureNodeId(nodeId, timeout = 20) {
+        const result = await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
                 reject(new LssTimeout());
             }, timeout);
@@ -442,27 +423,26 @@ class Lss {
                 resolve,
                 timer
             };
-        })
-            .then((result) => {
-                const code = result[0];
-                if (code == 0)
-                    return; // Success
+        });
 
-                let message = '';
-                switch (code) {
-                    case 1:
-                        message = 'Node-ID out of range';
-                        break;
-                    case 255:
-                        message = 'Implementation specific error';
-                        break;
-                    default:
-                        message = 'Unsupported error code';
-                        break;
-                }
+        const code = result[0];
+        if (code == 0)
+            return; // Success
 
-                throw new LssError(message, code, result[1]);
-            });
+        let message = '';
+        switch (code) {
+            case 1:
+                message = 'Node-ID out of range';
+                break;
+            case 255:
+                message = 'Implementation specific error';
+                break;
+            default:
+                message = 'Unsupported error code';
+                break;
+        }
+
+        throw new LssError(message, code, result[1]);
     }
 
     /**
@@ -481,7 +461,8 @@ class Lss {
             }, timeout);
 
             this._sendLssRequest(
-                LssCommand.CONFIGURE_BIT_TIMING, Buffer.from([tableSelect, tableIndex]));
+                LssCommand.CONFIGURE_BIT_TIMING,
+                Buffer.from([tableSelect, tableIndex]));
 
             this.pending[LssCommand.CONFIGURE_BIT_TIMING] = {
                 resolve,
@@ -576,10 +557,7 @@ class Lss {
      */
     async inquireVendorId(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-                reject(new LssTimeout());
-            }, timeout);
-
+            const timer = setTimeout(() => reject(new LssTimeout()), timeout);
             this._sendLssRequest(LssCommand.INQUIRE_VENDOR_ID);
 
             this.pending[LssCommand.INQUIRE_VENDOR_ID] = {
@@ -600,10 +578,7 @@ class Lss {
      */
     async inquireProductCode(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-                reject(new LssTimeout());
-            }, timeout);
-
+            const timer = setTimeout(() => reject(new LssTimeout()), timeout);
             this._sendLssRequest(LssCommand.INQUIRE_PRODUCT_CODE);
 
             this.pending[LssCommand.INQUIRE_PRODUCT_CODE] = {
@@ -624,10 +599,7 @@ class Lss {
      */
     async inquireRevisionNumber(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-                reject(new LssTimeout());
-            }, timeout);
-
+            const timer = setTimeout(() => reject(new LssTimeout()), timeout);
             this._sendLssRequest(LssCommand.INQUIRE_REVISION_NUMBER);
 
             this.pending[LssCommand.INQUIRE_REVISION_NUMBER] = {
@@ -648,10 +620,7 @@ class Lss {
      */
     async inquireSerialNumber(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-                reject(new LssTimeout());
-            }, timeout);
-
+            const timer = setTimeout(() => reject(new LssTimeout()), timeout);
             this._sendLssRequest(LssCommand.INQUIRE_SERIAL_NUMBER);
 
             this.pending[LssCommand.INQUIRE_SERIAL_NUMBER] = {
@@ -677,7 +646,7 @@ class Lss {
         if (data !== undefined)
             data.copy(sendBuffer, 1);
 
-        this.device.send({
+        this.emit('message', {
             id: 0x7e5,
             data: sendBuffer,
         });
@@ -697,7 +666,7 @@ class Lss {
         sendBuffer[1] = code;
         sendBuffer[2] = info;
 
-        this.device.send({
+        this.emit('message', {
             id: 0x7e4,
             data: sendBuffer,
         });
@@ -737,15 +706,14 @@ class Lss {
     }
 
     /**
-     * Called when a new CAN message is received.
+     * Call when a new CAN message is received.
      *
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @param {number} message.len - CAN message length in bytes.
-     * @private
      */
-    _onMessage(message) {
+    receive(message) {
         if (message.id === 0x7e4) {
             const cs = message.data[0];
             if (this.pending[cs] !== undefined) {
@@ -758,9 +726,6 @@ class Lss {
 
             if (cs === LssCommand.FASTSCAN) {
                 // Fastscan is only available for unconfigured nodes.
-                if (this.device.id !== null)
-                    return;
-
                 const bitCheck = message.data[5];
                 const lssSub = message.data[6];
                 const lssNext = message.data[7];
@@ -805,12 +770,15 @@ class Lss {
 
                     if (match) {
                         this.scanState = lssNext;
-                        if (bitCheck === 0 && lssNext < lssSub)
+                        if (bitCheck === 0 && lssNext < lssSub) {
                             this.mode = LssMode.CONFIGURATION;
+                            this.emit('lssChangeMode', this.mode);
+                        }
 
                         this._sendLssResponse(0x4f);
                     }
                 }
+                return;
             }
 
             // Switch mode commands
@@ -818,6 +786,7 @@ class Lss {
                 case LssCommand.SWITCH_MODE_GLOBAL:
                     this.mode = message.data[1];
                     this.select = [];
+                    this.emit('lssChangeMode', this.mode);
                     return;
 
                 case LssCommand.SWITCH_MODE_VENDOR_ID:
@@ -834,8 +803,10 @@ class Lss {
 
                 case LssCommand.SWITCH_MODE_SERIAL_NUMBER:
                     this.select[3] = message.data.readUInt32LE(1);
-                    if (this._checkLssAddress(this.select))
+                    if (this._checkLssAddress(this.select)) {
                         this.mode = LssMode.CONFIGURATION;
+                        this.emit('lssChangeMode', this.mode);
+                    }
                     return;
             }
 
@@ -846,9 +817,8 @@ class Lss {
             switch (cs) {
                 case LssCommand.CONFIGURE_NODE_ID:
                     try {
-                        this.device.id = message.data[1];
                         this._sendLssResponse(cs, 0);
-                        this.device.emit('lssChangeDeviceId', this.device.id);
+                        this.emit('lssChangeDeviceId', message.data[1]);
                     }
                     catch {
                         // Error: Node-ID out of range

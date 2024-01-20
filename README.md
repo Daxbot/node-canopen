@@ -5,9 +5,6 @@ CANopen see http://www.can-cia.org/
 
 This library allows the manipulation of CANopen devices as defined in CiA 301.
 
-## Documentation
-Pre-built documentation is available here: https://daxbot.github.io/node-canopen/
-
 ## Device
 The Device class represents a CANopen device and provides context for the
 protocol objects as well as access methods for the manufacturer data fields.
