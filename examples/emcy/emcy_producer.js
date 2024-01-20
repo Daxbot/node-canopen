@@ -17,11 +17,13 @@ async function main(device) {
         device.eds.setEmcyCobId(0x8A);
         device.start();
 
-        device.emcy.write(
-            EmcyType.GENERIC_ERROR, Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]));
+        device.emcy.write({
+            code: EmcyType.GENERIC_ERROR,
+            info: Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]),
+        });
 
         // Check error history
-        const lastError = device.emcy.history[0];
+        const lastError = device.emcy.history[0].code;
         console.log(`Sent 0x${lastError.toString(16)}`);
 
         device.stop();

@@ -5,7 +5,7 @@
  */
 
 const EventEmitter = require('events');
-const { Eds } = require('../eds');
+const { Eds, EdsError } = require('../eds');
 
 /**
  * CANopen emergency error code classes.
@@ -309,14 +309,10 @@ class Emcy extends EventEmitter {
     /**
      * Error history (Object 0x1003).
      *
-     * @type {Array<number>}
+     * @type {Array<object>} [{ code, info } ... ]
      */
     get history() {
-        const obj1003 = this.eds.getEntry(0x1003);
-        if (obj1003)
-            return obj1003.value;
-
-        return [];
+        return this.eds.getEmcyHistory();
     }
 
     /**
@@ -394,14 +390,23 @@ class Emcy extends EventEmitter {
     /**
      * Service: EMCY write.
      *
-     * @param {number} code - error code.
-     * @param {Buffer} info - error info.
+     * @param {object} args - function arguments.
+     * @param {number} args.code - error code.
+     * @param {Buffer} args.info - error info.
      */
-    write(code, info=null) {
+    write(args) {
         if (!this.cobId)
-            throw new Error('EMCY production is disabled');
+            throw new EdsError('EMCY production is disabled');
 
-        const em = new EmcyMessage({code, register: this.register, info});
+        if(typeof args !== 'object')
+            throw new TypeError('args should be an object');
+
+        const em = new EmcyMessage({
+            code: args.code,
+            register: this.register,
+            info: args.info
+        });
+
         const message = {
             id: this.cobId,
             data: em.toBuffer(),
@@ -411,24 +416,6 @@ class Emcy extends EventEmitter {
             this.sendQueue.push(message);
         else
             this.emit('message', message);
-
-        // Object 0x1003 - Pre-defined error field.
-        const obj1003 = this.eds.getEntry(0x1003);
-        if(obj1003) {
-            // Shift out oldest value.
-            const errorCount = obj1003[0].value;
-            if(errorCount > 0) {
-                for(let i = errorCount; i > 1; --i)
-                    obj1003[i-1].raw.copy(obj1003[i].raw);
-
-                // Set new code at sub-index 1.
-                obj1003[1].raw.writeUInt16LE(code);
-
-                // Update error count.
-                if(errorCount < (obj1003.subNumber - 1))
-                    obj1003[0].raw.writeUInt8(errorCount + 1);
-            }
-        }
     }
 
     /**

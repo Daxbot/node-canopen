@@ -19,15 +19,32 @@ describe('Emcy', function () {
             done();
         });
 
-        device.emcy.write(code);
+        device.emcy.write({ code });
     });
 
     it('should track error history', function(done) {
         const device = new Device({ id: 0xA, loopback: true });
         device.eds.setEmcyCobId(0x8A);
-        device.eds.setEmcyHistoryLength(1);
-        device.emcy.write(0x1000);
-        expect(device.emcy.history[0]).to.equal(0x1000);
+        device.eds.setEmcyHistoryLength(2);
+
+        device.eds.pushEmcyHistory(0x1000);
+        expect(device.emcy.history[0].code).to.equal(0x1000);
+        expect(device.emcy.history[0].info).to.equal(0);
+
+        device.eds.pushEmcyHistory(0x2000, 'CO');
+        expect(device.emcy.history[0].code).to.equal(0x2000);
+        expect(device.emcy.history[0].info).to.equal(0x4f43);
+
+        expect(device.emcy.history[1].code).to.equal(0x1000);
+        expect(device.emcy.history[1].info).to.equal(0);
+
+        device.eds.pushEmcyHistory(0x3000, 7);
+        expect(device.emcy.history[0].code).to.equal(0x3000);
+        expect(device.emcy.history[0].info).to.equal(7);
+
+        expect(device.emcy.history[1].code).to.equal(0x2000);
+        expect(device.emcy.history[1].info).to.equal(0x4f43);
+
         done();
     });
 });

@@ -1225,7 +1225,73 @@ class Eds {
     }
 
     /**
-     * Configures the number of sub-entries for 0x1003 (Pre-defined error field).
+     * Parse object 0x1003 - Pre-defined error field
+     *   sub-index 1+:
+     *     bit 0..15    Error code.
+     *     bit 16..31   Additional info.
+     *
+     * @returns {Array<object>} [{ code, info } ... ]
+     */
+    getEmcyHistory() {
+        const history = [];
+
+        const obj1003 = this.getEntry(0x1003);
+        if (obj1003) {
+            const maxSubIndex = obj1003[0].value;
+            for (let i = 1; i <= maxSubIndex; ++i) {
+                const raw = this.getRawArray(0x1003, i);
+                const code = raw.readUInt16LE(0);
+                const info = raw.readUInt16LE(2);
+
+                if(code)
+                    history.push({ code, info });
+            }
+        }
+
+        return history;
+    }
+
+    /**
+     * Push an entry to object 0x1003 - Pre-defined error field.
+     *   sub-index 1+:
+     *     bit 0..15    Error code.
+     *     bit 16..31   Additional info.
+     *
+     * @param {number} code - error code.
+     * @param {Buffer | number} info - error info (2 bytes).
+     */
+    pushEmcyHistory(code, info) {
+        const obj1003 = this.getEntry(0x1003);
+        if(!obj1003)
+            throw new EdsError();
+
+        const maxSubIndex = obj1003[0].value;
+        if(maxSubIndex > 1) {
+            // Shift objects
+            const lastObj = obj1003[maxSubIndex];
+            for(let i = maxSubIndex; i > 1; --i)
+                obj1003[i] = obj1003[i - 1];
+
+            obj1003[1] = lastObj;
+        }
+
+        // Write new value to sub-index 1
+        obj1003[1].raw.writeUInt16LE(code, 0);
+        if(info) {
+            if(typeof info === 'number') {
+                obj1003[1].raw.writeUInt16LE(info, 2);
+            }
+            else {
+                if(!Buffer.isBuffer(info))
+                    info = Buffer.from(info);
+
+                info.copy(obj1003[1].raw, 2);
+            }
+        }
+    }
+
+    /**
+     * Configures the length of 0x1003 - Pre-defined error field.
      *
      * @param {number} length - how many historical error events should be kept.
      * @param {object} [options] - DataObject creation options.
@@ -1233,29 +1299,29 @@ class Eds {
      * @param {AccessType} [options.accessType] - DataObject access type.
      */
     setEmcyHistoryLength(length, options = {}) {
-        if(length === undefined || length < 0)
+        if (length === undefined || length < 0)
             throw new EdsError('error field size must >= 0');
 
         let obj1003 = this.getEntry(0x1003);
-        if(obj1003 === undefined) {
+        if (obj1003 === undefined) {
             obj1003 = this.addEntry(0x1003, {
-                parameterName:  options.parameterName || 'Pre-defined error field',
-                objectType:     ObjectType.ARRAY,
+                parameterName: options.parameterName || 'Pre-defined error field',
+                objectType: ObjectType.ARRAY,
             });
         }
 
-        while(length < obj1003.subNumber - 1) {
+        while (length < obj1003.subNumber - 1) {
             // Remove extra entries
             this.removeSubEntry(0x1003, obj1003.subNumber - 1);
         }
 
-        while(length > obj1003.subNumber - 1) {
+        while (length > obj1003.subNumber - 1) {
             // Add new entries
             const index = obj1003.subNumber;
             this.addSubEntry(0x1003, index, {
-                parameterName:  `Standard error field ${index}`,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     options.accessType || AccessType.READ_WRITE,
+                parameterName: `Standard error field ${index}`,
+                dataType: DataType.UNSIGNED32,
+                accessType: options.accessType || AccessType.READ_WRITE,
             });
         }
     }
@@ -1430,7 +1496,7 @@ class Eds {
      *     bit 16..23   Node-ID of producer.
      *     bit 24..31   Reserved (0x00);
      *
-     * @returns {Array<object>} consumers: { deviceId, heartbeatTime }.
+     * @returns {Array<object>} [{ deviceId, heartbeatTime } ... ]
      */
     getHeartbeatConsumers() {
         const consumers = [];
