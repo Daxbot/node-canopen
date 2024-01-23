@@ -137,22 +137,33 @@ const EmcyCode = {
 /**
  * Structure for storing and parsing CANopen emergency objects.
  *
- * @param {object} obj - arguments.
- * @param {EmcyCode} obj.code - error code.
- * @param {number} obj.register - error register (Object 0x1001).
- * @param {Buffer} obj.info - error info.
+ * @param {object} args - arguments.
+ * @param {EmcyCode} args.code - error code.
+ * @param {number} args.register - error register (Object 0x1001).
+ * @param {Buffer} args.info - error info.
  */
 class EmcyMessage {
-    constructor({ code, register, info }) {
-        this.code = code;
-        this.register = register || 0;
+    constructor(...args) {
+        if(args.length > 1) {
+            args = {
+                code: args[0],
+                register: args[1],
+                info: args[2],
+            };
+        }
+        else {
+            args = args[0];
+        }
+
+        this.code = args.code;
+        this.register = args.register || 0;
         this.info = Buffer.alloc(5);
 
-        if (info) {
-            if (!Buffer.isBuffer(info) || info.length > 5)
+        if (args.info) {
+            if (!Buffer.isBuffer(args.info) || args.info.length > 5)
                 throw TypeError('info must be a Buffer of length [0-5]');
 
-            info.copy(this.info);
+            args.info.copy(this.info);
         }
     }
 
