@@ -311,11 +311,18 @@ class Emcy extends EventEmitter {
      * @type {number}
      */
     get register() {
+        if(this._register !== undefined)
+            return this._register;
+
         const obj1001 = this.eds.getEntry(0x1001);
         if (obj1001)
             return obj1001.value;
 
         return null;
+    }
+
+    set register(value) {
+        this._register = value;
     }
 
     /**
@@ -333,11 +340,18 @@ class Emcy extends EventEmitter {
      * @type {boolean}
      */
     get valid() {
+        if(this._valid !== undefined)
+            return this._valid;
+
         const obj1014 = this.eds.getEntry(0x1014);
         if(obj1014)
             return !((obj1014.value >> 31) & 0x1);
 
         return false;
+    }
+
+    set valid(value) {
+        this._valid = value;
     }
 
     /**
@@ -346,11 +360,18 @@ class Emcy extends EventEmitter {
      * @type {number}
      */
     get cobId() {
+        if(this._cobId !== undefined)
+            return this._cobId;
+
         const obj1014 = this.eds.getEntry(0x1014);
         if(obj1014)
             return obj1014.value & 0x7FF;
 
         return null;
+    }
+
+    set cobId(value) {
+        this._cobId = value;
     }
 
     /**
@@ -359,11 +380,18 @@ class Emcy extends EventEmitter {
      * @type {number}
      */
     get inhibitTime() {
+        if(this._inhibitTime !== undefined)
+            return this._inhibitTime;
+
         const obj1015 = this.eds.getEntry(0x1015);
         if (obj1015)
             return obj1015.value / 10; // 100 μs
 
         return null;
+    }
+
+    set inhibitTime(value) {
+        this._inhibitTime = value;
     }
 
     /**

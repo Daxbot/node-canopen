@@ -118,11 +118,18 @@ class Nmt extends EventEmitter {
      * @type {number}
      */
     get producerTime() {
+        if(this._producerTime !== undefined)
+            return this._producerTime;
+
         const obj1017 = this.eds.getEntry(0x1017);
         if (obj1017)
             return obj1017.value;
 
         return null;
+    }
+
+    set producerTime(value) {
+        this._producerTime = value;
     }
 
     /**

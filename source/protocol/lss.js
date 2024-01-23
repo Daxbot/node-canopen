@@ -108,7 +108,14 @@ class Lss extends EventEmitter {
      * @type {number}
      */
     get vendorId() {
+        if(this._vendorId !== undefined)
+            return this._vendorId;
+
         return this.eds.getValueArray(0x1018, 1);
+    }
+
+    set vendorId(value) {
+        this._vendorId = value;
     }
 
     /**
@@ -117,7 +124,14 @@ class Lss extends EventEmitter {
      * @type {number}
      */
     get productCode() {
+        if(this._productCode !== undefined)
+            return this._productCode;
+
         return this.eds.getValueArray(0x1018, 2);
+    }
+
+    set productCode(value) {
+        this._productCode = value;
     }
 
     /**
@@ -126,7 +140,14 @@ class Lss extends EventEmitter {
      * @type {number}
      */
     get revisionNumber() {
+        if(this._revisionNumber !== undefined)
+            return this._revisionNumber;
+
         return this.eds.getValueArray(0x1018, 3);
+    }
+
+    set revisionNumber(value) {
+        this._revisionNumber = value;
     }
 
     /**
@@ -135,7 +156,14 @@ class Lss extends EventEmitter {
      * @type {number}
      */
     get serialNumber() {
+        if(this._serialNumber !== undefined)
+            return this._serialNumber;
+
         return this.eds.getValueArray(0x1018, 4);
+    }
+
+    set serialNumber(value) {
+        this._serialNumber = value;
     }
 
     /**

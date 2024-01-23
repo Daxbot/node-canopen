@@ -38,11 +38,18 @@ class Sync extends EventEmitter {
      * @type {boolean}
      */
     get generate() {
+        if(this._generate !== undefined)
+            return this._generate;
+
         const obj1005 = this.eds.getEntry(0x1005);
         if(obj1005)
             return !!((obj1005.value >> 30) & 0x1);
 
         return false;
+    }
+
+    set generate(value) {
+        this._generate = value;
     }
 
     /**
@@ -51,11 +58,18 @@ class Sync extends EventEmitter {
      * @type {number}
      */
     get cobId() {
+        if(this._cobId !== undefined)
+            return this._cobId;
+
         const obj1005 = this.eds.getEntry(0x1005);
         if(obj1005)
             return obj1005.value & 0x7FF;
 
         return null;
+    }
+
+    set cobId(value) {
+        this._cobId = value;
     }
 
     /**
@@ -64,11 +78,18 @@ class Sync extends EventEmitter {
      * @type {number}
      */
     get cyclePeriod() {
+        if(this._cyclePeriod !== undefined)
+            return this._cyclePeriod;
+
         const obj1006 = this.eds.getEntry(0x1006);
         if (obj1006)
             return obj1006.value;
 
         return null;
+    }
+
+    set cyclePeriod(value) {
+        this._cyclePeriod = value;
     }
 
     /**
@@ -77,11 +98,18 @@ class Sync extends EventEmitter {
      * @type {number}
      */
     get overflow() {
+        if(this._overflow !== undefined)
+            return this._overflow;
+
         const obj1019 = this.eds.getEntry(0x1019);
         if (obj1019)
             return obj1019.value;
 
         return null;
+    }
+
+    set overflow(value) {
+        this._overflow = value;
     }
 
     /**

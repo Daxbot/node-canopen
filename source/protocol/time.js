@@ -39,11 +39,18 @@ class Time extends EventEmitter {
      * @type {boolean}
      */
     get produce() {
+        if(this._produce !== undefined)
+            return this._produce;
+
         const obj1012 = this.eds.getEntry(0x1012);
         if(obj1012)
             return !!((obj1012.value >> 30) & 0x1);
 
         return false;
+    }
+
+    set produce(value) {
+        this._produce = value;
     }
 
     /**
@@ -52,11 +59,18 @@ class Time extends EventEmitter {
      * @type {boolean}
      */
     get consume() {
+        if(this._consume !== undefined)
+            return this._consume;
+
         const obj1012 = this.eds.getEntry(0x1012);
         if(obj1012)
             return !!((obj1012.value >> 31) & 0x1);
 
         return false;
+    }
+
+    set consume(value) {
+        this._consume = value;
     }
 
     /**
@@ -65,11 +79,18 @@ class Time extends EventEmitter {
      * @type {number}
      */
     get cobId() {
+        if(this._cobId !== undefined)
+            return this._cobId;
+
         const obj1012 = this.eds.getEntry(0x1012);
         if(obj1012)
             return obj1012.value & 0x7FF;
 
         return null;
+    }
+
+    set cobId(value) {
+        this._cobId = value;
     }
 
     /**
