@@ -50,15 +50,27 @@ const LssMode = {
 /**
  * Errors generated during LSS services.
  *
- * @param {string} message - error message.
- * @param {number} code - error code.
- * @param {number} info - error info code.
+ * @param {object} args - arguments.
+ * @param {string} args.message - error message.
+ * @param {number} args.code - error code.
+ * @param {number} args.info - error info code.
  */
 class LssError extends Error {
-    constructor(message, code, info) {
-        super(message);
-        this.code = code;
-        this.info = info;
+    constructor(...args) {
+        if(args.length > 1) {
+            args = {
+                message: args[0],
+                code: args[1],
+                info: args[2],
+            };
+        }
+        else {
+            args = args[0];
+        }
+
+        super(args.message);
+        this.code = args.code;
+        this.info = args.info;
 
         this.name = this.constructor.name;
         Error.captureStackTrace(this, this.constructor);
@@ -674,79 +686,6 @@ class Lss extends EventEmitter {
     }
 
     /**
-     * Send an LSS request object.
-     *
-     * @param {LssCommand} command - LSS command specifier.
-     * @param {Buffer} data - command data.
-     * @private
-     */
-    _sendLssRequest(command, data) {
-        const sendBuffer = Buffer.alloc(8);
-        sendBuffer[0] = command;
-
-        if (data !== undefined)
-            data.copy(sendBuffer, 1);
-
-        this.emit('message', {
-            id: 0x7e5,
-            data: sendBuffer,
-        });
-    }
-
-    /**
-     * Send an LSS response object.
-     *
-     * @param {LssCommand} command - LSS command specifier.
-     * @param {number} code - response code.
-     * @param {number} info - response info.
-     * @private
-     */
-    _sendLssResponse(command, code, info = 0) {
-        const sendBuffer = Buffer.alloc(8);
-        sendBuffer[0] = command;
-        sendBuffer[1] = code;
-        sendBuffer[2] = info;
-
-        this.emit('message', {
-            id: 0x7e4,
-            data: sendBuffer,
-        });
-    }
-
-    /**
-     * Check an Lss address against the device address.
-     *
-     * @param {Array} address - Lss address.
-     * @param {number} address.0 - device vendor id.
-     * @param {number} address.1 - device product code.
-     * @param {number} address.2 - device revision number.
-     * @param {number} address.3 - device serial number.
-     * @returns {boolean} true if the address matches.
-     * @private
-     */
-    _checkLssAddress(address) {
-        return address[0] === this.vendorId
-            && address[1] === this.productCode
-            && address[2] === this.revisionNumber
-            && address[3] === this.serialNumber;
-    }
-
-    /**
-     * Mask and compare two unsigned integers.
-     *
-     * @param {number} a - first number.
-     * @param {number} b - second number.
-     * @param {number} mask - bit mask.
-     * @returns {boolean} true if the masked values are equal.
-     */
-    _maskCompare(a, b, mask) {
-        a = (a & mask) >>> 0;
-        b = (b & mask) >>> 0;
-
-        return a === b;
-    }
-
-    /**
      * Call when a new CAN message is received.
      *
      * @param {object} message - CAN frame.
@@ -894,6 +833,81 @@ class Lss extends EventEmitter {
                     return;
             }
         }
+    }
+
+    /**
+     * Send an LSS request object.
+     *
+     * @param {LssCommand} command - LSS command specifier.
+     * @param {Buffer} data - command data.
+     * @private
+     */
+    _sendLssRequest(command, data) {
+        const sendBuffer = Buffer.alloc(8);
+        sendBuffer[0] = command;
+
+        if (data !== undefined)
+            data.copy(sendBuffer, 1);
+
+        this.emit('message', {
+            id: 0x7e5,
+            data: sendBuffer,
+        });
+    }
+
+    /////////////////////////////// Private ////////////////////////////////
+
+    /**
+     * Send an LSS response object.
+     *
+     * @param {LssCommand} command - LSS command specifier.
+     * @param {number} code - response code.
+     * @param {number} info - response info.
+     * @private
+     */
+    _sendLssResponse(command, code, info = 0) {
+        const sendBuffer = Buffer.alloc(8);
+        sendBuffer[0] = command;
+        sendBuffer[1] = code;
+        sendBuffer[2] = info;
+
+        this.emit('message', {
+            id: 0x7e4,
+            data: sendBuffer,
+        });
+    }
+
+    /**
+     * Check an Lss address against the device address.
+     *
+     * @param {Array} address - Lss address.
+     * @param {number} address.0 - device vendor id.
+     * @param {number} address.1 - device product code.
+     * @param {number} address.2 - device revision number.
+     * @param {number} address.3 - device serial number.
+     * @returns {boolean} true if the address matches.
+     * @private
+     */
+    _checkLssAddress(address) {
+        return address[0] === this.vendorId
+            && address[1] === this.productCode
+            && address[2] === this.revisionNumber
+            && address[3] === this.serialNumber;
+    }
+
+    /**
+     * Mask and compare two unsigned integers.
+     *
+     * @param {number} a - first number.
+     * @param {number} b - second number.
+     * @param {number} mask - bit mask.
+     * @returns {boolean} true if the masked values are equal.
+     */
+    _maskCompare(a, b, mask) {
+        a = (a & mask) >>> 0;
+        b = (b & mask) >>> 0;
+
+        return a === b;
     }
 
     ////////////////////////////// Deprecated //////////////////////////////

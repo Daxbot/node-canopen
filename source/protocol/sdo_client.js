@@ -351,6 +351,102 @@ class SdoClient extends EventEmitter {
     }
 
     /**
+     * Call when a new CAN message is received.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
+     */
+    receive(message) {
+        // Handle transfers as a client (remote object dictionary)
+        const transfer = this.transfers[message.id];
+        if (transfer === undefined || !transfer.active)
+            return;
+
+        if (transfer.blockTransfer) {
+            // Block transfer in progress
+            const data = message.data;
+            if ((data[0] & 0x7f) === transfer.blockSequence + 1) {
+                transfer.data = Buffer.concat([transfer.data, data.slice(1)]);
+                transfer.blockSequence++;
+                if (data[0] & 0x80) {
+                    transfer.blockFinished = true;
+                    transfer.blockTransfer = false;
+                }
+            }
+
+            if (transfer.blockSequence > 127) {
+                this._abortTransfer(transfer, SdoCode.BAD_BLOCK_SEQUENCE);
+                return;
+            }
+
+            // Awknowledge block
+            if (transfer.blockFinished
+                || transfer.blockSequence == this.blockSize) {
+
+                const header = (ClientCommand.BLOCK_UPLOAD << 5)
+                    | (2 << 0); // Block upload response
+
+                const sendBuffer = Buffer.alloc(8);
+                sendBuffer.writeUInt8(header);
+                sendBuffer.writeInt8(transfer.blockSequence, 1);
+                sendBuffer.writeUInt8(this.blockSize, 2);
+
+                this._sendMessage(transfer.cobId, sendBuffer);
+
+                // Reset sequence
+                transfer.blockSequence = 0;
+            }
+
+            transfer.refresh();
+            return;
+        }
+
+        switch (message.data[0] >> 5) {
+            case ServerCommand.UPLOAD_SEGMENT:
+                this._uploadSegment(transfer, message.data);
+                break;
+            case ServerCommand.DOWNLOAD_SEGMENT:
+                this._downloadSegment(transfer, message.data);
+                break;
+            case ServerCommand.UPLOAD_INITIATE:
+                this._uploadInitiate(transfer, message.data);
+                break;
+            case ServerCommand.DOWNLOAD_INITIATE:
+                this._downloadInitiate(transfer);
+                break;
+            case ServerCommand.ABORT:
+                this._abortTransfer(transfer, message.data.readUInt32LE(4));
+                break;
+            case ServerCommand.BLOCK_DOWNLOAD:
+                switch (message.data[0] & 0x3) {
+                    case 0:
+                        // Initiate download
+                        this._blockDownloadInitiate(transfer, message.data);
+                        break;
+                    case 1:
+                        // End download
+                        this._blockDownloadEnd(transfer);
+                        break;
+                    case 2:
+                        // Confirm block
+                        this._blockDownloadConfirm(transfer, message.data);
+                        break;
+                }
+                break;
+            case ServerCommand.BLOCK_UPLOAD:
+                this._blockUpload(transfer, message.data);
+                break;
+            default:
+                this._abortTransfer(transfer, SdoCode.BAD_COMMAND);
+                break;
+        }
+    }
+
+    /////////////////////////////// Private ////////////////////////////////
+
+    /**
      * Handle ServerCommand.UPLOAD_INITIATE.
      *
      * @param {SdoTransfer} transfer - SDO context.
@@ -727,100 +823,6 @@ class SdoClient extends EventEmitter {
         this.emit('message', { id, data });
     }
 
-    /**
-     * Call when a new CAN message is received.
-     *
-     * @param {object} message - CAN frame.
-     * @param {number} message.id - CAN message identifier.
-     * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
-     */
-    receive(message) {
-        // Handle transfers as a client (remote object dictionary)
-        const transfer = this.transfers[message.id];
-        if (transfer === undefined || !transfer.active)
-            return;
-
-        if (transfer.blockTransfer) {
-            // Block transfer in progress
-            const data = message.data;
-            if ((data[0] & 0x7f) === transfer.blockSequence + 1) {
-                transfer.data = Buffer.concat([transfer.data, data.slice(1)]);
-                transfer.blockSequence++;
-                if (data[0] & 0x80) {
-                    transfer.blockFinished = true;
-                    transfer.blockTransfer = false;
-                }
-            }
-
-            if (transfer.blockSequence > 127) {
-                this._abortTransfer(transfer, SdoCode.BAD_BLOCK_SEQUENCE);
-                return;
-            }
-
-            // Awknowledge block
-            if (transfer.blockFinished
-                || transfer.blockSequence == this.blockSize) {
-
-                const header = (ClientCommand.BLOCK_UPLOAD << 5)
-                    | (2 << 0); // Block upload response
-
-                const sendBuffer = Buffer.alloc(8);
-                sendBuffer.writeUInt8(header);
-                sendBuffer.writeInt8(transfer.blockSequence, 1);
-                sendBuffer.writeUInt8(this.blockSize, 2);
-
-                this._sendMessage(transfer.cobId, sendBuffer);
-
-                // Reset sequence
-                transfer.blockSequence = 0;
-            }
-
-            transfer.refresh();
-            return;
-        }
-
-        switch (message.data[0] >> 5) {
-            case ServerCommand.UPLOAD_SEGMENT:
-                this._uploadSegment(transfer, message.data);
-                break;
-            case ServerCommand.DOWNLOAD_SEGMENT:
-                this._downloadSegment(transfer, message.data);
-                break;
-            case ServerCommand.UPLOAD_INITIATE:
-                this._uploadInitiate(transfer, message.data);
-                break;
-            case ServerCommand.DOWNLOAD_INITIATE:
-                this._downloadInitiate(transfer);
-                break;
-            case ServerCommand.ABORT:
-                this._abortTransfer(transfer, message.data.readUInt32LE(4));
-                break;
-            case ServerCommand.BLOCK_DOWNLOAD:
-                switch (message.data[0] & 0x3) {
-                    case 0:
-                        // Initiate download
-                        this._blockDownloadInitiate(transfer, message.data);
-                        break;
-                    case 1:
-                        // End download
-                        this._blockDownloadEnd(transfer);
-                        break;
-                    case 2:
-                        // Confirm block
-                        this._blockDownloadConfirm(transfer, message.data);
-                        break;
-                }
-                break;
-            case ServerCommand.BLOCK_UPLOAD:
-                this._blockUpload(transfer, message.data);
-                break;
-            default:
-                this._abortTransfer(transfer, SdoCode.BAD_COMMAND);
-                break;
-        }
-    }
-
     ////////////////////////////// Deprecated //////////////////////////////
 
     /**
@@ -831,6 +833,18 @@ class SdoClient extends EventEmitter {
     init() {
         deprecate(() => this.start(),
             'init() is deprecated. Use start() instead.');
+    }
+
+    /**
+     * Get an SDO client parameter entry.
+     *
+     * @param {number} serverId - server COB-ID of the entry to get.
+     * @returns {DataObject | null} the matching entry.
+     * @deprecated
+     */
+    getServer(serverId) {
+        return deprecate(() => this.eds.getSdoClientParameter(serverId),
+            'getServer() is deprecated. Use Eds method instead');
     }
 
     /**

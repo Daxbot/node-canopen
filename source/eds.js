@@ -1526,9 +1526,12 @@ class Eds {
         if (obj1016) {
             const maxSubIndex = obj1016[0].value;
             for (let i = 1; i <= maxSubIndex; ++i) {
-                const raw = this.getRawArray(0x1016, i);
-                const heartbeatTime = raw.readUInt16LE(0);
-                const deviceId = raw.readUInt8(2);
+                const subObj = obj1016.at(i);
+                if(!subObj)
+                    continue;
+
+                const heartbeatTime = subObj.raw.readUInt16LE(0);
+                const deviceId = subObj.raw.readUInt8(2);
 
                 if (deviceId > 0 && deviceId <= 127)
                     consumers.push({ deviceId, heartbeatTime });
@@ -1539,9 +1542,32 @@ class Eds {
     }
 
     /**
+     * Get an entry from 0x1016 - Consumer heartbeat time.
+     *
+     * @param {number} deviceId - device identifier [1-127].
+     * @returns {DataObject | null} the matching entry or null.
+     */
+    getHeartbeatConsumer(deviceId) {
+        const obj1016 = this.getEntry(0x1016);
+        if(obj1016) {
+            const maxSubIndex = obj1016[0].value;
+            for (let i = 1; i <= maxSubIndex; ++i) {
+                const subObj = obj1016.at(i);
+                if(!subObj)
+                    continue;
+
+                if(subObj.raw.readUInt8(2) === deviceId)
+                    return subObj;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Add an entry to object 0x1016 - Consumer heartbeat time.
      *
-     * @param {number} deviceId - device COB-ID.
+     * @param {number} deviceId - device identifier [1-127].
      * @param {number} timeout - milliseconds before a timeout is reported.
      * @param {object} [options] - DataObject creation options.
      * @param {number} [options.subIndex] - index to store the entry.
@@ -1564,11 +1590,9 @@ class Eds {
             });
         }
 
-        for (const consumer of this.getHeartbeatConsumers()) {
-            if (consumer.deviceId === deviceId) {
-                deviceId = '0x' + deviceId.toString(16);
-                throw new EdsError(`consumer for ${deviceId} already exists`);
-            }
+        if(this.getHeartbeatConsumer(deviceId)) {
+            deviceId = '0x' + deviceId.toString(16);
+            throw new EdsError(`consumer for ${deviceId} already exists`);
         }
 
         let subIndex = options.subIndex;
@@ -1772,17 +1796,38 @@ class Eds {
             const maxSubIndex = obj1028[0].value;
             for (let i = 1; i <= maxSubIndex; ++i) {
                 const subEntry = this.getSubEntry(0x1028, i);
-                if (subEntry === undefined)
+                if (!subEntry)
                     continue;
 
-                if (subEntry.value >> 31)
-                    continue;
-
-                consumers.push(subEntry.value & 0x7ff);
+                if (!(subEntry.value >> 31))
+                    consumers.push(subEntry.value & 0x7ff);
             }
         }
 
         return consumers;
+    }
+
+    /**
+     * Get an entry from object 0x1028 - Emergency consumer object.
+     *
+     * @param {number} cobId - Emcy COB-ID.
+     * @returns {DataObject | null} the matching entry or null.
+     */
+    getEmcyConsumer(cobId) {
+        const obj1028 = this.getEntry(0x1028);
+        if (obj1028) {
+            const maxSubIndex = obj1028[0].value;
+            for (let i = 1; i <= maxSubIndex; ++i) {
+                const subObj = this.getSubEntry(0x1028, i);
+                if (!subObj)
+                    continue;
+
+                if(subObj.raw.readUInt16LE() === cobId)
+                    return subObj;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1807,7 +1852,7 @@ class Eds {
             });
         }
 
-        if (this.getEmcyConsumers().includes(cobId)) {
+        if (this.getEmcyConsumer(cobId)) {
             cobId = '0x' + cobId.toString(16);
             throw new EdsError(`EMCY consumer ${cobId} already exists`);
         }
@@ -1915,10 +1960,30 @@ class Eds {
     }
 
     /**
+     * Get an SDO server parameter entry.
+     *   Object 0x1200..0x127F - SDO server parameter.
+     *
+     * @param {number} deviceId - device identifier [1-127].
+     * @returns {DataObject | null} the matching entry.
+     */
+    getSdoServerParameter(deviceId) {
+        for (let [index, entry] of Object.entries(this.dataObjects)) {
+            index = parseInt(index);
+            if (index < 0x1200 || index > 0x127F)
+                continue;
+
+            if(entry[3].value === deviceId)
+                return entry;
+        }
+
+        return null;
+    }
+
+    /**
      * Create an SDO server parameter entry.
      *   Object 0x1200..0x127F - SDO server parameter.
      *
-     * @param {number} deviceId - COB-ID of the client.
+     * @param {number} deviceId - device identifier [1-127].
      * @param {number} cobIdTx - COB-ID for outgoing messages (to client).
      * @param {number} cobIdRx - COB-ID for incoming messages (from client).
      * @param {object} [options] - DataObject creation options.
@@ -1991,7 +2056,7 @@ class Eds {
      * Remove an SDO server parameter entry.
      *   Object 0x1200..0x127F - SDO server parameter.
      *
-     * @param {number} deviceId - COB-ID of the entry to remove.
+     * @param {number} deviceId - device identifier [1-127].
      */
     removeSdoServerParameter(deviceId) {
         for (let [index, entry] of Object.entries(this.dataObjects)) {
@@ -2062,10 +2127,30 @@ class Eds {
     }
 
     /**
+     * Get an SDO client parameter entry.
+     *   Object 0x1280..0x12FF - SDO client parameter.
+     *
+     * @param {number} deviceId - device identifier [1-127].
+     * @returns {DataObject | null} the matching entry.
+     */
+    getSdoClientParameter(deviceId) {
+        for (let [index, entry] of Object.entries(this.dataObjects)) {
+            index = parseInt(index);
+            if (index < 0x1280 || index > 0x12FF)
+                continue;
+
+            if(entry[3].value === deviceId)
+                return entry;
+        }
+
+        return null;
+    }
+
+    /**
      * Create an SDO client parameter entry.
      *   Object 0x1280..0x12FF - SDO client parameter.
      *
-     * @param {number} deviceId - COB-ID of the server.
+     * @param {number} deviceId - device identifier [1-127].
      * @param {number} cobIdTx - COB-ID for outgoing messages (to server).
      * @param {number} cobIdRx - COB-ID for incoming messages (from server).
      * @param {object} [options] - DataObject creation options.
@@ -2138,7 +2223,7 @@ class Eds {
      * Remove an SDO client parameter entry.
      *   Object 0x1280..0x12FF - SDO client parameter.
      *
-     * @param {number} deviceId - COB-ID of the entry to remove.
+     * @param {number} deviceId - device identifier [1-127].
      */
     removeSdoClientParameter(deviceId) {
         for (let [index, entry] of Object.entries(this.dataObjects)) {

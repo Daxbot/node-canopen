@@ -188,10 +188,9 @@ class Nmt extends EventEmitter {
      * @returns {number | null} the consumer heartbeat time or null.
      */
     getConsumerTime(deviceId) {
-        for (const consumer in this.consumers) {
-            if (consumer.deviceId === deviceId)
-                return consumer.heartbeatTime;
-        }
+        const subObj = this.eds.getHeartbeatConsumer(deviceId);
+        if(subObj)
+            return subObj.raw.readUInt16LE(0);
 
         return null;
     }
@@ -302,6 +301,54 @@ class Nmt extends EventEmitter {
     }
 
     /**
+     * Call when a new CAN message is received.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @param {number} message.len - CAN message length in bytes.
+     */
+    receive(message) {
+        if ((message.id & 0x7FF) == 0x0) {
+            const nodeId = message.data[1];
+            if (nodeId == 0 || nodeId == this.deviceId)
+                this._handleNmt(message.data[0]);
+        }
+        else if ((message.id & 0x700) == 0x700) {
+            const deviceId = message.id & 0x7F;
+            if (deviceId in this.heartbeatMap) {
+                this.heartbeatMap[deviceId].last = Date.now();
+
+                const newState = message.data[0];
+                const oldState = this.heartbeatMap[deviceId].state;
+                if (newState !== oldState) {
+                    this.heartbeatMap[deviceId].state = newState;
+                    this.emit('nmtChangeState', {
+                        deviceId,
+                        newState,
+                        oldState,
+                    });
+                }
+
+                if (!this.heartbeatTimers[deviceId]) {
+                    // First heartbeat - start timer.
+                    const interval = this.heartbeatMap[deviceId].interval;
+                    this.heartbeatTimers[deviceId] = setTimeout(() => {
+                        this.emit('nmtTimeout', deviceId);
+                        this.heartbeatMap[deviceId].state = null;
+                        this.heartbeatTimers[deviceId] = null;
+                    }, interval);
+                }
+                else {
+                    this.heartbeatTimers[deviceId].refresh();
+                }
+            }
+        }
+    }
+
+    /////////////////////////////// Private ////////////////////////////////
+
+    /**
      * Serve an NMT command object.
      *
      * @param {number} nodeId - id of node or 0 for broadcast.
@@ -367,52 +414,6 @@ class Nmt extends EventEmitter {
         }
     }
 
-    /**
-     * Call when a new CAN message is received.
-     *
-     * @param {object} message - CAN frame.
-     * @param {number} message.id - CAN message identifier.
-     * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
-     */
-    receive(message) {
-        if ((message.id & 0x7FF) == 0x0) {
-            const nodeId = message.data[1];
-            if (nodeId == 0 || nodeId == this.deviceId)
-                this._handleNmt(message.data[0]);
-        }
-        else if ((message.id & 0x700) == 0x700) {
-            const deviceId = message.id & 0x7F;
-            if (deviceId in this.heartbeatMap) {
-                this.heartbeatMap[deviceId].last = Date.now();
-
-                const newState = message.data[0];
-                const oldState = this.heartbeatMap[deviceId].state;
-                if (newState !== oldState) {
-                    this.heartbeatMap[deviceId].state = newState;
-                    this.emit('nmtChangeState', {
-                        deviceId,
-                        newState,
-                        oldState,
-                    });
-                }
-
-                if (!this.heartbeatTimers[deviceId]) {
-                    // First heartbeat - start timer.
-                    const interval = this.heartbeatMap[deviceId].interval;
-                    this.heartbeatTimers[deviceId] = setTimeout(() => {
-                        this.emit('nmtTimeout', deviceId);
-                        this.heartbeatMap[deviceId].state = null;
-                        this.heartbeatTimers[deviceId] = null;
-                    }, interval);
-                }
-                else {
-                    this.heartbeatTimers[deviceId].refresh();
-                }
-            }
-        }
-    }
-
     ////////////////////////////// Deprecated //////////////////////////////
 
     /**
@@ -423,6 +424,18 @@ class Nmt extends EventEmitter {
     init() {
         deprecate(() => this.start(),
             'init() is deprecated. Use start() instead.');
+    }
+
+    /**
+     * Get an entry from 0x1016 (Consumer heartbeat time).
+     *
+     * @param {number} deviceId - device COB-ID of the entry to get.
+     * @returns {DataObject | null} the matching entry or null.
+     * @deprecated
+     */
+    getConsumer(deviceId) {
+        return deprecate(() => this.eds.getHeartbeatConsumer(deviceId),
+            'getConsumer() is deprecated. Use Eds method instead.');
     }
 
     /**

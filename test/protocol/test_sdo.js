@@ -1,6 +1,6 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const { Device, AccessType, DataType } = require('../../index.js');
+const { Device, AccessType, DataType } = require('../../index');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
