@@ -20,7 +20,7 @@ async function main(device) {
         });
 
         // Consume Time messages with ID 0x100.
-        device.eds.setTimeCobId({ cobId: 0x100, consume: true });
+        device.eds.setTimeCobId(0x100, false, true);
         device.start();
     });
 }

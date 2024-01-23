@@ -6,6 +6,7 @@
 
 const EventEmitter = require('events');
 const { Eds } = require('../eds');
+const { deprecate } = require('util');
 
 /**
  * CANopen LSS command specifiers.
@@ -155,25 +156,24 @@ class Lss extends EventEmitter {
      * Identifies exactly one LSS consumer device and switches it to
      * configuration mode.
      *
-     * @param {object} [identity] - device identity hint.
-     * @param {number} [identity.vendorId] - vendor-id hint (optional).
-     * @param {number} [identity.productCode] - product-code hint (optional).
-     * @param {number} [identity.revisionNumber] - revision-number hint (optional).
-     * @param {number} [identity.serialNumber] - serial-number hint (optional).
-     * @param {number} [timeout] - how long to wait for nodes to respond.
+     * @param {object} [args] - arguments.
+     * @param {number} [args.vendorId] - vendor-id hint.
+     * @param {number} [args.productCode] - product-code hint.
+     * @param {number} [args.revisionNumber] - revision-number hint.
+     * @param {number} [args.serialNumber] - serial-number hint.
+     * @param {number} [args.timeout] - how long to wait for nodes to respond.
      * @returns {Promise<null | object>} resolves to the discovered device's id (or null).
      * @see https://www.can-cia.org/fileadmin/resources/documents/proceedings/2008_pfeiffer.pdf
      */
-    async fastscan(identity={}, timeout = 20) {
-        let {
-            vendorId,
-            productCode,
-            revisionNumber,
-            serialNumber
-        } = identity;
+    async fastscan(args={}) {
+        let vendorId = args.vendorId;
+        let productCode = args.productCode;
+        let revisionNumber = args.revisionNumber;
+        let serialNumber = args.serialNumber;
+        let timeout = args.timeout || 20;
+        let timeoutFlag = false;
 
         // Initiate fastscan
-        let timeoutFlag = false;
         await new Promise((resolve) => {
             const timer = setTimeout(() => {
                 timeoutFlag = true;
@@ -365,37 +365,50 @@ class Lss extends EventEmitter {
     /**
      * Service: switch mode selective.
      *
-     * @param {object} identity - target device identity.
-     * @param {number} identity.vendorId - LSS consumer vendor-id.
-     * @param {number} identity.productCode - LSS consumer product-code.
-     * @param {number} identity.revisionNumber - LSS consumer revision-number.
-     * @param {number} identity.serialNumber - LSS consumer serial-number.
-     * @param {number} [timeout] - time until promise is rejected.
+     * @param {object} args - arguments.
+     * @param {number} args.vendorId - LSS consumer vendor-id.
+     * @param {number} args.productCode - LSS consumer product-code.
+     * @param {number} args.revisionNumber - LSS consumer revision-number.
+     * @param {number} args.serialNumber - LSS consumer serial-number.
+     * @param {number} [args.timeout] - time until promise is rejected.
      * @returns {Promise<LssMode>} - the actual mode of the LSS consumer.
      * @see CiA305 "Switch Mode Selective" (§3.9.2)
      */
-    switchModeSelective(identity, timeout = 20) {
+    switchModeSelective(...args) {
+        if(args.length > 1) {
+            args = {
+                vendorId: args[0],
+                productCode: args[1],
+                revisionNumber: args[2],
+                serialNumber: args[3],
+                timeout: args[4],
+            };
+        }
+        else {
+            args = args[0];
+        }
+
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
                 reject(new LssTimeout());
-            }, timeout);
+            }, args.timeout);
 
             const data = Buffer.alloc(4);
 
             // Send vendor-id
-            data.writeUInt32LE(identity.vendorId);
+            data.writeUInt32LE(args.vendorId);
             this._sendLssRequest(LssCommand.SWITCH_MODE_VENDOR_ID, data);
 
             // Send product-code
-            data.writeUInt32LE(identity.productCode);
+            data.writeUInt32LE(args.productCode);
             this._sendLssRequest(LssCommand.SWITCH_MODE_PRODUCT_CODE, data);
 
             // Send revision-number
-            data.writeUInt32LE(identity.revisionNumber);
+            data.writeUInt32LE(args.revisionNumber);
             this._sendLssRequest(LssCommand.SWITCH_MODE_REVISION_NUMBER, data);
 
             // Send serial-number
-            data.writeUInt32LE(identity.serialNumber);
+            data.writeUInt32LE(args.serialNumber);
             this._sendLssRequest(LssCommand.SWITCH_MODE_SERIAL_NUMBER, data);
 
             this.pending[68] = { resolve, timer };
@@ -853,6 +866,18 @@ class Lss extends EventEmitter {
                     return;
             }
         }
+    }
+
+    ////////////////////////////// Deprecated //////////////////////////////
+
+    /**
+     * Initialize the device and audit the object dictionary.
+     *
+     * @deprecated
+     */
+    init() {
+        deprecate(() => this.start(),
+            'init() is deprecated. Use start() instead.');
     }
 }
 

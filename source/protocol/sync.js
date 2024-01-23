@@ -6,6 +6,7 @@
 
 const EventEmitter = require('events');
 const { Eds, EdsError } = require('../eds');
+const { deprecate } = require('util');
 
 /**
  * CANopen SYNC protocol handler.
@@ -92,10 +93,10 @@ class Sync extends EventEmitter {
 
         if (this.generate) {
             if (!this.cobId)
-                throw new EdsError('COB-ID SYNC must not be 0');
+                throw new EdsError('COB-ID SYNC may not be 0');
 
             if (!this.cyclePeriod)
-                throw new EdsError('communication cycle period must not be 0');
+                throw new EdsError('communication cycle period may not be 0');
 
             if (this.overflow) {
                 this.syncTimer = setInterval(() => {
@@ -153,6 +154,18 @@ class Sync extends EventEmitter {
             else
                 this.emit('sync', null);
         }
+    }
+
+    ////////////////////////////// Deprecated //////////////////////////////
+
+    /**
+     * Initialize the device and audit the object dictionary.
+     *
+     * @deprecated
+     */
+    init() {
+        deprecate(() => this.start(),
+            'init() is deprecated. Use start() instead.');
     }
 }
 

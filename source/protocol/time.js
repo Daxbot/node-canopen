@@ -9,6 +9,7 @@ const { Eds, EdsError } = require('../eds');
 const { DataType } = require('../types');
 const rawToType = require('../functions/raw_to_type');
 const typeToRaw = require('../functions/type_to_raw');
+const { deprecate } = require('util');
 
 /**
  * CANopen TIME protocol handler.
@@ -76,7 +77,7 @@ class Time extends EventEmitter {
      */
     start() {
         if ((this.produce || this.consume) && !this.cobId)
-            throw new EdsError('COB-ID TIME must not be 0');
+            throw new EdsError('COB-ID TIME may not be 0');
     }
 
     /**
@@ -116,6 +117,18 @@ class Time extends EventEmitter {
             const date = rawToType(message.data, DataType.TIME_OF_DAY);
             this.emit('time', date);
         }
+    }
+
+    ////////////////////////////// Deprecated //////////////////////////////
+
+    /**
+     * Initialize the device and audit the object dictionary.
+     *
+     * @deprecated
+     */
+    init() {
+        deprecate(() => this.start(),
+            'init() is deprecated. Use start() instead.');
     }
 }
 

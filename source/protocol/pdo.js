@@ -6,6 +6,7 @@
 
 const EventEmitter = require('events');
 const { Eds, EdsError } = require('../eds');
+const { deprecate } = require('util');
 
 /**
  * CANopen PDO protocol handler.
@@ -233,6 +234,78 @@ class Pdo extends EventEmitter {
                 });
             }
         }
+    }
+
+    ////////////////////////////// Deprecated //////////////////////////////
+
+    /**
+     * Initialize the device and audit the object dictionary.
+     *
+     * @deprecated
+     */
+    init() {
+        deprecate(() => this.start(),
+            'init() is deprecated. Use start() instead.');
+    }
+
+    /**
+     * Create a new RPDO communication/mapping parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the RPDO.
+     * @param {Array<DataObject>} entries - entries to map.
+     * @param {object} args - optional arguments.
+     * @param {number} [args.type=254] - transmission type.
+     * @param {number} [args.inhibitTime=0] - minimum time between writes.
+     * @param {number} [args.eventTime=0] - how often to send timer based PDOs.
+     * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
+     * @deprecated
+     */
+    addReceive(cobId, entries, args={}) {
+        args.cobId = cobId;
+        args.dataObjects = entries;
+        deprecate(() => this.eds.addReceivePdo(args),
+            'addReceive() is deprecated. Use Eds method instead.');
+    }
+
+    /**
+     * Remove a RPDO communication/mapping parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the RPDO.
+     * @deprecated
+     */
+    removeReceive(cobId) {
+        deprecate(() => this.eds.removeReceivePdo(cobId),
+            'removeReceive() is deprecated. Use Eds method instead.');
+    }
+
+    /**
+     * Create a new TPDO communication/mapping parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the TPDO.
+     * @param {Array<DataObject>} entries - entries to map.
+     * @param {object} args - optional arguments.
+     * @param {number} [args.type=254] - transmission type.
+     * @param {number} [args.inhibitTime=0] - minimum time between writes.
+     * @param {number} [args.eventTime=0] - how often to send timer based PDOs.
+     * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
+     * @deprecated
+     */
+    addTransmit(cobId, entries, args={}) {
+        args.cobId = cobId;
+        args.dataObjects = entries;
+        deprecate(() => this.eds.addTransmitPdo(args),
+            'addTransmit() is deprecated. Use Eds method instead.');
+    }
+
+    /**
+     * Remove a TPDO communication/mapping parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the TPDO.
+     * @deprecated
+     */
+    removeTransmit(cobId) {
+        deprecate(() => this.eds.removeTransmitPdo(cobId),
+            'removeTransmit() is deprecated. Use Eds method instead.');
     }
 }
 

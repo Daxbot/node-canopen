@@ -12,7 +12,7 @@ const { Device } = require('../../index.js');
 async function main(device) {
     await new Promise((resolve) => {
         // Send Time messages with ID 0x100.
-        device.eds.setTimeCobId({ cobId: 0x100, produce: true });
+        device.eds.setTimeCobId(0x100, true, false);
         device.start();
         device.time.write();
         device.stop();

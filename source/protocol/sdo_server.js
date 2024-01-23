@@ -10,6 +10,7 @@ const { AccessType } = require('../types');
 const { SdoCode, SdoTransfer, ClientCommand, ServerCommand } = require('./sdo');
 const calculateCrc = require('../functions/crc');
 const rawToType = require('../functions/raw_to_type');
+const { deprecate } = require('util');
 
 /**
  * CANopen SDO protocol handler (Server).
@@ -722,6 +723,43 @@ class SdoServer extends EventEmitter {
                 this._abortTransfer(client, SdoCode.BAD_COMMAND);
                 break;
         }
+    }
+
+    ////////////////////////////// Deprecated //////////////////////////////
+
+    /**
+     * Initialize the device and audit the object dictionary.
+     *
+     * @deprecated
+     */
+    init() {
+        deprecate(() => this.start(),
+            'init() is deprecated. Use start() instead.');
+    }
+
+    /**
+     * Add an SDO server parameter entry.
+     *
+     * @param {number} clientId - client COB-ID to add.
+     * @param {number} cobIdTx - Sdo COB-ID for outgoing messages (to client).
+     * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from client).
+     * @deprecated
+     */
+    addClient(clientId, cobIdTx, cobIdRx) {
+        deprecate(
+            () => this.eds.addSdoServerParameter(clientId, cobIdTx, cobIdRx),
+            'addClient() is deprecated. Use Eds method instead');
+    }
+
+    /**
+     * Remove an SDO server parameter entry.
+     *
+     * @param {number} clientId - client COB-ID of the entry to remove.
+     * @deprecated
+     */
+    removeClient(clientId) {
+        deprecate(() => this.eds.removeSdoServerParameter(clientId),
+            'removeClient() is deprecated. Use Eds method instead');
     }
 }
 

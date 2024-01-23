@@ -27,7 +27,7 @@ async function main(device, consumerId) {
             resolve();
         });
 
-        device.eds.addHeartbeatConsumer({ deviceId: consumerId, timeout: 200 });
+        device.eds.addHeartbeatConsumer(consumerId, 200);
         device.start();
     });
 }

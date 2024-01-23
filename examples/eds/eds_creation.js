@@ -31,17 +31,20 @@ function main(cleanup=false) {
     eds.addSubEntry(0x1016, 1, {
         parameterName: 'Heartbeat consumer 1',
         dataType: DataType.UNSIGNED32,
-        defaultValue: (0x3 << 16) | 10, // { deviceId: 0x3, timeout: 10 }
+        defaultValue: (0x3 << 16) | 10, // deviceId: 0x3, timeout: 10
     });
 
     // ... or use the helper methods
-    eds.addHeartbeatConsumer({ deviceId: 0x4, timeout: 10 });
+    eds.addHeartbeatConsumer(0x4, 10, {
+        parameterName: 'Heartbeat consumer 2',
+        saveDefault: true,
+    });
 
     // Write to disk.
     eds.save('example.eds');
 
     // Load from disk
-    eds = Eds.load('example.eds');
+    eds = Eds.fromFile('example.eds');
 
     console.log(eds.getHeartbeatConsumers());
 

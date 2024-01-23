@@ -15,7 +15,7 @@ const { Device } = require('../../index.js');
 async function main(device) {
     await new Promise((resolve) => {
         // Consume Sync messages with ID 0x80
-        device.eds.setSyncCobId({ cobId: 0x80 });
+        device.eds.setSyncCobId(0x80, false);
         device.start();
 
         let timer = null;

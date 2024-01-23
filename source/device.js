@@ -35,7 +35,7 @@ class Device extends EventEmitter {
         super();
 
         if (typeof args.eds === 'string')
-            this.eds = Eds.load(args.eds);
+            this.eds = Eds.fromFile(args.eds);
         else
             this.eds = args.eds || new Eds();
 
@@ -217,53 +217,55 @@ class Device extends EventEmitter {
      *
      * This may be called multiple times to map more than one EDS.
      *
-     * @param {object} options - optional arguments.
-     * @param {Eds | string} options.eds - the server's EDS.
-     * @param {number} options.deviceId - the remote node's CAN identifier.
-     * @param {number} [options.dataStart] - start index for SDO entries.
-     * @param {boolean} [options.skipEmcy] - Skip EMCY producer -> consumer.
-     * @param {boolean} [options.skipNmt] - Skip NMT producer -> consumer.
-     * @param {boolean} [options.skipPdo] - Skip PDO transmit -> receive.
-     * @param {boolean} [options.skipSdo] - Skip SDO server -> client.
+     * @param {object} args - method arguments.
+     * @param {Eds | string} args.eds - the server's EDS.
+     * @param {number} args.deviceId - the remote node's CAN identifier.
+     * @param {number} [args.dataStart] - start index for SDO entries.
+     * @param {boolean} [args.skipEmcy] - Skip EMCY producer -> consumer.
+     * @param {boolean} [args.skipNmt] - Skip NMT producer -> consumer.
+     * @param {boolean} [args.skipPdo] - Skip PDO transmit -> receive.
+     * @param {boolean} [args.skipSdo] - Skip SDO server -> client.
      */
-    mapRemoteNode(options={}) {
-        let eds = options.eds;
-        if (typeof eds === 'string')
-            eds = Eds.load(eds);
+    mapRemoteNode(args={}) {
+        const deviceId = args.deviceId || args.serverId;
 
-        if (!options.skipEmcy) {
+        let eds = args.eds;
+        if (typeof eds === 'string')
+            eds = Eds.fromFile(eds);
+
+        if (!args.skipEmcy) {
             // Map EMCY producer -> consumer
             const cobId = eds.getEmcyCobId();
             if (cobId)
                 this.eds.addEmcyConsumer(cobId);
         }
 
-        if (!options.skipNmt) {
+        if (!args.skipNmt) {
             // Map heartbeat producer -> consumer
             const producerTime = eds.getHeartbeatProducerTime();
             if (producerTime) {
-                if (!options.deviceId)
+                if (!deviceId)
                     throw new ReferenceError('deviceId not defined');
 
                 this.eds.addHeartbeatConsumer({
-                    deviceId: options.deviceId,
+                    deviceId,
                     timeout: producerTime * 2
                 });
             }
         }
 
-        if (!options.skipSdo) {
+        if (!args.skipSdo) {
             for(const parameter of eds.getSdoServerParameters()) {
                 this.eds.addSdoClientParameter({
-                    deviceId: parameter.deviceId,
+                    deviceId,
                     cobIdTx: parameter.cobIdRx, // client -> server
                     cobIdRx: parameter.cobIdTx, // server -> client
                 });
             }
         }
 
-        if (!options.skipPdo) {
-            let dataIndex = options.dataStart || 0x2000;
+        if (!args.skipPdo) {
+            let dataIndex = args.dataStart || 0x2000;
             if (dataIndex < 0x2000)
                 throw new RangeError('dataStart must be >= 0x2000');
 
@@ -459,6 +461,8 @@ class Device extends EventEmitter {
         }
     }
 
+    ////////////////////////////// Deprecated //////////////////////////////
+
     /**
      * Initialize the device and audit the object dictionary.
      *
@@ -480,7 +484,7 @@ class Device extends EventEmitter {
      */
     setTransmitFunction(send) {
         deprecate(() => this.on('message', (m) => send(m)),
-            "setTransmitFunction is deprecated. Use on('message') instead");
+            "setTransmitFunction() is deprecated. Use on('message') instead");
     }
 
     /**
@@ -492,7 +496,7 @@ class Device extends EventEmitter {
      */
     getValue(index) {
         return deprecate(() => this.eds.getValue(index),
-            'getValue() is deprecated. Use eds.getValue() instead.');
+            'getValue() is deprecated. Use Eds method instead.');
     }
 
     /**
@@ -505,7 +509,7 @@ class Device extends EventEmitter {
      */
     getValueArray(index, subIndex) {
         return deprecate(() => this.eds.getValueArray(index, subIndex),
-            'getValueArray() is deprecated. Use eds.getValueArray() instead.');
+            'getValueArray() is deprecated. Use Eds method instead.');
     }
 
     /**
@@ -517,7 +521,7 @@ class Device extends EventEmitter {
      */
     getRaw(index) {
         return deprecate(() => this.eds.getRaw(index),
-            'getRaw() is deprecated. Use eds.getRaw() instead.');
+            'getRaw() is deprecated. Use Eds method instead.');
     }
 
     /**
@@ -530,7 +534,7 @@ class Device extends EventEmitter {
      */
     getRawArray(index, subIndex) {
         return deprecate(() => this.eds.getRawArray(index, subIndex),
-            'getRawArray() is deprecated. Use eds.getRawArray() instead.');
+            'getRawArray() is deprecated. Use Eds method instead.');
     }
 
     /**
@@ -542,7 +546,7 @@ class Device extends EventEmitter {
      */
     setValue(index, value) {
         deprecate(() => this.eds.setValue(index, value),
-            'setValue() is deprecated. Use eds.setValue() instead.');
+            'setValue() is deprecated. Use Eds method instead.');
     }
 
     /**
@@ -555,7 +559,7 @@ class Device extends EventEmitter {
      */
     setValueArray(index, subIndex, value) {
         deprecate(() => this.eds.setValueArray(index, subIndex, value),
-            'setValueArray() is deprecated. Use eds.setValueArray() instead.');
+            'setValueArray() is deprecated. Use Eds method instead.');
     }
 
     /**
@@ -567,7 +571,7 @@ class Device extends EventEmitter {
      */
     setRaw(index, raw) {
         deprecate(() => this.eds.setRaw(index, raw),
-            'setRaw() is deprecated. Use eds.setRaw() instead.');
+            'setRaw() is deprecated. Use Eds method instead.');
     }
 
     /**
@@ -580,7 +584,19 @@ class Device extends EventEmitter {
      */
     setRawArray(index, subIndex, raw) {
         deprecate(() => this.eds.setRawArray(index, subIndex, raw),
-            'setRawArray() is deprecated. Use eds.setRawArray() instead.');
+            'setRawArray() is deprecated. Use Eds method instead.');
+    }
+
+    /**
+     * Map a remote node's EDS file on to this Device.
+     *
+     * @param {object} args - arguments.
+     * @see mapRemoteNode
+     * @deprecated
+     */
+    mapEds(args) {
+        deprecate(() => this.mapRemoteNode(args),
+            'mapEds() is deprecated. Use mapRemoteNode() instead.');
     }
 }
 

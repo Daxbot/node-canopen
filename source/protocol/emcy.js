@@ -6,6 +6,7 @@
 
 const EventEmitter = require('events');
 const { Eds, EdsError } = require('../eds');
+const { deprecate } = require('util');
 
 /**
  * CANopen emergency error code classes.
@@ -390,21 +391,29 @@ class Emcy extends EventEmitter {
     /**
      * Service: EMCY write.
      *
-     * @param {object} args - function arguments.
+     * @param {object} args - arguments.
      * @param {number} args.code - error code.
      * @param {Buffer} args.info - error info.
      */
-    write(args) {
+    write(...args) {
         if (!this.cobId)
             throw new EdsError('EMCY production is disabled');
 
-        if(typeof args !== 'object')
-            throw new TypeError('args should be an object');
+        if(args.length > 1) {
+            args = {
+                code: args[0],
+                info: args[1],
+            };
+        }
+        else {
+            args = args[0];
+        }
 
+        const { code, info } = args;
         const em = new EmcyMessage({
-            code: args.code,
+            code,
             register: this.register,
-            info: args.info
+            info
         });
 
         const message = {
@@ -443,6 +452,29 @@ class Emcy extends EventEmitter {
                 break;
             }
         }
+    }
+
+    ////////////////////////////// Deprecated //////////////////////////////
+
+    /**
+     * Initialize members and begin emergency monitoring.
+     *
+     * @deprecated
+     */
+    init() {
+        deprecate(() => this.start(),
+            'init() is deprecated. Use start() instead');
+    }
+
+    /**
+     * Configures the number of sub-entries for 0x1003 (Pre-defined error field).
+     *
+     * @param {number} length - how many historical error events should be kept.
+     * @deprecated
+     */
+    setHistoryLength(length) {
+        deprecate(() => this.eds.setEmcyHistoryLength(length),
+            'setHistoryLength is deprecated. Use Eds method instead.');
     }
 }
 

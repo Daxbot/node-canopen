@@ -41,8 +41,8 @@ describe('Sdo', function () {
 
     beforeEach(function () {
         device = new Device({ id: 0xA, loopback: true });
-        device.eds.addSdoClientParameter({ deviceId: device.id, });
-        device.eds.addSdoServerParameter({ deviceId: device.id, });
+        device.eds.addSdoClientParameter(device.id);
+        device.eds.addSdoServerParameter(device.id);
         device.start();
     });
 

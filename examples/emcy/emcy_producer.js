@@ -13,7 +13,6 @@ const { Device, EmcyType } = require('../../index.js');
  */
 async function main(device) {
     await new Promise((resolve) => {
-        device.eds.setEmcyHistoryLength(1);
         device.eds.setEmcyCobId(0x8A);
         device.start();
 
@@ -21,10 +20,6 @@ async function main(device) {
             code: EmcyType.GENERIC_ERROR,
             info: Buffer.from([0x1, 0x2, 0x3, 0x4, 0x5]),
         });
-
-        // Check error history
-        const lastError = device.emcy.history[0].code;
-        console.log(`Sent 0x${lastError.toString(16)}`);
 
         device.stop();
         resolve();

@@ -6,6 +6,7 @@
 
 const EventEmitter = require('events');
 const { Eds, EdsError } = require('../eds');
+const { deprecate } = require('util');
 
 /**
  * NMT internal states.
@@ -79,7 +80,7 @@ class Nmt extends EventEmitter {
     constructor(eds) {
         super();
 
-        if(!Eds.isEds(eds))
+        if (!Eds.isEds(eds))
             throw new TypeError('not an Eds');
 
         this.eds = eds;
@@ -137,11 +138,11 @@ class Nmt extends EventEmitter {
      * Begin heartbeat generation.
      */
     start() {
-        if(this.state !== NmtState.INITIALIZING)
+        if (this.state !== NmtState.INITIALIZING)
             return;
 
         this.heartbeatMap = {};
-        for(const { deviceId, heartbeatTime } of this.consumers) {
+        for (const { deviceId, heartbeatTime } of this.consumers) {
             this.heartbeatMap[deviceId] = {
                 state: null,
                 interval: heartbeatTime,
@@ -149,13 +150,13 @@ class Nmt extends EventEmitter {
         }
 
         const producerTime = this.producerTime;
-        if(producerTime !== null) {
+        if (producerTime !== null) {
             if (producerTime === 0)
-                throw new EdsError('producerTime must not be 0');
+                throw new EdsError('producerTime may not be 0');
 
             // Start heartbeat timer
             this.heartbeatTimers[0] = setInterval(() => {
-                if(this.deviceId)
+                if (this.deviceId)
                     this._sendHeartbeat(this.deviceId);
             }, producerTime);
         }
@@ -166,11 +167,26 @@ class Nmt extends EventEmitter {
 
     /** Stop heartbeat generation. */
     stop() {
-        for(const timer of Object.values(this.heartbeatTimers))
+        for (const timer of Object.values(this.heartbeatTimers))
             clearTimeout(timer);
 
         this.state = NmtState.INITIALIZING;
         this.heartbeatTimers = {};
+    }
+
+    /**
+     * Get the consumer heartbeat time for a device.
+     *
+     * @param {number} deviceId - device COB-ID to get.
+     * @returns {number | null} the consumer heartbeat time or null.
+     */
+    getConsumerTime(deviceId) {
+        for (const consumer in this.consumers) {
+            if (consumer.deviceId === deviceId)
+                return consumer.heartbeatTime;
+        }
+
+        return null;
     }
 
     /**
@@ -181,7 +197,7 @@ class Nmt extends EventEmitter {
      * @returns {Promise<NmtState | null>} The node NMT state.
      */
     async getNodeState(deviceId, timeout) {
-        if(!deviceId)
+        if (!deviceId)
             return this.state;
 
         let interval = this.getConsumerTime(deviceId);
@@ -388,6 +404,44 @@ class Nmt extends EventEmitter {
                 }
             }
         }
+    }
+
+    ////////////////////////////// Deprecated //////////////////////////////
+
+    /**
+     * Initialize the device and audit the object dictionary.
+     *
+     * @deprecated
+     */
+    init() {
+        deprecate(() => this.start(),
+            'init() is deprecated. Use start() instead.');
+    }
+
+    /**
+     * Add an entry to 0x1016 (Consumer heartbeat time).
+     *
+     * @param {number} deviceId - device COB-ID to add.
+     * @param {number} timeout - milliseconds before a timeout is reported.
+     * @param {number} [subIndex] - sub-index to store the entry, optional.
+     * @deprecated
+     */
+    addConsumer(deviceId, timeout, subIndex) {
+        const opt = { subIndex };
+        deprecate(() => this.eds.addHeartbeatConsumer(deviceId, timeout, opt),
+            'addConsumer() is deprecated. Use Eds method instead.');
+
+    }
+
+    /**
+     * Remove an entry from 0x1016 (Consumer heartbeat time).
+     *
+     * @param {number} deviceId - device COB-ID of the entry to remove.
+     * @deprecated
+     */
+    removeConsumer(deviceId) {
+        deprecate(() => this.eds.removeHeartbeatConsumer(deviceId),
+            'removeConsumer() is deprecated. Use Eds method isntead.');
     }
 }
 

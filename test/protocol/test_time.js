@@ -8,11 +8,7 @@ chai.use(chaiAsPromised);
 describe('Time', function () {
     it('should produce a time object', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setTimeCobId({
-            cobId: 0x100,
-            produce: true,
-            consume: true
-        });
+        device.eds.setTimeCobId(0x100, true, true);
 
         device.time.on('time', () => {
             device.time.stop();
@@ -25,7 +21,7 @@ describe('Time', function () {
 
     it('should throw if produce is false', function () {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setTimeCobId({ cobId: 0x100, produce: false });
+        device.eds.setTimeCobId(0x100);
         device.time.start();
 
         return expect(() => device.time.write()).to.throw(EdsError);

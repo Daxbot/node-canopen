@@ -43,7 +43,7 @@ describe('Eds', function () {
 
             saveFile.save(testFile);
 
-            const loadFile = Eds.load(testFile);
+            const loadFile = Eds.fromFile(testFile);
             return Promise.all([
                 expect(loadFile.fileName).to.equal(testFile),
                 expect(loadFile.baudRates).to.include(500000),
@@ -53,7 +53,7 @@ describe('Eds', function () {
         });
 
         it('should create a raw entry if there is a defaultValue', function () {
-            const loadFile = Eds.load('test/sample.eds');
+            const loadFile = Eds.fromFile('test/sample.eds');
             const entry = loadFile.getSubEntry('DeviceInfo', 0);
             expect(entry.raw).to.not.be.undefined;
         });
@@ -273,10 +273,10 @@ describe('Eds', function () {
                 accessType: AccessType.READ_WRITE,
             });
 
-            expect(eds.getEntry('Test entry').length).to.equal(3);
+            expect(eds.findEntry('Test entry').length).to.equal(3);
             eds.removeEntry(0x2000);
 
-            const entries = eds.getEntry('Test entry');
+            const entries = eds.findEntry('Test entry');
             return Promise.all([
                 expect(entries.length).to.equal(2),
                 expect(entries[0].index).to.equal(0x2001),
