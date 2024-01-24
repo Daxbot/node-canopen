@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>protocol/emcy.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <input type="text" id="nav-search" placeholder="Search" />
+    
+    
+    <h2><a href="index.html">Home</a></h2><h2><a href="https://github.com/DaxBot/node-canopen" target="_blank" class="menu-item" id="repository" >Repository</a></h2><h3>Classes</h3><ul><li><a href="DataObject.html">DataObject</a><ul class='methods'><li data-type='method' style='display: none;'><a href="DataObject.html#.isDataObject">isDataObject</a></li><li data-type='method' style='display: none;'><a href="DataObject.html#addSubObject">addSubObject</a></li><li data-type='method' style='display: none;'><a href="DataObject.html#at">at</a></li><li data-type='method' style='display: none;'><a href="DataObject.html#removeSubObject">removeSubObject</a></li><li data-type='method' style='display: none;'><a href="DataObject.html#toString">toString</a></li><li data-type='method' style='display: none;'><a href="DataObject.html#valueOf">valueOf</a></li></ul></li><li><a href="Device.html">Device</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Device.html#getDeviceName">getDeviceName</a></li><li data-type='method' style='display: none;'><a href="Device.html#getDeviceType">getDeviceType</a></li><li data-type='method' style='display: none;'><a href="Device.html#getHardwareVersion">getHardwareVersion</a></li><li data-type='method' style='display: none;'><a href="Device.html#getSoftwareVersion">getSoftwareVersion</a></li><li data-type='method' style='display: none;'><a href="Device.html#getStatusRegister">getStatusRegister</a></li><li data-type='method' style='display: none;'><a href="Device.html#mapRemoteNode">mapRemoteNode</a></li><li data-type='method' style='display: none;'><a href="Device.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Device.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Device.html#stop">stop</a></li></ul></li><li><a href="Eds.html">Eds</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Eds.html#.fromFile">fromFile</a></li><li data-type='method' style='display: none;'><a href="Eds.html#.isEds">isEds</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addEmcyConsumer">addEmcyConsumer</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addEntry">addEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addHeartbeatConsumer">addHeartbeatConsumer</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addReceivePdo">addReceivePdo</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addSdoClientParameter">addSdoClientParameter</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addSdoServerParameter">addSdoServerParameter</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addSubEntry">addSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addTransmitPdo">addTransmitPdo</a></li><li data-type='method' style='display: none;'><a href="Eds.html#findEntry">findEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getEntry">getEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getRaw">getRaw</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getRawArray">getRawArray</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getScale">getScale</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getScaleArray">getScaleArray</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getSubEntry">getSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getValue">getValue</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getValueArray">getValueArray</a></li><li data-type='method' style='display: none;'><a href="Eds.html#load">load</a></li><li data-type='method' style='display: none;'><a href="Eds.html#pushErrorHistory">pushErrorHistory</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeEmcyConsumer">removeEmcyConsumer</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeEntry">removeEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeHeartbeatConsumer">removeHeartbeatConsumer</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeReceivePdo">removeReceivePdo</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeSdoClientParameter">removeSdoClientParameter</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeSdoServerParameter">removeSdoServerParameter</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeSubEntry">removeSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeTransmitPdo">removeTransmitPdo</a></li><li data-type='method' style='display: none;'><a href="Eds.html#reset">reset</a></li><li data-type='method' style='display: none;'><a href="Eds.html#save">save</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setDeviceName">setDeviceName</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setDeviceType">setDeviceType</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setEmcyCobId">setEmcyCobId</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setEmcyInhibitTime">setEmcyInhibitTime</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setErrorHistoryLength">setErrorHistoryLength</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setErrorRegister">setErrorRegister</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setHardwareVersion">setHardwareVersion</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setHeartbeatProducerTime">setHeartbeatProducerTime</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setIdentity">setIdentity</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setRaw">setRaw</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setRawArray">setRawArray</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setScale">setScale</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setScaleArray">setScaleArray</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setSoftwareVersion">setSoftwareVersion</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setStatusRegister">setStatusRegister</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setSyncCobId">setSyncCobId</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setSyncCyclePeriod">setSyncCyclePeriod</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setSyncOverflow">setSyncOverflow</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setTimeCobId">setTimeCobId</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setValue">setValue</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setValueArray">setValueArray</a></li></ul></li><li><a href="EdsError.html">EdsError</a></li><li><a href="Emcy.html">Emcy</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Emcy.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#write">write</a></li></ul></li><li><a href="EmcyMessage.html">EmcyMessage</a><ul class='methods'><li data-type='method' style='display: none;'><a href="EmcyMessage.html#.isMessage">isMessage</a></li><li data-type='method' style='display: none;'><a href="EmcyMessage.html#toBuffer">toBuffer</a></li><li data-type='method' style='display: none;'><a href="EmcyMessage.html#toString">toString</a></li></ul></li><li><a href="Lss.html">Lss</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Lss.html#activateBitTiming">activateBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureBitTiming">configureBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureNodeId">configureNodeId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#fastscan">fastscan</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireProductCode">inquireProductCode</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireRevisionNumber">inquireRevisionNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireSerialNumber">inquireSerialNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireVendorId">inquireVendorId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Lss.html#setMode">setMode</a></li><li data-type='method' style='display: none;'><a href="Lss.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Lss.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Lss.html#storeConfiguration">storeConfiguration</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeGlobal">switchModeGlobal</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeSelective">switchModeSelective</a></li></ul></li><li><a href="LssError.html">LssError</a></li><li><a href="Nmt.html">Nmt</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Nmt.html#enterPreOperational">enterPreOperational</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#getConsumerTime">getConsumerTime</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#getNodeState">getNodeState</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetCommunication">resetCommunication</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetNode">resetNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#setState">setState</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#startNode">startNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stopNode">stopNode</a></li></ul></li><li><a href="Pdo.html">Pdo</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Pdo.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#write">write</a></li></ul></li><li><a href="Protocol.html">Protocol</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Protocol.html#send">send</a></li><li data-type='method' style='display: none;'><a href="Protocol.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Protocol.html#stop">stop</a></li></ul></li><li><a href="SdoClient.html">SdoClient</a><ul class='methods'><li data-type='method' style='display: none;'><a href="SdoClient.html#download">download</a></li><li data-type='method' style='display: none;'><a href="SdoClient.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="SdoClient.html#start">start</a></li><li data-type='method' style='display: none;'><a href="SdoClient.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="SdoClient.html#upload">upload</a></li></ul></li><li><a href="SdoError.html">SdoError</a><ul class='members'><li data-type='member' style='display: none;'><a href="SdoError.html#.SdoCode">SdoCode</a></li></ul></li><li><a href="SdoServer.html">SdoServer</a><ul class='methods'><li data-type='method' style='display: none;'><a href="SdoServer.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="SdoServer.html#start">start</a></li><li data-type='method' style='display: none;'><a href="SdoServer.html#stop">stop</a></li></ul></li><li><a href="Sync.html">Sync</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Sync.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Sync.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Sync.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Sync.html#write">write</a></li></ul></li><li><a href="Time.html">Time</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Time.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Time.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Time.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Time.html#write">write</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="DataObject.html#event:update">DataObject#update</a></li><li><a href="Emcy.html#event:emergency">Emcy#emergency</a></li><li><a href="Lss.html#event:changeDeviceId">Lss#changeDeviceId</a></li><li><a href="Lss.html#event:changeMode">Lss#changeMode</a></li><li><a href="Nmt.html#event:changeState">Nmt#changeState</a></li><li><a href="Nmt.html#event:reset">Nmt#reset</a></li><li><a href="Nmt.html#event:timeout">Nmt#timeout</a></li><li><a href="Pdo.html#event:pdo">Pdo#pdo</a></li><li><a href="Protocol.html#event:message">Protocol#message</a></li><li><a href="Protocol.html#event:start">Protocol#start</a></li><li><a href="Protocol.html#event:stop">Protocol#stop</a></li><li><a href="Sync.html#event:sync">Sync#sync</a></li><li><a href="Time.html#event:time">Time#time</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AccessType">AccessType</a></li><li><a href="global.html#calculateCrc">calculateCrc</a></li><li><a href="global.html#DataType">DataType</a></li><li><a href="global.html#dateToTime">dateToTime</a></li><li><a href="global.html#EmcyCode">EmcyCode</a></li><li><a href="global.html#EmcyType">EmcyType</a></li><li><a href="global.html#LssMode">LssMode</a></li><li><a href="global.html#NmtState">NmtState</a></li><li><a href="global.html#ObjectType">ObjectType</a></li><li><a href="global.html#rawToType">rawToType</a></li><li><a href="global.html#timeToDate">timeToDate</a></li><li><a href="global.html#typeToRaw">typeToRaw</a></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">protocol/emcy.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Implements the CANopen Emergency (EMCY) protocol.
+ * @author Wilkins White
+ * @copyright 2024 Daxbot
+ */
+
+const Protocol = require('./protocol');
+const { Eds, EdsError } = require('../eds');
+const { deprecate } = require('util');
+
+/**
+ * CANopen emergency error code classes.
+ *
+ * @enum {number}
+ * @see CiA301 "Emergency object (EMCY)" (§7.2.7)
+ */
+const EmcyType = {
+    /** Error reset or no error. */
+    ERROR_RESET: 0x0000,
+
+    /** Generic error. */
+    GENERIC_ERROR: 0x1000,
+
+    /** Current error. */
+    CURRENT_GENERAL: 0x2000,
+
+    /** Current error, CANopen device input side. */
+    CURRENT_INPUT: 0x2100,
+
+    /** Current error inside the CANopen device. */
+    CURRENT_INTERNAL: 0x2200,
+
+    /** Current error, CANopen device output side. */
+    CURRENT_OUTPUT: 0x2300,
+
+    /** Voltage error. */
+    VOLTAGE_GENERAL: 0x3000,
+
+    /** Voltage error, mains. */
+    VOLTAGE_MAINS: 0x3100,
+
+    /** Voltage error inside the CANopen device. */
+    VOLTAGE_INTERNAL: 0x3200,
+
+    /** Voltage error, CANopen device output side. */
+    VOLTAGE_OUTPUT: 0x3300,
+
+    /** Temperature error. */
+    TEMPERATURE_GENERAL: 0x4000,
+
+    /** Temperature error, ambient. */
+    TEMPERATURE_AMBIENT: 0x4100,
+
+    /** Temperature error, CANopen device. */
+    TEMPERATURE_DEVICE: 0x4200,
+
+    /** CANopen device hardware error. */
+    HARDWARE: 0x5000,
+
+    /** CANopen device software error. */
+    SOFTWARE_GENERAL: 0x6000,
+
+    /** Internal software error. */
+    SOFTWARE_INTERNAL: 0x6100,
+
+    /** User software error. */
+    SOFTWARE_USER: 0x6200,
+
+    /** Data set error. */
+    SOFTWARE_DATA: 0x6300,
+
+    /** Additional modules error. */
+    MODULES: 0x7000,
+
+    /** Monitoring error. */
+    MONITORING: 0x8000,
+
+    /** Monitoring error, communication. */
+    COMMUNICATION: 0x8100,
+
+    /** Monitoring error, protocol. */
+    PROTOCOL: 0x8200,
+
+    /** External error. */
+    EXTERNAL: 0x9000,
+
+    /** Additional functions error. */
+    ADDITIONAL_FUNCTIONS: 0xf000,
+
+    /** CANopen device specific error. */
+    DEVICE_SPECIFIC: 0xff00,
+};
+
+/**
+ * CANopen emergency error codes.
+ *
+ * @enum {number}
+ * @see CiA301 "Emergency object (EMCY)" (§7.2.7)
+ */
+const EmcyCode = {
+    /** CAN overrun (objects lost). */
+    CAN_OVERRUN: EmcyType.COMMUNICATION | 0x10,
+
+    /** CAN in error passive mode. */
+    BUS_PASSIVE: EmcyType.COMMUNICATION | 0x20,
+
+    /** Life guard or heartbeat error. */
+    HEARTBEAT: EmcyType.COMMUNICATION | 0x30,
+
+    /** CAN recovered from bus off. */
+    BUS_OFF_RECOVERED: EmcyType.COMMUNICATION | 0x40,
+
+    /** CAN-ID collision. */
+    CAN_ID_COLLISION: EmcyType.COMMUNICATION | 0x50,
+
+    /** PDO not processed due to length error. */
+    PDO_LENGTH: EmcyType.PROTOCOL | 0x10,
+
+    /** PDO length exceeded. */
+    PDO_LENGTH_EXCEEDED: EmcyType.PROTOCOL | 0x20,
+
+    /** DAM MPDO not processed, destination object not available. */
+    DAM_MPDO: EmcyType.PROTOCOL | 0x30,
+
+    /** Unexpected SYNC data length. */
+    SYNC_LENGTH: EmcyType.PROTOCOL | 0x40,
+
+    /** RPDO timed out. */
+    RPDO_TIMEOUT: EmcyType.PROTOCOL | 0x50,
+
+    /** Unexpected TIME data length. */
+    TIME_LENGTH: EmcyType.PROTOCOL | 0x60,
+};
+
+/**
+ * Structure for storing and parsing CANopen emergency objects.
+ *
+ * @param {object} args - arguments.
+ * @param {EmcyCode} args.code - error code.
+ * @param {number} args.register - error register (Object 0x1001).
+ * @param {Buffer} args.info - error info.
+ */
+class EmcyMessage {
+    constructor(...args) {
+        if(typeof args[0] === 'object') {
+            args = args[0];
+        }
+        else {
+            args = {
+                code: args[0],
+                register: args[1],
+                info: args[2],
+            };
+        }
+
+        this.code = args.code;
+        this.register = args.register || 0;
+        this.info = Buffer.alloc(5);
+
+        if (args.info) {
+            if (!Buffer.isBuffer(args.info) || args.info.length > 5)
+                throw TypeError('info must be a Buffer of length [0-5]');
+
+            args.info.copy(this.info);
+        }
+    }
+
+    /**
+     * Convert to a string.
+     *
+     * @returns {string} string representation.
+     */
+    toString() {
+        // Check codes
+        switch (this.code) {
+            case EmcyCode.CAN_OVERRUN:
+                return 'CAN overrun';
+            case EmcyCode.BUS_PASSIVE:
+                return 'CAN in error passive mode';
+            case EmcyCode.HEARTBEAT:
+                return 'Life guard or heartbeat error';
+            case EmcyCode.BUS_OFF_RECOVERED:
+                return 'Recovered from bus off';
+            case EmcyCode.CAN_ID_COLLISION:
+                return 'CAN-ID collision';
+            case EmcyCode.PDO_LENGTH:
+                return 'PDO not processed due to length error';
+            case EmcyCode.PDO_LENGTH_EXCEEDED:
+                return 'PDO length exceeded';
+            case EmcyCode.DAM_MPDO:
+                return 'DAM MPDO not processed, destination object not available';
+            case EmcyCode.SYNC_LENGTH:
+                return 'Unexpected SYNC data length';
+            case EmcyCode.RPDO_TIMEOUT:
+                return 'RPDO timeout';
+            case EmcyCode.TIME_LENGTH:
+                return 'Unexpected TIME data length';
+        }
+
+        // Check class
+        switch (this.code &amp; 0xff00) {
+            case EmcyType.ERROR_RESET:
+                return 'Error reset';
+            case EmcyType.GENERIC_ERROR:
+                return 'Generic error';
+            case EmcyType.CURRENT_GENERAL:
+                return 'Current error';
+            case EmcyType.CURRENT_INPUT:
+                return 'Current, CANopen device input side';
+            case EmcyType.CURRENT_INTERNAL:
+                return 'Current inside the CANopen device';
+            case EmcyType.CURRENT_OUTPUT:
+                return 'Current, CANopen device output side';
+            case EmcyType.VOLTAGE_GENERAL:
+                return 'Voltage error';
+            case EmcyType.VOLTAGE_MAINS:
+                return 'Voltage mains';
+            case EmcyType.VOLTAGE_INTERNAL:
+                return 'Voltage inside the CANopen device';
+            case EmcyType.VOLTAGE_OUTPUT:
+                return 'Voltage output';
+            case EmcyType.TEMPERATURE_GENERAL:
+                return 'Temperature error';
+            case EmcyType.TEMPERATURE_AMBIENT:
+                return 'Ambient temperature';
+            case EmcyType.HARDWARE:
+                return 'CANopen device hardware';
+            case EmcyType.SOFTWARE_GENERAL:
+                return 'CANopen device software';
+            case EmcyType.SOFTWARE_INTERNAL:
+                return 'Internal software';
+            case EmcyType.SOFTWARE_USER:
+                return 'User software';
+            case EmcyType.SOFTWARE_DATA:
+                return 'Data set';
+            case EmcyType.MODULES:
+                return 'Additional modules';
+            case EmcyType.MONITORING:
+                return 'Monitoring error';
+            case EmcyType.COMMUNICATION:
+                return 'Communication error';
+            case EmcyType.PROTOCOL:
+                return 'Protocol error';
+            case EmcyType.EXTERNAL:
+                return 'External error';
+            case EmcyType.ADDITIONAL_FUNCTIONS:
+                return 'Additional functions';
+            case EmcyType.DEVICE_SPECIFIC:
+                return 'CANopen device specific';
+        }
+
+        return `Unknown error (0x${this.code.toString(16)})`;
+    }
+
+    /**
+     * Convert to a Buffer.
+     *
+     * @returns {Buffer} encoded data.
+     */
+    toBuffer() {
+        let data = Buffer.alloc(8);
+        data.writeUInt16LE(this.code);
+        data.writeUInt8(this.register, 2);
+        this.info.copy(data, 3);
+
+        return data;
+    }
+
+    /**
+     * Returns true if the object is an instance of EmcyMessage.
+     *
+     * @param {object} obj - object to test.
+     * @returns {boolean} true if obj is an EmcyMessage.
+     */
+    static isMessage(obj) {
+        return obj instanceof EmcyMessage;
+    }
+}
+
+/**
+ * CANopen EMCY protocol handler.
+ *
+ * The emergency (EMCY) protocol follows a producer-consumer structure where
+ * emergency objects are used to indicate CANopen device errors. An emergency
+ * object should be transmitted only once per error event.
+ *
+ * This class implements the EMCY write service for producing emergency objects.
+ *
+ * @param {Eds} eds - Eds object.
+ * @see CiA301 "Emergency object" (§7.2.7)
+ */
+class Emcy extends Protocol {
+    constructor(eds) {
+        super();
+
+        if(!Eds.isEds(eds))
+            throw new TypeError('not an Eds');
+
+        this.eds = eds;
+        this.sendQueue = [];
+        this.sendTimer = null;
+    }
+
+    /**
+     * Error register (Object 0x1001).
+     *
+     * @type {number}
+     */
+    get register() {
+        if(this._register !== undefined)
+            return this._register;
+
+        const obj1001 = this.eds.getEntry(0x1001);
+        if (obj1001)
+            return obj1001.value;
+
+        return null;
+    }
+
+    set register(value) {
+        this._register = value;
+    }
+
+    /**
+     * Error history (Object 0x1003).
+     *
+     * [{ code, info } ... ]
+     *
+     * @type {Array&lt;object>}
+     */
+    get history() {
+        const history = [];
+
+        const obj1003 = this.eds.getEntry(0x1003);
+        if (obj1003) {
+            const maxSubIndex = obj1003[0].value;
+            for (let i = 1; i &lt;= maxSubIndex; ++i) {
+                const raw = this.eds.getRawArray(0x1003, i);
+                const code = raw.readUInt16LE(0);
+                const info = raw.readUInt16LE(2);
+
+                if (code)
+                    history.push({ code, info });
+            }
+        }
+
+        return history;
+    }
+
+    /**
+     * Emcy valid bit (Object 0x1014, bit 31).
+     *
+     * @type {boolean}
+     */
+    get valid() {
+        if(this._valid !== undefined)
+            return this._valid;
+
+        const obj1014 = this.eds.getEntry(0x1014);
+        if(obj1014)
+            return !((obj1014.value >> 31) &amp; 0x1);
+
+        return false;
+    }
+
+    set valid(value) {
+        this._valid = value;
+    }
+
+    /**
+     * Emcy COB-ID (Object 0x1014, bits 0-28).
+     *
+     * @type {number}
+     */
+    get cobId() {
+        if(this._cobId !== undefined)
+            return this._cobId;
+
+        const obj1014 = this.eds.getEntry(0x1014);
+        if(obj1014)
+            return obj1014.value &amp; 0x7FF;
+
+        return null;
+    }
+
+    set cobId(value) {
+        this._cobId = value;
+    }
+
+    /**
+     * Emcy inhibit time in ms (Object 0x1015).
+     *
+     * @type {number}
+     */
+    get inhibitTime() {
+        if(this._inhibitTime !== undefined)
+            return this._inhibitTime;
+
+        const obj1015 = this.eds.getEntry(0x1015);
+        if (obj1015)
+            return obj1015.value;
+
+        return null;
+    }
+
+    set inhibitTime(value) {
+        this._inhibitTime = value;
+    }
+
+    /**
+     * Emergency consumer object (Object 0x1028).
+     *
+     * @type {Array&lt;number>}
+     */
+    get consumers() {
+        const consumers = [];
+
+        const obj1028 = this.eds.getEntry(0x1028);
+        if (obj1028) {
+            const maxSubIndex = obj1028[0].value;
+            for (let i = 1; i &lt;= maxSubIndex; ++i) {
+                const subEntry = this.eds.getSubEntry(0x1028, i);
+                if (!subEntry)
+                    continue;
+
+                if (!(subEntry.value >> 31))
+                    consumers.push(subEntry.value &amp; 0x7ff);
+            }
+        }
+
+        return consumers;
+    }
+
+    /**
+     * Start the module.
+     *
+     * @fires Protocol#start
+     */
+    start() {
+        if(this.sendTimer !== null)
+            return;
+
+        const delay = this.inhibitTime / 10; // 100 μs
+        if(delay) {
+            this.sendTimer = setInterval(() => {
+                if(this.sendQueue.length > 0) {
+                    const [ id, data ] = this.sendQueue.shift();
+                    this.send(id, data);
+                }
+            }, delay);
+        }
+        super.start();
+    }
+
+    /**
+     * Stop the module.
+     *
+     * @fires Protocol#stop
+     */
+    stop() {
+        clearInterval(this.sendTimer);
+        this.sendTimer = null;
+        super.stop();
+    }
+
+    /**
+     * Service: EMCY write.
+     *
+     * @param {object} args - arguments.
+     * @param {number} args.code - error code.
+     * @param {Buffer} args.info - error info.
+     * @fires Protocol#message
+     */
+    write(...args) {
+        if (!this.cobId)
+            throw new EdsError('EMCY production is disabled');
+
+        let code, info;
+        if(typeof args[0] === 'object') {
+            // write({ code, info })
+            code = args.code;
+            info = args.info;
+        }
+        else {
+            // write(code, info)
+            code = args[0];
+            info = args[1];
+        }
+
+        const em = new EmcyMessage({
+            code,
+            register: this.register,
+            info
+        });
+
+        if(this.sendTimer)
+            this.sendQueue.push([ this.cobId, em.toBuffer() ]);
+        else
+            this.send(this.cobId, em.toBuffer());
+    }
+
+    /**
+     * Call when a new CAN message is received.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @fires Emcy#emergency
+     */
+    receive({ id, data }) {
+        if (data.length != 8)
+            return;
+
+        for (let cobId of this.consumers) {
+            if (id === cobId) {
+                /**
+                 * An emergency message was received.
+                 *
+                 * @event Emcy#emergency
+                 * @type {object}
+                 * @property {number} cobId - message identifier.
+                 * @property {EmcyMessage} em - message object.
+                 */
+                this.emit('emergency', {
+                    cobId: id,
+                    em: new EmcyMessage({
+                        code: data.readUInt16LE(0),
+                        register: data.readUInt8(2),
+                        info: data.subarray(3),
+                    }),
+                });
+                break;
+            }
+        }
+    }
+
+    ////////////////////////////// Deprecated //////////////////////////////
+
+    /**
+     * Initialize members and begin emergency monitoring.
+     *
+     * @deprecated
+     * @ignore
+     */
+    init() {
+        deprecate(() => this.start(),
+            'init() is deprecated. Use start() instead');
+    }
+
+    /**
+     * Configures the number of sub-entries for 0x1003 (Pre-defined error field).
+     *
+     * @param {number} length - how many historical error events should be kept.
+     * @deprecated
+     * @ignore
+     */
+    setHistoryLength(length) {
+        deprecate(() => this.eds.setErrorHistoryLength(length),
+            'setHistoryLength is deprecated. Use Eds method instead.');
+    }
+}
+
+module.exports = exports = { EmcyType, EmcyCode, EmcyMessage, Emcy };
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+<script src="scripts/search.js" defer></script>
+
+
+<script src="scripts/collapse.js" defer></script>
+
+
+</body>
+</html>

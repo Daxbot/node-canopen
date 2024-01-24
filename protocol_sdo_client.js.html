@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>protocol/sdo_client.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <input type="text" id="nav-search" placeholder="Search" />
+    
+    
+    <h2><a href="index.html">Home</a></h2><h2><a href="https://github.com/DaxBot/node-canopen" target="_blank" class="menu-item" id="repository" >Repository</a></h2><h3>Classes</h3><ul><li><a href="DataObject.html">DataObject</a><ul class='methods'><li data-type='method' style='display: none;'><a href="DataObject.html#.isDataObject">isDataObject</a></li><li data-type='method' style='display: none;'><a href="DataObject.html#addSubObject">addSubObject</a></li><li data-type='method' style='display: none;'><a href="DataObject.html#at">at</a></li><li data-type='method' style='display: none;'><a href="DataObject.html#removeSubObject">removeSubObject</a></li><li data-type='method' style='display: none;'><a href="DataObject.html#toString">toString</a></li><li data-type='method' style='display: none;'><a href="DataObject.html#valueOf">valueOf</a></li></ul></li><li><a href="Device.html">Device</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Device.html#getDeviceName">getDeviceName</a></li><li data-type='method' style='display: none;'><a href="Device.html#getDeviceType">getDeviceType</a></li><li data-type='method' style='display: none;'><a href="Device.html#getHardwareVersion">getHardwareVersion</a></li><li data-type='method' style='display: none;'><a href="Device.html#getSoftwareVersion">getSoftwareVersion</a></li><li data-type='method' style='display: none;'><a href="Device.html#getStatusRegister">getStatusRegister</a></li><li data-type='method' style='display: none;'><a href="Device.html#mapRemoteNode">mapRemoteNode</a></li><li data-type='method' style='display: none;'><a href="Device.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Device.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Device.html#stop">stop</a></li></ul></li><li><a href="Eds.html">Eds</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Eds.html#.fromFile">fromFile</a></li><li data-type='method' style='display: none;'><a href="Eds.html#.isEds">isEds</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addEmcyConsumer">addEmcyConsumer</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addEntry">addEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addHeartbeatConsumer">addHeartbeatConsumer</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addReceivePdo">addReceivePdo</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addSdoClientParameter">addSdoClientParameter</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addSdoServerParameter">addSdoServerParameter</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addSubEntry">addSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#addTransmitPdo">addTransmitPdo</a></li><li data-type='method' style='display: none;'><a href="Eds.html#findEntry">findEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getEntry">getEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getRaw">getRaw</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getRawArray">getRawArray</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getScale">getScale</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getScaleArray">getScaleArray</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getSubEntry">getSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getValue">getValue</a></li><li data-type='method' style='display: none;'><a href="Eds.html#getValueArray">getValueArray</a></li><li data-type='method' style='display: none;'><a href="Eds.html#load">load</a></li><li data-type='method' style='display: none;'><a href="Eds.html#pushErrorHistory">pushErrorHistory</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeEmcyConsumer">removeEmcyConsumer</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeEntry">removeEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeHeartbeatConsumer">removeHeartbeatConsumer</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeReceivePdo">removeReceivePdo</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeSdoClientParameter">removeSdoClientParameter</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeSdoServerParameter">removeSdoServerParameter</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeSubEntry">removeSubEntry</a></li><li data-type='method' style='display: none;'><a href="Eds.html#removeTransmitPdo">removeTransmitPdo</a></li><li data-type='method' style='display: none;'><a href="Eds.html#reset">reset</a></li><li data-type='method' style='display: none;'><a href="Eds.html#save">save</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setDeviceName">setDeviceName</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setDeviceType">setDeviceType</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setEmcyCobId">setEmcyCobId</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setEmcyInhibitTime">setEmcyInhibitTime</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setErrorHistoryLength">setErrorHistoryLength</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setErrorRegister">setErrorRegister</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setHardwareVersion">setHardwareVersion</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setHeartbeatProducerTime">setHeartbeatProducerTime</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setIdentity">setIdentity</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setRaw">setRaw</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setRawArray">setRawArray</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setScale">setScale</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setScaleArray">setScaleArray</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setSoftwareVersion">setSoftwareVersion</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setStatusRegister">setStatusRegister</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setSyncCobId">setSyncCobId</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setSyncCyclePeriod">setSyncCyclePeriod</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setSyncOverflow">setSyncOverflow</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setTimeCobId">setTimeCobId</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setValue">setValue</a></li><li data-type='method' style='display: none;'><a href="Eds.html#setValueArray">setValueArray</a></li></ul></li><li><a href="EdsError.html">EdsError</a></li><li><a href="Emcy.html">Emcy</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Emcy.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Emcy.html#write">write</a></li></ul></li><li><a href="EmcyMessage.html">EmcyMessage</a><ul class='methods'><li data-type='method' style='display: none;'><a href="EmcyMessage.html#.isMessage">isMessage</a></li><li data-type='method' style='display: none;'><a href="EmcyMessage.html#toBuffer">toBuffer</a></li><li data-type='method' style='display: none;'><a href="EmcyMessage.html#toString">toString</a></li></ul></li><li><a href="Lss.html">Lss</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Lss.html#activateBitTiming">activateBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureBitTiming">configureBitTiming</a></li><li data-type='method' style='display: none;'><a href="Lss.html#configureNodeId">configureNodeId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#fastscan">fastscan</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireProductCode">inquireProductCode</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireRevisionNumber">inquireRevisionNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireSerialNumber">inquireSerialNumber</a></li><li data-type='method' style='display: none;'><a href="Lss.html#inquireVendorId">inquireVendorId</a></li><li data-type='method' style='display: none;'><a href="Lss.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Lss.html#setMode">setMode</a></li><li data-type='method' style='display: none;'><a href="Lss.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Lss.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Lss.html#storeConfiguration">storeConfiguration</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeGlobal">switchModeGlobal</a></li><li data-type='method' style='display: none;'><a href="Lss.html#switchModeSelective">switchModeSelective</a></li></ul></li><li><a href="LssError.html">LssError</a></li><li><a href="Nmt.html">Nmt</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Nmt.html#enterPreOperational">enterPreOperational</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#getConsumerTime">getConsumerTime</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#getNodeState">getNodeState</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetCommunication">resetCommunication</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#resetNode">resetNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#setState">setState</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#startNode">startNode</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Nmt.html#stopNode">stopNode</a></li></ul></li><li><a href="Pdo.html">Pdo</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Pdo.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Pdo.html#write">write</a></li></ul></li><li><a href="Protocol.html">Protocol</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Protocol.html#send">send</a></li><li data-type='method' style='display: none;'><a href="Protocol.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Protocol.html#stop">stop</a></li></ul></li><li><a href="SdoClient.html">SdoClient</a><ul class='methods'><li data-type='method' style='display: none;'><a href="SdoClient.html#download">download</a></li><li data-type='method' style='display: none;'><a href="SdoClient.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="SdoClient.html#start">start</a></li><li data-type='method' style='display: none;'><a href="SdoClient.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="SdoClient.html#upload">upload</a></li></ul></li><li><a href="SdoError.html">SdoError</a><ul class='members'><li data-type='member' style='display: none;'><a href="SdoError.html#.SdoCode">SdoCode</a></li></ul></li><li><a href="SdoServer.html">SdoServer</a><ul class='methods'><li data-type='method' style='display: none;'><a href="SdoServer.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="SdoServer.html#start">start</a></li><li data-type='method' style='display: none;'><a href="SdoServer.html#stop">stop</a></li></ul></li><li><a href="Sync.html">Sync</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Sync.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Sync.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Sync.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Sync.html#write">write</a></li></ul></li><li><a href="Time.html">Time</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Time.html#receive">receive</a></li><li data-type='method' style='display: none;'><a href="Time.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Time.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Time.html#write">write</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="DataObject.html#event:update">DataObject#update</a></li><li><a href="Emcy.html#event:emergency">Emcy#emergency</a></li><li><a href="Lss.html#event:changeDeviceId">Lss#changeDeviceId</a></li><li><a href="Lss.html#event:changeMode">Lss#changeMode</a></li><li><a href="Nmt.html#event:changeState">Nmt#changeState</a></li><li><a href="Nmt.html#event:reset">Nmt#reset</a></li><li><a href="Nmt.html#event:timeout">Nmt#timeout</a></li><li><a href="Pdo.html#event:pdo">Pdo#pdo</a></li><li><a href="Protocol.html#event:message">Protocol#message</a></li><li><a href="Protocol.html#event:start">Protocol#start</a></li><li><a href="Protocol.html#event:stop">Protocol#stop</a></li><li><a href="Sync.html#event:sync">Sync#sync</a></li><li><a href="Time.html#event:time">Time#time</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AccessType">AccessType</a></li><li><a href="global.html#calculateCrc">calculateCrc</a></li><li><a href="global.html#DataType">DataType</a></li><li><a href="global.html#dateToTime">dateToTime</a></li><li><a href="global.html#EmcyCode">EmcyCode</a></li><li><a href="global.html#EmcyType">EmcyType</a></li><li><a href="global.html#LssMode">LssMode</a></li><li><a href="global.html#NmtState">NmtState</a></li><li><a href="global.html#ObjectType">ObjectType</a></li><li><a href="global.html#rawToType">rawToType</a></li><li><a href="global.html#timeToDate">timeToDate</a></li><li><a href="global.html#typeToRaw">typeToRaw</a></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">protocol/sdo_client.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Implements the CANopen Service Data Object (SDO) protocol client.
+ * @author Wilkins White
+ * @copyright 2024 Daxbot
+ */
+
+const Protocol = require('./protocol');
+const { DataObject, Eds } = require('../eds');
+const { DataType } = require('../types');
+const { SdoCode, SdoTransfer, ClientCommand, ServerCommand } = require('./sdo');
+const calculateCrc = require('../functions/crc');
+const rawToType = require('../functions/raw_to_type');
+const typeToRaw = require('../functions/type_to_raw');
+const { deprecate } = require('util');
+
+/**
+ * Queue of pending transfers.
+ *
+ * @see https://medium.com/@karenmarkosyan/how-to-manage-promises-into-dynamic-queue-with-vanilla-javascript-9d0d1f8d4df5
+ * @memberof SdoClient
+ * @private
+ */
+class Queue {
+    constructor() {
+        this.queue = [];
+        this.pending = false;
+    }
+
+    /**
+     * Add a transfer to the queue.
+     *
+     * @param {Function} start - start the transfer.
+     * @returns {Promise} resolves when the transfer is complete.
+     */
+    push(start) {
+        return new Promise((resolve, reject) => {
+            this.queue.push({ start, resolve, reject });
+            this.pop();
+        });
+    }
+
+    /** Run the next transfer in queue. */
+    pop() {
+        if (this.pending)
+            return;
+
+        const transfer = this.queue.shift();
+        if (!transfer)
+            return;
+
+        this.pending = true;
+        transfer.start().then((value) => {
+            this.pending = false;
+            transfer.resolve(value);
+            this.pop();
+        })
+            .catch((error) => {
+                this.pending = false;
+                transfer.reject(error);
+                this.pop();
+            });
+    }
+}
+
+/**
+ * CANopen SDO protocol handler (Client).
+ *
+ * The service data object (SDO) protocol uses a client-server structure where
+ * a client can initiate the transfer of data from the server's object
+ * dictionary. An SDO is transfered as a sequence of segments with basic
+ * error checking.
+ *
+ * @param {Eds} eds - Eds object.
+ * @see CiA301 'Service data object (SDO)' (§7.2.4)
+ */
+class SdoClient extends Protocol {
+    constructor(eds) {
+        super();
+
+        if(!Eds.isEds(eds))
+            throw new TypeError('not an Eds');
+
+        this.eds = eds;
+        this.serverMap = {};
+        this.transfers = {};
+        this._blockSize = 127;
+        // Minimum timeout for the sdo block download.
+        this._blockDownloadTimeout = 1;
+        this.started = false;
+    }
+
+    /**
+     * Number of segments per block when serving block transfers.
+     *
+     * @type {number}
+     */
+    get blockSize() {
+        return this._blockSize;
+    }
+
+    set blockSize(value) {
+        if (value &lt; 1 || value > 127)
+            throw RangeError('blockSize must be in range [1-127]');
+
+        this._blockSize = value;
+    }
+
+    /**
+     * SDO client parameter (Object 0x1280..0x12FF).
+     *
+     * [{ cobIdTx, cobIdRx, deviceId } ... ]
+     *
+     * @type {Array&lt;object>}
+     */
+    get servers() {
+        const parameters = [];
+
+        for (let [index, entry] of Object.entries(this.eds.dataObjects)) {
+            index = parseInt(index);
+            if (index &lt; 0x1280 || index > 0x12FF)
+                continue;
+
+            const deviceId = entry[3].value;
+            if(!deviceId)
+                continue;
+
+            let cobIdTx = entry[1].value;
+            if (!cobIdTx || ((cobIdTx >> 31) &amp; 0x1) == 0x1)
+                continue;
+
+            let cobIdRx = entry[2].value;
+            if (!cobIdRx || ((cobIdRx >> 31) &amp; 0x1) == 0x1)
+                continue;
+
+            cobIdTx &amp;= 0x7FF;
+            cobIdRx &amp;= 0x7FF;
+
+            parameters.push({ cobIdTx, cobIdRx, deviceId });
+        }
+
+        return parameters;
+    }
+
+    /**
+     * Start the module.
+     *
+     * @fires Protocol#start
+     */
+    start() {
+        if(this.started)
+            return;
+
+        this.serverMap = {};
+        for (const { deviceId, cobIdTx, cobIdRx } of this.servers) {
+            this.serverMap[deviceId] = {
+                cobIdTx,
+                cobIdRx,
+                queue: new Queue(),
+            };
+        }
+
+        super.start();
+    }
+
+    /**
+     * Stop the module.
+     *
+     * @fires Protocol#stop
+     */
+    stop() {
+        for(const transfer of Object.values(this.transfers)) {
+            if(transfer.active)
+                this._abortTransfer(transfer, SdoCode.DEVICE_STATE);
+        }
+
+        super.stop();
+    }
+
+    /**
+     * Service: SDO upload
+     *
+     * Read data from an SDO server.
+     *
+     * @param {object} args - arguments to destructure.
+     * @param {number} args.deviceId - SDO server.
+     * @param {number} args.index - data index to upload.
+     * @param {number} args.subIndex - data subIndex to upload.
+     * @param {DataType} [args.dataType] - expected data type.
+     * @param {number} [args.timeout] - time before transfer is aborted.
+     * @param {boolean} [args.blockTransfer] - use block transfer protocol.
+     * @returns {Promise&lt;Buffer | number | bigint | string | Date>} resolves when the upload is complete.
+     * @fires Protocol#message
+     */
+    upload(args) {
+        const deviceId = args.deviceId || args.serverId;
+        const index = args.index;
+        const subIndex = args.subIndex || null;
+        const timeout = args.timeout || 30;
+        const dataType = args.dataType || null;
+        const blockTransfer = args.blockTransfer || false;
+
+        let server = this.serverMap[deviceId];
+        if (server === undefined) {
+            // Attempt to use default server
+            if (this.serverMap[0] === undefined) {
+                const id = deviceId.toString(16);
+                throw new ReferenceError(`SDO server 0x${id} not mapped`);
+            }
+
+            let cobIdRx = this.serverMap[0].cobIdRx;
+            if ((cobIdRx &amp; 0xF) == 0x0)
+                cobIdRx |= deviceId;
+
+            let cobIdTx = this.serverMap[0].cobIdTx;
+            if ((cobIdTx &amp; 0xF) == 0x0)
+                cobIdTx |= deviceId;
+
+            server = this.serverMap[deviceId] = {
+                cobIdRx: cobIdRx,
+                cobIdTx: cobIdTx,
+                pending: {},
+                queue: new Queue(),
+            };
+        }
+
+        if (index === undefined)
+            throw ReferenceError('index must be defined');
+
+        return server.queue.push(() => {
+            return new Promise((resolve, reject) => {
+                this.transfers[server.cobIdRx] = new SdoTransfer({
+                    resolve,
+                    reject,
+                    index,
+                    subIndex,
+                    timeout,
+                    cobId: server.cobIdTx,
+                });
+
+                const sendBuffer = Buffer.alloc(8);
+                sendBuffer.writeUInt16LE(index, 1);
+                sendBuffer.writeUInt8(subIndex, 3);
+
+                if (blockTransfer) {
+                    const header = (ClientCommand.BLOCK_UPLOAD &lt;&lt; 5)
+                        | (1 &lt;&lt; 2); // CRC supported
+
+                    sendBuffer.writeUInt8(header);
+                    sendBuffer.writeUInt16LE(this.blockSize, 4);
+                }
+                else {
+                    const header = (ClientCommand.UPLOAD_INITIATE &lt;&lt; 5);
+                    sendBuffer.writeUInt8(header);
+                }
+
+                const transfer = this.transfers[server.cobIdRx];
+                transfer.start();
+
+                transfer.on('abort',
+                    (code) => this._abortTransfer(transfer, code));
+
+                this.send(server.cobIdTx, sendBuffer);
+            });
+        })
+            .then((data) => {
+                return rawToType(data, dataType);
+            });
+    }
+
+    /**
+     * Service: SDO download.
+     *
+     * Write data to an SDO server.
+     *
+     * @param {object} args - arguments to destructure.
+     * @param {number} args.deviceId - SDO server.
+     * @param {object} args.data - data to download.
+     * @param {number} args.index - index or name to download to.
+     * @param {number} args.subIndex - data subIndex to download to.
+     * @param {DataType} [args.dataType] - type of data to download.
+     * @param {number} [args.timeout] - time before transfer is aborted.
+     * @param {boolean} [args.blockTransfer] - use block transfer protocol.
+     * @returns {Promise} resolves when the download is complete.
+     * @fires Protocol#message
+     */
+    download(args) {
+        const deviceId = args.deviceId || args.serverId;
+        const index = args.index;
+        const subIndex = args.subIndex || null;
+        const timeout = args.timeout || 30;
+        const dataType = args.dataType || null;
+        const blockTransfer = args.blockTransfer || false;
+
+        let server = this.serverMap[deviceId];
+        if (server === undefined) {
+            // Attempt to use default server
+            if (this.serverMap[0] === undefined) {
+                const id = deviceId.toString(16);
+                throw new ReferenceError(`SDO server 0x${id} not mapped`);
+            }
+
+            let cobIdRx = this.serverMap[0].cobIdRx;
+            if ((cobIdRx &amp; 0xF) == 0x0)
+                cobIdRx |= deviceId;
+
+            let cobIdTx = this.serverMap[0].cobIdTx;
+            if ((cobIdTx &amp; 0xF) == 0x0)
+                cobIdTx |= deviceId;
+
+            server = this.serverMap[deviceId] = {
+                cobIdRx: cobIdRx,
+                cobIdTx: cobIdTx,
+                pending: Promise.resolve(),
+                queue: new Queue(),
+            };
+        }
+
+        if (index === undefined)
+            throw ReferenceError('index must be defined');
+
+        let data = args.data;
+        if (!Buffer.isBuffer(data)) {
+            if (DataObject.isDataObject(data)) {
+                data = data.raw;
+            }
+            else {
+                if (!dataType)
+                    throw ReferenceError('dataType must be defined');
+
+                data = typeToRaw(data, dataType);
+                if (data === undefined)
+                    throw TypeError(`unknown dataType ${dataType}`);
+            }
+        }
+
+        return server.queue.push(() => {
+            return new Promise((resolve, reject) => {
+                this.transfers[server.cobIdRx] = new SdoTransfer({
+                    cobId: server.cobIdTx,
+                    resolve,
+                    reject,
+                    index,
+                    subIndex,
+                    data,
+                    timeout,
+                });
+
+                const sendBuffer = Buffer.alloc(8);
+                sendBuffer.writeUInt16LE(index, 1);
+                sendBuffer.writeUInt8(subIndex, 3);
+
+                if (blockTransfer) {
+                    // Block transfer
+                    const header = (ClientCommand.BLOCK_DOWNLOAD &lt;&lt; 5)
+                        | (1 &lt;&lt; 2)                  // CRC supported
+                        | (1 &lt;&lt; 1);                 // Data size indicated
+
+                    sendBuffer.writeUInt8(header);
+                    sendBuffer.writeUInt32LE(data.length, 4);
+                }
+                else if (data.length > 4) {
+                    // Segmented transfer
+                    const header = (ClientCommand.DOWNLOAD_INITIATE &lt;&lt; 5)
+                        | (1 &lt;&lt; 0);                 // Data size indicated
+
+                    sendBuffer.writeUInt8(header);
+                    sendBuffer.writeUInt32LE(data.length, 4);
+                }
+                else {
+                    // Expedited transfer
+                    const header = (ClientCommand.DOWNLOAD_INITIATE &lt;&lt; 5)
+                        | ((4 - data.length) &lt;&lt; 2)  // Number of empty bytes
+                        | (1 &lt;&lt; 1)                  // Expedited transfer
+                        | (1 &lt;&lt; 0);                 // Data size indicated
+
+                    sendBuffer.writeUInt8(header);
+                    data.copy(sendBuffer, 4);
+                }
+
+                const transfer = this.transfers[server.cobIdRx];
+                transfer.start();
+
+                transfer.on('abort',
+                    (code) => this._abortTransfer(transfer, code));
+
+                this.send(server.cobIdTx, sendBuffer);
+            });
+        });
+    }
+
+    /**
+     * Call when a new CAN message is received.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @fires Protocol#message
+     */
+    receive({ id, data }) {
+        // Handle transfers as a client (remote object dictionary)
+        const transfer = this.transfers[id];
+        if (transfer === undefined || !transfer.active)
+            return;
+
+        if (transfer.blockTransfer) {
+            // Block transfer in progress
+            if ((data[0] &amp; 0x7f) === transfer.blockSequence + 1) {
+                transfer.data = Buffer.concat([transfer.data, data.slice(1)]);
+                transfer.blockSequence++;
+                if (data[0] &amp; 0x80) {
+                    transfer.blockFinished = true;
+                    transfer.blockTransfer = false;
+                }
+            }
+
+            if (transfer.blockSequence > 127) {
+                this._abortTransfer(transfer, SdoCode.BAD_BLOCK_SEQUENCE);
+                return;
+            }
+
+            // Awknowledge block
+            if (transfer.blockFinished
+                || transfer.blockSequence == this.blockSize) {
+
+                const header = (ClientCommand.BLOCK_UPLOAD &lt;&lt; 5)
+                    | (2 &lt;&lt; 0); // Block upload response
+
+                const sendBuffer = Buffer.alloc(8);
+                sendBuffer.writeUInt8(header);
+                sendBuffer.writeInt8(transfer.blockSequence, 1);
+                sendBuffer.writeUInt8(this.blockSize, 2);
+
+                this.send(transfer.cobId, sendBuffer);
+
+                // Reset sequence
+                transfer.blockSequence = 0;
+            }
+
+            transfer.refresh();
+            return;
+        }
+
+        switch (data[0] >> 5) {
+            case ServerCommand.UPLOAD_SEGMENT:
+                this._uploadSegment(transfer, data);
+                break;
+            case ServerCommand.DOWNLOAD_SEGMENT:
+                this._downloadSegment(transfer, data);
+                break;
+            case ServerCommand.UPLOAD_INITIATE:
+                this._uploadInitiate(transfer, data);
+                break;
+            case ServerCommand.DOWNLOAD_INITIATE:
+                this._downloadInitiate(transfer);
+                break;
+            case ServerCommand.ABORT:
+                this._abortTransfer(transfer, data.readUInt32LE(4));
+                break;
+            case ServerCommand.BLOCK_DOWNLOAD:
+                switch (data[0] &amp; 0x3) {
+                    case 0:
+                        // Initiate download
+                        this._blockDownloadInitiate(transfer, data);
+                        break;
+                    case 1:
+                        // End download
+                        this._blockDownloadEnd(transfer);
+                        break;
+                    case 2:
+                        // Confirm block
+                        this._blockDownloadConfirm(transfer, data);
+                        break;
+                }
+                break;
+            case ServerCommand.BLOCK_UPLOAD:
+                this._blockUpload(transfer, data);
+                break;
+            default:
+                this._abortTransfer(transfer, SdoCode.BAD_COMMAND);
+                break;
+        }
+    }
+
+    /////////////////////////////// Private ////////////////////////////////
+
+    /**
+     * Handle ServerCommand.UPLOAD_INITIATE.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @param {Buffer} data - message data.
+     * @fires Protocol#message
+     * @private
+     */
+    _uploadInitiate(transfer, data) {
+        if (data[0] &amp; 0x02) {
+            // Expedited transfer
+            const size = (data[0] &amp; 1) ? (4 - ((data[0] >> 2) &amp; 3)) : 4;
+            transfer.resolve(data.slice(4, 4 + size));
+        }
+        else {
+            // Segmented transfer
+            const sendBuffer = Buffer.alloc(8);
+            sendBuffer.writeUInt8(ClientCommand.UPLOAD_SEGMENT &lt;&lt; 5);
+
+            if (data[0] &amp; 0x1)
+                transfer.size = data.readUInt32LE(4);
+
+            this.send(transfer.cobId, sendBuffer);
+
+            transfer.refresh();
+        }
+    }
+
+    /**
+     * Handle ServerCommand.UPLOAD_SEGMENT.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @param {Buffer} data - message data.
+     * @fires Protocol#message
+     * @private
+     */
+    _uploadSegment(transfer, data) {
+        if (!transfer.active)
+            return;
+
+        if ((data[0] &amp; 0x10) != (transfer.toggle &lt;&lt; 4)) {
+            this._abortTransfer(transfer, SdoCode.TOGGLE_BIT);
+            return;
+        }
+
+        const count = (7 - ((data[0] >> 1) &amp; 0x7));
+        const payload = data.slice(1, count + 1);
+        const size = transfer.data.length + count;
+        const buffer = Buffer.concat([transfer.data, payload], size);
+
+        if (data[0] &amp; 1) {
+            if (transfer.size != size) {
+                this._abortTransfer(transfer, SdoCode.BAD_LENGTH);
+                return;
+            }
+
+            transfer.resolve(buffer);
+        }
+        else {
+            transfer.toggle ^= 1;
+            transfer.data = buffer;
+
+            const sendBuffer = Buffer.alloc(8);
+            const header = (ClientCommand.UPLOAD_SEGMENT &lt;&lt; 5)
+                | (transfer.toggle &lt;&lt; 4);
+
+            sendBuffer.writeUInt8(header);
+
+            this.send(transfer.cobId, sendBuffer);
+
+            transfer.refresh();
+        }
+    }
+
+    /**
+     * Handle ServerCommand.DOWNLOAD_INITIATE.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @fires Protocol#message
+     * @private
+     */
+    _downloadInitiate(transfer) {
+        if (transfer.size &lt;= 4) {
+            /* Expedited transfer. */
+            transfer.resolve();
+            return;
+        }
+
+        const sendBuffer = Buffer.alloc(8);
+        transfer.size = Math.min(7, transfer.data.length);
+        transfer.data.copy(sendBuffer, 1, 0, transfer.size);
+
+        let header = (ClientCommand.DOWNLOAD_SEGMENT &lt;&lt; 5)
+            | ((7 - transfer.size) &lt;&lt; 1);
+
+        if (transfer.data.length == transfer.size)
+            header |= 1;
+
+        sendBuffer.writeUInt8(header);
+
+        this.send(transfer.cobId, sendBuffer);
+
+        transfer.refresh();
+    }
+
+    /**
+     * Handle ServerCommand.DOWNLOAD_SEGMENT.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @param {Buffer} data - message data.
+     * @fires Protocol#message
+     * @private
+     */
+    _downloadSegment(transfer, data) {
+        if (!transfer.active)
+            return;
+
+        if ((data[0] &amp; 0x10) != (transfer.toggle &lt;&lt; 4)) {
+            this._abortTransfer(transfer, SdoCode.TOGGLE_BIT);
+            return;
+        }
+
+        if (transfer.size == transfer.data.length) {
+            transfer.resolve();
+            return;
+        }
+
+        const sendBuffer = Buffer.alloc(8);
+        const count = Math.min(7, (transfer.data.length - transfer.size));
+
+        transfer.data.copy(
+            sendBuffer, 1, transfer.size, transfer.size + count);
+
+        transfer.toggle ^= 1;
+        transfer.size += count;
+
+        let header = (ClientCommand.DOWNLOAD_SEGMENT &lt;&lt; 5)
+            | (transfer.toggle &lt;&lt; 4)
+            | ((7 - count) &lt;&lt; 1);
+
+        if (transfer.size == transfer.data.length)
+            header |= 1;
+
+        sendBuffer.writeUInt8(header);
+
+        this.send(transfer.cobId, sendBuffer);
+
+        transfer.refresh();
+    }
+
+    /**
+     * Download a data block.
+     *
+     * Sub-blocks are scheduled using setInterval to avoid blocking during
+     * large transfers.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @fires Protocol#message
+     * @private
+     */
+    _blockDownloadProcess(transfer) {
+        if (transfer.blockInterval) {
+            // Re-schedule timer
+            clearInterval(transfer.blockInterval);
+        }
+
+        transfer.blockInterval = setInterval(() => {
+            if (!transfer.active) {
+                // Transfer was interrupted
+                clearInterval(transfer.blockInterval);
+                transfer.blockInterval = null;
+                return;
+            }
+
+            if (this._blockDownloadTimeout > 1)
+                this._blockDownloadTimeout = this._blockDownloadTimeout >> 1;
+
+
+            const sendBuffer = Buffer.alloc(8);
+            const offset = 7 * (transfer.blockSequence
+                + (transfer.blockCount * transfer.blockSize));
+
+            sendBuffer[0] = ++transfer.blockSequence;
+            if ((offset + 7) >= transfer.data.length) {
+                sendBuffer[0] |= 0x80; // Last block
+                transfer.blockFinished = true;
+            }
+
+            transfer.data.copy(sendBuffer, 1, offset, offset + 7);
+            this.send(transfer.cobId, sendBuffer);
+            transfer.refresh();
+
+            if (transfer.blockFinished
+                || transfer.blockSequence >= transfer.blockSize) {
+                clearInterval(transfer.blockInterval);
+                transfer.blockInterval = null;
+            }
+        }, this._blockDownloadTimeout);
+    }
+
+    /**
+     * Initiate an SDO block download.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @param {Buffer} data - message data.
+     * @fires Protocol#message
+     * @private
+     */
+    _blockDownloadInitiate(transfer, data) {
+        transfer.blockCrc = !!(data[0] &amp; (1 &lt;&lt; 2));
+        transfer.blockSize = data[4];
+        transfer.blockCount = 0;
+        transfer.blockSequence = 0;
+        transfer.blockFinished = false;
+
+        if (transfer.blockSize &lt; 1 || transfer.blockSize > 127) {
+            this._abortTransfer(transfer, SdoCode.BAD_BLOCK_SIZE);
+            return;
+        }
+
+        // Download first block
+        this._blockDownloadProcess(transfer);
+    }
+
+    /**
+     * Confirm the previous block and send the next one.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @param {Buffer} data - message data.
+     * @fires Protocol#message
+     * @private
+     */
+    _blockDownloadConfirm(transfer, data) {
+        // Check that all sub-blocks were received.
+        if (data[1] === transfer.blockSequence) {
+            transfer.blockCount += 1;
+            transfer.blockSequence = 0;
+
+            if (transfer.blockFinished) {
+                // End block download
+                const sendBuffer = Buffer.alloc(8);
+
+                let header = (ClientCommand.BLOCK_DOWNLOAD &lt;&lt; 5)
+                    | (1 &lt;&lt; 0); // End block download
+
+                const emptyBytes = transfer.data.length % 7;
+                if (emptyBytes)
+                    header |= (7 - emptyBytes) &lt;&lt; 2;
+
+                sendBuffer.writeUInt8(header);
+
+                // Write CRC (if supported)
+                if (transfer.blockCrc) {
+                    const crcValue = calculateCrc(transfer.data);
+                    sendBuffer.writeUInt16LE(crcValue, 1);
+                }
+
+                this.send(transfer.cobId, sendBuffer);
+
+                transfer.refresh();
+                return;
+            }
+        }
+
+        // Update block size for next transfer.
+        transfer.blockSize = data[2];
+        if (transfer.blockSize &lt; 1 || transfer.blockSize > 127) {
+            this._abortTransfer(transfer, SdoCode.BAD_BLOCK_SIZE);
+            return;
+        }
+
+        // Download next block
+        this._blockDownloadProcess(transfer);
+    }
+
+    /**
+     * Confirm the previous block and send the next one.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @fires Protocol#message
+     * @private
+     */
+    _blockDownloadEnd(transfer) {
+        transfer.resolve();
+    }
+
+    /**
+     * Handle ServerCommand.BLOCK_UPLOAD.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @param {Buffer} data - message data.
+     * @fires Protocol#message
+     * @private
+     */
+    _blockUpload(transfer, data) {
+        if (transfer.blockFinished) {
+            // Number of bytes that do not contain segment data
+            const count = (data[0] >> 2) &amp; 7;
+            if (count) {
+                const size = transfer.data.length - count;
+                transfer.data = transfer.data.slice(0, size);
+            }
+
+            // Check size
+            if (transfer.data.length &lt; transfer.size) {
+                this._abortTransfer(transfer, SdoCode.DATA_SHORT);
+                return;
+            }
+
+            if (transfer.data.length > transfer.size) {
+                this._abortTransfer(transfer, SdoCode.DATA_LONG);
+                return;
+            }
+
+            // Check CRC (if supported)
+            if (transfer.blockCrc) {
+                const crcValue = data.readUInt16LE(1);
+                if (crcValue !== calculateCrc(transfer.data)) {
+                    this._abortTransfer(transfer, SdoCode.BAD_BLOCK_CRC);
+                    return;
+                }
+            }
+
+            // End transfer
+            const header = (ClientCommand.BLOCK_UPLOAD &lt;&lt; 5)
+                | (1 &lt;&lt; 0); // End block upload
+
+            const sendBuffer = Buffer.alloc(8);
+            sendBuffer.writeUInt8(header);
+
+            this.send(transfer.cobId, sendBuffer);
+
+            transfer.resolve(transfer.data);
+        }
+        else {
+            // Initiate block transfer
+            transfer.index = data.readUInt16LE(1);
+            transfer.subIndex = data.readUInt8(3);
+            transfer.size = data.readUInt32LE(4);
+            transfer.data = Buffer.alloc(0);
+            transfer.blockTransfer = true;
+            transfer.blockSequence = 0;
+            transfer.blockFinished = false;
+            transfer.blockCrc = !!(data[0] &amp; (1 &lt;&lt; 2));
+
+            // Confirm transfer
+            const header = (ClientCommand.BLOCK_UPLOAD &lt;&lt; 5)
+                | (3 &lt;&lt; 0); // Start upload
+
+            const sendBuffer = Buffer.alloc(8);
+            sendBuffer.writeUInt8(header);
+
+            this.send(transfer.cobId, sendBuffer);
+
+            transfer.refresh();
+        }
+    }
+
+    /**
+     * Abort a transfer.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @param {SdoCode} code - SDO abort code.
+     * @fires Protocol#message
+     * @private
+     */
+    _abortTransfer(transfer, code) {
+        const sendBuffer = Buffer.alloc(8);
+        sendBuffer.writeUInt8(0x80);
+        sendBuffer.writeUInt16LE(transfer.index, 1);
+        sendBuffer.writeUInt8(transfer.subIndex, 3);
+        sendBuffer.writeUInt32LE(code, 4);
+        this.send(transfer.cobId, sendBuffer);
+        transfer.reject(code);
+    }
+
+    ////////////////////////////// Deprecated //////////////////////////////
+
+    /**
+     * Initialize the device and audit the object dictionary.
+     *
+     * @deprecated
+     * @ignore
+     */
+    init() {
+        deprecate(() => this.start(),
+            'init() is deprecated. Use start() instead.');
+    }
+
+    /**
+     * Get an SDO client parameter entry.
+     *
+     * @param {number} serverId - server COB-ID of the entry to get.
+     * @returns {DataObject | null} the matching entry.
+     * @deprecated
+     * @ignore
+     */
+    getServer(serverId) {
+        return deprecate(() => {
+            for (let [index, entry] of Object.entries(this.dataObjects)) {
+                index = parseInt(index);
+                if (index &lt; 0x1280 || index > 0x12FF)
+                    continue;
+
+                if(entry[3].value === serverId)
+                    return entry;
+            }
+
+            return null;
+
+        }, 'getServer() is deprecated. Use this.servers instead');
+    }
+
+    /**
+     * Add an SDO client parameter entry.
+     *
+     * @param {number} serverId - server COB-ID to add.
+     * @param {number} cobIdTx - Sdo COB-ID for outgoing messages (to server).
+     * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from server).
+     * @deprecated
+     * @ignore
+     */
+    addServer(serverId, cobIdTx, cobIdRx) {
+        deprecate(
+            () => this.eds.addSdoClientParameter(serverId, cobIdTx, cobIdRx),
+            'addServer() is deprecated. Use Eds method instead');
+    }
+
+    /**
+     * Remove an SDO client parameter entry.
+     *
+     * @param {number} serverId - server COB-ID of the entry to remove.
+     * @deprecated
+     * @ignore
+     */
+    removeServer(serverId) {
+        deprecate(() => this.eds.removeSdoClientParameter(serverId),
+            'removeServer() is deprecated. Use Eds method instead');
+    }
+}
+
+module.exports = exports = SdoClient;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+<script src="scripts/search.js" defer></script>
+
+
+<script src="scripts/collapse.js" defer></script>
+
+
+</body>
+</html>
