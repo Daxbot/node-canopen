@@ -29,7 +29,7 @@ describe('Nmt', function () {
         const device = new Device({ id: 0xA, loopback: true });
         device.eds.addHeartbeatConsumer(device.id, 10);
 
-        device.nmt.addListener('nmtTimeout', () => {
+        device.nmt.addListener('timeout', () => {
             device.nmt.stop();
             done();
         });
@@ -43,7 +43,7 @@ describe('Nmt', function () {
         device.eds.setHeartbeatProducerTime(1);
         device.eds.addHeartbeatConsumer(device.id, 10);
 
-        device.nmt.addListener('nmtChangeState', ({ newState }) => {
+        device.nmt.addListener('changeState', ({ newState }) => {
             if (newState) {
                 device.nmt.stop();
                 done();

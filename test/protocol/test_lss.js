@@ -40,7 +40,7 @@ describe('Lss', function () {
         it('should change mode (global)', function (done) {
             const device = new Device({ loopback: true, enableLss: true });
 
-            device.lss.addListener('lssChangeMode', (mode) => {
+            device.lss.addListener('changeMode', (mode) => {
                 expect(mode).to.equal(LssMode.CONFIGURATION);
                 done();
             });
@@ -58,7 +58,7 @@ describe('Lss', function () {
                 serialNumber: 4,
             };
 
-            device.lss.addListener('lssChangeMode', (mode) => {
+            device.lss.addListener('changeMode', (mode) => {
                 expect(mode).to.equal(LssMode.CONFIGURATION);
                 done();
             });

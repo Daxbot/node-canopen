@@ -113,7 +113,7 @@ class EdsError extends Error {
  * @param {boolean} data.compactSubObj - use the compact sub-object format.
  * @param {number | string | Date} data.defaultValue - default value.
  * @param {number} data.scaleFactor - optional multiplier for numeric types.
- * @fires 'update' on value change.
+ * @fires DataObject#update
  * @see CiA306 "Object descriptions" (§4.6.3)
  */
 class DataObject extends EventEmitter {
@@ -437,7 +437,7 @@ class DataObject extends EventEmitter {
             return;
 
         this._raw = raw;
-        this.emit('update', this);
+        this._emitUpdate();
     }
 
     /**
@@ -468,6 +468,16 @@ class DataObject extends EventEmitter {
         }
 
         this.raw = typeToRaw(value, this.dataType, this.scaleFactor);
+    }
+
+    /**
+     * Returns true if the object is an instance of DataObject;
+     *
+     * @param {*} obj - object to test.
+     * @returns {boolean} true if obj is DataObject.
+     */
+    static isDataObject(obj) {
+        return obj instanceof DataObject;
     }
 
     /**
@@ -519,7 +529,7 @@ class DataObject extends EventEmitter {
         this._subObjects[subIndex] = entry;
 
         // Emit update from parent if sub-entry value changes
-        entry.on('update', () => this.emit('update', this));
+        entry.on('update', () => this._emitUpdate());
 
         // Allow access to the sub-object using bracket notation
         if (!Object.prototype.hasOwnProperty.call(this, subIndex)) {
@@ -578,13 +588,17 @@ class DataObject extends EventEmitter {
     }
 
     /**
-     * Returns true if the object is an instance of DataObject;
+     * Emit the update event.
      *
-     * @param {*} obj - object to test.
-     * @returns {boolean} true if obj is DataObject.
+     * @private
      */
-    static isDataObject(obj) {
-        return obj instanceof DataObject;
+    _emitUpdate() {
+        /**
+         * The DataObject value was changed.
+         *
+         * @event DataObject#update
+         */
+        this.emit('update', this);
     }
 }
 
@@ -1207,8 +1221,8 @@ class Eds {
 
     /**
      * Set object 0x1000 - Device type.
-     *   bit 0..15    Device profile number.
-     *   bit 16..31   Additional info.
+     * - bit 0..15 - Device profile number.
+     * - bit 16..31 - Additional info.
      *
      * @param {number} profile - profile number.
      * @param {Buffer | number} info - info field (2 bytes).
@@ -1245,14 +1259,14 @@ class Eds {
 
     /**
      * Set object 0x1001 - Error register.
-     *   bit 0      Generic error.
-     *   bit 1      Current.
-     *   bit 2      Voltage.
-     *   bit 3      Temperature.
-     *   bit 4      Communication error.
-     *   bit 5      Device profile specific.
-     *   bit 6      Reserved (always 0).
-     *   bit 7      Manufacturer specific.
+     * - bit 0 - Generic error.
+     * - bit 1 - Current.
+     * - bit 2 - Voltage.
+     * - bit 3 - Temperature.
+     * - bit 4 - Communication error.
+     * - bit 5 - Device profile specific.
+     * - bit 6 - Reserved (always 0).
+     * - bit 7 - Manufacturer specific.
      *
      * @param {number | object} flags - error flags.
      * @param {boolean} flags.generic - generic error.
@@ -1366,9 +1380,8 @@ class Eds {
 
     /**
      * Push an entry to object 0x1003 - Pre-defined error field.
-     *   sub-index 1+:
-     *     bit 0..15    Error code.
-     *     bit 16..31   Additional info.
+     * - bit 0..15 - Error code.
+     * - bit 16..31 - Additional info.
      *
      * @param {number} code - error code.
      * @param {Buffer | number} info - error info (2 bytes).
@@ -1440,10 +1453,10 @@ class Eds {
 
     /**
      * Set object 0x1005 - COB-ID SYNC.
-     *   bit 0..10      11-bit CAN base frame.
-     *   bit 11..28     29-bit CAN extended frame.
-     *   bit 29         Frame type.
-     *   bit 30         Produce sync objects.
+     * - bit 0..10 - CAN base frame.
+     * - bit 11..28 - CAN extended frame.
+     * - bit 29 - Frame type.
+     * - bit 30 - Produce sync objects.
      *
      * @param {number} cobId - Sync COB-ID (typically 0x80).
      * @param {boolean} generate - Sync generation enable.
@@ -1570,11 +1583,11 @@ class Eds {
 
     /**
      * Set object 0x1012 - COB-ID TIME.
-     *   bit 0..10      11-bit CAN base frame.
-     *   bit 11..28     29-bit CAN extended frame.
-     *   bit 29         Frame type.
-     *   bit 30         Produce time objects.
-     *   bit 31         Consume time objects.
+     * - bit 0..10 - CAN base frame.
+     * - bit 11..28 - CAN extended frame.
+     * - bit 29 - Frame type.
+     * - bit 30 - Produce time objects.
+     * - bit 31 - Consume time objects.
      *
      * @param {number} cobId - Time COB-ID.
      * @param {boolean} produce - Time stamp producer enable.
@@ -1611,11 +1624,11 @@ class Eds {
 
     /**
      * Set object 0x1014 - COB-ID EMCY.
-     *   bit 0..10      11-bit CAN base frame.
-     *   bit 11..28     29-bit CAN extended frame.
-     *   bit 29         Frame type.
-     *   bit 30         Reserved (0x00).
-     *   bit 31         EMCY valid.
+     * - bit 0..10 - CAN base frame.
+     * - bit 11..28 - CAN extended frame.
+     * - bit 29 - Frame type.
+     * - bit 30 - Reserved (0x00).
+     * - bit 31 - EMCY valid.
      *
      * @param {number} cobId - Emcy COB-ID.
      * @param {object} [options] - DataObject creation options.
@@ -1666,10 +1679,9 @@ class Eds {
 
     /**
      * Add an entry to object 0x1016 - Consumer heartbeat time.
-     *   sub-index 1+:
-     *     bit 0..15    Heartbeat time in ms.
-     *     bit 16..23   Node-ID of producer.
-     *     bit 24..31   Reserved (0x00);
+     * - bit 0..15 - Heartbeat time in ms.
+     * - bit 16..23 - Node-ID of producer.
+     * - bit 24..31 - Reserved (0x00);
      *
      * @param {number} deviceId - device identifier [1-127].
      * @param {number} timeout - milliseconds before a timeout is reported.
@@ -1778,10 +1790,10 @@ class Eds {
 
     /**
      * Set object 0x1018 - Identity object.
-     *   sub-index 1: Vendor id.
-     *   sub-index 2: Product code.
-     *   sub-index 3: Revision number.
-     *   sub-index 4: Serial number.
+     * - sub-index 1 - Vendor id.
+     * - sub-index 2 - Product code.
+     * - sub-index 3 - Revision number.
+     * - sub-index 4 - Serial number.
      *
      * @param {object} identity - device identity.
      * @param {number} identity.vendorId - vendor id.
@@ -1881,10 +1893,9 @@ class Eds {
 
     /**
      * Add an entry to object 0x1028 - Emergency consumer object.
-     *   sub-index 1+:
-     *     bit 0..11    11-bit CAN-ID.
-     *     bit 16..23   Reserved (0x00).
-     *     bit 31       0 = valid, 1 = invalid.
+     * - bit 0..11 - CAN-ID.
+     * - bit 16..23 - Reserved (0x00).
+     * - bit 31 - 0 = valid, 1 = invalid.
      *
      * @param {number} cobId - COB-ID to add.
      * @param {object} [options] - DataObject creation options.
@@ -1967,15 +1978,16 @@ class Eds {
      * Add an SDO server parameter object.
      *
      * Object 0x1200..0x127F - SDO server parameter.
-     *   sub-index 1/2:
-     *     bit 0..10      11-bit CAN base frame.
-     *     bit 11..28     29-bit CAN extended frame.
-     *     bit 29         Frame type (base or extended).
-     *     bit 30         Dynamically allocated.
-     *     bit 31         SDO exists / is valid.
      *
-     *   sub-index 3 (optional):
-     *     bit 0..7      Node-ID of the SDO client.
+     * Sub-index 1/2:
+     * - bit 0..10 - CAN base frame.
+     * - bit 11..28 - CAN extended frame.
+     * - bit 29 - Frame type (base or extended).
+     * - bit 30 - Dynamically allocated.
+     * - bit 31 - SDO exists / is valid.
+     *
+     * Sub-index 3 (optional):
+     * - bit 0..7 - Node-ID of the SDO client.
      *
      * @param {number} deviceId - device identifier [1-127].
      * @param {number} cobIdTx - COB-ID for outgoing messages (to client).
@@ -2073,15 +2085,16 @@ class Eds {
      * Add an SDO client parameter object.
      *
      * Object 0x1280..0x12FF - SDO client parameter.
-     *   sub-index 1/2:
-     *     bit 0..10      11-bit CAN base frame.
-     *     bit 11..28     29-bit CAN extended frame.
-     *     bit 29         Frame type (base or extended).
-     *     bit 30         Dynamically allocated.
-     *     bit 31         SDO exists / is valid.
      *
-     *   sub-index 3:
-     *     bit 0..7      Node-ID of the SDO server.
+     * Sub-index 1/2:
+     * - bit 0..10 - CAN base frame.
+     * - bit 11..28 - CAN extended frame.
+     * - bit 29 - Frame type (base or extended).
+     * - bit 30 - Dynamically allocated.
+     * - bit 31 - SDO exists / is valid.
+     *
+     * Sub-index 3:
+     * - bit 0..7 - Node-ID of the SDO server.
      *
      * @param {number} deviceId - device identifier [1-127].
      * @param {number} cobIdTx - COB-ID for outgoing messages (to server).
@@ -2179,24 +2192,24 @@ class Eds {
      * Create a RPDO communication/mapping parameter object.
      *
      * Object 0x1400..0x15FF - RPDO communication parameter
-     *   sub-index 1 (mandatory):
-     *     bit 0..10      11-bit CAN base frame.
-     *     bit 11..28     29-bit CAN extended frame.
-     *     bit 29         Frame type.
-     *     bit 30         RTR allowed.
-     *     bit 31         RPDO valid.
      *
-     *   sub-index 2 (mandatory):
-     *     bit 0..7       Transmission type.
+     * Sub-index 1 (mandatory):
+     * - bit 0..10 - CAN base frame.
+     * - bit 11..28 - CAN extended frame.
+     * - bit 29 - Frame type.
+     * - bit 30 - RTR allowed.
+     * - bit 31 - RPDO valid.
      *
-     *   sub-index 3 (optional):
-     *     bit 0..15      Inhibit time.
+     * Sub-index 2 (mandatory):
+     * - bit 0..7 - Transmission type.
+     *
+     * Sub-index 3 (optional):
+     * - bit 0..15 - Inhibit time.
      *
      * Object 0x1600..0x17FF - RPDO mapping parameter
-     *   sub-index 1+:
-     *     bit 0..7       Bit length.
-     *     bit 8..15      Sub-index.
-     *     bit 16..31     Index.
+     * - bit 0..7 - Bit length.
+     * - bit 8..15 - Sub-index.
+     * - bit 16..31 - Index.
      *
      * Inhibit time and synchronous RPDOs are not yet supported. All entries
      * are treated as event-driven with an inhibit time of 0.
@@ -2362,30 +2375,30 @@ class Eds {
      * Create a TPDO communication/mapping parameter object.
      *
      * Object 0x1800..0x19FF - TPDO communication parameter
-     *   sub-index 1 (mandatory):
-     *     bit 0..10      11-bit CAN base frame.
-     *     bit 11..28     29-bit CAN extended frame.
-     *     bit 29         Frame type.
-     *     bit 30         RTR allowed.
-     *     bit 31         TPDO valid.
      *
-     *   sub-index 2 (mandatory):
-     *     bit 0..7       Transmission type.
+     * Sub-index 1 (mandatory):
+     * - bit 0..10 - CAN base frame.
+     * - bit 11..28 - CAN extended frame.
+     * - bit 29 - Frame type.
+     * - bit 30 - RTR allowed.
+     * - bit 31 - TPDO valid.
      *
-     *   sub-index 3 (optional):
-     *     bit 0..15      Inhibit time.
+     * Sub-index 2 (mandatory):
+     * - bit 0..7 - Transmission type.
      *
-     *   sub-index 5 (optional):
-     *     bit 0..15      Event timer value.
+     * Sub-index 3 (optional):
+     * - bit 0..15 - Inhibit time.
      *
-     *   sub-index 6 (optional):
-     *     bit 0..7       SYNC start value.
+     * Sub-index 5 (optional):
+     * - bit 0..15 - Event timer value.
+     *
+     * Sub-index 6 (optional):
+     * - bit 0..7 - SYNC start value.
      *
      * Object 0x2000..0x21FF - TPDO mapping parameter
-     *   sub-index 1+:
-     *     bit 0..7       Bit length.
-     *     bit 8..15      Sub-index.
-     *     bit 16..31     Index.
+     * - bit 0..7 - Bit length.
+     * - bit 8..15 - Sub-index.
+     * - bit 16..31 - Index.
      *
      * @param {object} pdo - object data.
      * @param {number} pdo.cobId - COB-ID used by the TPDO.

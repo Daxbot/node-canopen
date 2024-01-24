@@ -4,7 +4,7 @@
  * @copyright 2024 Daxbot
  */
 
-const EventEmitter = require('events');
+const Protocol = require('./protocol');
 const { Eds } = require('../eds');
 const { deprecate } = require('util');
 
@@ -13,7 +13,6 @@ const { deprecate } = require('util');
  *
  * @enum {number}
  * @see CiA305 "LSS Protocol Descriptions" (§3.8.2)
- * @memberof Lss
  * @private
  */
 const LssCommand = {
@@ -78,29 +77,12 @@ class LssError extends Error {
 }
 
 /**
- * Errors generated from LSS service timeouts.
- *
- * @param {string} message - error message.
- */
-class LssTimeout extends Error {
-    constructor() {
-        super('LSS timeout');
-
-        this.name = this.constructor.name;
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
-
-/**
  * CANopen LSS protocol handler.
  *
  * @param {Eds} eds - Eds object.
  * @see CiA305 "Layer Settings Services and Protocol (LSS)"
- * @fires 'message' on preparing a CAN message to send.
- * @fires 'lssChangeDeviceId' on change of device id.
- * @fires 'lssChangeMode' on change of LSS mode.
  */
-class Lss extends EventEmitter {
+class Lss extends Protocol {
     constructor(eds) {
         super();
 
@@ -108,10 +90,23 @@ class Lss extends EventEmitter {
             throw new TypeError('not an Eds');
 
         this.eds = eds;
-        this.mode = LssMode.OPERATION;
+        this._mode = LssMode.OPERATION;
         this.pending = {};
         this.select = [];
         this.scanState = 0;
+    }
+
+    /**
+     * Device LSS Mode.
+     *
+     * @type {LssMode}
+     */
+    get mode() {
+        return this._mode;
+    }
+
+    set mode(value) {
+        this.setMode(value);
     }
 
     /**
@@ -180,14 +175,40 @@ class Lss extends EventEmitter {
 
     /**
      * Start the module.
+     *
+     * @fires Protocol#start
      */
     start() {
+        super.start();
     }
 
     /**
      * Stop the module.
+     *
+     * @fires Protocol#stop
      */
     stop() {
+        super.stop();
+    }
+
+    /**
+     * Set the LSS mode.
+     *
+     * @param {LssMode} mode - new mode.
+     * @fires Lss#changeMode
+     */
+    setMode(mode) {
+        if(mode !== this._mode) {
+            this._mode = mode;
+
+            /**
+             * The LSS mode changed.
+             *
+             * @event Lss#changeMode
+             * @type {LssMode}
+             */
+            this.emit('changeMode', mode);
+        }
     }
 
     /**
@@ -203,6 +224,7 @@ class Lss extends EventEmitter {
      * @param {number} [args.serialNumber] - serial-number hint.
      * @param {number} [args.timeout] - how long to wait for nodes to respond.
      * @returns {Promise<null | object>} resolves to the discovered device's id (or null).
+     * @fires Protocol#message
      * @see https://www.can-cia.org/fileadmin/resources/documents/proceedings/2008_pfeiffer.pdf
      */
     async fastscan(args={}) {
@@ -392,6 +414,7 @@ class Lss extends EventEmitter {
      * Service: switch mode global.
      *
      * @param {LssMode} mode - LSS mode to switch to.
+     * @fires Protocol#message
      * @see CiA305 "Switch Mode Global" (§3.9.1)
      */
     switchModeGlobal(mode) {
@@ -412,6 +435,7 @@ class Lss extends EventEmitter {
      * @param {number} args.serialNumber - LSS consumer serial-number.
      * @param {number} [args.timeout] - time until promise is rejected.
      * @returns {Promise<LssMode>} - the actual mode of the LSS consumer.
+     * @fires Protocol#message
      * @see CiA305 "Switch Mode Selective" (§3.9.2)
      */
     switchModeSelective(...args) {
@@ -430,7 +454,7 @@ class Lss extends EventEmitter {
 
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssTimeout());
+                reject(new LssError('timeout'));
             }, args.timeout);
 
             const data = Buffer.alloc(4);
@@ -461,12 +485,13 @@ class Lss extends EventEmitter {
      * @param {number} nodeId - new node-id
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise} resolves when the service is finished.
+     * @fires Protocol#message
      * @see CiA305 "Configure Node-ID Protocol" (§3.10.1)
      */
     async configureNodeId(nodeId, timeout = 20) {
         const result = await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssTimeout());
+                reject(new LssError('timeout'));
             }, timeout);
 
             this._sendLssRequest(
@@ -478,12 +503,10 @@ class Lss extends EventEmitter {
             };
         });
 
-        const code = result[0];
-        if (code == 0)
-            return; // Success
-
         let message = '';
-        switch (code) {
+        switch (result[0]) {
+            case 0:
+                return; // Success
             case 1:
                 message = 'Node-ID out of range';
                 break;
@@ -495,7 +518,7 @@ class Lss extends EventEmitter {
                 break;
         }
 
-        throw new LssError(message, code, result[1]);
+        throw new LssError(message, result[0], result[1]);
     }
 
     /**
@@ -505,12 +528,13 @@ class Lss extends EventEmitter {
      * @param {number} tableIndex - the entry in the selected table to use.
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise} resolves when the service is finished.
+     * @fires Protocol#message
      * @see CiA305 "Configure Bit Timing Parameters Protocol" (§3.10.2)
      */
-    configureBitTiming(tableSelect, tableIndex, timeout = 20) {
-        return new Promise((resolve, reject) => {
+    async configureBitTiming(tableSelect, tableIndex, timeout = 20) {
+        const result = await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssTimeout());
+                reject(new LssError('timeout'));
             }, timeout);
 
             this._sendLssRequest(
@@ -521,33 +545,31 @@ class Lss extends EventEmitter {
                 resolve,
                 timer
             };
-        })
-            .then((result) => {
-                const code = result[0];
-                if (code == 0)
-                    return; // Success
+        });
 
-                let message = '';
-                switch (code) {
-                    case 1:
-                        message = 'Bit timing not supported';
-                        break;
-                    case 255:
-                        message = 'Implementation specific error';
-                        break;
-                    default:
-                        message = 'Unsupported error code';
-                        break;
-                }
+        let message = '';
+        switch (result[0]) {
+            case 0:
+                return; // Success
+            case 1:
+                message = 'Bit timing not supported';
+                break;
+            case 255:
+                message = 'Implementation specific error';
+                break;
+            default:
+                message = 'Unsupported error code';
+                break;
+        }
 
-                throw new LssError(message, code, result[1]);
-            });
+        throw new LssError(message, result[0], result[1]);
     }
 
     /**
      * Service: activate bit timing parameters.
      *
      * @param {number} delay - switch delay in ms.
+     * @fires Protocol#message
      * @see CiA305 "Activate Bit Timing Parameters Protocol" (§3.10.3)
      */
     activateBitTiming(delay) {
@@ -561,12 +583,13 @@ class Lss extends EventEmitter {
      *
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise} resolves when the service is finished.
+     * @fires Protocol#message
      * @see CiA305 "Store Configuration Protocol" (§3.10.4)
      */
-    storeConfiguration(timeout = 20) {
-        return new Promise((resolve, reject) => {
+    async storeConfiguration(timeout = 20) {
+        const result = await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssTimeout());
+                reject(new LssError('timeout'));
             }, timeout);
 
             this._sendLssRequest(LssCommand.STORE_CONFIGURATION);
@@ -575,30 +598,27 @@ class Lss extends EventEmitter {
                 resolve,
                 timer
             };
-        })
-            .then((result) => {
-                const code = result[0];
-                if (code == 0)
-                    return; // Success
+        });
 
-                let message = '';
-                switch (code) {
-                    case 1:
-                        message = 'Store configuration not supported';
-                        break;
-                    case 2:
-                        message = 'Storage media access error';
-                        break;
-                    case 255:
-                        message = 'Implementation specific error';
-                        break;
-                    default:
-                        message = 'Unsupported error code';
-                        break;
-                }
+        let message = '';
+        switch (result[0]) {
+            case 0:
+                return; // Success
+            case 1:
+                message = 'Store configuration not supported';
+                break;
+            case 2:
+                message = 'Storage media access error';
+                break;
+            case 255:
+                message = 'Implementation specific error';
+                break;
+            default:
+                message = 'Unsupported error code';
+                break;
+        }
 
-                throw new LssError(message, code, result[1]);
-            });
+        throw new LssError(message, result[0], result[1]);
     }
 
     /**
@@ -606,11 +626,14 @@ class Lss extends EventEmitter {
      *
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise<number>} - LSS consumer vendor-id.
+     * @fires Protocol#message
      * @see CiA305 "Inquire Identity Vendor-ID Protocol" (§3.11.1.1)
      */
     async inquireVendorId(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject(new LssTimeout()), timeout);
+            const timer = setTimeout(
+                () => reject(new LssError('timeout')), timeout);
+
             this._sendLssRequest(LssCommand.INQUIRE_VENDOR_ID);
 
             this.pending[LssCommand.INQUIRE_VENDOR_ID] = {
@@ -627,11 +650,14 @@ class Lss extends EventEmitter {
      *
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise<number>} - LSS consumer product-code.
+     * @fires Protocol#message
      * @see CiA305 "Inquire Identity Product-Code Protocol" (§3.11.1.2)
      */
     async inquireProductCode(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject(new LssTimeout()), timeout);
+            const timer = setTimeout(
+                () => reject(new LssError('timeout')), timeout);
+
             this._sendLssRequest(LssCommand.INQUIRE_PRODUCT_CODE);
 
             this.pending[LssCommand.INQUIRE_PRODUCT_CODE] = {
@@ -648,11 +674,14 @@ class Lss extends EventEmitter {
      *
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise<number>} - LSS consumer revision-number.
+     * @fires Protocol#message
      * @see CiA305 "Inquire Identity Revision-Number Protocol" (§3.11.1.3)
      */
     async inquireRevisionNumber(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject(new LssTimeout()), timeout);
+            const timer = setTimeout(
+                () => reject(new LssError('timeout')), timeout);
+
             this._sendLssRequest(LssCommand.INQUIRE_REVISION_NUMBER);
 
             this.pending[LssCommand.INQUIRE_REVISION_NUMBER] = {
@@ -669,11 +698,14 @@ class Lss extends EventEmitter {
      *
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise<number>} - LSS consumer serial-number.
+     * @fires Protocol#message
      * @see CiA305 "Inquire Identity Serial-Number Protocol" (§3.11.1.4)
      */
     async inquireSerialNumber(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject(new LssTimeout()), timeout);
+            const timer = setTimeout(
+                () => reject(new LssError('timeout')), timeout);
+
             this._sendLssRequest(LssCommand.INQUIRE_SERIAL_NUMBER);
 
             this.pending[LssCommand.INQUIRE_SERIAL_NUMBER] = {
@@ -691,24 +723,25 @@ class Lss extends EventEmitter {
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
+     * @fires Lss#changeMode
+     * @fires Lss#changeDeviceId
      */
-    receive(message) {
-        if (message.id === 0x7e4) {
-            const cs = message.data[0];
+    receive({ id, data }) {
+        if (id === 0x7e4) {
+            const cs = data[0];
             if (this.pending[cs] !== undefined) {
                 clearTimeout(this.pending[cs].timer);
-                this.pending[cs].resolve(message.data.slice(1));
+                this.pending[cs].resolve(data.slice(1));
             }
         }
-        else if (message.id === 0x7e5) {
-            const cs = message.data[0];
+        else if (id === 0x7e5) {
+            const cs = data[0];
 
             if (cs === LssCommand.FASTSCAN) {
                 // Fastscan is only available for unconfigured nodes.
-                const bitCheck = message.data[5];
-                const lssSub = message.data[6];
-                const lssNext = message.data[7];
+                const bitCheck = data[5];
+                const lssSub = data[6];
+                const lssNext = data[7];
 
                 if (bitCheck === 0x80) {
                     // Reset state
@@ -719,7 +752,7 @@ class Lss extends EventEmitter {
                     if (bitCheck > 0x1f || lssSub > 3 || lssNext > 3)
                         return; // Invalid request
 
-                    const data = message.data.readUInt32LE(1);
+                    const value = data.readUInt32LE(1);
                     const mask = (0xffffffff << bitCheck) >>> 0;
                     let match = false;
 
@@ -727,33 +760,31 @@ class Lss extends EventEmitter {
                         case 0:
                             // Test vendor id
                             match = this._maskCompare(
-                                this.vendorId, data, mask);
+                                this.vendorId, value, mask);
                             break;
 
                         case 1:
                             // Test product code
                             match = this._maskCompare(
-                                this.productCode, data, mask);
+                                this.productCode, value, mask);
                             break;
 
                         case 2:
                             // Test revision number
                             match = this._maskCompare(
-                                this.revisionNumber, data, mask);
+                                this.revisionNumber, value, mask);
                             break;
 
                         case 3:
                             match = this._maskCompare(
-                                this.serialNumber, data, mask);
+                                this.serialNumber, value, mask);
                             break;
                     }
 
                     if (match) {
                         this.scanState = lssNext;
-                        if (bitCheck === 0 && lssNext < lssSub) {
-                            this.mode = LssMode.CONFIGURATION;
-                            this.emit('lssChangeMode', this.mode);
-                        }
+                        if (bitCheck === 0 && lssNext < lssSub)
+                            this.setMode(LssMode.CONFIGURATION);
 
                         this._sendLssResponse(0x4f);
                     }
@@ -764,29 +795,26 @@ class Lss extends EventEmitter {
             // Switch mode commands
             switch (cs) {
                 case LssCommand.SWITCH_MODE_GLOBAL:
-                    this.mode = message.data[1];
+                    this.setMode(data[1]);
                     this.select = [];
-                    this.emit('lssChangeMode', this.mode);
                     return;
 
                 case LssCommand.SWITCH_MODE_VENDOR_ID:
-                    this.select[0] = message.data.readUInt32LE(1);
+                    this.select[0] = data.readUInt32LE(1);
                     return;
 
                 case LssCommand.SWITCH_MODE_PRODUCT_CODE:
-                    this.select[1] = message.data.readUInt32LE(1);
+                    this.select[1] = data.readUInt32LE(1);
                     return;
 
                 case LssCommand.SWITCH_MODE_REVISION_NUMBER:
-                    this.select[2] = message.data.readUInt32LE(1);
+                    this.select[2] = data.readUInt32LE(1);
                     return;
 
                 case LssCommand.SWITCH_MODE_SERIAL_NUMBER:
-                    this.select[3] = message.data.readUInt32LE(1);
-                    if (this._checkLssAddress(this.select)) {
-                        this.mode = LssMode.CONFIGURATION;
-                        this.emit('lssChangeMode', this.mode);
-                    }
+                    this.select[3] = data.readUInt32LE(1);
+                    if (this._checkLssAddress(this.select))
+                        this.setMode(LssMode.CONFIGURATION);
                     return;
             }
 
@@ -797,8 +825,14 @@ class Lss extends EventEmitter {
             switch (cs) {
                 case LssCommand.CONFIGURE_NODE_ID:
                     try {
+                        /**
+                         * LssCommand.CONFIGURE_NODE_ID was received.
+                         *
+                         * @event Lss#changeDeviceId
+                         * @type {number}
+                         */
+                        this.emit('changeDeviceId', data[1]);
                         this._sendLssResponse(cs, 0);
-                        this.emit('lssChangeDeviceId', message.data[1]);
                     }
                     catch {
                         // Error: Node-ID out of range
@@ -835,11 +869,14 @@ class Lss extends EventEmitter {
         }
     }
 
+    /////////////////////////////// Private ////////////////////////////////
+
     /**
      * Send an LSS request object.
      *
      * @param {LssCommand} command - LSS command specifier.
      * @param {Buffer} data - command data.
+     * @fires Protocol#message
      * @private
      */
     _sendLssRequest(command, data) {
@@ -849,13 +886,8 @@ class Lss extends EventEmitter {
         if (data !== undefined)
             data.copy(sendBuffer, 1);
 
-        this.emit('message', {
-            id: 0x7e5,
-            data: sendBuffer,
-        });
+        this.send(0x7e5, sendBuffer);
     }
-
-    /////////////////////////////// Private ////////////////////////////////
 
     /**
      * Send an LSS response object.
@@ -863,6 +895,7 @@ class Lss extends EventEmitter {
      * @param {LssCommand} command - LSS command specifier.
      * @param {number} code - response code.
      * @param {number} info - response info.
+     * @fires Protocol#message
      * @private
      */
     _sendLssResponse(command, code, info = 0) {
@@ -871,10 +904,7 @@ class Lss extends EventEmitter {
         sendBuffer[1] = code;
         sendBuffer[2] = info;
 
-        this.emit('message', {
-            id: 0x7e4,
-            data: sendBuffer,
-        });
+        this.send(0x7e4, sendBuffer);
     }
 
     /**
@@ -902,6 +932,7 @@ class Lss extends EventEmitter {
      * @param {number} b - second number.
      * @param {number} mask - bit mask.
      * @returns {boolean} true if the masked values are equal.
+     * @private
      */
     _maskCompare(a, b, mask) {
         a = (a & mask) >>> 0;
@@ -916,6 +947,7 @@ class Lss extends EventEmitter {
      * Initialize the device and audit the object dictionary.
      *
      * @deprecated
+     * @ignore
      */
     init() {
         deprecate(() => this.start(),
@@ -923,4 +955,4 @@ class Lss extends EventEmitter {
     }
 }
 
-module.exports = exports = { LssMode, LssError, LssTimeout, Lss };
+module.exports = exports = { LssMode, LssError, Lss };

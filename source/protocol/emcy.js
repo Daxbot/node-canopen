@@ -4,7 +4,7 @@
  * @copyright 2024 Daxbot
  */
 
-const EventEmitter = require('events');
+const Protocol = require('./protocol');
 const { Eds, EdsError } = require('../eds');
 const { deprecate } = require('util');
 
@@ -13,7 +13,6 @@ const { deprecate } = require('util');
  *
  * @enum {number}
  * @see CiA301 "Emergency object (EMCY)" (§7.2.7)
- * @memberof EmcyMessage
  */
 const EmcyType = {
     /** Error reset or no error. */
@@ -97,7 +96,6 @@ const EmcyType = {
  *
  * @enum {number}
  * @see CiA301 "Emergency object (EMCY)" (§7.2.7)
- * @memberof EmcyMessage
  */
 const EmcyCode = {
     /** CAN overrun (objects lost). */
@@ -290,10 +288,8 @@ class EmcyMessage {
  *
  * @param {Eds} eds - Eds object.
  * @see CiA301 "Emergency object" (§7.2.7)
- * @fires 'message' on preparing a CAN message to send.
- * @fires 'emergency' on consuming an emergency object.
  */
-class Emcy extends EventEmitter {
+class Emcy extends Protocol {
     constructor(eds) {
         super();
 
@@ -328,7 +324,9 @@ class Emcy extends EventEmitter {
     /**
      * Error history (Object 0x1003).
      *
-     * @type {Array<object>} [{ code, info } ... ]
+     * [{ code, info } ... ]
+     *
+     * @type {Array<object>}
      */
     get history() {
         const history = [];
@@ -435,6 +433,8 @@ class Emcy extends EventEmitter {
 
     /**
      * Start the module.
+     *
+     * @fires Protocol#start
      */
     start() {
         if(this.sendTimer !== null)
@@ -443,18 +443,24 @@ class Emcy extends EventEmitter {
         const delay = this.inhibitTime / 10; // 100 μs
         if(delay) {
             this.sendTimer = setInterval(() => {
-                if(this.sendQueue.length > 0)
-                    this.emit('message', this.sendQueue.shift());
+                if(this.sendQueue.length > 0) {
+                    const [ id, data ] = this.sendQueue.shift();
+                    this.send(id, data);
+                }
             }, delay);
         }
+        super.start();
     }
 
     /**
      * Stop the module.
+     *
+     * @fires Protocol#stop
      */
     stop() {
         clearInterval(this.sendTimer);
         this.sendTimer = null;
+        super.stop();
     }
 
     /**
@@ -463,6 +469,7 @@ class Emcy extends EventEmitter {
      * @param {object} args - arguments.
      * @param {number} args.code - error code.
      * @param {Buffer} args.info - error info.
+     * @fires Protocol#message
      */
     write(...args) {
         if (!this.cobId)
@@ -486,15 +493,10 @@ class Emcy extends EventEmitter {
             info
         });
 
-        const message = {
-            id: this.cobId,
-            data: em.toBuffer(),
-        };
-
         if(this.sendTimer)
-            this.sendQueue.push(message);
+            this.sendQueue.push([ this.cobId, em.toBuffer() ]);
         else
-            this.emit('message', message);
+            this.send(this.cobId, em.toBuffer());
     }
 
     /**
@@ -503,20 +505,28 @@ class Emcy extends EventEmitter {
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
+     * @fires Emcy#emergency
      */
-    receive(message) {
-        if (message.data.length != 8)
+    receive({ id, data }) {
+        if (data.length != 8)
             return;
 
-        for (let id of this.consumers) {
-            if (id === message.id) {
+        for (let cobId of this.consumers) {
+            if (id === cobId) {
+                /**
+                 * An emergency message was received.
+                 *
+                 * @event Emcy#emergency
+                 * @type {object}
+                 * @property {number} cobId - message identifier.
+                 * @property {EmcyMessage} em - message object.
+                 */
                 this.emit('emergency', {
-                    cobId: message.id,
+                    cobId: id,
                     em: new EmcyMessage({
-                        code: message.data.readUInt16LE(0),
-                        register: message.data.readUInt8(2),
-                        info: message.data.subarray(3),
+                        code: data.readUInt16LE(0),
+                        register: data.readUInt8(2),
+                        info: data.subarray(3),
                     }),
                 });
                 break;
@@ -530,6 +540,7 @@ class Emcy extends EventEmitter {
      * Initialize members and begin emergency monitoring.
      *
      * @deprecated
+     * @ignore
      */
     init() {
         deprecate(() => this.start(),
@@ -541,6 +552,7 @@ class Emcy extends EventEmitter {
      *
      * @param {number} length - how many historical error events should be kept.
      * @deprecated
+     * @ignore
      */
     setHistoryLength(length) {
         deprecate(() => this.eds.setErrorHistoryLength(length),

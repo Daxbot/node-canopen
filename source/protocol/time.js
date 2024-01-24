@@ -4,7 +4,7 @@
  * @copyright 2024 Daxbot
  */
 
-const EventEmitter = require('events');
+const Protocol = require('./protocol');
 const { Eds, EdsError } = require('../eds');
 const { DataType } = require('../types');
 const rawToType = require('../functions/raw_to_type');
@@ -20,10 +20,8 @@ const { deprecate } = require('util');
  *
  * @param {Eds} eds - Eds object.
  * @see CiA301 "Time stamp object (TIME)" (§7.2.6)
- * @fires 'message' on preparing a CAN message to send.
- * @fires 'time' on consuming a time stamp object.
  */
-class Time extends EventEmitter {
+class Time extends Protocol {
     constructor(eds) {
         super();
 
@@ -95,22 +93,30 @@ class Time extends EventEmitter {
 
     /**
      * Start the module.
+     *
+     * @fires Protocol#start
      */
     start() {
         if ((this.produce || this.consume) && !this.cobId)
             throw new EdsError('COB-ID TIME may not be 0');
+
+        super.start();
     }
 
     /**
      * Stop the module.
+     *
+     * @fires Protocol#start
      */
     stop() {
+        super.stop();
     }
 
     /**
      * Service: TIME write.
      *
      * @param {Date} date - date to write.
+     * @fires Protocol#message
      */
     write(date) {
         if (!this.produce)
@@ -119,10 +125,7 @@ class Time extends EventEmitter {
         if(!date)
             date = new Date();
 
-        this.emit('message', {
-            id: this.cobId,
-            data: typeToRaw(date, DataType.TIME_OF_DAY),
-        });
+        this.send(this.cobId, typeToRaw(date, DataType.TIME_OF_DAY));
     }
 
     /**
@@ -131,11 +134,18 @@ class Time extends EventEmitter {
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
+     * @fires Time#time
      */
-    receive(message) {
-        if (this.consume && (message.id & 0x7FF) === this.cobId) {
-            const date = rawToType(message.data, DataType.TIME_OF_DAY);
+    receive({ id, data }) {
+        if (this.consume && (id & 0x7FF) === this.cobId) {
+            const date = rawToType(data, DataType.TIME_OF_DAY);
+
+            /**
+             * A Time object was received.
+             *
+             * @event Time#time
+             * @type {Date}
+             */
             this.emit('time', date);
         }
     }
@@ -146,6 +156,7 @@ class Time extends EventEmitter {
      * Initialize the device and audit the object dictionary.
      *
      * @deprecated
+     * @ignore
      */
     init() {
         deprecate(() => this.start(),

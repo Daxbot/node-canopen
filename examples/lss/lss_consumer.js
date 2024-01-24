@@ -24,7 +24,7 @@ async function main(device) {
             serialNumber: Math.floor(Math.random() * 0xffffffff),
         });
 
-        device.lss.addListener('lssChangeMode', (mode) => {
+        device.lss.addListener('changeMode', (mode) => {
             console.log('Changed mode to',
                 (mode) ? 'CONFIGURATION' : 'OPERATION');
 
@@ -32,7 +32,7 @@ async function main(device) {
                 resolve();
         });
 
-        device.lss.addListener('lssChangeDeviceId', (newId) => {
+        device.lss.addListener('changeDeviceId', (newId) => {
             console.log('Changed device id to', newId);
         });
     });

@@ -4,8 +4,8 @@
  * @copyright 2024 Daxbot
  */
 
-const EventEmitter = require('events');
-const { Eds } = require('../eds');
+const Protocol = require('./protocol');
+const { DataObject, Eds } = require('../eds');
 const { AccessType } = require('../types');
 const { SdoCode, SdoTransfer, ClientCommand, ServerCommand } = require('./sdo');
 const calculateCrc = require('../functions/crc');
@@ -24,7 +24,7 @@ const { deprecate } = require('util');
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
  * @fires 'message' on preparing a CAN message to send.
  */
-class SdoServer extends EventEmitter {
+class SdoServer extends Protocol {
     constructor(eds) {
         super();
 
@@ -56,7 +56,9 @@ class SdoServer extends EventEmitter {
     /**
      * SDO server parameter (Object 0x1200..0x127F).
      *
-     * @type {Array<object>} [{ cobIdTx, cobIdRx, deviceId } ... ]
+     * [{ cobIdTx, cobIdRx, deviceId } ... ]
+     *
+     * @type {Array<object>}
      */
     get clients() {
         const parameters = [];
@@ -85,6 +87,11 @@ class SdoServer extends EventEmitter {
         return parameters;
     }
 
+    /**
+     * Start the module.
+     *
+     * @fires Protocol#start
+     */
     start() {
         if(this.started)
             return;
@@ -93,16 +100,21 @@ class SdoServer extends EventEmitter {
         for (const { cobIdTx, cobIdRx } of this.clients)
             this.transfers[cobIdRx] = new SdoTransfer({ cobId: cobIdTx });
 
-        this.started = true;
+        super.start();
     }
 
+    /**
+     * Stop the module.
+     *
+     * @fires Protocol#stop
+     */
     stop() {
         for(const transfer of Object.values(this.transfers)) {
             if(transfer.active)
                 this._abortTransfer(transfer, SdoCode.DEVICE_STATE);
         }
 
-        this.started = false;
+        super.stop();
     }
 
 
@@ -112,17 +124,16 @@ class SdoServer extends EventEmitter {
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
+     * @fires Protocol#message
      */
-    receive(message) {
+    receive({ id, data }) {
         // Handle transfers as a server (local object dictionary)
-        const client = this.transfers[message.id];
+        const client = this.transfers[id];
         if (client === undefined)
             return;
 
         if (client.blockTransfer) {
             // Block transfer in progress
-            const data = message.data;
             if ((data[0] & 0x7f) === client.blockSequence + 1) {
                 client.data = Buffer.concat([client.data, data.slice(1)]);
                 client.blockSequence++;
@@ -149,7 +160,7 @@ class SdoServer extends EventEmitter {
                 sendBuffer.writeInt8(client.blockSequence, 1);
                 sendBuffer.writeUInt8(this.blockSize, 2);
 
-                this._sendMessage(client.cobId, sendBuffer);
+                this.send(client.cobId, sendBuffer);
 
                 // Reset sequence
                 client.blockSequence = 0;
@@ -159,27 +170,27 @@ class SdoServer extends EventEmitter {
             return;
         }
 
-        switch (message.data[0] >> 5) {
+        switch (data[0] >> 5) {
             case ClientCommand.DOWNLOAD_SEGMENT:
-                this._downloadSegment(client, message.data);
+                this._downloadSegment(client, data);
                 break;
             case ClientCommand.DOWNLOAD_INITIATE:
-                this._downloadInitiate(client, message.data);
+                this._downloadInitiate(client, data);
                 break;
             case ClientCommand.UPLOAD_INITIATE:
-                this._uploadInitiate(client, message.data);
+                this._uploadInitiate(client, data);
                 break;
             case ClientCommand.UPLOAD_SEGMENT:
-                this._uploadSegment(client, message.data);
+                this._uploadSegment(client, data);
                 break;
             case ClientCommand.ABORT:
                 client.reject();
                 break;
             case ClientCommand.BLOCK_UPLOAD:
-                switch (message.data[0] & 0x3) {
+                switch (data[0] & 0x3) {
                     case 0:
                         // Initiate upload
-                        this._blockUploadInitiate(client, message.data);
+                        this._blockUploadInitiate(client, data);
                         break;
                     case 1:
                         // End upload
@@ -187,7 +198,7 @@ class SdoServer extends EventEmitter {
                         break;
                     case 2:
                         // Confirm block
-                        this._blockUploadConfirm(client, message.data);
+                        this._blockUploadConfirm(client, data);
                         break;
                     case 3:
                         // Start upload
@@ -196,7 +207,7 @@ class SdoServer extends EventEmitter {
                 }
                 break;
             case ClientCommand.BLOCK_DOWNLOAD:
-                this._blockDownload(client, message.data);
+                this._blockDownload(client, data);
                 break;
             default:
                 this._abortTransfer(client, SdoCode.BAD_COMMAND);
@@ -211,6 +222,7 @@ class SdoServer extends EventEmitter {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _downloadInitiate(client, data) {
@@ -261,7 +273,7 @@ class SdoServer extends EventEmitter {
             sendBuffer.writeUInt16LE(client.index, 1);
             sendBuffer.writeUInt8(client.subIndex, 3);
 
-            this._sendMessage(client.cobId, sendBuffer);
+            this.send(client.cobId, sendBuffer);
         }
         else {
             // Segmented client
@@ -274,7 +286,7 @@ class SdoServer extends EventEmitter {
             sendBuffer.writeUInt16LE(client.index, 1);
             sendBuffer.writeUInt8(client.subIndex, 3);
 
-            this._sendMessage(client.cobId, sendBuffer);
+            this.send(client.cobId, sendBuffer);
 
             client.start();
         }
@@ -285,6 +297,7 @@ class SdoServer extends EventEmitter {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _uploadInitiate(client, data) {
@@ -326,7 +339,7 @@ class SdoServer extends EventEmitter {
             if (entry.size < 4)
                 sendBuffer[0] |= ((4 - entry.size) << 2) | 0x1;
 
-            this._sendMessage(client.cobId, sendBuffer);
+            this.send(client.cobId, sendBuffer);
         }
         else {
             // Segmented client
@@ -342,7 +355,7 @@ class SdoServer extends EventEmitter {
             sendBuffer.writeUInt8(client.subIndex, 3);
             sendBuffer.writeUInt32LE(client.data.length, 4);
 
-            this._sendMessage(client.cobId, sendBuffer);
+            this.send(client.cobId, sendBuffer);
 
             client.start();
         }
@@ -353,6 +366,7 @@ class SdoServer extends EventEmitter {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _uploadSegment(client, data) {
@@ -376,7 +390,7 @@ class SdoServer extends EventEmitter {
         client.toggle ^= 1;
         client.size += count;
 
-        this._sendMessage(client.cobId, sendBuffer);
+        this.send(client.cobId, sendBuffer);
 
         client.refresh();
     }
@@ -386,6 +400,7 @@ class SdoServer extends EventEmitter {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _downloadSegment(client, data) {
@@ -447,7 +462,7 @@ class SdoServer extends EventEmitter {
         sendBuffer.writeUInt8(header);
         client.toggle ^= 1;
 
-        this._sendMessage(client.cobId, sendBuffer);
+        this.send(client.cobId, sendBuffer);
 
         client.refresh();
     }
@@ -459,6 +474,7 @@ class SdoServer extends EventEmitter {
      * large transfers.
      *
      * @param {SdoTransfer} client - SDO context.
+     * @fires Protocol#message
      * @private
      */
     _blockUploadProcess(client) {
@@ -486,7 +502,7 @@ class SdoServer extends EventEmitter {
             }
 
             client.data.copy(sendBuffer, 1, offset, offset + 7);
-            this._sendMessage(client.cobId, sendBuffer);
+            this.send(client.cobId, sendBuffer);
 
             client.refresh();
 
@@ -503,6 +519,7 @@ class SdoServer extends EventEmitter {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _blockUploadInitiate(client, data) {
@@ -547,7 +564,7 @@ class SdoServer extends EventEmitter {
         sendBuffer.writeUInt8(client.subIndex, 3);
         sendBuffer.writeUInt16LE(client.data.length, 4);
 
-        this._sendMessage(client.cobId, sendBuffer);
+        this.send(client.cobId, sendBuffer);
 
         client.start();
     }
@@ -557,6 +574,7 @@ class SdoServer extends EventEmitter {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _blockUploadConfirm(client, data) {
@@ -584,7 +602,7 @@ class SdoServer extends EventEmitter {
                     sendBuffer.writeUInt16LE(crcValue, 1);
                 }
 
-                this._sendMessage(client.cobId, sendBuffer);
+                this.send(client.cobId, sendBuffer);
 
                 client.refresh();
                 return;
@@ -606,6 +624,7 @@ class SdoServer extends EventEmitter {
      * Handle ClientCommand.BLOCK_UPLOAD.
      *
      * @param {SdoTransfer} client - SDO context.
+     * @fires Protocol#message
      * @private
      */
     _blockUploadEnd(client) {
@@ -617,6 +636,7 @@ class SdoServer extends EventEmitter {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _blockDownload(client, data) {
@@ -692,7 +712,7 @@ class SdoServer extends EventEmitter {
             const sendBuffer = Buffer.alloc(8);
             sendBuffer.writeUInt8(header);
 
-            this._sendMessage(client.cobId, sendBuffer);
+            this.send(client.cobId, sendBuffer);
 
             client.resolve();
         }
@@ -717,7 +737,7 @@ class SdoServer extends EventEmitter {
             sendBuffer.writeUInt8(client.subIndex, 3);
             sendBuffer.writeUInt8(this.blockSize, 4);
 
-            this._sendMessage(client.cobId, sendBuffer);
+            this.send(client.cobId, sendBuffer);
 
             client.start();
         }
@@ -728,6 +748,7 @@ class SdoServer extends EventEmitter {
      *
      * @param {SdoTransfer} transfer - SDO context.
      * @param {SdoCode} code - SDO abort code.
+     * @fires Protocol#message
      * @private
      */
     _abortTransfer(transfer, code) {
@@ -736,19 +757,8 @@ class SdoServer extends EventEmitter {
         sendBuffer.writeUInt16LE(transfer.index, 1);
         sendBuffer.writeUInt8(transfer.subIndex, 3);
         sendBuffer.writeUInt32LE(code, 4);
-        this._sendMessage(transfer.cobId, sendBuffer);
+        this.send(transfer.cobId, sendBuffer);
         transfer.reject(code);
-    }
-
-    /**
-     * Helper method to emit CAN data.
-     *
-     * @param {number} id - CAN message identifier.
-     * @param {Buffer} data - CAN message data;
-     * @private
-     */
-    _sendMessage(id, data) {
-        this.emit('message', { id, data });
     }
 
     ////////////////////////////// Deprecated //////////////////////////////
@@ -757,6 +767,7 @@ class SdoServer extends EventEmitter {
      * Initialize the device and audit the object dictionary.
      *
      * @deprecated
+     * @ignore
      */
     init() {
         deprecate(() => this.start(),
@@ -769,6 +780,7 @@ class SdoServer extends EventEmitter {
      * @param {number} clientId - server COB-ID of the entry to get.
      * @returns {DataObject | null} the matching entry.
      * @deprecated
+     * @ignore
      */
     getClient(clientId) {
         return deprecate(() => {
@@ -792,6 +804,7 @@ class SdoServer extends EventEmitter {
      * @param {number} cobIdTx - Sdo COB-ID for outgoing messages (to client).
      * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from client).
      * @deprecated
+     * @ignore
      */
     addClient(clientId, cobIdTx, cobIdRx) {
         deprecate(
@@ -804,6 +817,7 @@ class SdoServer extends EventEmitter {
      *
      * @param {number} clientId - client COB-ID of the entry to remove.
      * @deprecated
+     * @ignore
      */
     removeClient(clientId) {
         deprecate(() => this.eds.removeSdoServerParameter(clientId),

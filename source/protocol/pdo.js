@@ -4,8 +4,8 @@
  * @copyright 2024 Daxbot
  */
 
-const EventEmitter = require('events');
-const { Eds, EdsError } = require('../eds');
+const Protocol = require('./protocol');
+const { DataObject, Eds, EdsError } = require('../eds');
 const { deprecate } = require('util');
 
 /**
@@ -18,10 +18,8 @@ const { deprecate } = require('util');
  *
  * @param {Eds} eds - Eds object.
  * @see CiA301 "Process data objects (PDO)" (§7.2.2)
- * @fires 'message' on preparing a CAN message to send.
- * @fires 'pdo' on updating a mapped pdo object.
  */
-class Pdo extends EventEmitter {
+class Pdo extends Protocol {
     constructor(eds) {
         super();
 
@@ -35,7 +33,6 @@ class Pdo extends EventEmitter {
         this.events = [];
         this.syncTpdo = [];
         this.syncCobId = null;
-        this.started = false;
     }
 
     /**
@@ -84,7 +81,11 @@ class Pdo extends EventEmitter {
         return tpdo;
     }
 
-    /** Begin TPDO generation. */
+    /**
+     * Begin TPDO generation.
+     *
+     * @fires Protocol#start
+     */
     start() {
         if(this.started)
             return;
@@ -162,10 +163,14 @@ class Pdo extends EventEmitter {
         if(this.syncTpdo.length > 0)
             this.syncCobId = this.eds.getSyncCobId().cobId;
 
-        this.started = true;
+        super.start();
     }
 
-    /** Stop TPDO generation. */
+    /**
+     * Stop TPDO generation.
+     *
+     * @fires Protocol#stop
+     */
     stop() {
         for (const [emitter, eventName, func] of this.events)
             emitter.removeListener(eventName, func);
@@ -176,13 +181,14 @@ class Pdo extends EventEmitter {
         this.eventTimers = {};
         this.events = [];
         this.syncTpdo = [];
-        this.started = false;
+        super.stop();
     }
 
     /**
      * Service: PDO write
      *
      * @param {number} cobId - mapped TPDO to send.
+     * @fires Protocol#message
      */
     write(cobId) {
         const pdo = this.transmitMap[cobId];
@@ -197,7 +203,7 @@ class Pdo extends EventEmitter {
             dataOffset += obj.raw.length;
         }
 
-        this.emit('message', { id: cobId, data });
+        this.send(cobId, data);
     }
 
     /**
@@ -206,11 +212,11 @@ class Pdo extends EventEmitter {
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
+     * @fires Pdo#pdo
      */
-    receive(message) {
-        if ((message.id & 0x7FF) === this.syncCobId) {
-            const counter = message.data[1];
+    receive({ id, data }) {
+        if ((id & 0x7FF) === this.syncCobId) {
+            const counter = data[1];
             for( const pdo of this.syncTpdo) {
                 if (pdo.started) {
                     if (pdo.transmissionType == 0) {
@@ -229,38 +235,53 @@ class Pdo extends EventEmitter {
                 }
             }
         }
-        else if (message.id >= 0x180 && message.id < 0x580) {
-            const updated = [];
-            if (message.id in this.receiveMap) {
-                const pdo = this.receiveMap[message.id];
+        else if (id >= 0x180 && id < 0x580) {
+            if (id in this.receiveMap) {
+                const pdo = this.receiveMap[id];
                 let dataOffset = 0;
 
+                let updated = false;
                 for (const obj of pdo.dataObjects) {
                     const size = obj.size;
-                    if (message.data.length < dataOffset + size)
+                    if (data.length < dataOffset + size)
                         continue;
 
                     const lastValue = obj.value;
-                    message.data.copy(
-                        obj.raw, 0, dataOffset, dataOffset + size);
-
+                    data.copy(obj.raw, 0, dataOffset, dataOffset + size);
                     dataOffset += obj.raw.length;
 
-                    if (lastValue !== obj.value)
-                        updated.push(obj);
+                    if (!updated && lastValue !== obj.value)
+                        updated = true;
                 }
-            }
 
-            if (updated.length > 0) {
-                this.emit('pdo', {
-                    cobId: message.id,
-                    updated,
-                });
+                if (updated)
+                    this._emitPdo(pdo);
             }
         }
     }
 
     /////////////////////////////// Private ////////////////////////////////
+
+    /**
+     * Emit a PDO object.
+     *
+     * @param {object} pdo - object to emit.
+     * @fires Pdo#pdo
+     * @private
+     */
+    _emitPdo(pdo) {
+        /**
+         * New Pdo data is available.
+         *
+         * @event Pdo#pdo
+         * @type {object}
+         * @property {number} cobId - object identifier.
+         * @property {number} transmissionType - transmission type.
+         * @property {number} inhibitTime - minimum time between updates.
+         * @property {Array<DataObject>} dataObjects - mapped objects.
+         */
+        this.emit('pdo', pdo);
+    }
 
     /**
      * Parse a pair of PDO communication/mapping parameters.
@@ -379,6 +400,7 @@ class Pdo extends EventEmitter {
      * Initialize the device and audit the object dictionary.
      *
      * @deprecated
+     * @ignore
      */
     init() {
         deprecate(() => this.start(),
@@ -391,6 +413,7 @@ class Pdo extends EventEmitter {
      * @param {number} cobId - COB-ID used by the RPDO.
      * @returns {DataObject | null} the matching entry.
      * @deprecated
+     * @ignore
      */
     getReceive(cobId) {
         return deprecate(() => {
@@ -418,6 +441,7 @@ class Pdo extends EventEmitter {
      * @param {number} [args.eventTime=0] - how often to send timer based PDOs.
      * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
      * @deprecated
+     * @ignore
      */
     addReceive(cobId, entries, args={}) {
         args.cobId = cobId;
@@ -431,6 +455,7 @@ class Pdo extends EventEmitter {
      *
      * @param {number} cobId - COB-ID used by the RPDO.
      * @deprecated
+     * @ignore
      */
     removeReceive(cobId) {
         deprecate(() => this.eds.removeReceivePdo(cobId),
@@ -443,6 +468,7 @@ class Pdo extends EventEmitter {
      * @param {number} cobId - COB-ID used by the TPDO.
      * @returns {DataObject | null} the matching entry.
      * @deprecated
+     * @ignore
      */
     getTransmit(cobId) {
         return deprecate(() => {
@@ -470,6 +496,7 @@ class Pdo extends EventEmitter {
      * @param {number} [args.eventTime=0] - how often to send timer based PDOs.
      * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
      * @deprecated
+     * @ignore
      */
     addTransmit(cobId, entries, args={}) {
         args.cobId = cobId;
@@ -483,6 +510,7 @@ class Pdo extends EventEmitter {
      *
      * @param {number} cobId - COB-ID used by the TPDO.
      * @deprecated
+     * @ignore
      */
     removeTransmit(cobId) {
         deprecate(() => this.eds.removeTransmitPdo(cobId),

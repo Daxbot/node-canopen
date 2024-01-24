@@ -1,6 +1,10 @@
 const util = require('util');
 
-/** Time offset in milliseconds between January 1, 1970 and January 1, 1984. */
+/**
+ * Time offset in milliseconds between January 1, 1970 and January 1, 1984.
+ *
+ * @private
+ */
 const EPOCH_OFFSET = 441763200 * 1000;
 
 /**

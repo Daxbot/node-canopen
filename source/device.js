@@ -21,8 +21,7 @@ const { DataType } = require('./types');
 /**
  * A CANopen device.
  *
- * This class represents a single addressable device (or node) on the bus and
- * provides methods for manipulating the object dictionary.
+ * This class represents a single addressable device (or node) on the bus.
  *
  * @param {object} args - arguments.
  * @param {Eds} args.eds - the device's electronic data sheet.
@@ -73,12 +72,12 @@ class Device extends EventEmitter {
         if(args.enableLss) {
             this.protocol.lss = new Lss(this.eds);
             this.lss.on('message', (m) => this.emit('message', m));
-            this.lss.on('lssChangeDeviceId', (id) => this.id = id);
+            this.lss.on('changeDeviceId', (id) => this.id = id);
             this.lss.start();
         }
 
-        this.nmt.on('nmtReset', (event) => this.nmtReset(event));
-        this.nmt.on('nmtChangeState', (event) => this.nmtChangeState(event));
+        this.nmt.on('reset', (event) => this.nmtReset(event));
+        this.nmt.on('changeState', (event) => this.nmtChangeState(event));
     }
 
     /**
@@ -399,7 +398,7 @@ class Device extends EventEmitter {
     }
 
     /**
-     * Called on nmtReset.
+     * Called on Nmt#reset.
      *
      * @param {boolean} resetApp - if true, then perform a full reset.
      * @private
@@ -418,7 +417,7 @@ class Device extends EventEmitter {
     }
 
     /**
-     * Called on nmtChangeState
+     * Called on Nmt#changeState
      *
      * @param {NmtState} newState - new nmt state.
      * @private
@@ -467,6 +466,7 @@ class Device extends EventEmitter {
      * Initialize the device and audit the object dictionary.
      *
      * @deprecated
+     * @ignore
      */
     init() {
         deprecate(() => this.start(),
@@ -481,6 +481,7 @@ class Device extends EventEmitter {
      *
      * @param {Function} send - send function.
      * @deprecated
+     * @ignore
      */
     setTransmitFunction(send) {
         deprecate(() => this.on('message', (m) => send(m)),
@@ -493,6 +494,7 @@ class Device extends EventEmitter {
      * @param {number | string} index - index or name of the entry.
      * @returns {number | bigint | string | Date} entry value.
      * @deprecated
+     * @ignore
      */
     getValue(index) {
         return deprecate(() => this.eds.getValue(index),
@@ -506,6 +508,7 @@ class Device extends EventEmitter {
      * @param {number} subIndex - sub-object index.
      * @returns {number | bigint | string | Date} entry value.
      * @deprecated
+     * @ignore
      */
     getValueArray(index, subIndex) {
         return deprecate(() => this.eds.getValueArray(index, subIndex),
@@ -518,6 +521,7 @@ class Device extends EventEmitter {
      * @param {number | string} index - index or name of the entry.
      * @returns {Buffer} entry data.
      * @deprecated
+     * @ignore
      */
     getRaw(index) {
         return deprecate(() => this.eds.getRaw(index),
@@ -531,6 +535,7 @@ class Device extends EventEmitter {
      * @param {number} subIndex - sub-object index.
      * @returns {Buffer} entry data.
      * @deprecated
+     * @ignore
      */
     getRawArray(index, subIndex) {
         return deprecate(() => this.eds.getRawArray(index, subIndex),
@@ -543,6 +548,7 @@ class Device extends EventEmitter {
      * @param {number | string} index - index or name of the entry.
      * @param {number | bigint | string | Date} value - value to set.
      * @deprecated
+     * @ignore
      */
     setValue(index, value) {
         deprecate(() => this.eds.setValue(index, value),
@@ -556,6 +562,7 @@ class Device extends EventEmitter {
      * @param {number} subIndex - array sub-index to set;
      * @param {number | bigint | string | Date} value - value to set.
      * @deprecated
+     * @ignore
      */
     setValueArray(index, subIndex, value) {
         deprecate(() => this.eds.setValueArray(index, subIndex, value),
@@ -568,6 +575,7 @@ class Device extends EventEmitter {
      * @param {number | string} index - index or name of the entry.
      * @param {Buffer} raw - raw Buffer to set.
      * @deprecated
+     * @ignore
      */
     setRaw(index, raw) {
         deprecate(() => this.eds.setRaw(index, raw),
@@ -581,6 +589,7 @@ class Device extends EventEmitter {
      * @param {number} subIndex - sub-object index.
      * @param {Buffer} raw - raw Buffer to set.
      * @deprecated
+     * @ignore
      */
     setRawArray(index, subIndex, raw) {
         deprecate(() => this.eds.setRawArray(index, subIndex, raw),
@@ -593,6 +602,7 @@ class Device extends EventEmitter {
      * @param {object} args - arguments.
      * @see mapRemoteNode
      * @deprecated
+     * @ignore
      */
     mapEds(args) {
         deprecate(() => this.mapRemoteNode(args),

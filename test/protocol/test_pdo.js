@@ -40,8 +40,8 @@ describe('Pdo', function () {
         device.pdo.start();
         device.nmt.startNode();
 
-        device.pdo.addListener('pdo', ({ updated }) => {
-            const pdo = updated[0];
+        device.pdo.addListener('pdo', ({ dataObjects }) => {
+            const pdo = dataObjects[0];
             expect(pdo.index).to.equal(0x5);
             expect(pdo.value).to.equal(1);
             done();

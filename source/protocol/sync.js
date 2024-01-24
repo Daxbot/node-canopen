@@ -4,7 +4,7 @@
  * @copyright 2024 Daxbot
  */
 
-const EventEmitter = require('events');
+const Protocol = require('./protocol');
 const { Eds, EdsError } = require('../eds');
 const { deprecate } = require('util');
 
@@ -17,10 +17,8 @@ const { deprecate } = require('util');
  *
  * @param {Eds} eds - Eds object.
  * @see CiA301 "Synchronization object (SYNC)" (§7.2.5)
- * @fires 'message' on preparing a CAN message to send.
- * @fires 'sync' on consuming a synchronization object.
  */
-class Sync extends EventEmitter {
+class Sync extends Protocol {
     constructor(eds) {
         super();
 
@@ -114,6 +112,8 @@ class Sync extends EventEmitter {
 
     /**
      * Start the module;
+     *
+     * @fires Protocol#start
      */
     start() {
         if(this.syncTimer !== null)
@@ -141,21 +141,27 @@ class Sync extends EventEmitter {
                 }, this.cyclePeriod / 1000);
             }
         }
+
+        super.start();
     }
 
     /**
      * Stop the module.
+     *
+     * @fires Protocol#stop
      */
     stop() {
         clearInterval(this.syncTimer);
         this.syncTimer = null;
         this.syncCounter = 0;
+        super.stop();
     }
 
     /**
      * Service: SYNC write.
      *
      * @param {number | null} counter - sync counter;
+     * @fires Protocol#message
      */
     write(counter = null) {
         if (!this.generate)
@@ -173,14 +179,20 @@ class Sync extends EventEmitter {
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
+     * @fires Sync#sync
      */
-    receive(message) {
-        if ((message.id & 0x7FF) === this.cobId) {
-            if (message.data)
-                this.emit('sync', message.data[0]);
-            else
-                this.emit('sync', null);
+    receive({ id, data }) {
+        if ((id & 0x7FF) === this.cobId) {
+            if (data)
+                data = data[0];
+
+            /**
+             * A Sync object was received.
+             *
+             * @event Sync#sync
+             * @type {number}
+             */
+            this.emit('sync', data);
         }
     }
 
@@ -190,6 +202,7 @@ class Sync extends EventEmitter {
      * Initialize the device and audit the object dictionary.
      *
      * @deprecated
+     * @ignore
      */
     init() {
         deprecate(() => this.start(),

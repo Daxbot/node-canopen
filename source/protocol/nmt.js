@@ -4,8 +4,8 @@
  * @copyright 2024 Daxbot
  */
 
-const EventEmitter = require('events');
-const { Eds, EdsError } = require('../eds');
+const Protocol = require('./protocol');
+const { DataObject, Eds, EdsError } = require('../eds');
 const { deprecate } = require('util');
 
 /**
@@ -71,12 +71,8 @@ const NmtCommand = {
  *
  * @param {Eds} eds - Eds object.
  * @see CiA301 "Network management" (§7.2.8)
- * @fires 'message' on preparing a CAN message to send.
- * @fires 'nmtTimeout' on missing a consumer heartbeat.
- * @fires 'nmtChangeState' on change of NMT state.
- * @fires 'nmtReset' on an NMT reset command.
  */
-class Nmt extends EventEmitter {
+class Nmt extends Protocol {
     constructor(eds) {
         super();
 
@@ -99,17 +95,8 @@ class Nmt extends EventEmitter {
         return this._state;
     }
 
-    set state(newState) {
-        if (newState !== this.state) {
-            const deviceId = this.deviceId;
-            const oldState = this.state;
-            this._state = newState;
-            this.emit('nmtChangeState', {
-                deviceId,
-                newState,
-                oldState,
-            });
-        }
+    set state(value) {
+        this.setState(value);
     }
 
     /**
@@ -135,7 +122,9 @@ class Nmt extends EventEmitter {
     /**
      * Consumer heartbeat time (Object 0x1016).
      *
-     * @type {Array<object>} [{ deviceId, heartbeatTime } ... ]
+     * [{ deviceId, heartbeatTime } ... ]
+     *
+     * @type {Array<object>}
      */
     get consumers() {
         const consumers = [];
@@ -161,6 +150,8 @@ class Nmt extends EventEmitter {
 
     /**
      * Begin heartbeat generation.
+     *
+     * @fires Protocol#start
      */
     start() {
         if (this.state !== NmtState.INITIALIZING)
@@ -187,16 +178,36 @@ class Nmt extends EventEmitter {
         }
 
         this.state = NmtState.PRE_OPERATIONAL;
-        this.started = true;
+        super.start();
     }
 
-    /** Stop heartbeat generation. */
+    /**
+     * Stop heartbeat generation.
+     *
+     * @fires Protocol#stop
+     */
     stop() {
         for (const timer of Object.values(this.heartbeatTimers))
             clearTimeout(timer);
 
         this.state = NmtState.INITIALIZING;
         this.heartbeatTimers = {};
+        super.stop();
+    }
+
+    /**
+     * Set the Nmt state.
+     *
+     * @param {NmtState} state - new state.
+     * @fires Nmt#changeState
+     */
+    setState(state) {
+        if (state !== this._state) {
+            const deviceId = this.deviceId;
+            const oldState = this.state;
+            this._state = state;
+            this._emitChangeState(deviceId, state, oldState);
+        }
     }
 
     /**
@@ -264,6 +275,8 @@ class Nmt extends EventEmitter {
      * Change the state of NMT consumer(s) to NMT state operational.
      *
      * @param {number} [nodeId] - id of node or 0 for broadcast.
+     * @fires Protocol#message
+     * @fires Nmt#changeState
      * @see CiA301 "Service start remote node" (§7.2.8.2.1.2)
      */
     startNode(nodeId) {
@@ -276,6 +289,8 @@ class Nmt extends EventEmitter {
      * Change the state of NMT consumer(s) to NMT state stopped.
      *
      * @param {number} [nodeId] - id of node or 0 for broadcast.
+     * @fires Protocol#message
+     * @fires Nmt#changeState
      * @see CiA301 "Service stop remote node" (§7.2.8.2.1.3)
      */
     stopNode(nodeId) {
@@ -288,6 +303,8 @@ class Nmt extends EventEmitter {
      * Change the state of NMT consumer(s) to NMT state pre-operational.
      *
      * @param {number} [nodeId] - id of node or 0 for broadcast.
+     * @fires Protocol#message
+     * @fires Nmt#changeState
      * @see CiA301 "Service enter pre-operational" (§7.2.8.2.1.4)
      */
     enterPreOperational(nodeId) {
@@ -300,6 +317,8 @@ class Nmt extends EventEmitter {
      * Reset the application of NMT consumer(s).
      *
      * @param {number} [nodeId] - id of node or 0 for broadcast.
+     * @fires Protocol#message
+     * @fires Nmt#reset
      * @see CiA301 "Service reset node" (§7.2.8.2.1.5)
      */
     resetNode(nodeId) {
@@ -312,6 +331,8 @@ class Nmt extends EventEmitter {
      * Reset communication of NMT consumer(s).
      *
      * @param {number} [nodeId] - id of node or 0 for broadcast.
+     * @fires Protocol#message
+     * @fires Nmt#reset
      * @see CiA301 "Service reset communication" (§7.2.8.2.1.6)
      */
     resetCommunication(nodeId) {
@@ -324,35 +345,32 @@ class Nmt extends EventEmitter {
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
+     * @fires Nmt#changeState
+     * @fires Nmt#timeout
      */
-    receive(message) {
-        if ((message.id & 0x7FF) == 0x0) {
-            const nodeId = message.data[1];
+    receive({ id, data }) {
+        if ((id & 0x7FF) == 0x0) {
+            const nodeId = data[1];
             if (nodeId == 0 || nodeId == this.deviceId)
-                this._handleNmt(message.data[0]);
+                this._handleNmt(data[0]);
         }
-        else if ((message.id & 0x700) == 0x700) {
-            const deviceId = message.id & 0x7F;
+        else if ((id & 0x700) == 0x700) {
+            const deviceId = id & 0x7F;
             if (deviceId in this.heartbeatMap) {
                 this.heartbeatMap[deviceId].last = Date.now();
 
-                const newState = message.data[0];
+                const newState = data[0];
                 const oldState = this.heartbeatMap[deviceId].state;
                 if (newState !== oldState) {
                     this.heartbeatMap[deviceId].state = newState;
-                    this.emit('nmtChangeState', {
-                        deviceId,
-                        newState,
-                        oldState,
-                    });
+                    this._emitChangeState(deviceId, newState, oldState);
                 }
 
                 if (!this.heartbeatTimers[deviceId]) {
                     // First heartbeat - start timer.
                     const interval = this.heartbeatMap[deviceId].interval;
                     this.heartbeatTimers[deviceId] = setTimeout(() => {
-                        this.emit('nmtTimeout', deviceId);
+                        this._emitTimeout(deviceId);
                         this.heartbeatMap[deviceId].state = null;
                         this.heartbeatTimers[deviceId] = null;
                     }, interval);
@@ -371,6 +389,7 @@ class Nmt extends EventEmitter {
      *
      * @param {number} nodeId - id of node or 0 for broadcast.
      * @param {NmtCommand} command - NMT command to serve.
+     * @fires Protocol#message
      * @private
      */
     _sendNmt(nodeId, command) {
@@ -385,29 +404,25 @@ class Nmt extends EventEmitter {
             this._handleNmt(command);
         }
 
-        this.emit('message', {
-            id: 0x0,
-            data: Buffer.from([command, nodeId]),
-        });
+        this.send(0x0, Buffer.from([command, nodeId]));
     }
 
     /**
      * Serve a Heartbeat object.
      *
      * @param {number} deviceId - device identifier [1-127].
+     * @fires Protocol#message
      * @private
      */
     _sendHeartbeat(deviceId) {
-        this.emit('message', {
-            id: 0x700 + deviceId,
-            data: Buffer.from([this.state])
-        });
+        this.send(0x700 + deviceId, Buffer.from([this.state]));
     }
 
     /**
      * Parse an NMT command.
      *
      * @param {NmtCommand} command - NMT command to handle.
+     * @fires Nmt#reset
      * @private
      */
     _handleNmt(command) {
@@ -422,14 +437,74 @@ class Nmt extends EventEmitter {
                 this.state = NmtState.PRE_OPERATIONAL;
                 break;
             case NmtCommand.RESET_NODE:
-                this.emit('nmtReset', true);
+                this._emitReset(true);
                 this.state = NmtState.INITIALIZING;
                 break;
             case NmtCommand.RESET_COMMUNICATION:
-                this.emit('nmtReset', false);
+                this._emitReset(true);
                 this.state = NmtState.INITIALIZING;
                 break;
         }
+    }
+
+    /**
+     * Emit the reset event.
+     *
+     * @param {boolean} resetNode - true if a full reset was requested.
+     * @fires Nmt#reset
+     * @private
+     */
+    _emitReset(resetNode) {
+        /**
+         * A reset was requested.
+         *
+         * @event Nmt#reset
+         * @type {boolean}
+         */
+        this.emit('reset', resetNode);
+    }
+
+    /**
+     * Emit the changeState event.
+     *
+     * @param {number} deviceId - the device identifier.
+     * @param {NmtState} newState - the new Nmt state.
+     * @param {NmtState} oldState - the old Nmt state.
+     * @fires Nmt#changeState
+     * @private
+     */
+    _emitChangeState(deviceId, newState, oldState) {
+        /**
+         * The Nmt state changed.
+         *
+         * @event Nmt#changeState
+         * @type {object}
+         * @property {number} deviceId - the device that changed.
+         * @property {NmtState} newState - the new Nmt state.
+         * @property {NmtState} oldState - the previous Nmt state.
+         */
+        this.emit('changeState', {
+            deviceId,
+            newState,
+            oldState,
+        });
+    }
+
+    /**
+     * Emit the timeout event.
+     *
+     * @param {number} deviceId - the device identifier.
+     * @fires Nmt#timeout
+     * @private
+     */
+    _emitTimeout(deviceId) {
+        /**
+         * A consumer heartbeat timed out.
+         *
+         * @event Nmt#timeout
+         * @type {number}
+         */
+        this.emit('timeout', deviceId);
     }
 
     ////////////////////////////// Deprecated //////////////////////////////
@@ -438,6 +513,7 @@ class Nmt extends EventEmitter {
      * Initialize the device and audit the object dictionary.
      *
      * @deprecated
+     * @ignore
      */
     init() {
         deprecate(() => this.start(),
@@ -450,6 +526,7 @@ class Nmt extends EventEmitter {
      * @param {number} deviceId - device COB-ID of the entry to get.
      * @returns {DataObject | null} the matching entry or null.
      * @deprecated
+     * @ignore
      */
     getConsumer(deviceId) {
         return deprecate(() => {
@@ -477,6 +554,7 @@ class Nmt extends EventEmitter {
      * @param {number} timeout - milliseconds before a timeout is reported.
      * @param {number} [subIndex] - sub-index to store the entry, optional.
      * @deprecated
+     * @ignore
      */
     addConsumer(deviceId, timeout, subIndex) {
         const opt = { subIndex };
@@ -490,6 +568,7 @@ class Nmt extends EventEmitter {
      *
      * @param {number} deviceId - device COB-ID of the entry to remove.
      * @deprecated
+     * @ignore
      */
     removeConsumer(deviceId) {
         deprecate(() => this.eds.removeHeartbeatConsumer(deviceId),

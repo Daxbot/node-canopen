@@ -29,10 +29,10 @@ async function main(device) {
         device.nmt.startNode();
 
         let timer = null;
-        device.pdo.on('pdo', ({ cobId, updated }) => {
+        device.pdo.on('pdo', ({ cobId, dataObjects }) => {
             console.log('Received PDO 0x' + cobId.toString(16));
-            for (const obj of updated)
-                console.log(`Updated ${obj} to ${obj.value}`);
+            for (const obj of dataObjects)
+                console.log(`Set ${obj} to ${obj.value}`);
 
             if (!timer) {
                 timer = setTimeout(() => {

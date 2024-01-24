@@ -14,7 +14,7 @@ const { Device } = require('../../index.js');
  */
 async function main(device, consumerId) {
     await new Promise((resolve) => {
-        device.nmt.addListener('nmtChangeState', ({ deviceId, newState }) => {
+        device.nmt.addListener('changeState', ({ deviceId, newState }) => {
             if (deviceId == device.id)
                 return;
 
@@ -22,7 +22,7 @@ async function main(device, consumerId) {
             console.log('Device ' + deviceId + ' changed to state', newState);
         });
 
-        device.nmt.addListener('nmtTimeout', () => {
+        device.nmt.addListener('timeout', () => {
             device.stop();
             resolve();
         });
