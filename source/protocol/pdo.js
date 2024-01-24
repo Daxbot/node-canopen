@@ -46,7 +46,20 @@ class Pdo extends EventEmitter {
      * @type {Array<object>}
      */
     get rpdo() {
-        return this.eds.getReceivePdos();
+        const rpdo = [];
+
+        for (let index of Object.keys(this.eds.dataObjects)) {
+            index = parseInt(index);
+            if (index < 0x1400 || index > 0x15FF)
+                continue;
+
+            const pdo = this._parsePdo(index);
+            delete pdo.syncStart; // Not used by RPDOs
+
+            rpdo.push(pdo);
+        }
+
+        return rpdo;
     }
 
     /**
@@ -57,7 +70,18 @@ class Pdo extends EventEmitter {
      * @type {Array<object>}
      */
     get tpdo() {
-        return this.eds.getTransmitPdos();
+        const tpdo = [];
+
+        for (let index of Object.keys(this.eds.dataObjects)) {
+            index = parseInt(index);
+            if (index < 0x1800 || index > 0x19FF)
+                continue;
+
+            const pdo = this._parsePdo(index);
+            tpdo.push(pdo);
+        }
+
+        return tpdo;
     }
 
     /** Begin TPDO generation. */
@@ -236,6 +260,119 @@ class Pdo extends EventEmitter {
         }
     }
 
+    /////////////////////////////// Private ////////////////////////////////
+
+    /**
+     * Parse a pair of PDO communication/mapping parameters.
+     *
+     * @param {number} index - PDO communication parameter index.
+     * @returns {object} parsed PDO data.
+     * @private
+     */
+    _parsePdo(index) {
+        const commEntry = this.eds.getEntry(index);
+        if (!commEntry) {
+            index = '0x' + index.toString(16);
+            throw new EdsError(
+                `missing PDO communication parameter (${index})`);
+        }
+
+        const mapEntry = this.eds.getEntry(index + 0x200);
+        if (!mapEntry) {
+            index = '0x' + (index + 0x200).toString(16);
+            throw new EdsError(`missing PDO mapping parameter (${index})`);
+        }
+
+        /* sub-index 1 (mandatory):
+         *   bit 0..10      11-bit CAN base frame.
+         *   bit 11..28     29-bit CAN extended frame.
+         *   bit 29         Frame type.
+         *   bit 30         RTR allowed.
+         *   bit 31         PDO valid.
+         */
+        if (commEntry[1] === undefined)
+            throw new EdsError('missing PDO COB-ID');
+
+        let cobId = commEntry[1].value;
+        if (!cobId || ((cobId >> 31) & 0x1) == 0x1)
+            return;
+
+        if (((cobId >> 29) & 0x1) == 0x1)
+            throw new EdsError('CAN extended frames are not supported');
+
+        cobId &= 0x7FF;
+
+        /* sub-index 2 (mandatory):
+         *   bit 0..7       Transmission type.
+         */
+        if (commEntry[2] === undefined)
+            throw new EdsError('missing PDO transmission type');
+
+        const transmissionType = commEntry[2].value;
+
+        /* sub-index 3 (optional):
+         *   bit 0..15      Inhibit time.
+         */
+        const inhibitTime = (commEntry[3] !== undefined)
+            ? commEntry[3].value : 0;
+
+        /* sub-index 5 (optional):
+         *   bit 0..15      Event timer value.
+         */
+        const eventTime = (commEntry[5] !== undefined)
+            ? commEntry[5].value : 0;
+
+        /* sub-index 6 (optional):
+         *   bit 0..7       SYNC start value.
+         */
+        const syncStart = (commEntry[6] !== undefined)
+            ? commEntry[6].value : 0;
+
+        let pdo = {
+            cobId,
+            transmissionType,
+            inhibitTime,
+            eventTime,
+            syncStart,
+            dataObjects: [],
+            dataSize: 0,
+        };
+
+        if (mapEntry[0].value == 0xFE)
+            throw new EdsError('SAM-MPDO not supported');
+
+        if (mapEntry[0].value == 0xFF)
+            throw new EdsError('DAM-MPDO not supported');
+
+        if (mapEntry[0].value > 0x40) {
+            throw new EdsError('invalid PDO mapping value '
+                + `(${mapEntry[0].value})`);
+        }
+
+        for (let i = 1; i <= mapEntry[0].value; ++i) {
+            if (mapEntry[i].raw.length == 0)
+                continue;
+
+            /* sub-index 1+:
+             *   bit 0..7       Bit length.
+             *   bit 8..15      Sub-index.
+             *   bit 16..31     Index.
+             */
+            const dataLength = mapEntry[i].raw.readUInt8(0);
+            const dataSubIndex = mapEntry[i].raw.readUInt8(1);
+            const dataIndex = mapEntry[i].raw.readUInt16LE(2);
+
+            let obj = this.eds.getEntry(dataIndex);
+            if (dataSubIndex)
+                obj = obj[dataSubIndex];
+
+            pdo.dataObjects[i - 1] = obj;
+            pdo.dataSize += dataLength / 8;
+        }
+
+        return pdo;
+    }
+
     ////////////////////////////// Deprecated //////////////////////////////
 
     /**
@@ -246,6 +383,28 @@ class Pdo extends EventEmitter {
     init() {
         deprecate(() => this.start(),
             'init() is deprecated. Use start() instead.');
+    }
+
+    /**
+     * Get a RPDO communication parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the RPDO.
+     * @returns {DataObject | null} the matching entry.
+     * @deprecated
+     */
+    getReceive(cobId) {
+        return deprecate(() => {
+            for(let [index, entry] of Object.entries(this.eds.dataObjects)) {
+                index = parseInt(index);
+                if(index < 0x1400 || index > 0x15FF)
+                    continue;
+
+                if(entry[1] !== undefined && entry[1].value === cobId)
+                    return entry;
+            }
+
+            return null;
+        }, 'getReceive is deprecated. Use this.rpdo instead');
     }
 
     /**
@@ -276,6 +435,28 @@ class Pdo extends EventEmitter {
     removeReceive(cobId) {
         deprecate(() => this.eds.removeReceivePdo(cobId),
             'removeReceive() is deprecated. Use Eds method instead.');
+    }
+
+    /**
+     * Get a TPDO communication parameter entry.
+     *
+     * @param {number} cobId - COB-ID used by the TPDO.
+     * @returns {DataObject | null} the matching entry.
+     * @deprecated
+     */
+    getTransmit(cobId) {
+        return deprecate(() => {
+            for(let [index, entry] of Object.entries(this.eds.dataObjects)) {
+                index = parseInt(index);
+                if(index < 0x1800 || index > 0x19FF)
+                    continue;
+
+                if(entry[1] !== undefined && entry[1].value === cobId)
+                    return entry;
+            }
+
+            return null;
+        }, 'getTransmit is deprecated. Use this.tpdo instead.');
     }
 
     /**

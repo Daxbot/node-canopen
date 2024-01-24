@@ -1,14 +1,39 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
+const chaiBytes = require('chai-bytes');
 const { DataType, AccessType, ObjectType, EdsError, Eds } = require('../index');
 const fs = require('fs');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
+chai.use(chaiBytes);
 
 describe('Eds', function () {
-    it('should be constructable', function () {
-        new Eds();
+    describe('Initialization', function () {
+        it('should be constructable', function () {
+            new Eds();
+        });
+
+        it('should configure 0x1000', function () {
+            const eds = new Eds();
+
+            eds.setDeviceType(1);
+            expect(eds.getValue(0x1000)).to.equal(0x1);
+
+            eds.setDeviceType(2, 3);
+            expect(eds.getValue(0x1000)).to.equal(0x00030002);
+        });
+
+        it('should configure 0x1002', function () {
+            const eds = new Eds();
+
+            eds.setStatusRegister(100);
+            expect(eds.getValue(0x1002)).to.equal(100);
+
+            const raw = Buffer.from('abcd');
+            eds.setStatusRegister(raw);
+            expect(eds.getRaw(0x1002)).to.equalBytes(raw);
+        });
     });
 
     describe('File IO', function () {
@@ -50,12 +75,6 @@ describe('Eds', function () {
                 expect(loadFile.creationDate.getTime())
                     .to.equal(date.getTime()),
             ]);
-        });
-
-        it('should create a raw entry if there is a defaultValue', function () {
-            const loadFile = Eds.fromFile('test/sample.eds');
-            const entry = loadFile.getSubEntry('DeviceInfo', 0);
-            expect(entry.raw).to.not.be.undefined;
         });
 
         it('should properly convert a boolean values', function () {

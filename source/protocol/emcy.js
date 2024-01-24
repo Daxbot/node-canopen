@@ -144,15 +144,15 @@ const EmcyCode = {
  */
 class EmcyMessage {
     constructor(...args) {
-        if(args.length > 1) {
+        if(typeof args[0] === 'object') {
+            args = args[0];
+        }
+        else {
             args = {
                 code: args[0],
                 register: args[1],
                 info: args[2],
             };
-        }
-        else {
-            args = args[0];
         }
 
         this.code = args.code;
@@ -331,7 +331,22 @@ class Emcy extends EventEmitter {
      * @type {Array<object>} [{ code, info } ... ]
      */
     get history() {
-        return this.eds.getEmcyHistory();
+        const history = [];
+
+        const obj1003 = this.eds.getEntry(0x1003);
+        if (obj1003) {
+            const maxSubIndex = obj1003[0].value;
+            for (let i = 1; i <= maxSubIndex; ++i) {
+                const raw = this.eds.getRawArray(0x1003, i);
+                const code = raw.readUInt16LE(0);
+                const info = raw.readUInt16LE(2);
+
+                if (code)
+                    history.push({ code, info });
+            }
+        }
+
+        return history;
     }
 
     /**
@@ -385,7 +400,7 @@ class Emcy extends EventEmitter {
 
         const obj1015 = this.eds.getEntry(0x1015);
         if (obj1015)
-            return obj1015.value / 10; // 100 μs
+            return obj1015.value;
 
         return null;
     }
@@ -400,7 +415,22 @@ class Emcy extends EventEmitter {
      * @type {Array<number>}
      */
     get consumers() {
-        return this.eds.getEmcyConsumers();
+        const consumers = [];
+
+        const obj1028 = this.eds.getEntry(0x1028);
+        if (obj1028) {
+            const maxSubIndex = obj1028[0].value;
+            for (let i = 1; i <= maxSubIndex; ++i) {
+                const subEntry = this.eds.getSubEntry(0x1028, i);
+                if (!subEntry)
+                    continue;
+
+                if (!(subEntry.value >> 31))
+                    consumers.push(subEntry.value & 0x7ff);
+            }
+        }
+
+        return consumers;
     }
 
     /**
@@ -410,7 +440,7 @@ class Emcy extends EventEmitter {
         if(this.sendTimer !== null)
             return;
 
-        const delay = this.inhibitTime;
+        const delay = this.inhibitTime / 10; // 100 μs
         if(delay) {
             this.sendTimer = setInterval(() => {
                 if(this.sendQueue.length > 0)
@@ -438,17 +468,18 @@ class Emcy extends EventEmitter {
         if (!this.cobId)
             throw new EdsError('EMCY production is disabled');
 
-        if(args.length > 1) {
-            args = {
-                code: args[0],
-                info: args[1],
-            };
+        let code, info;
+        if(typeof args[0] === 'object') {
+            // write({ code, info })
+            code = args.code;
+            info = args.info;
         }
         else {
-            args = args[0];
+            // write(code, info)
+            code = args[0];
+            info = args[1];
         }
 
-        const { code, info } = args;
         const em = new EmcyMessage({
             code,
             register: this.register,
@@ -512,7 +543,7 @@ class Emcy extends EventEmitter {
      * @deprecated
      */
     setHistoryLength(length) {
-        deprecate(() => this.eds.setEmcyHistoryLength(length),
+        deprecate(() => this.eds.setErrorHistoryLength(length),
             'setHistoryLength is deprecated. Use Eds method instead.');
     }
 }

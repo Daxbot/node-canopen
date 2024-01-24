@@ -16,6 +16,8 @@ protocol objects as well as access methods for the manufacturer data fields.
   0x1008  | Manufacturer device name      | :heavy_check_mark:
   0x1009  | Manufacturer hardware version | :heavy_check_mark:
   0x100A  | Manufacturer software version | :heavy_check_mark:
+  0x1010  | Store parameters              | :x:
+  0x1011  | Restore default parameters    | :x:
 
 ## Protocols
 ### Emergency - EMCY
@@ -54,6 +56,8 @@ Call [Nmt.start][2] to begin heartbeat generation.
 
  OD Entry | Description             | Supported
  -------- | ----------------------- | ------------------------
+  0x100C  | Guard time              | :x:
+  0x100D  | Life time factor        | :x:
   0x1016  | Consumer heartbeat time | :heavy_check_mark:
   0x1017  | Producer heartbeat time | :heavy_check_mark:
 
@@ -107,7 +111,7 @@ network. Call [Sync.start][7] to begin producing sync objects.
   0x1005  | COB-ID SYNC                 | :heavy_check_mark:
   0x1006  | Communication cycle period  | :heavy_check_mark:
   0x1007  | Sync window length          | :x:
-  0x1019  | Sync counter overflow value | :x:
+  0x1019  | Sync counter overflow value | :heavy_check_mark:
 
 [7]: https://daxbot.github.io/node-canopen/#syncstart
 

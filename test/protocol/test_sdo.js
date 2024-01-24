@@ -46,7 +46,7 @@ describe('Sdo', function () {
         device.start();
     });
 
-    afterEach(function() {
+    afterEach(function () {
         device.stop();
     });
 

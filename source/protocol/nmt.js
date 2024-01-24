@@ -138,7 +138,25 @@ class Nmt extends EventEmitter {
      * @type {Array<object>} [{ deviceId, heartbeatTime } ... ]
      */
     get consumers() {
-        return this.eds.getHeartbeatConsumers();
+        const consumers = [];
+
+        const obj1016 = this.eds.getEntry(0x1016);
+        if (obj1016) {
+            const maxSubIndex = obj1016[0].value;
+            for (let i = 1; i <= maxSubIndex; ++i) {
+                const subObj = obj1016.at(i);
+                if(!subObj)
+                    continue;
+
+                const heartbeatTime = subObj.raw.readUInt16LE(0);
+                const deviceId = subObj.raw.readUInt8(2);
+
+                if (deviceId > 0 && deviceId <= 127)
+                    consumers.push({ deviceId, heartbeatTime });
+            }
+        }
+
+        return consumers;
     }
 
     /**
@@ -434,8 +452,22 @@ class Nmt extends EventEmitter {
      * @deprecated
      */
     getConsumer(deviceId) {
-        return deprecate(() => this.eds.getHeartbeatConsumer(deviceId),
-            'getConsumer() is deprecated. Use Eds method instead.');
+        return deprecate(() => {
+            const obj1016 = this.getEntry(0x1016);
+            if(obj1016) {
+                const maxSubIndex = obj1016[0].value;
+                for (let i = 1; i <= maxSubIndex; ++i) {
+                    const subObj = obj1016.at(i);
+                    if(!subObj)
+                        continue;
+
+                    if(subObj.raw.readUInt8(2) === deviceId)
+                        return subObj;
+                }
+            }
+
+            return null;
+        }, 'getConsumer() is deprecated. Use getConsumerTime instead.');
     }
 
     /**

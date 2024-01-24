@@ -656,55 +656,14 @@ class Eds {
             });
         }
 
-        // Add mandatory objects
-        this.addEntry(0x1000, {
-            parameterName: 'Device type',
-            objectType: ObjectType.VAR,
-            dataType: DataType.UNSIGNED32,
-            accessType: AccessType.READ_ONLY,
-        });
-
-        this.addEntry(0x1001, {
-            parameterName: 'Error register',
-            objectType: ObjectType.VAR,
-            dataType: DataType.UNSIGNED8,
-            accessType: AccessType.READ_ONLY,
-        });
-
-        this.addEntry(0x1018, {
-            parameterName: 'Identity object',
-            objectType: ObjectType.RECORD,
-        });
-
-        this.addSubEntry(0x1018, 1, {
-            parameterName: 'Vendor-ID',
-            objectType: ObjectType.VAR,
-            dataType: DataType.UNSIGNED32,
-            accessType: AccessType.READ_ONLY,
-            defaultValue: this.vendorNumber,
-        });
-
-        this.addSubEntry(0x1018, 2, {
-            parameterName: 'Product code',
-            objectType: ObjectType.VAR,
-            dataType: DataType.UNSIGNED32,
-            accessType: AccessType.READ_ONLY,
-            defaultValue: this.productNumber,
-        });
-
-        this.addSubEntry(0x1018, 3, {
-            parameterName: 'Revision number',
-            objectType: ObjectType.VAR,
-            dataType: DataType.UNSIGNED32,
-            accessType: AccessType.READ_ONLY,
-            defaultValue: this.revisionNumber,
-        });
-
-        this.addSubEntry(0x1018, 4, {
-            parameterName: 'Serial number',
-            objectType: ObjectType.VAR,
-            dataType: DataType.UNSIGNED32,
-            accessType: AccessType.READ_ONLY,
+        // Add mandatory objects (0x1000, 0x1001, 0x1018)
+        this.setDeviceType(0, 0);
+        this.setErrorRegister(0);
+        this.setIdentity({
+            vendorId: info.vendorNumber,
+            productCode: info.productNumber,
+            revisionNumber: info.revisionNumber,
+            serialNumber: 0,
         });
     }
 
@@ -1247,30 +1206,162 @@ class Eds {
     }
 
     /**
-     * Parse object 0x1003 - Pre-defined error field
-     *   sub-index 1+:
-     *     bit 0..15    Error code.
-     *     bit 16..31   Additional info.
+     * Set object 0x1000 - Device type.
+     *   bit 0..15    Device profile number.
+     *   bit 16..31   Additional info.
      *
-     * @returns {Array<object>} [{ code, info } ... ]
+     * @param {number} profile - profile number.
+     * @param {Buffer | number} info - info field (2 bytes).
+     * @param {object} [options] - DataObject creation options.
+     * @param {boolean} [options.saveDefault] - save value as default.
      */
-    getEmcyHistory() {
-        const history = [];
+    setDeviceType(profile, info, options = {}) {
+        let obj1000 = this.getEntry(0x1000);
+        if (obj1000 === undefined) {
+            obj1000 = this.addEntry(0x1000, {
+                parameterName: 'Device type',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_ONLY,
+            });
+        }
 
-        const obj1003 = this.getEntry(0x1003);
-        if (obj1003) {
-            const maxSubIndex = obj1003[0].value;
-            for (let i = 1; i <= maxSubIndex; ++i) {
-                const raw = this.getRawArray(0x1003, i);
-                const code = raw.readUInt16LE(0);
-                const info = raw.readUInt16LE(2);
+        obj1000.raw.writeUInt16LE(profile, 0);
+        if (info) {
+            if (typeof info === 'number') {
+                obj1000.raw.writeUInt16LE(info, 2);
+            }
+            else {
+                if (!Buffer.isBuffer(info))
+                    info = Buffer.from(info);
 
-                if (code)
-                    history.push({ code, info });
+                info.copy(obj1000.raw, 2);
             }
         }
 
-        return history;
+        if(options.saveDefault)
+            obj1000.defaultValue = obj1000.value;
+    }
+
+    /**
+     * Set object 0x1001 - Error register.
+     *   bit 0      Generic error.
+     *   bit 1      Current.
+     *   bit 2      Voltage.
+     *   bit 3      Temperature.
+     *   bit 4      Communication error.
+     *   bit 5      Device profile specific.
+     *   bit 6      Reserved (always 0).
+     *   bit 7      Manufacturer specific.
+     *
+     * @param {number | object} flags - error flags.
+     * @param {boolean} flags.generic - generic error.
+     * @param {boolean} flags.current - current error.
+     * @param {boolean} flags.voltage - voltage error.
+     * @param {boolean} flags.temperature - temperature error.
+     * @param {boolean} flags.communication - communication error.
+     * @param {boolean} flags.device - device profile specific error.
+     * @param {boolean} flags.manufacturer - manufacturer specific error.
+     */
+    setErrorRegister(flags) {
+        let obj1001 = this.getEntry(0x1001);
+        if (obj1001 === undefined) {
+            obj1001 = this.addEntry(0x1001, {
+                parameterName: 'Error register',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED8,
+                accessType: AccessType.READ_ONLY,
+            });
+        }
+
+        if(typeof flags !== 'object') {
+            obj1001.value = flags;
+        }
+        else {
+            let value = obj1001.value;
+            if(flags.generic !== undefined) {
+                if(flags.generic)
+                    value |= (1 << 0);
+                else
+                    value &= ~(1 << 0);
+            }
+
+            if(flags.current !== undefined) {
+                if(flags.current)
+                    value |= (1 << 1);
+                else
+                    value &= ~(1 << 1);
+            }
+
+            if(flags.voltage !== undefined) {
+                if(flags.voltage)
+                    value |= (1 << 2);
+                else
+                    value &= ~(1 << 2);
+            }
+
+            if(flags.temperature !== undefined) {
+                if(flags.temperature)
+                    value |= (1 << 3);
+                else
+                    value &= ~(1 << 3);
+            }
+
+            if(flags.communication !== undefined) {
+                if(flags.communication)
+                    value |= (1 << 4);
+                else
+                    value &= ~(1 << 4);
+            }
+
+            if(flags.device !== undefined) {
+                if(flags.device)
+                    value |= (1 << 5);
+                else
+                    value &= ~(1 << 5);
+            }
+
+            if(flags.manufacturer !== undefined) {
+                if(flags.manufacturer)
+                    value |= (1 << 7);
+                else
+                    value &= ~(1 << 7);
+            }
+
+            obj1001.value = value;
+        }
+    }
+
+    /**
+     * Set object 0x1002 - Manufacturer status register.
+     *
+     * @param {Buffer | number} status - status register.
+     * @param {object} [options] - DataObject creation options.
+     * @param {boolean} [options.saveDefault] - save value as default.
+     */
+    setStatusRegister(status, options = {}) {
+        let obj1002 = this.getEntry(0x1002);
+        if (obj1002 === undefined) {
+            obj1002 = this.addEntry(0x1002, {
+                parameterName: 'Manufacturer status register',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_ONLY,
+            });
+        }
+
+        if (typeof status === 'number') {
+            obj1002.value = status;
+        }
+        else {
+            if (!Buffer.isBuffer(status))
+                status = Buffer.from(status);
+
+            status.copy(obj1002.raw);
+        }
+
+        if(options.saveDefault)
+            obj1002.defaultValue = obj1002.value;
     }
 
     /**
@@ -1282,7 +1373,7 @@ class Eds {
      * @param {number} code - error code.
      * @param {Buffer | number} info - error info (2 bytes).
      */
-    pushEmcyHistory(code, info) {
+    pushErrorHistory(code, info) {
         const obj1003 = this.getEntry(0x1003);
         if (!obj1003)
             throw new EdsError();
@@ -1317,17 +1408,16 @@ class Eds {
      *
      * @param {number} length - how many historical error events should be kept.
      * @param {object} [options] - DataObject creation options.
-     * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      */
-    setEmcyHistoryLength(length, options = {}) {
+    setErrorHistoryLength(length, options = {}) {
         if (length === undefined || length < 0)
             throw new EdsError('error field size must >= 0');
 
         let obj1003 = this.getEntry(0x1003);
         if (obj1003 === undefined) {
             obj1003 = this.addEntry(0x1003, {
-                parameterName: options.parameterName || 'Pre-defined error field',
+                parameterName: 'Pre-defined error field',
                 objectType: ObjectType.ARRAY,
             });
         }
@@ -1355,10 +1445,9 @@ class Eds {
      *   bit 29         Frame type.
      *   bit 30         Produce sync objects.
      *
-     * @param {number} cobId - Sync COB-ID.
+     * @param {number} cobId - Sync COB-ID (typically 0x80).
      * @param {boolean} generate - Sync generation enable.
      * @param {object} [options] - DataObject creation options.
-     * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
      */
@@ -1374,7 +1463,7 @@ class Eds {
         if (!obj1005) {
             obj1005 = this.addEntry(0x1005, {
                 dataType: DataType.UNSIGNED32,
-                parameterName: options.parameterName || 'COB-ID SYNC',
+                parameterName: 'COB-ID SYNC',
                 accessType: options.accessType || AccessType.READ_WRITE,
             });
         }
@@ -1389,7 +1478,6 @@ class Eds {
      *
      * @param {number} cyclePeriod - communication cycle period.
      * @param {object} [options] - DataObject creation options.
-     * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
      */
@@ -1401,7 +1489,7 @@ class Eds {
         if (!obj1006) {
             obj1006 = this.addEntry(0x1006, {
                 dataType: DataType.UNSIGNED32,
-                parameterName: options.parameterName || 'Communication cycle period',
+                parameterName: 'Communication cycle period',
                 accessType: options.accessType || AccessType.READ_WRITE,
             });
         }
@@ -1409,6 +1497,75 @@ class Eds {
         obj1006.value = cyclePeriod;
         if (options.saveDefault)
             obj1006.defaultValue = cyclePeriod;
+    }
+
+    /**
+     * Set object 0x1008 - Manufacturer device name.
+     *
+     * @param {string} name - device name.
+     * @param {object} [options] - DataObject creation options.
+     * @param {boolean} [options.saveDefault] - save value as default.
+     */
+    setDeviceName(name, options = {}) {
+        let obj1008 = this.getEntry(0x1008);
+        if (obj1008 === undefined) {
+            obj1008 = this.addEntry(0x1008, {
+                parameterName: 'Manufacturer device name',
+                objectType: ObjectType.VAR,
+                dataType: DataType.VISIBLE_STRING,
+                accessType: AccessType.CONSTANT,
+            });
+        }
+
+        obj1008.value = name;
+        if(options.saveDefault)
+            obj1008.defaultValue = name;
+    }
+
+    /**
+     * Set object 0x1009 - Manufacturer hardware version.
+     *
+     * @param {string} version - device hardware version.
+     * @param {object} [options] - DataObject creation options.
+     * @param {boolean} [options.saveDefault] - save value as default.
+     */
+    setHardwareVersion(version, options = {}) {
+        let obj1009 = this.getEntry(0x1009);
+        if (obj1009 === undefined) {
+            obj1009 = this.addEntry(0x1009, {
+                parameterName: 'Manufacturer hardware version',
+                objectType: ObjectType.VAR,
+                dataType: DataType.VISIBLE_STRING,
+                accessType: AccessType.CONSTANT,
+            });
+        }
+
+        obj1009.value = version;
+        if(options.saveDefault)
+            obj1009.defaultValue = version;
+    }
+
+    /**
+     * Set object 0x100A - Manufacturer software version.
+     *
+     * @param {string} version - device software version.
+     * @param {object} [options] - DataObject creation options.
+     * @param {boolean} [options.saveDefault] - save value as default.
+     */
+    setSoftwareVersion(version, options = {}) {
+        let obj100A = this.getEntry(0x100A);
+        if (obj100A === undefined) {
+            obj100A = this.addEntry(0x100A, {
+                parameterName: 'Manufacturer software version',
+                objectType: ObjectType.VAR,
+                dataType: DataType.VISIBLE_STRING,
+                accessType: AccessType.CONSTANT,
+            });
+        }
+
+        obj100A.value = version;
+        if(options.saveDefault)
+            obj100A.defaultValue = version;
     }
 
     /**
@@ -1423,7 +1580,6 @@ class Eds {
      * @param {boolean} produce - Time stamp producer enable.
      * @param {boolean} consume - Time stamp consumer enable.
      * @param {object} [options] - DataObject creation options.
-     * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
      */
@@ -1443,7 +1599,7 @@ class Eds {
         if (!obj1012) {
             obj1012 = this.addEntry(0x1012, {
                 dataType: DataType.UNSIGNED32,
-                parameterName: options.parameterName || 'COB-ID TIME',
+                parameterName: 'COB-ID TIME',
                 accessType: options.accessType || AccessType.READ_WRITE,
             });
         }
@@ -1463,7 +1619,6 @@ class Eds {
      *
      * @param {number} cobId - Emcy COB-ID.
      * @param {object} [options] - DataObject creation options.
-     * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
      */
@@ -1476,7 +1631,7 @@ class Eds {
         if (!obj1014) {
             obj1014 = this.addEntry(0x1014, {
                 dataType: DataType.UNSIGNED32,
-                parameterName: options.parameterName || 'COB-ID EMCY',
+                parameterName: 'COB-ID EMCY',
                 accessType: options.accessType || AccessType.READ_WRITE,
             });
         }
@@ -1491,7 +1646,6 @@ class Eds {
      *
      * @param {number} inhibitTime - inhibit time in multiples of 100 μs.
      * @param {object} [options] - DataObject creation options.
-     * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
      */
@@ -1500,7 +1654,7 @@ class Eds {
         if (!obj1015) {
             obj1015 = this.addEntry(0x1015, {
                 dataType: DataType.UNSIGNED16,
-                parameterName: options.parameterName || 'Inhibit time EMCY',
+                parameterName: 'Inhibit time EMCY',
                 accessType: options.accessType || AccessType.READ_WRITE,
             });
         }
@@ -1511,67 +1665,16 @@ class Eds {
     }
 
     /**
-     * Parse object 0x1016 - Consumer heartbeat time.
+     * Add an entry to object 0x1016 - Consumer heartbeat time.
      *   sub-index 1+:
      *     bit 0..15    Heartbeat time in ms.
      *     bit 16..23   Node-ID of producer.
      *     bit 24..31   Reserved (0x00);
      *
-     * @returns {Array<object>} [{ deviceId, heartbeatTime } ... ]
-     */
-    getHeartbeatConsumers() {
-        const consumers = [];
-
-        const obj1016 = this.getEntry(0x1016);
-        if (obj1016) {
-            const maxSubIndex = obj1016[0].value;
-            for (let i = 1; i <= maxSubIndex; ++i) {
-                const subObj = obj1016.at(i);
-                if(!subObj)
-                    continue;
-
-                const heartbeatTime = subObj.raw.readUInt16LE(0);
-                const deviceId = subObj.raw.readUInt8(2);
-
-                if (deviceId > 0 && deviceId <= 127)
-                    consumers.push({ deviceId, heartbeatTime });
-            }
-        }
-
-        return consumers;
-    }
-
-    /**
-     * Get an entry from 0x1016 - Consumer heartbeat time.
-     *
-     * @param {number} deviceId - device identifier [1-127].
-     * @returns {DataObject | null} the matching entry or null.
-     */
-    getHeartbeatConsumer(deviceId) {
-        const obj1016 = this.getEntry(0x1016);
-        if(obj1016) {
-            const maxSubIndex = obj1016[0].value;
-            for (let i = 1; i <= maxSubIndex; ++i) {
-                const subObj = obj1016.at(i);
-                if(!subObj)
-                    continue;
-
-                if(subObj.raw.readUInt8(2) === deviceId)
-                    return subObj;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Add an entry to object 0x1016 - Consumer heartbeat time.
-     *
      * @param {number} deviceId - device identifier [1-127].
      * @param {number} timeout - milliseconds before a timeout is reported.
      * @param {object} [options] - DataObject creation options.
      * @param {number} [options.subIndex] - index to store the entry.
-     * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
      */
@@ -1586,13 +1689,16 @@ class Eds {
         if (obj1016 === undefined) {
             obj1016 = this.addEntry(0x1016, {
                 objectType: ObjectType.ARRAY,
-                parameterName: options.parameterName || 'Consumer heartbeat time',
+                parameterName: 'Consumer heartbeat time',
             });
         }
 
-        if(this.getHeartbeatConsumer(deviceId)) {
-            deviceId = '0x' + deviceId.toString(16);
-            throw new EdsError(`consumer for ${deviceId} already exists`);
+        for (let i = 1; i <= obj1016[0].value; ++i) {
+            const subObj = obj1016.at(i);
+            if(subObj && subObj.raw.readUInt8(2) === deviceId) {
+                deviceId = '0x' + deviceId.toString(16);
+                throw new EdsError(`consumer for ${deviceId} already exists`);
+            }
         }
 
         let subIndex = options.subIndex;
@@ -1610,16 +1716,16 @@ class Eds {
             throw new EdsError('NMT consumer entry full');
 
         // Install sub entry
-        const value = (deviceId << 16) | timeout;
         const subObj = this.addSubEntry(0x1016, subIndex, {
             parameterName: `Device 0x${deviceId.toString(16)}`,
             dataType: DataType.UNSIGNED32,
             accessType: options.accessType || AccessType.READ_WRITE,
         });
 
-        subObj.value = value;
+        subObj.raw.writeUInt16LE(timeout, 0);
+        subObj.raw.writeUInt8(deviceId, 2);
         if (options.saveDefault)
-            subObj.defaultValue = value;
+            subObj.defaultValue = subObj.value;
     }
 
     /**
@@ -1630,16 +1736,13 @@ class Eds {
     removeHeartbeatConsumer(cobId) {
         const obj1016 = this.getEntry(0x1016);
         if (obj1016 !== undefined) {
-            for (let i = 1; i <= obj1016._subObjects[0].value; ++i) {
-                const subObject = obj1016._subObjects[i];
-                if (subObject === undefined)
+            const maxSubIndex = obj1016[0].value;
+            for (let i = 1; i <= maxSubIndex; ++i) {
+                const subObj = obj1016.at(i);
+                if (subObj === undefined)
                     continue;
 
-                const value = subObject.value;
-                if (value >> 31)
-                    continue; // Invalid
-
-                if ((value & 0x7FF) === cobId) {
+                if (subObj.raw.readUInt8(2) === cobId) {
                     obj1016.removeSubObject(i);
                     break;
                 }
@@ -1652,7 +1755,6 @@ class Eds {
      *
      * @param {number} producerTime - Producer heartbeat time in ms.
      * @param {object} [options] - DataObject creation options.
-     * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
      */
@@ -1664,7 +1766,7 @@ class Eds {
         if (!obj1017) {
             obj1017 = this.addEntry(0x1017, {
                 dataType: DataType.UNSIGNED32,
-                parameterName: options.parameterName || 'Producer heartbeat time',
+                parameterName: 'Producer heartbeat time',
                 accessType: options.accessType || AccessType.READ_WRITE,
             });
         }
@@ -1687,7 +1789,6 @@ class Eds {
      * @param {number} identity.revisionNumber - revision number.
      * @param {number} identity.serialNumber - serial number.
      * @param {object} [options] - DataObject creation options.
-     * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
      */
@@ -1695,7 +1796,7 @@ class Eds {
         let obj1018 = this.getEntry(0x1018);
         if (!obj1018) {
             obj1018 = this.addEntry(0x1018, {
-                parameterName: options.parameterName || 'Identity object',
+                parameterName: 'Identity object',
                 objectType: ObjectType.RECORD,
             });
 
@@ -1757,7 +1858,6 @@ class Eds {
      *
      * @param {number} overflowValue - Sync overflow value.
      * @param {object} [options] - DataObject creation options.
-     * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
      */
@@ -1768,7 +1868,7 @@ class Eds {
         if (!obj1019) {
             obj1019 = this.addEntry(0x1019, {
                 dataType: DataType.UNSIGNED8,
-                parameterName: options.parameterName || 'Synchronous counter overflow value',
+                parameterName: 'Synchronous counter overflow value',
                 accessType: options.accessType || AccessType.READ_WRITE,
                 defaultValue: overflowValue,
             });
@@ -1780,58 +1880,11 @@ class Eds {
     }
 
     /**
-     * Parse object 0x1028 - Emergency consumer object.
+     * Add an entry to object 0x1028 - Emergency consumer object.
      *   sub-index 1+:
      *     bit 0..11    11-bit CAN-ID.
      *     bit 16..23   Reserved (0x00).
      *     bit 31       0 = valid, 1 = invalid.
-     *
-     * @returns {Array<number>} valid consumers.
-     */
-    getEmcyConsumers() {
-        const consumers = [];
-
-        const obj1028 = this.getEntry(0x1028);
-        if (obj1028) {
-            const maxSubIndex = obj1028[0].value;
-            for (let i = 1; i <= maxSubIndex; ++i) {
-                const subEntry = this.getSubEntry(0x1028, i);
-                if (!subEntry)
-                    continue;
-
-                if (!(subEntry.value >> 31))
-                    consumers.push(subEntry.value & 0x7ff);
-            }
-        }
-
-        return consumers;
-    }
-
-    /**
-     * Get an entry from object 0x1028 - Emergency consumer object.
-     *
-     * @param {number} cobId - Emcy COB-ID.
-     * @returns {DataObject | null} the matching entry or null.
-     */
-    getEmcyConsumer(cobId) {
-        const obj1028 = this.getEntry(0x1028);
-        if (obj1028) {
-            const maxSubIndex = obj1028[0].value;
-            for (let i = 1; i <= maxSubIndex; ++i) {
-                const subObj = this.getSubEntry(0x1028, i);
-                if (!subObj)
-                    continue;
-
-                if(subObj.raw.readUInt16LE() === cobId)
-                    return subObj;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Add an entry to object 0x1028 - Emergency consumer object.
      *
      * @param {number} cobId - COB-ID to add.
      * @param {object} [options] - DataObject creation options.
@@ -1852,9 +1905,12 @@ class Eds {
             });
         }
 
-        if (this.getEmcyConsumer(cobId)) {
-            cobId = '0x' + cobId.toString(16);
-            throw new EdsError(`EMCY consumer ${cobId} already exists`);
+        for (let i = 1; i <= obj1028[0].value; ++i) {
+            const subObj = this.getSubEntry(0x1028, i);
+            if(subObj && subObj.raw.readUInt16LE() === cobId) {
+                cobId = '0x' + cobId.toString(16);
+                throw new EdsError(`EMCY consumer ${cobId} already exists`);
+            }
         }
 
         let subIndex = options.subIndex;
@@ -1908,7 +1964,9 @@ class Eds {
     }
 
     /**
-     * Parse object 0x1200..0x127F - SDO server parameter.
+     * Add an SDO server parameter object.
+     *
+     * Object 0x1200..0x127F - SDO server parameter.
      *   sub-index 1/2:
      *     bit 0..10      11-bit CAN base frame.
      *     bit 11..28     29-bit CAN extended frame.
@@ -1918,70 +1976,6 @@ class Eds {
      *
      *   sub-index 3 (optional):
      *     bit 0..7      Node-ID of the SDO client.
-     *
-     * @returns {Array<object>} [{ cobIdTx, cobIdRx, deviceId } ... ]
-     */
-    getSdoServerParameters() {
-        const parameters = [];
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
-            if (index < 0x1200 || index > 0x127F)
-                continue;
-
-            let cobIdRx = entry[1].value;
-            if (!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
-                return;
-
-            if (((cobIdRx >> 30) & 0x1) == 0x1)
-                throw new EdsError('dynamic assignment is not supported');
-
-            if (((cobIdRx >> 29) & 0x1) == 0x1)
-                throw new EdsError('CAN extended frames are not supported');
-
-            let cobIdTx = entry[2].value;
-            if (!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
-                return;
-
-            if (((cobIdTx >> 30) & 0x1) == 0x1)
-                throw new EdsError('dynamic assignment is not supported');
-
-            if (((cobIdTx >> 29) & 0x1) == 0x1)
-                throw new EdsError('CAN extended frames are not supported');
-
-            cobIdRx &= 0x7FF;
-            cobIdTx &= 0x7FF;
-
-            const deviceId = entry[3].value || 0;
-
-            parameters.push({ cobIdTx, cobIdRx, deviceId });
-        }
-
-        return parameters;
-    }
-
-    /**
-     * Get an SDO server parameter entry.
-     *   Object 0x1200..0x127F - SDO server parameter.
-     *
-     * @param {number} deviceId - device identifier [1-127].
-     * @returns {DataObject | null} the matching entry.
-     */
-    getSdoServerParameter(deviceId) {
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
-            if (index < 0x1200 || index > 0x127F)
-                continue;
-
-            if(entry[3].value === deviceId)
-                return entry;
-        }
-
-        return null;
-    }
-
-    /**
-     * Create an SDO server parameter entry.
-     *   Object 0x1200..0x127F - SDO server parameter.
      *
      * @param {number} deviceId - device identifier [1-127].
      * @param {number} cobIdTx - COB-ID for outgoing messages (to client).
@@ -1998,8 +1992,13 @@ class Eds {
         if (deviceId < 0 || deviceId > 0x7F)
             throw RangeError('deviceId must be in range [0-127]');
 
-        for (const param of this.getSdoServerParameters()) {
-            if (param.deviceId === deviceId) {
+        for (let [index, entry] of Object.entries(this.dataObjects)) {
+            index = parseInt(index);
+            if (index < 0x1200 || index > 0x127F)
+                continue;
+
+            const subObj = entry.at(3);
+            if(subObj && subObj.value === deviceId) {
                 deviceId = '0x' + deviceId.toString(16);
                 throw new EdsError(`SDO client ${deviceId} already exists`);
             }
@@ -2053,8 +2052,7 @@ class Eds {
     }
 
     /**
-     * Remove an SDO server parameter entry.
-     *   Object 0x1200..0x127F - SDO server parameter.
+     * Remove an SDO server parameter object.
      *
      * @param {number} deviceId - device identifier [1-127].
      */
@@ -2072,7 +2070,9 @@ class Eds {
     }
 
     /**
-     * Parse object 0x1280..0x12FF - SDO client parameter.
+     * Add an SDO client parameter object.
+     *
+     * Object 0x1280..0x12FF - SDO client parameter.
      *   sub-index 1/2:
      *     bit 0..10      11-bit CAN base frame.
      *     bit 11..28     29-bit CAN extended frame.
@@ -2082,73 +2082,6 @@ class Eds {
      *
      *   sub-index 3:
      *     bit 0..7      Node-ID of the SDO server.
-     *
-     * @returns {Array<object>} [{ cobIdTx, cobIdRx, deviceId } ... ]
-     */
-    getSdoClientParameters() {
-        const parameters = [];
-
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
-            if (index < 0x1280 || index > 0x12FF)
-                continue;
-
-            let cobIdTx = entry[1].value;
-            if (!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
-                return;
-
-            if (((cobIdTx >> 30) & 0x1) == 0x1)
-                throw new EdsError('dynamic assignment is not supported');
-
-            if (((cobIdTx >> 29) & 0x1) == 0x1)
-                throw new EdsError('CAN extended frames are not supported');
-
-            let cobIdRx = entry[2].value;
-            if (!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
-                return;
-
-            if (((cobIdRx >> 30) & 0x1) == 0x1)
-                throw new EdsError('dynamic assignment is not supported');
-
-            if (((cobIdRx >> 29) & 0x1) == 0x1)
-                throw new EdsError('CAN extended frames are not supported');
-
-            cobIdTx &= 0x7FF;
-            cobIdRx &= 0x7FF;
-
-            const deviceId = entry[3].value;
-            if (!deviceId)
-                throw new EdsError('SDO server id must be defined');
-
-            parameters.push({ cobIdTx, cobIdRx, deviceId });
-        }
-
-        return parameters;
-    }
-
-    /**
-     * Get an SDO client parameter entry.
-     *   Object 0x1280..0x12FF - SDO client parameter.
-     *
-     * @param {number} deviceId - device identifier [1-127].
-     * @returns {DataObject | null} the matching entry.
-     */
-    getSdoClientParameter(deviceId) {
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
-            if (index < 0x1280 || index > 0x12FF)
-                continue;
-
-            if(entry[3].value === deviceId)
-                return entry;
-        }
-
-        return null;
-    }
-
-    /**
-     * Create an SDO client parameter entry.
-     *   Object 0x1280..0x12FF - SDO client parameter.
      *
      * @param {number} deviceId - device identifier [1-127].
      * @param {number} cobIdTx - COB-ID for outgoing messages (to server).
@@ -2165,8 +2098,13 @@ class Eds {
         if (!deviceId || deviceId < 1 || deviceId > 0x7F)
             throw new RangeError('deviceId must be in range [1-127]');
 
-        for (const param of this.getSdoClientParameters()) {
-            if (param.deviceId === deviceId) {
+        for (let [index, entry] of Object.entries(this.dataObjects)) {
+            index = parseInt(index);
+            if (index < 0x1280 || index > 0x12FF)
+                continue;
+
+            const subObj = entry.at(3);
+            if(subObj && subObj.value === deviceId) {
                 deviceId = '0x' + deviceId.toString(16);
                 throw new EdsError(`SDO server ${deviceId} already exists`);
             }
@@ -2220,8 +2158,7 @@ class Eds {
     }
 
     /**
-     * Remove an SDO client parameter entry.
-     *   Object 0x1280..0x12FF - SDO client parameter.
+     * Remove an SDO client parameter object.
      *
      * @param {number} deviceId - device identifier [1-127].
      */
@@ -2239,32 +2176,27 @@ class Eds {
     }
 
     /**
-     * Parse RPDO communication/mapping parameter entries.
-     *   Object 0x1400..0x15FF - RPDO communication parameter
-     *   Object 0x1600..0x17FF - RPDO mapping parameter
+     * Create a RPDO communication/mapping parameter object.
      *
-     * @returns {Array<object>} RPDO map.
-     */
-    getReceivePdos() {
-        const rpdo = [];
-        for (let index of Object.keys(this.dataObjects)) {
-            index = parseInt(index);
-            if (index < 0x1400 || index > 0x15FF)
-                continue;
-
-            const pdo = this._parsePdo(index);
-            delete pdo.syncStart; // Not used by RPDOs
-
-            rpdo.push(pdo);
-        }
-
-        return rpdo;
-    }
-
-    /**
-     * Create a RPDO communication/mapping parameter entry.
-     *   Object 0x1400..0x15FF - RPDO communication parameter
-     *   Object 0x1600..0x17FF - RPDO mapping parameter
+     * Object 0x1400..0x15FF - RPDO communication parameter
+     *   sub-index 1 (mandatory):
+     *     bit 0..10      11-bit CAN base frame.
+     *     bit 11..28     29-bit CAN extended frame.
+     *     bit 29         Frame type.
+     *     bit 30         RTR allowed.
+     *     bit 31         RPDO valid.
+     *
+     *   sub-index 2 (mandatory):
+     *     bit 0..7       Transmission type.
+     *
+     *   sub-index 3 (optional):
+     *     bit 0..15      Inhibit time.
+     *
+     * Object 0x1600..0x17FF - RPDO mapping parameter
+     *   sub-index 1+:
+     *     bit 0..7       Bit length.
+     *     bit 8..15      Sub-index.
+     *     bit 16..31     Index.
      *
      * Inhibit time and synchronous RPDOs are not yet supported. All entries
      * are treated as event-driven with an inhibit time of 0.
@@ -2281,9 +2213,14 @@ class Eds {
      * @param {boolean} [options.saveDefault] - save value as default.
      */
     addReceivePdo(pdo, options = {}) {
-        for (let { cobId } of Object.entries(this.getReceivePdos())) {
-            if (cobId === pdo.cobId) {
-                cobId = '0x' + cobId.toString(16);
+        for (let [index, entry] of Object.entries(this.dataObjects)) {
+            index = parseInt(index);
+            if (index < 0x1400 || index > 0x15FF)
+                continue;
+
+            const subObj = entry.at(1);
+            if (subObj && subObj.value === pdo.cobId) {
+                const cobId = '0x' + pdo.cobId.toString(16);
                 throw new EdsError(`RPDO ${cobId} already exists`);
             }
         }
@@ -2400,9 +2337,7 @@ class Eds {
     }
 
     /**
-     * Remove a RPDO communication/mapping parameter entry.
-     *   Object 0x1400..0x15FF - RPDO communication parameter
-     *   Object 0x1600..0x17FF - RPDO mapping parameter
+     * Remove an RPDO communication/mapping parameter object.
      *
      * @param {number} cobId - COB-ID used by the RPDO.
      */
@@ -2424,30 +2359,33 @@ class Eds {
     }
 
     /**
-     * Parse TPDO communication/mapping parameter entries.
-     *   Object 0x1800..0x19FF - TPDO communication parameter
-     *   Object 0x2000..0x21FF - TPDO mapping parameter
+     * Create a TPDO communication/mapping parameter object.
      *
-     * @returns {Array<object>} TPDO list.
-     */
-    getTransmitPdos() {
-        const tpdo = [];
-        for (let index of Object.keys(this.dataObjects)) {
-            index = parseInt(index);
-            if (index < 0x1800 || index > 0x19FF)
-                continue;
-
-            const pdo = this._parsePdo(index);
-            tpdo.push(pdo);
-        }
-
-        return tpdo;
-    }
-
-    /**
-     * Create a TPDO communication/mapping parameter entry.
-     *   Object 0x1800..0x19FF - TPDO communication parameter
-     *   Object 0x2000..0x21FF - TPDO mapping parameter
+     * Object 0x1800..0x19FF - TPDO communication parameter
+     *   sub-index 1 (mandatory):
+     *     bit 0..10      11-bit CAN base frame.
+     *     bit 11..28     29-bit CAN extended frame.
+     *     bit 29         Frame type.
+     *     bit 30         RTR allowed.
+     *     bit 31         TPDO valid.
+     *
+     *   sub-index 2 (mandatory):
+     *     bit 0..7       Transmission type.
+     *
+     *   sub-index 3 (optional):
+     *     bit 0..15      Inhibit time.
+     *
+     *   sub-index 5 (optional):
+     *     bit 0..15      Event timer value.
+     *
+     *   sub-index 6 (optional):
+     *     bit 0..7       SYNC start value.
+     *
+     * Object 0x2000..0x21FF - TPDO mapping parameter
+     *   sub-index 1+:
+     *     bit 0..7       Bit length.
+     *     bit 8..15      Sub-index.
+     *     bit 16..31     Index.
      *
      * @param {object} pdo - object data.
      * @param {number} pdo.cobId - COB-ID used by the TPDO.
@@ -2462,10 +2400,15 @@ class Eds {
      * @param {AccessType} [options.accessType] - DataObject access type.
      */
     addTransmitPdo(pdo, options = {}) {
-        for (let { cobId } of Object.entries(this.getTransmitPdos())) {
-            if (cobId === pdo.cobId) {
-                cobId = '0x' + cobId.toString(16);
-                throw new EdsError(`RPDO ${cobId} already exists`);
+        for (let [index, entry] of Object.entries(this.dataObjects)) {
+            index = parseInt(index);
+            if (index < 0x1800 || index > 0x19FF)
+                continue;
+
+            const subObj = entry.at(1);
+            if (subObj && subObj.value === pdo.cobId) {
+                const cobId = '0x' + pdo.cobId.toString(16);
+                throw new EdsError(`TPDO ${cobId} already exists`);
             }
         }
 
@@ -2586,9 +2529,7 @@ class Eds {
     }
 
     /**
-     * Remove a TPDO communication/mapping parameter entry.
-     *   Object 0x1800..0x19FF - TPDO communication parameter
-     *   Object 0x2000..0x21FF - TPDO mapping parameter
+     * Remove a TPDO communication/mapping parameter object.
      *
      * @param {number} cobId - COB-ID used by the TPDO.
      */
@@ -3041,117 +2982,6 @@ class Eds {
                 }
             }
         }
-    }
-
-    /**
-     * Parse a pair of PDO communication/mapping parameters.
-     *
-     * @param {number} index - PDO communication parameter index.
-     * @returns {object} parsed PDO data.
-     * @private
-     */
-    _parsePdo(index) {
-        const commEntry = this.getEntry(index);
-        if (!commEntry) {
-            index = '0x' + index.toString(16);
-            throw new EdsError(
-                `missing PDO communication parameter (${index})`);
-        }
-
-        const mapEntry = this.getEntry(index + 0x200);
-        if (!mapEntry) {
-            index = '0x' + (index + 0x200).toString(16);
-            throw new EdsError(`missing PDO mapping parameter (${index})`);
-        }
-
-        /* sub-index 1 (mandatory):
-         *   bit 0..10      11-bit CAN base frame.
-         *   bit 11..28     29-bit CAN extended frame.
-         *   bit 29         Frame type.
-         *   bit 30         RTR allowed.
-         *   bit 31         TPDO valid.
-         */
-        if (commEntry[1] === undefined)
-            throw new EdsError('missing PDO COB-ID');
-
-        let cobId = commEntry[1].value;
-        if (!cobId || ((cobId >> 31) & 0x1) == 0x1)
-            return;
-
-        if (((cobId >> 29) & 0x1) == 0x1)
-            throw new EdsError('CAN extended frames are not supported');
-
-        cobId &= 0x7FF;
-
-        /* sub-index 2 (mandatory):
-         *   bit 0..7       Transmission type.
-         */
-        if (commEntry[2] === undefined)
-            throw new EdsError('missing PDO transmission type');
-
-        const transmissionType = commEntry[2].value;
-
-        /* sub-index 3 (optional):
-         *   bit 0..15      Inhibit time.
-         */
-        const inhibitTime = (commEntry[3] !== undefined)
-            ? commEntry[3].value : 0;
-
-        /* sub-index 5 (optional):
-         *   bit 0..15      Event timer value.
-         */
-        const eventTime = (commEntry[5] !== undefined)
-            ? commEntry[5].value : 0;
-
-        /* sub-index 6 (optional):
-         *   bit 0..7       SYNC start value.
-         */
-        const syncStart = (commEntry[6] !== undefined)
-            ? commEntry[6].value : 0;
-
-        let pdo = {
-            cobId,
-            transmissionType,
-            inhibitTime,
-            eventTime,
-            syncStart,
-            dataObjects: [],
-            dataSize: 0,
-        };
-
-        if (mapEntry[0].value == 0xFE)
-            throw new EdsError('SAM-MPDO not supported');
-
-        if (mapEntry[0].value == 0xFF)
-            throw new EdsError('DAM-MPDO not supported');
-
-        if (mapEntry[0].value > 0x40) {
-            throw new EdsError('invalid PDO mapping value '
-                + `(${mapEntry[0].value})`);
-        }
-
-        for (let i = 1; i <= mapEntry[0].value; ++i) {
-            if (mapEntry[i].raw.length == 0)
-                continue;
-
-            /* sub-index 1+:
-             *   bit 0..7       Bit length.
-             *   bit 8..15      Sub-index.
-             *   bit 16..31     Index.
-             */
-            const dataLength = mapEntry[i].raw.readUInt8(0);
-            const dataSubIndex = mapEntry[i].raw.readUInt8(1);
-            const dataIndex = mapEntry[i].raw.readUInt16LE(2);
-
-            let obj = this.getEntry(dataIndex);
-            if (dataSubIndex)
-                obj = obj[dataSubIndex];
-
-            pdo.dataObjects[i - 1] = obj;
-            pdo.dataSize += dataLength / 8;
-        }
-
-        return pdo;
     }
 }
 

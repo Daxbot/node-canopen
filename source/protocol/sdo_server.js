@@ -59,7 +59,30 @@ class SdoServer extends EventEmitter {
      * @type {Array<object>} [{ cobIdTx, cobIdRx, deviceId } ... ]
      */
     get clients() {
-        return this.eds.getSdoServerParameters();
+        const parameters = [];
+
+        for (let [index, entry] of Object.entries(this.eds.dataObjects)) {
+            index = parseInt(index);
+            if (index < 0x1200 || index > 0x127F)
+                continue;
+
+            let cobIdRx = entry[1].value;
+            if (!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
+                continue;
+
+            let cobIdTx = entry[2].value;
+            if (!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
+                continue;
+
+            cobIdRx &= 0x7FF;
+            cobIdTx &= 0x7FF;
+
+            const deviceId = entry[3].value || 0;
+
+            parameters.push({ cobIdTx, cobIdRx, deviceId });
+        }
+
+        return parameters;
     }
 
     start() {
@@ -743,13 +766,23 @@ class SdoServer extends EventEmitter {
     /**
      * Get an SDO client parameter entry.
      *
-     * @param {number} serverId - server COB-ID of the entry to get.
+     * @param {number} clientId - server COB-ID of the entry to get.
      * @returns {DataObject | null} the matching entry.
      * @deprecated
      */
-    getClient(serverId) {
-        return deprecate(() => this.eds.getSdoServerParameter(serverId),
-            'getClient() is deprecated. Use Eds method instead');
+    getClient(clientId) {
+        return deprecate(() => {
+            for(let [index, entry] of Object.entries(this.device.dataObjects)) {
+                index = parseInt(index);
+                if(index < 0x1200 || index > 0x127F)
+                    continue;
+
+                if(entry[3] !== undefined && entry[3].value === clientId)
+                    return entry;
+            }
+
+            return null;
+        }, 'getClient() is deprecated. Use this.clients instead');
     }
 
     /**

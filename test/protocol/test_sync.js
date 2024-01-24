@@ -6,6 +6,32 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Sync', function () {
+    it('should configure 0x1005', function () {
+        const device = new Device({ id: 0xA });
+        expect(device.sync.cobId).to.be.null;
+        expect(device.sync.generate).to.be.false;
+
+        device.eds.setSyncCobId(0x80, true);
+        expect(device.sync.cobId).to.equal(0x80);
+        expect(device.sync.generate).to.be.true;
+    });
+
+    it('should configure 0x1006', function () {
+        const device = new Device({ id: 0xA });
+        expect(device.sync.cyclePeriod).to.be.null;
+
+        device.eds.setSyncCyclePeriod(333);
+        expect(device.sync.cyclePeriod).to.equal(333);
+    });
+
+    it('should configure 0x1019', function () {
+        const device = new Device({ id: 0xA });
+        expect(device.sync.overflow).to.be.null;
+
+        device.eds.setSyncOverflow(10);
+        expect(device.sync.overflow).to.equal(10);
+    });
+
     it('should produce a sync object', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
         device.eds.setSyncCobId(0x80, true);
@@ -27,7 +53,7 @@ describe('Sync', function () {
 
         let lastCount = null;
         device.sync.addListener('sync', (count) => {
-            if(lastCount && count > lastCount) {
+            if (lastCount && count > lastCount) {
                 device.sync.stop();
                 done();
             }

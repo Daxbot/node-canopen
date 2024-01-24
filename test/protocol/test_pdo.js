@@ -13,7 +13,7 @@ describe('Pdo', function () {
         device.eds.addTransmitPdo({
             cobId: 0x18A,
             transmissionType: 254,
-            dataObjects: [ obj0005 ],
+            dataObjects: [obj0005],
         });
 
         device.pdo.start();
@@ -29,12 +29,12 @@ describe('Pdo', function () {
         device.eds.addTransmitPdo({
             cobId: 0x18A,
             transmissionType: 254,
-            dataObjects: [ obj0002 ],
+            dataObjects: [obj0002],
         });
 
         device.eds.addReceivePdo({
             cobId: 0x18A,
-            dataObjects: [ obj0005 ],
+            dataObjects: [obj0005],
         });
 
         device.pdo.start();

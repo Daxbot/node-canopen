@@ -57,15 +57,15 @@ const LssMode = {
  */
 class LssError extends Error {
     constructor(...args) {
-        if(args.length > 1) {
+        if(typeof args[0] === 'object') {
+            args = args[0];
+        }
+        else {
             args = {
                 message: args[0],
                 code: args[1],
                 info: args[2],
             };
-        }
-        else {
-            args = args[0];
         }
 
         super(args.message);
@@ -415,7 +415,10 @@ class Lss extends EventEmitter {
      * @see CiA305 "Switch Mode Selective" (§3.9.2)
      */
     switchModeSelective(...args) {
-        if(args.length > 1) {
+        if(typeof args[0] === 'object') {
+            args = args[0];
+        }
+        else {
             args = {
                 vendorId: args[0],
                 productCode: args[1],
@@ -423,9 +426,6 @@ class Lss extends EventEmitter {
                 serialNumber: args[3],
                 timeout: args[4],
             };
-        }
-        else {
-            args = args[0];
         }
 
         return new Promise((resolve, reject) => {

@@ -16,6 +16,26 @@ function rand32() {
 }
 
 describe('Lss', function () {
+    it('should configure 0x1018', function () {
+        const device = new Device({ enableLss: true });
+        expect(device.lss.vendorId).to.equal(0);
+        expect(device.lss.productCode).to.equal(0);
+        expect(device.lss.revisionNumber).to.equal(0);
+        expect(device.lss.serialNumber).to.equal(0);
+
+        device.eds.setIdentity({
+            vendorId: 1,
+            productCode: 2,
+            revisionNumber: 3,
+            serialNumber: 4,
+        });
+
+        expect(device.lss.vendorId).to.equal(1);
+        expect(device.lss.productCode).to.equal(2);
+        expect(device.lss.revisionNumber).to.equal(3);
+        expect(device.lss.serialNumber).to.equal(4);
+    });
+
     describe('Mode switching', function () {
         it('should change mode (global)', function (done) {
             const device = new Device({ loopback: true, enableLss: true });
@@ -97,44 +117,21 @@ describe('Lss', function () {
     });
 
     describe('Fastscan', function () {
-        it('should scan vendorId', async function () {
+        it('should fastscan', async function () {
             const device = new Device({ loopback: true, enableLss: true });
-            for (let i = 0; i < 3; ++i) {
-                device.lss.vendorId = rand32();
-                await device.lss.fastscan({ timeout: 2 });
-                expect(device.lss.mode).to.equal(LssMode.CONFIGURATION);
-                device._mode = LssMode.OPERATION;
-            }
-        });
+            device.eds.setIdentity({
+                vendorId: rand32(),
+                productCode: rand32(),
+                revisionNumber: rand32(),
+                serialNumber: rand32(),
+            });
 
-        it('should scan productCode', async function () {
-            const device = new Device({ loopback: true, enableLss: true });
-            for (let i = 0; i < 3; ++i) {
-                device.lss.productCode = rand32();
-                await device.lss.fastscan({ timeout: 2 });
-                expect(device.lss.mode).to.equal(LssMode.CONFIGURATION);
-                device._mode = LssMode.OPERATION;
-            }
-        });
-
-        it('should scan revisionNumber', async function () {
-            const device = new Device({ loopback: true, enableLss: true });
-            for (let i = 0; i < 3; ++i) {
-                device.lss.revisionNumber = rand32();
-                await device.lss.fastscan({ timeout: 2 });
-                expect(device.lss.mode).to.equal(LssMode.CONFIGURATION);
-                device._mode = LssMode.OPERATION;
-            }
-        });
-
-        it('should scan serialNumber', async function () {
-            const device = new Device({ loopback: true, enableLss: true });
-            for (let i = 0; i < 3; ++i) {
-                device.lss.serialNumber = rand32();
-                await device.lss.fastscan({ timeout: 2 });
-                expect(device.lss.mode).to.equal(LssMode.CONFIGURATION);
-                device._mode = LssMode.OPERATION;
-            }
+            const identity = await device.lss.fastscan({ timeout: 2 });
+            expect(device.lss.mode).to.equal(LssMode.CONFIGURATION);
+            expect(device.lss.vendorId).to.equal(identity.vendorId);
+            expect(device.lss.productCode).to.equal(identity.productCode);
+            expect(device.lss.revisionNumber).to.equal(identity.revisionNumber);
+            expect(device.lss.serialNumber).to.equal(identity.serialNumber);
         });
     });
 });
