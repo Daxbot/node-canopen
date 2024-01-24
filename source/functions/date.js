@@ -13,6 +13,7 @@ const EPOCH_OFFSET = 441763200 * 1000;
  * @param {number} days - days since Jan 1, 1984
  * @param {number} ms - milliseconds since midnight.
  * @returns {Date} converted Date.
+ * @since 6.0.0
  */
 function timeToDate(days, ms) {
     return new Date((days * 8.64e7) + ms + EPOCH_OFFSET);
@@ -23,6 +24,7 @@ function timeToDate(days, ms) {
  *
  * @param {Date} date - Date object.
  * @returns {object} CANopen timestamp { days, ms }
+ * @since 6.0.0
  */
 function dateToTime(date) {
     if (!util.types.isDate(date))

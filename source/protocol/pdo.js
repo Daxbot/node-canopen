@@ -41,6 +41,7 @@ class Pdo extends Protocol {
      *   Object 0x1600..0x17FF - RPDO mapping parameter
      *
      * @type {Array<object>}
+     * @since 6.0.0
      */
     get rpdo() {
         const rpdo = [];
@@ -65,6 +66,7 @@ class Pdo extends Protocol {
      *   Object 0x2000..0x21FF - TPDO mapping parameter
      *
      * @type {Array<object>}
+     * @since 6.0.0
      */
     get tpdo() {
         const tpdo = [];
@@ -399,8 +401,7 @@ class Pdo extends Protocol {
     /**
      * Initialize the device and audit the object dictionary.
      *
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     init() {
         deprecate(() => this.start(),
@@ -412,8 +413,7 @@ class Pdo extends Protocol {
      *
      * @param {number} cobId - COB-ID used by the RPDO.
      * @returns {DataObject | null} the matching entry.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     getReceive(cobId) {
         return deprecate(() => {
@@ -440,8 +440,7 @@ class Pdo extends Protocol {
      * @param {number} [args.inhibitTime=0] - minimum time between writes.
      * @param {number} [args.eventTime=0] - how often to send timer based PDOs.
      * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     addReceive(cobId, entries, args={}) {
         args.cobId = cobId;
@@ -454,8 +453,7 @@ class Pdo extends Protocol {
      * Remove a RPDO communication/mapping parameter entry.
      *
      * @param {number} cobId - COB-ID used by the RPDO.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     removeReceive(cobId) {
         deprecate(() => this.eds.removeReceivePdo(cobId),
@@ -467,8 +465,7 @@ class Pdo extends Protocol {
      *
      * @param {number} cobId - COB-ID used by the TPDO.
      * @returns {DataObject | null} the matching entry.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     getTransmit(cobId) {
         return deprecate(() => {
@@ -495,8 +492,7 @@ class Pdo extends Protocol {
      * @param {number} [args.inhibitTime=0] - minimum time between writes.
      * @param {number} [args.eventTime=0] - how often to send timer based PDOs.
      * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     addTransmit(cobId, entries, args={}) {
         args.cobId = cobId;
@@ -509,8 +505,7 @@ class Pdo extends Protocol {
      * Remove a TPDO communication/mapping parameter entry.
      *
      * @param {number} cobId - COB-ID used by the TPDO.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     removeTransmit(cobId) {
         deprecate(() => this.eds.removeTransmitPdo(cobId),

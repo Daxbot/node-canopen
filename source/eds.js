@@ -475,6 +475,7 @@ class DataObject extends EventEmitter {
      *
      * @param {*} obj - object to test.
      * @returns {boolean} true if obj is DataObject.
+     * @since 6.0.0
      */
     static isDataObject(obj) {
         return obj instanceof DataObject;
@@ -484,6 +485,7 @@ class DataObject extends EventEmitter {
      * Primitive value conversion.
      *
      * @returns {number | bigint | string | Date} DataObject value.
+     * @since 6.0.0
      */
     valueOf() {
         return this.value;
@@ -493,6 +495,7 @@ class DataObject extends EventEmitter {
      * Primitive string conversion.
      *
      * @returns {string} DataObject string representation.
+     * @since 6.0.0
      */
     toString() {
         return '[' + this.key + ']';
@@ -503,6 +506,7 @@ class DataObject extends EventEmitter {
      *
      * @param {number} index - sub-entry index to get.
      * @returns {DataObject} new DataObject.
+     * @since 6.0.0
      */
     at(index) {
         if (!this._subObjects)
@@ -686,6 +690,7 @@ class Eds {
      *
      * @param {object} obj - object to test.
      * @returns {boolean} true if obj is Eds.
+     * @since 6.0.0
      */
     static isEds(obj) {
         return obj instanceof Eds;
@@ -696,6 +701,7 @@ class Eds {
      *
      * @param {string} path - path to file.
      * @returns {Eds} new Eds object.
+     * @since 6.0.0
      */
     static fromFile(path) {
         const eds = new Eds();
@@ -1187,6 +1193,7 @@ class Eds {
      *
      * @param {number | string} index - index or name of the entry.
      * @param {number} scaleFactor - value to set.
+     * @since 6.0.0
      */
     setScale(index, scaleFactor) {
         const entry = this.getEntry(index);
@@ -1206,6 +1213,7 @@ class Eds {
      * @param {number | string} index - index or name of the entry.
      * @param {number} subIndex - array sub-index to set;
      * @param {number} scaleFactor - value to set.
+     * @since 6.0.0
      */
     setScaleArray(index, subIndex, scaleFactor) {
         const entry = this.getSubEntry(index, subIndex);
@@ -1228,6 +1236,7 @@ class Eds {
      * @param {Buffer | number} info - info field (2 bytes).
      * @param {object} [options] - DataObject creation options.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setDeviceType(profile, info, options = {}) {
         let obj1000 = this.getEntry(0x1000);
@@ -1276,6 +1285,7 @@ class Eds {
      * @param {boolean} flags.communication - communication error.
      * @param {boolean} flags.device - device profile specific error.
      * @param {boolean} flags.manufacturer - manufacturer specific error.
+     * @since 6.0.0
      */
     setErrorRegister(flags) {
         let obj1001 = this.getEntry(0x1001);
@@ -1352,6 +1362,7 @@ class Eds {
      * @param {Buffer | number} status - status register.
      * @param {object} [options] - DataObject creation options.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setStatusRegister(status, options = {}) {
         let obj1002 = this.getEntry(0x1002);
@@ -1385,6 +1396,7 @@ class Eds {
      *
      * @param {number} code - error code.
      * @param {Buffer | number} info - error info (2 bytes).
+     * @since 6.0.0
      */
     pushErrorHistory(code, info) {
         const obj1003 = this.getEntry(0x1003);
@@ -1422,6 +1434,7 @@ class Eds {
      * @param {number} length - how many historical error events should be kept.
      * @param {object} [options] - DataObject creation options.
      * @param {AccessType} [options.accessType] - DataObject access type.
+     * @since 6.0.0
      */
     setErrorHistoryLength(length, options = {}) {
         if (length === undefined || length < 0)
@@ -1463,6 +1476,7 @@ class Eds {
      * @param {object} [options] - DataObject creation options.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setSyncCobId(cobId, generate, options = {}) {
         const raw = typeToRaw(cobId & 0x7FF, DataType.UNSIGNED32);
@@ -1493,6 +1507,7 @@ class Eds {
      * @param {object} [options] - DataObject creation options.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setSyncCyclePeriod(cyclePeriod, options = {}) {
         if (!cyclePeriod)
@@ -1518,6 +1533,7 @@ class Eds {
      * @param {string} name - device name.
      * @param {object} [options] - DataObject creation options.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setDeviceName(name, options = {}) {
         let obj1008 = this.getEntry(0x1008);
@@ -1541,6 +1557,7 @@ class Eds {
      * @param {string} version - device hardware version.
      * @param {object} [options] - DataObject creation options.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setHardwareVersion(version, options = {}) {
         let obj1009 = this.getEntry(0x1009);
@@ -1564,6 +1581,7 @@ class Eds {
      * @param {string} version - device software version.
      * @param {object} [options] - DataObject creation options.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setSoftwareVersion(version, options = {}) {
         let obj100A = this.getEntry(0x100A);
@@ -1595,6 +1613,7 @@ class Eds {
      * @param {object} [options] - DataObject creation options.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setTimeCobId(cobId, produce, consume, options = {}) {
         const raw = typeToRaw(cobId & 0x7FF, DataType.UNSIGNED32);
@@ -1634,6 +1653,7 @@ class Eds {
      * @param {object} [options] - DataObject creation options.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setEmcyCobId(cobId, options = {}) {
         let value = cobId & 0x7FF;
@@ -1661,6 +1681,7 @@ class Eds {
      * @param {object} [options] - DataObject creation options.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setEmcyInhibitTime(inhibitTime, options = {}) {
         let obj1015 = this.getEntry(0x1015);
@@ -1689,6 +1710,7 @@ class Eds {
      * @param {number} [options.subIndex] - index to store the entry.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     addHeartbeatConsumer(deviceId, timeout, options = {}) {
         if (deviceId < 1 || deviceId > 0x7F)
@@ -1744,6 +1766,7 @@ class Eds {
      * Remove an entry from object 0x1016 - Consumer heartbeat time.
      *
      * @param {number} cobId - COB-ID of the entry to remove.
+     * @since 6.0.0
      */
     removeHeartbeatConsumer(cobId) {
         const obj1016 = this.getEntry(0x1016);
@@ -1769,6 +1792,7 @@ class Eds {
      * @param {object} [options] - DataObject creation options.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setHeartbeatProducerTime(producerTime, options = {}) {
         if (!producerTime)
@@ -1803,6 +1827,7 @@ class Eds {
      * @param {object} [options] - DataObject creation options.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setIdentity(identity, options = {}) {
         let obj1018 = this.getEntry(0x1018);
@@ -1872,6 +1897,7 @@ class Eds {
      * @param {object} [options] - DataObject creation options.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     setSyncOverflow(overflowValue, options = {}) {
         overflowValue = overflowValue & 0xff;
@@ -1903,6 +1929,7 @@ class Eds {
      * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     addEmcyConsumer(cobId, options = {}) {
         if (cobId > 0x7FF)
@@ -1953,6 +1980,7 @@ class Eds {
      * Remove an entry from object 0x1028 - Emergency consumer object.
      *
      * @param {number} cobId - COB-ID of the entry to remove.
+     * @since 6.0.0
      */
     removeEmcyConsumer(cobId) {
         const obj1028 = this.getEntry(0x1028);
@@ -1997,6 +2025,7 @@ class Eds {
      * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     addSdoServerParameter(
         deviceId, cobIdTx=0x580, cobIdRx=0x600, options = {}) {
@@ -2067,6 +2096,7 @@ class Eds {
      * Remove an SDO server parameter object.
      *
      * @param {number} deviceId - device identifier [1-127].
+     * @since 6.0.0
      */
     removeSdoServerParameter(deviceId) {
         for (let [index, entry] of Object.entries(this.dataObjects)) {
@@ -2104,6 +2134,7 @@ class Eds {
      * @param {string} [options.parameterName] - DataObject name.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     addSdoClientParameter(
         deviceId, cobIdTx=0x600, cobIdRx=0x580, options = {}) {
@@ -2174,6 +2205,7 @@ class Eds {
      * Remove an SDO client parameter object.
      *
      * @param {number} deviceId - device identifier [1-127].
+     * @since 6.0.0
      */
     removeSdoClientParameter(deviceId) {
         for (let [index, entry] of Object.entries(this.dataObjects)) {
@@ -2224,6 +2256,7 @@ class Eds {
      * @param {Array<string>} [options.parameterName] - DataObject names.
      * @param {AccessType} [options.accessType] - DataObject access type.
      * @param {boolean} [options.saveDefault] - save value as default.
+     * @since 6.0.0
      */
     addReceivePdo(pdo, options = {}) {
         for (let [index, entry] of Object.entries(this.dataObjects)) {
@@ -2353,6 +2386,7 @@ class Eds {
      * Remove an RPDO communication/mapping parameter object.
      *
      * @param {number} cobId - COB-ID used by the RPDO.
+     * @since 6.0.0
      */
     removeReceivePdo(cobId) {
         for (let [index, entry] of Object.entries(this.dataObjects)) {
@@ -2411,6 +2445,7 @@ class Eds {
      * @param {number} [options.index] - DataObject index [0x1800-0x19ff].
      * @param {Array<string>} [options.parameterName] - DataObject names.
      * @param {AccessType} [options.accessType] - DataObject access type.
+     * @since 6.0.0
      */
     addTransmitPdo(pdo, options = {}) {
         for (let [index, entry] of Object.entries(this.dataObjects)) {
@@ -2545,6 +2580,7 @@ class Eds {
      * Remove a TPDO communication/mapping parameter object.
      *
      * @param {number} cobId - COB-ID used by the TPDO.
+     * @since 6.0.0
      */
     removeTransmitPdo(cobId) {
         for (let [index, entry] of Object.entries(this.dataObjects)) {

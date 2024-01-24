@@ -27,6 +27,7 @@ class Protocol extends EventEmitter {
          * The module has been started.
          *
          * @event Protocol#start
+         * @since 6.0.0
          */
         this.emit('start');
     }
@@ -43,6 +44,7 @@ class Protocol extends EventEmitter {
          * The module has been stopped.
          *
          * @event Protocol#stop
+         * @since 6.0.0
          */
         this.emit('stop');
     }
@@ -62,6 +64,7 @@ class Protocol extends EventEmitter {
          * @type {object}
          * @property {number} id - CAN message identifier.
          * @property {Buffer} data - CAN message data.
+         * @since 6.0.0
          */
         this.emit('message', { id, data });
     }

@@ -155,8 +155,7 @@ class Time extends Protocol {
     /**
      * Initialize the device and audit the object dictionary.
      *
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     init() {
         deprecate(() => this.start(),

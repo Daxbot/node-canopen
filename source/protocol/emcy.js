@@ -411,6 +411,7 @@ class Emcy extends Protocol {
      * Emergency consumer object (Object 0x1028).
      *
      * @type {Array<number>}
+     * @since 6.0.0
      */
     get consumers() {
         const consumers = [];
@@ -539,7 +540,7 @@ class Emcy extends Protocol {
     /**
      * Initialize members and begin emergency monitoring.
      *
-     * @deprecated
+     * @deprecated since 6.0.0
      * @ignore
      */
     init() {
@@ -551,7 +552,7 @@ class Emcy extends Protocol {
      * Configures the number of sub-entries for 0x1003 (Pre-defined error field).
      *
      * @param {number} length - how many historical error events should be kept.
-     * @deprecated
+     * @deprecated since 6.0.0
      * @ignore
      */
     setHistoryLength(length) {

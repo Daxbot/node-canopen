@@ -125,6 +125,7 @@ class Nmt extends Protocol {
      * [{ deviceId, heartbeatTime } ... ]
      *
      * @type {Array<object>}
+     * @since 6.0.0
      */
     get consumers() {
         const consumers = [];
@@ -203,10 +204,15 @@ class Nmt extends Protocol {
      */
     setState(state) {
         if (state !== this._state) {
-            const deviceId = this.deviceId;
-            const oldState = this.state;
             this._state = state;
-            this._emitChangeState(deviceId, state, oldState);
+
+            /**
+             * The Nmt state changed.
+             *
+             * @event Nmt#changeState
+             * @type {NmtState}
+             */
+            this.emit('changeState', state);
         }
     }
 
@@ -215,6 +221,7 @@ class Nmt extends Protocol {
      *
      * @param {number} deviceId - device COB-ID to get.
      * @returns {number | null} the consumer heartbeat time or null.
+     * @since 6.0.0
      */
     getConsumerTime(deviceId) {
         const subObj = this.eds.getHeartbeatConsumer(deviceId);
@@ -230,6 +237,7 @@ class Nmt extends Protocol {
      * @param {number} [deviceId] - CAN identifier.
      * @param {number} [timeout] - How long to wait (ms).
      * @returns {Promise<NmtState | null>} The node NMT state.
+     * @since 6.0.0
      */
     async getNodeState(deviceId, timeout) {
         if (!deviceId)
@@ -361,16 +369,20 @@ class Nmt extends Protocol {
 
                 const newState = data[0];
                 const oldState = this.heartbeatMap[deviceId].state;
-                if (newState !== oldState) {
+                if (newState !== oldState)
                     this.heartbeatMap[deviceId].state = newState;
-                    this._emitChangeState(deviceId, newState, oldState);
-                }
 
                 if (!this.heartbeatTimers[deviceId]) {
                     // First heartbeat - start timer.
                     const interval = this.heartbeatMap[deviceId].interval;
                     this.heartbeatTimers[deviceId] = setTimeout(() => {
-                        this._emitTimeout(deviceId);
+                        /**
+                         * A consumer heartbeat timed out.
+                         *
+                         * @event Nmt#timeout
+                         * @type {number}
+                         */
+                        this.emit('timeout', deviceId);
                         this.heartbeatMap[deviceId].state = null;
                         this.heartbeatTimers[deviceId] = null;
                     }, interval);
@@ -464,56 +476,12 @@ class Nmt extends Protocol {
         this.emit('reset', resetNode);
     }
 
-    /**
-     * Emit the changeState event.
-     *
-     * @param {number} deviceId - the device identifier.
-     * @param {NmtState} newState - the new Nmt state.
-     * @param {NmtState} oldState - the old Nmt state.
-     * @fires Nmt#changeState
-     * @private
-     */
-    _emitChangeState(deviceId, newState, oldState) {
-        /**
-         * The Nmt state changed.
-         *
-         * @event Nmt#changeState
-         * @type {object}
-         * @property {number} deviceId - the device that changed.
-         * @property {NmtState} newState - the new Nmt state.
-         * @property {NmtState} oldState - the previous Nmt state.
-         */
-        this.emit('changeState', {
-            deviceId,
-            newState,
-            oldState,
-        });
-    }
-
-    /**
-     * Emit the timeout event.
-     *
-     * @param {number} deviceId - the device identifier.
-     * @fires Nmt#timeout
-     * @private
-     */
-    _emitTimeout(deviceId) {
-        /**
-         * A consumer heartbeat timed out.
-         *
-         * @event Nmt#timeout
-         * @type {number}
-         */
-        this.emit('timeout', deviceId);
-    }
-
     ////////////////////////////// Deprecated //////////////////////////////
 
     /**
      * Initialize the device and audit the object dictionary.
      *
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     init() {
         deprecate(() => this.start(),
@@ -525,8 +493,7 @@ class Nmt extends Protocol {
      *
      * @param {number} deviceId - device COB-ID of the entry to get.
      * @returns {DataObject | null} the matching entry or null.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     getConsumer(deviceId) {
         return deprecate(() => {
@@ -553,8 +520,7 @@ class Nmt extends Protocol {
      * @param {number} deviceId - device COB-ID to add.
      * @param {number} timeout - milliseconds before a timeout is reported.
      * @param {number} [subIndex] - sub-index to store the entry, optional.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     addConsumer(deviceId, timeout, subIndex) {
         const opt = { subIndex };
@@ -567,8 +533,7 @@ class Nmt extends Protocol {
      * Remove an entry from 0x1016 (Consumer heartbeat time).
      *
      * @param {number} deviceId - device COB-ID of the entry to remove.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     removeConsumer(deviceId) {
         deprecate(() => this.eds.removeHeartbeatConsumer(deviceId),

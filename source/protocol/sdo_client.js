@@ -111,6 +111,7 @@ class SdoClient extends Protocol {
      * [{ cobIdTx, cobIdRx, deviceId } ... ]
      *
      * @type {Array<object>}
+     * @since 6.0.0
      */
     get servers() {
         const parameters = [];
@@ -864,8 +865,7 @@ class SdoClient extends Protocol {
     /**
      * Initialize the device and audit the object dictionary.
      *
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     init() {
         deprecate(() => this.start(),
@@ -877,8 +877,7 @@ class SdoClient extends Protocol {
      *
      * @param {number} serverId - server COB-ID of the entry to get.
      * @returns {DataObject | null} the matching entry.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     getServer(serverId) {
         return deprecate(() => {
@@ -902,8 +901,7 @@ class SdoClient extends Protocol {
      * @param {number} serverId - server COB-ID to add.
      * @param {number} cobIdTx - Sdo COB-ID for outgoing messages (to server).
      * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from server).
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     addServer(serverId, cobIdTx, cobIdRx) {
         deprecate(
@@ -915,8 +913,7 @@ class SdoClient extends Protocol {
      * Remove an SDO client parameter entry.
      *
      * @param {number} serverId - server COB-ID of the entry to remove.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     removeServer(serverId) {
         deprecate(() => this.eds.removeSdoClientParameter(serverId),

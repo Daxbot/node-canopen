@@ -72,12 +72,114 @@ class Device extends EventEmitter {
         if(args.enableLss) {
             this.protocol.lss = new Lss(this.eds);
             this.lss.on('message', (m) => this.emit('message', m));
-            this.lss.on('changeDeviceId', (id) => this.id = id);
+
+            this.lss.on('changeMode', (mode) => {
+                /**
+                 * Change of LSS mode (deprecated).
+                 *
+                 * @event Device#lssChangeMode
+                 * @deprecated since 6.0.0
+                 */
+                this.emit('lssChangeMode', mode);
+            });
+
+            this.lss.on('changeDeviceId', (id) => {
+                /**
+                 * Change of device id (deprecated).
+                 *
+                 * @event Device#lssChangeDeviceId
+                 * @deprecated since 6.0.0
+                 */
+                this.emit('lssChangeDeviceId', id);
+                this.id = id;
+            });
+
             this.lss.start();
         }
 
-        this.nmt.on('reset', (event) => this.nmtReset(event));
-        this.nmt.on('changeState', (event) => this.nmtChangeState(event));
+        this.emcy.on('emergency', ({ cobId, em }) => {
+            /**
+             * Emcy object consumed (deprecated).
+             *
+             * @event Device#emergency
+             * @deprecated since 6.0.0
+             */
+            this.emit('emergency', (cobId & 0xF), em);
+        });
+
+        this.nmt.on('reset', (resetNode) => {
+            if(resetNode) {
+                /**
+                 * NMT reset node (deprecated).
+                 *
+                 * @event Device#nmtResetNode
+                 * @deprecated since 6.0.0
+                 */
+                this.emit('nmtResetNode');
+            }
+            else {
+                /**
+                 * NMT reset communication (deprecated).
+                 *
+                 * @event Device#nmtResetCommunication
+                 * @deprecated since 6.0.0
+                 */
+                this.emit('nmtResetCommunication');
+            }
+
+            this._onNmtReset(resetNode);
+        });
+
+        this.nmt.on('changeState', (state) => {
+            /**
+             * NMT state changed (deprecated).
+             *
+             * @event Device#nmtChangeState
+             * @deprecated since 6.0.0
+             */
+            this.emit('nmtChangeState', this.deviceId, state);
+            this._onNmtChangeState(state);
+        });
+
+        this.nmt.on('timeout', (deviceId) => {
+            /**
+             * NMT consumer timeout (deprecated).
+             *
+             * @event Device#nmtChangeState
+             * @deprecated since 6.0.0
+             */
+            this.emit('nmtTimeout', deviceId);
+        });
+
+        this.pdo.on('pdo', (pdo) => {
+            /**
+             * PDO received (deprecated).
+             *
+             * @event Device#pdo
+             * @deprecated since 6.0.0
+             */
+            this.emit('pdo', pdo.dataObjects, pdo.cobId);
+        });
+
+        this.sync.on('sync', (count) => {
+            /**
+             * Sync object consumed (deprecated).
+             *
+             * @event Device#sync
+             * @deprecated since 6.0.0
+             */
+            this.emit('sync', count);
+        });
+
+        this.time.on('time', (date) => {
+            /**
+             * Time object consumed (deprecated).
+             *
+             * @event Device#time
+             * @deprecated since 6.0.0
+             */
+            this.emit('time', date);
+        });
     }
 
     /**
@@ -224,6 +326,7 @@ class Device extends EventEmitter {
      * @param {boolean} [args.skipNmt] - Skip NMT producer -> consumer.
      * @param {boolean} [args.skipPdo] - Skip PDO transmit -> receive.
      * @param {boolean} [args.skipSdo] - Skip SDO server -> client.
+     * @since 6.0.0
      */
     mapRemoteNode(args={}) {
         const deviceId = args.deviceId || args.serverId;
@@ -317,6 +420,7 @@ class Device extends EventEmitter {
      *
      * @param {number} [deviceId] - CAN identifier
      * @returns {Promise<string>} Device name string.
+     * @since 6.0.0
      */
     async getDeviceType(deviceId) {
         if (!deviceId || deviceId == this.id)
@@ -334,6 +438,7 @@ class Device extends EventEmitter {
      *
      * @param {number} [deviceId] - CAN identifier
      * @returns {Promise<string>} Device name string.
+     * @since 6.0.0
      */
     async getStatusRegister(deviceId) {
         if (!deviceId || deviceId == this.id)
@@ -351,6 +456,7 @@ class Device extends EventEmitter {
      *
      * @param {number} [deviceId] - CAN identifier
      * @returns {Promise<string>} Device name string.
+     * @since 6.0.0
      */
     async getDeviceName(deviceId) {
         if (!deviceId || deviceId == this.id)
@@ -368,6 +474,7 @@ class Device extends EventEmitter {
      *
      * @param {number} [deviceId] - CAN identifier.
      * @returns {Promise<string>} Hardware version string.
+     * @since 6.0.0
      */
     async getHardwareVersion(deviceId) {
         if (!deviceId || deviceId == this.id)
@@ -385,6 +492,7 @@ class Device extends EventEmitter {
      *
      * @param {number} [deviceId] - CAN identifier.
      * @returns {Promise<string>} Software version string.
+     * @since 6.0.0
      */
     async getSoftwareVersion(deviceId) {
         if (!deviceId || deviceId == this.id)
@@ -397,14 +505,17 @@ class Device extends EventEmitter {
         });
     }
 
+    /////////////////////////////// Private ////////////////////////////////
+
     /**
      * Called on Nmt#reset.
      *
-     * @param {boolean} resetApp - if true, then perform a full reset.
+     * @param {boolean} resetNode - if true, then perform a full reset.
+     * @listens Nmt#reset
      * @private
      */
-    nmtReset(resetApp) {
-        if(resetApp)
+    _onNmtReset(resetNode) {
+        if(resetNode)
             this.eds.reset();
 
         setImmediate(() => {
@@ -419,44 +530,43 @@ class Device extends EventEmitter {
     /**
      * Called on Nmt#changeState
      *
-     * @param {NmtState} newState - new nmt state.
+     * @param {NmtState} state - new nmt state.
+     * @listens Nmt#changeState
      * @private
      */
-    nmtChangeState({ deviceId, newState }) {
-        if(deviceId === null || deviceId == this.id) {
-            switch(newState) {
-                case NmtState.PRE_OPERATIONAL:
-                    // Start all...
-                    this.protocol.emcy.start();
-                    this.protocol.sdoClient.start();
-                    this.protocol.sdoServer.start();
-                    this.protocol.sync.start();
-                    this.protocol.time.start();
+    _onNmtChangeState(state) {
+        switch(state) {
+            case NmtState.PRE_OPERATIONAL:
+                // Start all...
+                this.protocol.emcy.start();
+                this.protocol.sdoClient.start();
+                this.protocol.sdoServer.start();
+                this.protocol.sync.start();
+                this.protocol.time.start();
 
-                    // ... except Pdo
-                    this.protocol.pdo.stop();
-                    break;
+                // ... except Pdo
+                this.protocol.pdo.stop();
+                break;
 
-                case NmtState.OPERATIONAL:
-                    // Start all
-                    this.protocol.emcy.start();
-                    this.protocol.sdoClient.start();
-                    this.protocol.sdoServer.start();
-                    this.protocol.sync.start();
-                    this.protocol.time.start();
-                    this.protocol.pdo.start();
-                    break;
+            case NmtState.OPERATIONAL:
+                // Start all
+                this.protocol.emcy.start();
+                this.protocol.sdoClient.start();
+                this.protocol.sdoServer.start();
+                this.protocol.sync.start();
+                this.protocol.time.start();
+                this.protocol.pdo.start();
+                break;
 
-                case NmtState.STOPPED:
-                    // Stop all except Nmt
-                    this.protocol.emcy.stop();
-                    this.protocol.sdoClient.stop();
-                    this.protocol.sdoServer.stop();
-                    this.protocol.sync.stop();
-                    this.protocol.time.stop();
-                    this.protocol.pdo.stop();
-                    break;
-            }
+            case NmtState.STOPPED:
+                // Stop all except Nmt
+                this.protocol.emcy.stop();
+                this.protocol.sdoClient.stop();
+                this.protocol.sdoServer.stop();
+                this.protocol.sync.stop();
+                this.protocol.time.stop();
+                this.protocol.pdo.stop();
+                break;
         }
     }
 
@@ -465,8 +575,7 @@ class Device extends EventEmitter {
     /**
      * Initialize the device and audit the object dictionary.
      *
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     init() {
         deprecate(() => this.start(),
@@ -480,8 +589,7 @@ class Device extends EventEmitter {
      * instead.
      *
      * @param {Function} send - send function.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     setTransmitFunction(send) {
         deprecate(() => this.on('message', (m) => send(m)),
@@ -493,8 +601,7 @@ class Device extends EventEmitter {
      *
      * @param {number | string} index - index or name of the entry.
      * @returns {number | bigint | string | Date} entry value.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     getValue(index) {
         return deprecate(() => this.eds.getValue(index),
@@ -507,8 +614,7 @@ class Device extends EventEmitter {
      * @param {number | string} index - index or name of the entry.
      * @param {number} subIndex - sub-object index.
      * @returns {number | bigint | string | Date} entry value.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     getValueArray(index, subIndex) {
         return deprecate(() => this.eds.getValueArray(index, subIndex),
@@ -520,8 +626,7 @@ class Device extends EventEmitter {
      *
      * @param {number | string} index - index or name of the entry.
      * @returns {Buffer} entry data.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     getRaw(index) {
         return deprecate(() => this.eds.getRaw(index),
@@ -534,8 +639,7 @@ class Device extends EventEmitter {
      * @param {number | string} index - index or name of the entry.
      * @param {number} subIndex - sub-object index.
      * @returns {Buffer} entry data.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     getRawArray(index, subIndex) {
         return deprecate(() => this.eds.getRawArray(index, subIndex),
@@ -547,8 +651,7 @@ class Device extends EventEmitter {
      *
      * @param {number | string} index - index or name of the entry.
      * @param {number | bigint | string | Date} value - value to set.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     setValue(index, value) {
         deprecate(() => this.eds.setValue(index, value),
@@ -561,8 +664,7 @@ class Device extends EventEmitter {
      * @param {number | string} index - index or name of the entry.
      * @param {number} subIndex - array sub-index to set;
      * @param {number | bigint | string | Date} value - value to set.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     setValueArray(index, subIndex, value) {
         deprecate(() => this.eds.setValueArray(index, subIndex, value),
@@ -574,8 +676,7 @@ class Device extends EventEmitter {
      *
      * @param {number | string} index - index or name of the entry.
      * @param {Buffer} raw - raw Buffer to set.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     setRaw(index, raw) {
         deprecate(() => this.eds.setRaw(index, raw),
@@ -588,25 +689,11 @@ class Device extends EventEmitter {
      * @param {number | string} index - index or name of the entry.
      * @param {number} subIndex - sub-object index.
      * @param {Buffer} raw - raw Buffer to set.
-     * @deprecated
-     * @ignore
+     * @deprecated since 6.0.0
      */
     setRawArray(index, subIndex, raw) {
         deprecate(() => this.eds.setRawArray(index, subIndex, raw),
             'setRawArray() is deprecated. Use Eds method instead.');
-    }
-
-    /**
-     * Map a remote node's EDS file on to this Device.
-     *
-     * @param {object} args - arguments.
-     * @see mapRemoteNode
-     * @deprecated
-     * @ignore
-     */
-    mapEds(args) {
-        deprecate(() => this.mapRemoteNode(args),
-            'mapEds() is deprecated. Use mapRemoteNode() instead.');
     }
 }
 
