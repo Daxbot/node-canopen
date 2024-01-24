@@ -1,13 +1,19 @@
 # node-canopen
 CANopen is the internationally standardized (EN 50325-4) CAN-based
-higher-layer protocol for embedded control system. For more information on
-CANopen see http://www.can-cia.org/
+higher-layer protocol for embedded control system. More information on CANopen
+can be found on the [CiA site](http://www.can-cia.org/)
 
 This library allows the manipulation of CANopen devices as defined in CiA 301.
+
+## Documentation
+
+Pre-built documentation for the latest release is available
+[here](https://daxbot.github.io/node-canopen/).
 
 ## Device
 The Device class represents a CANopen device and provides context for the
 protocol objects as well as access methods for the manufacturer data fields.
+It contains the Eds and protocol objects.
 
  OD Entry | Description                   | Supported
  -------- | ----------------------------- | ------------------------
@@ -19,10 +25,25 @@ protocol objects as well as access methods for the manufacturer data fields.
   0x1010  | Store parameters              | :x:
   0x1011  | Restore default parameters    | :x:
 
+## Eds
+The Eds class represents a CANopen electronic datasheet file and can be used to
+load and save the eds file format as defined in CiA 306. Device configuration
+files (DCF) are not currently supported.
+
+Eds provides setters for many of the communication profile objects
+that are defined in CiA 301. Most of the protocol objects require one or more
+entries in the Eds before they can function. Typically the user will want to
+create or set those entries before calling [Device.start()][1].
+
+[1]: https://daxbot.github.io/node-canopen/Device.html#start
+
 ## Protocols
+
 ### Emergency - EMCY
 The CANopen emergency protocol is used to indicate internal errors with a
-CANopen device. Call [Emcy.write][1] to produce an emergency object.
+CANopen device. Call [Emcy.write()][2] to produce an emergency object. If a
+valid 'Emergency consumer object entry' is present, the Emcy module will emit
+[event:emergency][3] when the matching COB-ID is consumed.
 
  OD Entry | Description               | Supported
  -------- | ------------------------- | ------------------------
@@ -33,7 +54,8 @@ CANopen device. Call [Emcy.write][1] to produce an emergency object.
   0x1028  | Emergency consumer object | :heavy_check_mark:
   0x1029  | Error behavior object     | :x:
 
-[1]: https://daxbot.github.io/node-canopen/#emcywrite
+[2]: https://daxbot.github.io/node-canopen/Emcy.html#write
+[3]: https://daxbot.github.io/node-canopen/Emcy.html#event:emergency
 
 ### Layer Setting Services - LSS
 The CANopen layer setting services protocol allows the CAN-ID and bitrate of
@@ -52,7 +74,9 @@ Supported Features:
 ### Network Management - NMT
 The CANopen network management protocol is used to manipulate the state of
 NMT consumer devices on the network and is responsible for the device heartbeat.
-Call [Nmt.start][2] to begin heartbeat generation.
+Heartbeat generation will begin automatically when 'Producer heartbeat time'
+is set. If a 'Consumer heartbeat time' entry is present, then the Nmt module
+will emit [event:changeState][4] and [event:timeout][5].
 
  OD Entry | Description             | Supported
  -------- | ----------------------- | ------------------------
@@ -71,13 +95,15 @@ Supported Features:
     - Reset node :heavy_check_mark:
     - Reset communications :heavy_check_mark:
 
-[2]: https://daxbot.github.io/node-canopen/#nmtstart
+[4]: https://daxbot.github.io/node-canopen/Nmt.html#event:changeState
+[5]: https://daxbot.github.io/node-canopen/Nmt.html#event:timeout
 
 ### Process Data Object - PDO
 The CANopen process data object protocol is used for broadcasting data changes
 with minimal overhead, similar to a more traditional CAN network architecture.
-A mapped PDO can be sent with the [Pdo.write][3] method. Calling
-[Pdo.start][4] will begin producing mapped synchronous TPDOs.
+A mapped TPDO can be sent with the [Pdo.write()][6] method. Event driven TPDOs
+will be sent automatically when the device is in NmtState.OPERATIONAL. The Pdo
+module will emit [event:pdo][7] when a mapped RPDO is consumed.
 
  OD Entry        | Description                  | Supported
  --------------- | ---------------------------- | ------------------
@@ -86,25 +112,27 @@ A mapped PDO can be sent with the [Pdo.write][3] method. Calling
  0x1800 - 0x19FF | TPDO communication parameter | :heavy_check_mark:
  0x1A00 - 0x1BFF | TPDO mapping parameter       | :heavy_check_mark:
 
-[3]: https://daxbot.github.io/node-canopen/#pdowrite
-[4]: https://daxbot.github.io/node-canopen/#pdostart
+[6]: https://daxbot.github.io/node-canopen/Pdo.html#write
+[7]: https://daxbot.github.io/node-canopen/Pdo.html#event:pdo
 
 ### Service Data Object - SDO
 The CANopen service data object protocol provides direct access to a device's
-object dictionary. Call the [Sdo.upload][5] or [Sdo.download][6] methods to
-initate a transfer.
+object dictionary. Call the [SdoClient.upload()][7] or [SdoClient.download()][8]
+methods to initate a transfer.
 
  OD Entry        | Description          | Supported
  --------------- | -------------------- | --------------------
  0x1200 - 0x127F | SDO server parameter | :heavy_check_mark:
  0x1280 - 0x12FF | SDO client parameter | :heavy_check_mark:
 
-[5]: https://daxbot.github.io/node-canopen/#sdoupload
-[6]: https://daxbot.github.io/node-canopen/#sdodownload
+[8]: https://daxbot.github.io/node-canopen/SdoClient.html#upload
+[9]: https://daxbot.github.io/node-canopen/SdoClient.html#download
 
 ### Synchronization - SYNC
 The CANopen sync protocol is used to synchronize actions between devices on the
-network. Call [Sync.start][7] to begin producing sync objects.
+network. If enabled, Sync message generation will begin automatically when
+[Device.start()][1] is called. Sync will emit [event:sync][10] when a Sync
+object is consumed.
 
  OD Entry | Description                 | Supported
  -------- | --------------------------- | -----------------------------
@@ -113,15 +141,17 @@ network. Call [Sync.start][7] to begin producing sync objects.
   0x1007  | Sync window length          | :x:
   0x1019  | Sync counter overflow value | :heavy_check_mark:
 
-[7]: https://daxbot.github.io/node-canopen/#syncstart
+[10]: https://daxbot.github.io/node-canopen/Sync.html#event:sync
 
 ###  Time stamp - TIME
 The CANopen time protocol is used to provide a simple network clock. Call
-[Time.write][8] to produce a time stamp object.
+[Time.write()][11] to produce a time stamp object. Time will emit
+[event:time][12] when a time stamp object is consumed.
 
  OD Entry | Description                | Supported
  -------- | -------------------------- | ---------
   0x1012  | COB-ID TIME                | :heavy_check_mark:
   0x1013  | High resolution time stamp | :x:
 
-[8]: https://daxbot.github.io/node-canopen/#timewrite
+[11]: https://daxbot.github.io/node-canopen/Time.html#write
+[12]: https://daxbot.github.io/node-canopen/Time.html#event:time
