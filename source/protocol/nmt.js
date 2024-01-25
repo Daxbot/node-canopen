@@ -100,53 +100,23 @@ class Nmt extends Protocol {
     }
 
     /**
-     * Producer heartbeat time in ms (Object 0x1017).
+     * Get object 0x1017 - Producer heartbeat time.
      *
-     * @type {number}
+     * @returns {number} heartbeat time in ms.
+     * @deprecated
      */
     get producerTime() {
-        if (this._producerTime !== undefined)
-            return this._producerTime;
-
-        const obj1017 = this.eds.getEntry(0x1017);
-        if (obj1017)
-            return obj1017.value;
-
-        return null;
-    }
-
-    set producerTime(value) {
-        this._producerTime = value;
+        return this.getHeartbeatProducerTime();
     }
 
     /**
-     * Consumer heartbeat time (Object 0x1016).
+     * Set object 0x1017 - Producer heartbeat time.
      *
-     * [{ deviceId, heartbeatTime } ... ]
-     *
-     * @type {Array<object>}
-     * @since 6.0.0
+     * @param {number} value - Producer heartbeat time in ms.
+     * @deprecated
      */
-    get consumers() {
-        const consumers = [];
-
-        const obj1016 = this.eds.getEntry(0x1016);
-        if (obj1016) {
-            const maxSubIndex = obj1016[0].value;
-            for (let i = 1; i <= maxSubIndex; ++i) {
-                const subObj = obj1016.at(i);
-                if(!subObj)
-                    continue;
-
-                const heartbeatTime = subObj.raw.readUInt16LE(0);
-                const deviceId = subObj.raw.readUInt8(2);
-
-                if (deviceId > 0 && deviceId <= 127)
-                    consumers.push({ deviceId, heartbeatTime });
-            }
-        }
-
-        return consumers;
+    set producerTime(value) {
+        this.eds.setHeartbeatProducerTime(value);
     }
 
     /**
@@ -158,15 +128,17 @@ class Nmt extends Protocol {
         if (this.state !== NmtState.INITIALIZING)
             return;
 
+        const producerTime = this.eds.getHeartbeatProducerTime();
+        const consumers = this.eds.getHeartbeatConsumers();
+
         this.heartbeatMap = {};
-        for (const { deviceId, heartbeatTime } of this.consumers) {
+        for (const { deviceId, heartbeatTime } of consumers) {
             this.heartbeatMap[deviceId] = {
                 state: null,
                 interval: heartbeatTime,
             };
         }
 
-        const producerTime = this.producerTime;
         if (producerTime !== null) {
             if (producerTime === 0)
                 throw new EdsError('producerTime may not be 0');
@@ -221,7 +193,7 @@ class Nmt extends Protocol {
      *
      * @param {number} deviceId - device COB-ID to get.
      * @returns {number | null} the consumer heartbeat time or null.
-     * @since 6.0.0
+     * @since 5.1.0
      */
     getConsumerTime(deviceId) {
         const subObj = this.eds.getHeartbeatConsumer(deviceId);
@@ -407,8 +379,6 @@ class Nmt extends Protocol {
         }
     }
 
-    /////////////////////////////// Private ////////////////////////////////
-
     /**
      * Serve an NMT command object.
      *
@@ -488,70 +458,71 @@ class Nmt extends Protocol {
          */
         this.emit('reset', resetNode);
     }
-
-    ////////////////////////////// Deprecated //////////////////////////////
-
-    /**
-     * Initialize the device and audit the object dictionary.
-     *
-     * @deprecated since 6.0.0
-     */
-    init() {
-        deprecate(() => this.start(),
-            'init() is deprecated. Use start() instead.');
-    }
-
-    /**
-     * Get an entry from 0x1016 (Consumer heartbeat time).
-     *
-     * @param {number} deviceId - device COB-ID of the entry to get.
-     * @returns {DataObject | null} the matching entry or null.
-     * @deprecated since 6.0.0
-     */
-    getConsumer(deviceId) {
-        return deprecate(() => {
-            const obj1016 = this.getEntry(0x1016);
-            if (obj1016) {
-                const maxSubIndex = obj1016[0].value;
-                for (let i = 1; i <= maxSubIndex; ++i) {
-                    const subObj = obj1016.at(i);
-                    if (!subObj)
-                        continue;
-
-                    if (subObj.raw.readUInt8(2) === deviceId)
-                        return subObj;
-                }
-            }
-
-            return null;
-        }, 'getConsumer() is deprecated. Use getConsumerTime instead.');
-    }
-
-    /**
-     * Add an entry to 0x1016 (Consumer heartbeat time).
-     *
-     * @param {number} deviceId - device COB-ID to add.
-     * @param {number} timeout - milliseconds before a timeout is reported.
-     * @param {number} [subIndex] - sub-index to store the entry, optional.
-     * @deprecated since 6.0.0
-     */
-    addConsumer(deviceId, timeout, subIndex) {
-        const opt = { subIndex };
-        deprecate(() => this.eds.addHeartbeatConsumer(deviceId, timeout, opt),
-            'addConsumer() is deprecated. Use Eds method instead.');
-
-    }
-
-    /**
-     * Remove an entry from 0x1016 (Consumer heartbeat time).
-     *
-     * @param {number} deviceId - device COB-ID of the entry to remove.
-     * @deprecated since 6.0.0
-     */
-    removeConsumer(deviceId) {
-        deprecate(() => this.eds.removeHeartbeatConsumer(deviceId),
-            'removeConsumer() is deprecated. Use Eds method isntead.');
-    }
 }
+
+////////////////////////////////// Deprecated //////////////////////////////////
+
+/**
+ * Initialize the device and audit the object dictionary.
+ *
+ * @deprecated Use {@link Nmt#start} instead.
+ * @function
+ */
+Nmt.prototype.init = deprecate(
+    function () {
+        this.start();
+    }, 'Nmt.init() is deprecated. Use Nmt.start() instead.');
+
+/**
+ * Get an entry from 0x1016 (Consumer heartbeat time).
+ *
+ * @param {number} deviceId - device COB-ID of the entry to get.
+ * @returns {DataObject | null} the matching entry or null.
+ * @deprecated Use {@link Nmt#getConsumerTime} instead.
+ * @function
+ */
+Nmt.prototype.getConsumer = deprecate(
+    function (deviceId) {
+        const obj1016 = this.getEntry(0x1016);
+        if (obj1016) {
+            const maxSubIndex = obj1016[0].value;
+            for (let i = 1; i <= maxSubIndex; ++i) {
+                const subObj = obj1016.at(i);
+                if (!subObj)
+                    continue;
+
+                if (subObj.raw.readUInt8(2) === deviceId)
+                    return subObj;
+            }
+        }
+
+        return null;
+    }, 'Nmt.getConsumer() is deprecated. Use Nmt.getConsumerTime() instead.');
+
+/**
+ * Add an entry to 0x1016 (Consumer heartbeat time).
+ *
+ * @param {number} deviceId - device COB-ID to add.
+ * @param {number} timeout - milliseconds before a timeout is reported.
+ * @param {number} [subIndex] - sub-index to store the entry, optional.
+ * @deprecated Use {@link Eds#addHeartbeatConsumer} instead.
+ * @function
+ */
+Nmt.prototype.addConsumer = deprecate(
+    function (deviceId, timeout, subIndex) {
+        this.eds.addHeartbeatConsumer(deviceId, timeout, { subIndex });
+    }, 'Nmt.addConsumer() is deprecated. Use Eds.addConsumer() instead.');
+
+/**
+ * Remove an entry from 0x1016 (Consumer heartbeat time).
+ *
+ * @param {number} deviceId - device COB-ID of the entry to remove.
+ * @deprecated Use {@link Eds#removeHeartbeatConsumer} instead.
+ * @function
+ */
+Nmt.prototype.removeConsumer = deprecate(
+    function (deviceId) {
+        this.eds.removeHeartbeatConsumer(deviceId);
+    }, 'Nmt.removeConsumer() is deprecated. Use Eds.removeHeartbeatConsumer() instead.');
 
 module.exports = exports = { NmtState, Nmt };

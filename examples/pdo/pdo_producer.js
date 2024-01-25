@@ -30,7 +30,7 @@ async function main(device) {
         // Send the PDO
         let count = 0;
         const timer = setInterval(() => {
-            device.eds.setValue(0x2000, ++count);
+            device.setValue(0x2000, ++count);
 
             if (count >= 3) {
                 // Cleanup

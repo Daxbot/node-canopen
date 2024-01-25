@@ -299,137 +299,87 @@ class Emcy extends Protocol {
         this.eds = eds;
         this.sendQueue = [];
         this.sendTimer = null;
+        this.consumers = [];
     }
 
     /**
-     * Error register (Object 0x1001).
+     * Get object 0x1001 - Error register.
      *
-     * @type {number}
+     * @returns {number} error register value.
+     * @deprecated
      */
     get register() {
-        if(this._register !== undefined)
-            return this._register;
-
-        const obj1001 = this.eds.getEntry(0x1001);
-        if (obj1001)
-            return obj1001.value;
-
-        return null;
-    }
-
-    set register(value) {
-        this._register = value;
+        return this.eds.getErrorRegister();
     }
 
     /**
-     * Error history (Object 0x1003).
+     * Set object 0x1001 - Error register.
      *
-     * [{ code, info } ... ]
-     *
-     * @type {Array<object>}
+     * @param {number} flags - error flags.
+     * @deprecated
      */
-    get history() {
-        const history = [];
-
-        const obj1003 = this.eds.getEntry(0x1003);
-        if (obj1003) {
-            const maxSubIndex = obj1003[0].value;
-            for (let i = 1; i <= maxSubIndex; ++i) {
-                const raw = this.eds.getRawArray(0x1003, i);
-                const code = raw.readUInt16LE(0);
-                const info = raw.readUInt16LE(2);
-
-                if (code)
-                    history.push({ code, info });
-            }
-        }
-
-        return history;
+    set register(flags) {
+        this.eds.setErrorRegister(flags);
     }
 
     /**
-     * Emcy valid bit (Object 0x1014, bit 31).
+     * Get object 0x1014 [bit 31] - EMCY valid.
      *
-     * @type {boolean}
+     * @returns {boolean} Emcy valid.
+     * @deprecated
      */
     get valid() {
-        if(this._valid !== undefined)
-            return this._valid;
-
-        const obj1014 = this.eds.getEntry(0x1014);
-        if(obj1014)
-            return !((obj1014.value >> 31) & 0x1);
-
-        return false;
-    }
-
-    set valid(value) {
-        this._valid = value;
+        return this.eds.getEmcyValid();
     }
 
     /**
-     * Emcy COB-ID (Object 0x1014, bits 0-28).
+     * Set object 0x1014 [bit 31] - EMCY valid.
      *
-     * @type {number}
+     * @param {number} valid - Emcy valid.
+     * @deprecated
+     */
+    set valid(valid) {
+        this.eds.setEmcyValid(valid);
+    }
+
+    /**
+     * Get object 0x1014 - COB-ID EMCY.
+     *
+     * @returns {number} Emcy COB-ID.
+     * @deprecated
      */
     get cobId() {
-        if(this._cobId !== undefined)
-            return this._cobId;
-
-        const obj1014 = this.eds.getEntry(0x1014);
-        if(obj1014)
-            return obj1014.value & 0x7FF;
-
-        return null;
-    }
-
-    set cobId(value) {
-        this._cobId = value;
+        return this.eds.getEmcyCobId();
     }
 
     /**
-     * Emcy inhibit time in ms (Object 0x1015).
+     * Set object 0x1014 - COB-ID EMCY.
      *
-     * @type {number}
+     * @param {number} value - Emcy COB-ID.
+     * @deprecated
+     */
+    set cobId(value) {
+        this.eds.setEmcyCobId(value);
+    }
+
+    /**
+     * Get object 0x1015 - Inhibit time EMCY.
+     *
+     * @returns {number} Emcy inhibit time in ms.
+     * @deprecated
      */
     get inhibitTime() {
-        if(this._inhibitTime !== undefined)
-            return this._inhibitTime;
-
-        const obj1015 = this.eds.getEntry(0x1015);
-        if (obj1015)
-            return obj1015.value;
-
-        return null;
-    }
-
-    set inhibitTime(value) {
-        this._inhibitTime = value;
+        return this.eds.getEmcyInhibitTime();
     }
 
     /**
-     * Emergency consumer object (Object 0x1028).
+     * Set object 0x1015 - Inhibit time EMCY.
      *
-     * @type {Array<number>}
-     * @since 6.0.0
+     * @param {number} value - inhibit time in multiples of 100 μs.
+     * @deprecated
      */
-    get consumers() {
-        const consumers = [];
-
-        const obj1028 = this.eds.getEntry(0x1028);
-        if (obj1028) {
-            const maxSubIndex = obj1028[0].value;
-            for (let i = 1; i <= maxSubIndex; ++i) {
-                const subEntry = this.eds.getSubEntry(0x1028, i);
-                if (!subEntry)
-                    continue;
-
-                if (!(subEntry.value >> 31))
-                    consumers.push(subEntry.value & 0x7ff);
-            }
-        }
-
-        return consumers;
+    set inhibitTime(value) {
+        this.eds.setEmcyInhibitTime(value);
     }
 
     /**
@@ -441,8 +391,11 @@ class Emcy extends Protocol {
         if(this.sendTimer !== null)
             return;
 
-        const delay = this.inhibitTime / 10; // 100 μs
-        if(delay) {
+        this.consumers = this.eds.getEmcyConsumers();
+
+        const inhibitTime = this.eds.getEmcyInhibitTime();
+        if(inhibitTime) {
+            const delay = inhibitTime / 10; // 100 μs
             this.sendTimer = setInterval(() => {
                 if(this.sendQueue.length > 0) {
                     const [ id, data ] = this.sendQueue.shift();
@@ -450,6 +403,7 @@ class Emcy extends Protocol {
                 }
             }, delay);
         }
+
         super.start();
     }
 
@@ -469,12 +423,16 @@ class Emcy extends Protocol {
      *
      * @param {object} args - arguments.
      * @param {number} args.code - error code.
-     * @param {Buffer} args.info - error info.
+     * @param {Buffer} [args.info] - error info.
      * @fires Protocol#message
      */
     write(...args) {
-        if (!this.cobId)
+        if(!this.eds.getEmcyValid())
             throw new EdsError('EMCY production is disabled');
+
+        const cobId = this.eds.getEmcyCobId();
+        if (!cobId)
+            throw new EdsError('COB-ID EMCY may not be 0');
 
         let code, info;
         if(typeof args[0] === 'object') {
@@ -488,16 +446,13 @@ class Emcy extends Protocol {
             info = args[1];
         }
 
-        const em = new EmcyMessage({
-            code,
-            register: this.register,
-            info
-        });
+        const register = this.eds.getErrorRegister();
+        const em = new EmcyMessage({ code, register, info });
 
         if(this.sendTimer)
-            this.sendQueue.push([ this.cobId, em.toBuffer() ]);
+            this.sendQueue.push([ cobId, em.toBuffer() ]);
         else
-            this.send(this.cobId, em.toBuffer());
+            this.send(cobId, em.toBuffer());
     }
 
     /**
@@ -534,31 +489,31 @@ class Emcy extends Protocol {
             }
         }
     }
-
-    ////////////////////////////// Deprecated //////////////////////////////
-
-    /**
-     * Initialize members and begin emergency monitoring.
-     *
-     * @deprecated since 6.0.0
-     * @ignore
-     */
-    init() {
-        deprecate(() => this.start(),
-            'init() is deprecated. Use start() instead');
-    }
-
-    /**
-     * Configures the number of sub-entries for 0x1003 (Pre-defined error field).
-     *
-     * @param {number} length - how many historical error events should be kept.
-     * @deprecated since 6.0.0
-     * @ignore
-     */
-    setHistoryLength(length) {
-        deprecate(() => this.eds.setErrorHistoryLength(length),
-            'setHistoryLength is deprecated. Use Eds method instead.');
-    }
 }
+
+////////////////////////////////// Deprecated //////////////////////////////////
+
+/**
+ * Initialize the device and audit the object dictionary.
+ *
+ * @deprecated Use {@link Emcy#start} instead.
+ * @function
+ */
+Emcy.prototype.init = deprecate(
+    function() {
+        this.start();
+    }, 'Emcy.init() is deprecated. Use Emcy.start() instead.');
+
+/**
+ * Configures the number of sub-entries for 0x1003 (Pre-defined error field).
+ *
+ * @param {number} length - how many historical error events should be kept.
+ * @deprecated Use {@link Eds#setHistoryLength} instead.
+ * @function
+ */
+Emcy.prototype.setHistoryLength = deprecate(
+    function (length) {
+        this.eds.setErrorHistoryLength(length);
+    }, 'Emcy.setHistoryLength is deprecated. Use Eds.setHistoryLength() instead.');
 
 module.exports = exports = { EmcyType, EmcyCode, EmcyMessage, Emcy };

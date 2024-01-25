@@ -29,66 +29,67 @@ class Time extends Protocol {
             throw new TypeError('not an Eds');
 
         this.eds = eds;
+        this._cobId = null;
     }
 
     /**
-     * Time stamp producer enable bit (Object 0x1012, bit 30).
+     * Get object 0x1012 [bit 30] - Time producer enable.
      *
-     * @type {boolean}
+     * @returns {boolean} Time producer enable.
+     * @deprecated
      */
     get produce() {
-        if(this._produce !== undefined)
-            return this._produce;
-
-        const obj1012 = this.eds.getEntry(0x1012);
-        if(obj1012)
-            return !!((obj1012.value >> 30) & 0x1);
-
-        return false;
-    }
-
-    set produce(value) {
-        this._produce = value;
+        return this.eds.getTimeProducerEnable();
     }
 
     /**
-     * Time stamp consumer enable bit (Object 0x1012, bit 31).
+     * Set object 0x1012 [bit 30] - Time producer enable.
      *
-     * @type {boolean}
+     * @param {boolean} enable - Time producer enable.
+     * @deprecated
+     */
+    set produce(enable) {
+        this.eds.setTimeProducerEnable(enable);
+    }
+
+    /**
+     * Get object 0x1012 [bit 31] - Time consumer enable.
+     *
+     * @returns {boolean} Time consumer enable.
+     * @deprecated
      */
     get consume() {
-        if(this._consume !== undefined)
-            return this._consume;
-
-        const obj1012 = this.eds.getEntry(0x1012);
-        if(obj1012)
-            return !!((obj1012.value >> 31) & 0x1);
-
-        return false;
-    }
-
-    set consume(value) {
-        this._consume = value;
+        return this.eds.getTimeConsumerEnable();
     }
 
     /**
-     * Time COB-ID (Object 0x1012, bits 0-28).
+     * Set object 0x1012 [bit 31] - Time consumer enable.
      *
-     * @type {number}
+     * @param {boolean} enable - Time consumer enable.
+     * @deprecated
      */
-    get cobId() {
-        if(this._cobId !== undefined)
-            return this._cobId;
-
-        const obj1012 = this.eds.getEntry(0x1012);
-        if(obj1012)
-            return obj1012.value & 0x7FF;
-
-        return null;
+    set consume(enable) {
+        this.eds.setTimeConsumerEnable(enable);
     }
 
-    set cobId(value) {
-        this._cobId = value;
+    /**
+     * Get object 0x1012 - COB-ID TIME.
+     *
+     * @returns {number} Time COB-ID.
+     * @deprecated
+     */
+    get cobId() {
+        return this.eds.getTimeCobId();
+    }
+
+    /**
+     * Set object 0x1012 - COB-ID TIME.
+     *
+     * @param {number} cobId - Time COB-ID (typically 0x100).
+     * @deprecated
+     */
+    set cobId(cobId) {
+        this.eds.setTimeCobId(cobId);
     }
 
     /**
@@ -97,8 +98,13 @@ class Time extends Protocol {
      * @fires Protocol#start
      */
     start() {
-        if ((this.produce || this.consume) && !this.cobId)
-            throw new EdsError('COB-ID TIME may not be 0');
+        if(this.eds.getTimeConsumerEnable()) {
+            const cobId = this.eds.getTimeCobId();
+            if(!cobId)
+                throw new EdsError('COB-ID TIME may not be 0');
+
+            this._cobId = cobId;
+        }
 
         super.start();
     }
@@ -119,8 +125,12 @@ class Time extends Protocol {
      * @fires Protocol#message
      */
     write(date) {
-        if (!this.produce)
+        if (!this.eds.getTimeProducerEnable())
             throw new EdsError('TIME production is disabled');
+
+        const cobId = this.eds.getTimeCobId();
+        if(!cobId)
+            throw new EdsError('COB-ID TIME may not be 0');
 
         if(!date)
             date = new Date();
@@ -137,7 +147,7 @@ class Time extends Protocol {
      * @fires Time#time
      */
     receive({ id, data }) {
-        if (this.consume && (id & 0x7FF) === this.cobId) {
+        if (this._cobId === id) {
             const date = rawToType(data, DataType.TIME_OF_DAY);
 
             /**
@@ -149,18 +159,19 @@ class Time extends Protocol {
             this.emit('time', date);
         }
     }
-
-    ////////////////////////////// Deprecated //////////////////////////////
-
-    /**
-     * Initialize the device and audit the object dictionary.
-     *
-     * @deprecated since 6.0.0
-     */
-    init() {
-        deprecate(() => this.start(),
-            'init() is deprecated. Use start() instead.');
-    }
 }
+
+////////////////////////////////// Deprecated //////////////////////////////////
+
+/**
+ * Initialize the device and audit the object dictionary.
+ *
+ * @deprecated Use {@link Time#start} instead.
+ * @function
+ */
+Time.prototype.init = deprecate(
+    function () {
+        this.start();
+    }, 'Time.init() is deprecated. Use Time.start() instead.');
 
 module.exports = exports = { Time };

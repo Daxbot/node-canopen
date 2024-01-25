@@ -6,83 +6,83 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Emcy', function () {
-    it('should configure 0x1001', function () {
+    it('should get 0x1001', function () {
         const device = new Device({ id: 0xA });
 
         device.eds.setErrorRegister({ generic: true });
-        expect(device.emcy.register).to.equal(1);
+        expect(device.eds.getErrorRegister()).to.equal(1);
 
         device.eds.setErrorRegister({ current: true });
-        expect(device.emcy.register).to.equal(3);
+        expect(device.eds.getErrorRegister()).to.equal(3);
 
         device.eds.setErrorRegister({ voltage: true });
-        expect(device.emcy.register).to.equal(7);
+        expect(device.eds.getErrorRegister()).to.equal(7);
 
         device.eds.setErrorRegister({ temperature: true });
-        expect(device.emcy.register).to.equal(15);
+        expect(device.eds.getErrorRegister()).to.equal(15);
 
         device.eds.setErrorRegister({ generic: false, communication: true });
-        expect(device.emcy.register).to.equal(30);
+        expect(device.eds.getErrorRegister()).to.equal(30);
 
         device.eds.setErrorRegister({ current: false, device: true });
-        expect(device.emcy.register).to.equal(60);
+        expect(device.eds.getErrorRegister()).to.equal(60);
 
         device.eds.setErrorRegister({ voltage: false, manufacturer: true });
-        expect(device.emcy.register).to.equal(184);
+        expect(device.eds.getErrorRegister()).to.equal(184);
 
         device.eds.setErrorRegister({ temperature: false });
-        expect(device.emcy.register).to.equal(176);
+        expect(device.eds.getErrorRegister()).to.equal(176);
     });
 
-    it('should configure 0x1003', function () {
+    it('should get 0x1003', function () {
         const device = new Device({ id: 0xA });
         device.eds.setErrorHistoryLength(2);
 
         device.eds.pushErrorHistory(0x1000);
-        expect(device.emcy.history[0].code).to.equal(0x1000);
-        expect(device.emcy.history[0].info).to.equal(0);
+        expect(device.eds.getErrorHistory()[0].code).to.equal(0x1000);
+        expect(device.eds.getErrorHistory()[0].info).to.equal(0);
 
         device.eds.pushErrorHistory(0x2000, 'CO');
-        expect(device.emcy.history[0].code).to.equal(0x2000);
-        expect(device.emcy.history[0].info).to.equal(0x4f43);
+        expect(device.eds.getErrorHistory()[0].code).to.equal(0x2000);
+        expect(device.eds.getErrorHistory()[0].info).to.equal(0x4f43);
 
-        expect(device.emcy.history[1].code).to.equal(0x1000);
-        expect(device.emcy.history[1].info).to.equal(0);
+        expect(device.eds.getErrorHistory()[1].code).to.equal(0x1000);
+        expect(device.eds.getErrorHistory()[1].info).to.equal(0);
 
         device.eds.pushErrorHistory(0x3000, 7);
-        expect(device.emcy.history[0].code).to.equal(0x3000);
-        expect(device.emcy.history[0].info).to.equal(7);
+        expect(device.eds.getErrorHistory()[0].code).to.equal(0x3000);
+        expect(device.eds.getErrorHistory()[0].info).to.equal(7);
 
-        expect(device.emcy.history[1].code).to.equal(0x2000);
-        expect(device.emcy.history[1].info).to.equal(0x4f43);
+        expect(device.eds.getErrorHistory()[1].code).to.equal(0x2000);
+        expect(device.eds.getErrorHistory()[1].info).to.equal(0x4f43);
     });
 
-    it('should configure 0x1014', function () {
+    it('should get 0x1014', function () {
         const device = new Device({ id: 0xA });
-        expect(device.emcy.cobId).to.be.null;
-        expect(device.emcy.valid).to.be.false;
+        expect(device.eds.getEmcyCobId()).to.be.null;
+        expect(device.eds.getEmcyValid()).to.be.false;
 
         device.eds.setEmcyCobId(0x8A);
-        expect(device.emcy.cobId).to.equal(0x8A);
-        expect(device.emcy.valid).to.be.true;
+        expect(device.eds.getEmcyCobId()).to.equal(0x8A);
+        expect(device.eds.getEmcyValid()).to.be.true;
     });
 
-    it('should configure 0x1015', function () {
+    it('should get 0x1015', function () {
         const device = new Device({ id: 0xA });
-        expect(device.emcy.inhibitTime).to.be.null;
+        expect(device.eds.getEmcyInhibitTime()).to.be.null;
 
         device.eds.setEmcyInhibitTime(100);
-        expect(device.emcy.inhibitTime).to.equal(100);
+        expect(device.eds.getEmcyInhibitTime()).to.equal(100);
     });
 
-    it('should configure 0x1028', function () {
+    it('should get 0x1028', function () {
         const device = new Device({ id: 0xA });
 
         device.eds.addEmcyConsumer(0x3);
-        expect(device.emcy.consumers[0]).to.equal(0x3);
+        expect(device.eds.getEmcyConsumers()[0]).to.equal(0x3);
 
         device.eds.removeEmcyConsumer(0x3);
-        expect(device.emcy.consumers).to.be.an('array').that.is.empty;
+        expect(device.eds.getEmcyConsumers()).to.be.an('array').that.is.empty;
     });
 
     it('should produce an emergency object', function (done) {

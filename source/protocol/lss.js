@@ -9,6 +9,45 @@ const { Eds } = require('../eds');
 const { deprecate } = require('util');
 
 /**
+ * Check an Lss address against the device address.
+ *
+ * @param {object} identity - identity object.
+ * @param {number} identity.vendorId - vendor id.
+ * @param {number} identity.productCode - product code.
+ * @param {number} identity.revisionNumber - revision number.
+ * @param {number} identity.serialNumber - serial number.
+ * @param {Array} address - Lss address.
+ * @param {number} address.0 - device vendor id.
+ * @param {number} address.1 - device product code.
+ * @param {number} address.2 - device revision number.
+ * @param {number} address.3 - device serial number.
+ * @returns {boolean} true if the address matches.
+ * @private
+ */
+function checkLssAddress(identity, address) {
+    return address[0] === identity.vendorId
+        && address[1] === identity.productCode
+        && address[2] === identity.revisionNumber
+        && address[3] === identity.serialNumber;
+}
+
+/**
+ * Mask and compare two unsigned integers.
+ *
+ * @param {number} a - first number.
+ * @param {number} b - second number.
+ * @param {number} mask - bit mask.
+ * @returns {boolean} true if the masked values are equal.
+ * @private
+ */
+function maskCompare(a, b, mask) {
+    a = (a & mask) >>> 0;
+    b = (b & mask) >>> 0;
+
+    return a === b;
+}
+
+/**
  * CANopen LSS command specifiers.
  *
  * @enum {number}
@@ -113,64 +152,80 @@ class Lss extends Protocol {
      * Vendor id.
      *
      * @type {number}
+     * @deprecated
      */
     get vendorId() {
-        if(this._vendorId !== undefined)
-            return this._vendorId;
-
-        return this.eds.getValueArray(0x1018, 1);
+        return this.eds.getSubEntry(0x1018, 1).value;
     }
 
+    /**
+     * Vendor id.
+     *
+     * @param {number} value - value to set.
+     * @deprecated
+     */
     set vendorId(value) {
-        this._vendorId = value;
+        this.eds.getSubEntry(0x1018, 1).value = value;
     }
 
     /**
      * Product code.
      *
      * @type {number}
+     * @deprecated
      */
     get productCode() {
-        if(this._productCode !== undefined)
-            return this._productCode;
-
-        return this.eds.getValueArray(0x1018, 2);
+        return this.eds.getSubEntry(0x1018, 2).value;
     }
 
+    /**
+     * Product code.
+     *
+     * @param {number} value - value to set.
+     * @deprecated
+     */
     set productCode(value) {
-        this._productCode = value;
+        this.eds.getSubEntry(0x1018, 2).value = value;
     }
 
     /**
      * Revision number.
      *
      * @type {number}
+     * @deprecated
      */
     get revisionNumber() {
-        if(this._revisionNumber !== undefined)
-            return this._revisionNumber;
-
-        return this.eds.getValueArray(0x1018, 3);
+        return this.eds.getSubEntry(0x1018, 3).value;
     }
 
+    /**
+     * Revision number.
+     *
+     * @param {number} value - value to set.
+     * @deprecated
+     */
     set revisionNumber(value) {
-        this._revisionNumber = value;
+        this.eds.getSubEntry(0x1018, 3).value = value;
     }
 
     /**
      * Serial number.
      *
      * @type {number}
+     * @deprecated
      */
     get serialNumber() {
-        if(this._serialNumber !== undefined)
-            return this._serialNumber;
-
-        return this.eds.getValueArray(0x1018, 4);
+        return this.eds.getSubEntry(0x1018, 4).value;
     }
 
+    /**
+     * Serial number.
+     *
+     * @param {number} value - value to set.
+     * @deprecated
+     */
     set serialNumber(value) {
-        this._serialNumber = value;
+        this.eds.getSubEntry(0x1018, 4).value = value;
     }
 
     /**
@@ -737,6 +792,8 @@ class Lss extends Protocol {
         else if (id === 0x7e5) {
             const cs = data[0];
 
+            const identity = this.eds.getIdentity();
+
             if (cs === LssCommand.FASTSCAN) {
                 // Fastscan is only available for unconfigured nodes.
                 const bitCheck = data[5];
@@ -759,25 +816,25 @@ class Lss extends Protocol {
                     switch (lssSub) {
                         case 0:
                             // Test vendor id
-                            match = this._maskCompare(
-                                this.vendorId, value, mask);
+                            match = maskCompare(
+                                identity.vendorId, value, mask);
                             break;
 
                         case 1:
                             // Test product code
-                            match = this._maskCompare(
-                                this.productCode, value, mask);
+                            match = maskCompare(
+                                identity.productCode, value, mask);
                             break;
 
                         case 2:
                             // Test revision number
-                            match = this._maskCompare(
-                                this.revisionNumber, value, mask);
+                            match = maskCompare(
+                                identity.revisionNumber, value, mask);
                             break;
 
                         case 3:
-                            match = this._maskCompare(
-                                this.serialNumber, value, mask);
+                            match = maskCompare(
+                                identity.serialNumber, value, mask);
                             break;
                     }
 
@@ -813,7 +870,7 @@ class Lss extends Protocol {
 
                 case LssCommand.SWITCH_MODE_SERIAL_NUMBER:
                     this.select[3] = data.readUInt32LE(1);
-                    if (this._checkLssAddress(this.select))
+                    if (checkLssAddress(identity, this.select))
                         this.setMode(LssMode.CONFIGURATION);
                     return;
             }
@@ -851,25 +908,23 @@ class Lss extends Protocol {
                     return;
 
                 case LssCommand.INQUIRE_VENDOR_ID:
-                    this._sendLssResponse(cs, this.vendorId);
+                    this._sendLssResponse(cs, identity.vendorId);
                     return;
 
                 case LssCommand.INQUIRE_PRODUCT_CODE:
-                    this._sendLssResponse(cs, this.productCode);
+                    this._sendLssResponse(cs, identity.productCode);
                     return;
 
                 case LssCommand.INQUIRE_REVISION_NUMBER:
-                    this._sendLssResponse(cs, this.revisionNumber);
+                    this._sendLssResponse(cs, identity.revisionNumber);
                     return;
 
                 case LssCommand.INQUIRE_SERIAL_NUMBER:
-                    this._sendLssResponse(cs, this.serialNumber);
+                    this._sendLssResponse(cs, identity.serialNumber);
                     return;
             }
         }
     }
-
-    /////////////////////////////// Private ////////////////////////////////
 
     /**
      * Send an LSS request object.
@@ -906,52 +961,19 @@ class Lss extends Protocol {
 
         this.send(0x7e4, sendBuffer);
     }
-
-    /**
-     * Check an Lss address against the device address.
-     *
-     * @param {Array} address - Lss address.
-     * @param {number} address.0 - device vendor id.
-     * @param {number} address.1 - device product code.
-     * @param {number} address.2 - device revision number.
-     * @param {number} address.3 - device serial number.
-     * @returns {boolean} true if the address matches.
-     * @private
-     */
-    _checkLssAddress(address) {
-        return address[0] === this.vendorId
-            && address[1] === this.productCode
-            && address[2] === this.revisionNumber
-            && address[3] === this.serialNumber;
-    }
-
-    /**
-     * Mask and compare two unsigned integers.
-     *
-     * @param {number} a - first number.
-     * @param {number} b - second number.
-     * @param {number} mask - bit mask.
-     * @returns {boolean} true if the masked values are equal.
-     * @private
-     */
-    _maskCompare(a, b, mask) {
-        a = (a & mask) >>> 0;
-        b = (b & mask) >>> 0;
-
-        return a === b;
-    }
-
-    ////////////////////////////// Deprecated //////////////////////////////
-
-    /**
-     * Initialize the device and audit the object dictionary.
-     *
-     * @deprecated since 6.0.0
-     */
-    init() {
-        deprecate(() => this.start(),
-            'init() is deprecated. Use start() instead.');
-    }
 }
+
+////////////////////////////////// Deprecated //////////////////////////////////
+
+/**
+ * Initialize the device and audit the object dictionary.
+ *
+ * @deprecated Use {@link Lss#start} instead.
+ * @function
+ */
+Lss.prototype.init = deprecate(
+    function() {
+        this.start();
+    }, 'Lss.init() is deprecated. Use Lss.start() instead.');
 
 module.exports = exports = { LssMode, LssError, Lss };

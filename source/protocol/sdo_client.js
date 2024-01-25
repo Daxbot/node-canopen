@@ -77,7 +77,7 @@ class SdoClient extends Protocol {
     constructor(eds) {
         super();
 
-        if(!Eds.isEds(eds))
+        if (!Eds.isEds(eds))
             throw new TypeError('not an Eds');
 
         this.eds = eds;
@@ -106,53 +106,18 @@ class SdoClient extends Protocol {
     }
 
     /**
-     * SDO client parameter (Object 0x1280..0x12FF).
-     *
-     * [{ cobIdTx, cobIdRx, deviceId } ... ]
-     *
-     * @type {Array<object>}
-     * @since 6.0.0
-     */
-    get servers() {
-        const parameters = [];
-
-        for (let [index, entry] of Object.entries(this.eds.dataObjects)) {
-            index = parseInt(index);
-            if (index < 0x1280 || index > 0x12FF)
-                continue;
-
-            const deviceId = entry[3].value;
-            if(!deviceId)
-                continue;
-
-            let cobIdTx = entry[1].value;
-            if (!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
-                continue;
-
-            let cobIdRx = entry[2].value;
-            if (!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
-                continue;
-
-            cobIdTx &= 0x7FF;
-            cobIdRx &= 0x7FF;
-
-            parameters.push({ cobIdTx, cobIdRx, deviceId });
-        }
-
-        return parameters;
-    }
-
-    /**
      * Start the module.
      *
      * @fires Protocol#start
      */
     start() {
-        if(this.started)
+        if (this.started)
             return;
 
+        const servers = this.eds.getSdoClientParameters();
+
         this.serverMap = {};
-        for (const { deviceId, cobIdTx, cobIdRx } of this.servers) {
+        for (const { deviceId, cobIdTx, cobIdRx } of servers) {
             this.serverMap[deviceId] = {
                 cobIdTx,
                 cobIdRx,
@@ -169,8 +134,8 @@ class SdoClient extends Protocol {
      * @fires Protocol#stop
      */
     stop() {
-        for(const transfer of Object.values(this.transfers)) {
-            if(transfer.active)
+        for (const transfer of Object.values(this.transfers)) {
+            if (transfer.active)
                 this._abortTransfer(transfer, SdoCode.DEVICE_STATE);
         }
 
@@ -481,8 +446,6 @@ class SdoClient extends Protocol {
                 break;
         }
     }
-
-    /////////////////////////////// Private ////////////////////////////////
 
     /**
      * Handle ServerCommand.UPLOAD_INITIATE.
@@ -859,66 +822,68 @@ class SdoClient extends Protocol {
         this.send(transfer.cobId, sendBuffer);
         transfer.reject(code);
     }
-
-    ////////////////////////////// Deprecated //////////////////////////////
-
-    /**
-     * Initialize the device and audit the object dictionary.
-     *
-     * @deprecated since 6.0.0
-     */
-    init() {
-        deprecate(() => this.start(),
-            'init() is deprecated. Use start() instead.');
-    }
-
-    /**
-     * Get an SDO client parameter entry.
-     *
-     * @param {number} serverId - server COB-ID of the entry to get.
-     * @returns {DataObject | null} the matching entry.
-     * @deprecated since 6.0.0
-     */
-    getServer(serverId) {
-        return deprecate(() => {
-            for (let [index, entry] of Object.entries(this.dataObjects)) {
-                index = parseInt(index);
-                if (index < 0x1280 || index > 0x12FF)
-                    continue;
-
-                if(entry[3].value === serverId)
-                    return entry;
-            }
-
-            return null;
-
-        }, 'getServer() is deprecated. Use this.servers instead');
-    }
-
-    /**
-     * Add an SDO client parameter entry.
-     *
-     * @param {number} serverId - server COB-ID to add.
-     * @param {number} cobIdTx - Sdo COB-ID for outgoing messages (to server).
-     * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from server).
-     * @deprecated since 6.0.0
-     */
-    addServer(serverId, cobIdTx, cobIdRx) {
-        deprecate(
-            () => this.eds.addSdoClientParameter(serverId, cobIdTx, cobIdRx),
-            'addServer() is deprecated. Use Eds method instead');
-    }
-
-    /**
-     * Remove an SDO client parameter entry.
-     *
-     * @param {number} serverId - server COB-ID of the entry to remove.
-     * @deprecated since 6.0.0
-     */
-    removeServer(serverId) {
-        deprecate(() => this.eds.removeSdoClientParameter(serverId),
-            'removeServer() is deprecated. Use Eds method instead');
-    }
 }
 
-module.exports = exports = SdoClient;
+////////////////////////////////// Deprecated //////////////////////////////////
+
+/**
+ * Initialize the device and audit the object dictionary.
+ *
+ * @deprecated Use {@link SdoClient#start()} instead.
+ * @function
+ */
+SdoClient.prototype.init = deprecate(
+    function () {
+        this.start();
+    }, 'SdoClient.init() is deprecated. Use SdoClient.start() instead.');
+
+/**
+ * Get an SDO client parameter entry.
+ *
+ * @param {number} serverId - server COB-ID of the entry to get.
+ * @returns {DataObject | null} the matching entry.
+ * @deprecated Use {@link Eds.getSdoClientParameters} instead.
+ * @function
+ */
+SdoClient.prototype.getServer = deprecate(
+    function (serverId) {
+        for (let [index, entry] of Object.entries(this.dataObjects)) {
+            index = parseInt(index);
+            if (index < 0x1280 || index > 0x12FF)
+                continue;
+
+            if (entry[3].value === serverId)
+                return entry;
+        }
+
+        return null;
+
+    }, 'SdoClient.getServer() is deprecated. Use Eds.getSdoClientParameters() instead.');
+
+/**
+ * Add an SDO client parameter entry.
+ *
+ * @param {number} serverId - server COB-ID to add.
+ * @param {number} cobIdTx - Sdo COB-ID for outgoing messages (to server).
+ * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from server).
+ * @deprecated Use {@link Eds#addSdoClientParameter} instead.
+ * @function
+ */
+SdoClient.prototype.addServer = deprecate(
+    function (serverId, cobIdTx, cobIdRx) {
+        this.eds.addSdoClientParameter(serverId, cobIdTx, cobIdRx);
+    }, 'SdoClient.addServer() is deprecated. Use Eds.addSdoClientParameter() instead.');
+
+/**
+ * Remove an SDO client parameter entry.
+ *
+ * @param {number} serverId - server COB-ID of the entry to remove.
+ * @deprecated Use {@link Eds#removeSdoClientParameter} instead.
+ * @function
+ */
+SdoClient.prototype.removeServer = deprecate(
+    function (serverId) {
+        this.eds.removeSdoClientParameter(serverId);
+    }, 'SdoClient.removeServer() is deprecated. Use Eds.removeSdoClientParameter instead.');
+
+module.exports = exports = { SdoClient };

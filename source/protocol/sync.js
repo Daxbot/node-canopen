@@ -22,92 +22,93 @@ class Sync extends Protocol {
     constructor(eds) {
         super();
 
-        if(!Eds.isEds(eds))
+        if (!Eds.isEds(eds))
             throw new TypeError('not an Eds');
 
         this.eds = eds;
         this.syncCounter = 0;
         this.syncTimer = null;
+        this._cobId = null;
     }
 
     /**
-     * Sync generation enable bit (Object 0x1005, bit 30).
+     * Get object 0x1005 [bit 30] - Sync generation enable.
      *
-     * @type {boolean}
+     * @returns {boolean} Sync generation enable.
+     * @deprecated
      */
     get generate() {
-        if(this._generate !== undefined)
-            return this._generate;
-
-        const obj1005 = this.eds.getEntry(0x1005);
-        if(obj1005)
-            return !!((obj1005.value >> 30) & 0x1);
-
-        return false;
-    }
-
-    set generate(value) {
-        this._generate = value;
+        return this.eds.getSyncGenerationEnable();
     }
 
     /**
-     * Sync COB-ID (Object 0x1005, bits 0-28).
+     * Set object 0x1005 [bit 30] - Sync generation enable.
      *
-     * @type {number}
+     * @param {boolean} enable - Sync generation enable.
+     * @deprecated
+     */
+    set generate(enable) {
+        this.eds.setSyncGenerationEnable(enable);
+    }
+
+    /**
+     * Get object 0x1005 - COB-ID SYNC.
+     *
+     * @returns {number} Sync COB-ID.
+     * @deprecated
      */
     get cobId() {
-        if(this._cobId !== undefined)
-            return this._cobId;
-
-        const obj1005 = this.eds.getEntry(0x1005);
-        if(obj1005)
-            return obj1005.value & 0x7FF;
-
-        return null;
-    }
-
-    set cobId(value) {
-        this._cobId = value;
+        return this.eds.getSyncCobId();
     }
 
     /**
-     * Sync interval in μs (Object 0x1006).
+     * Set object 0x1005 - COB-ID SYNC.
      *
-     * @type {number}
+     * @param {number} cobId - Sync COB-ID (typically 0x80).
+     * @deprecated
+     */
+    set cobId(cobId) {
+        this.eds.setSyncCobId(cobId);
+    }
+
+    /**
+     * Get object 0x1006 - Communication cycle period.
+     *
+     * @returns {number} Sync interval in μs.
+     * @deprecated
      */
     get cyclePeriod() {
-        if(this._cyclePeriod !== undefined)
-            return this._cyclePeriod;
-
-        const obj1006 = this.eds.getEntry(0x1006);
-        if (obj1006)
-            return obj1006.value;
-
-        return null;
-    }
-
-    set cyclePeriod(value) {
-        this._cyclePeriod = value;
+        return this.eds.getSyncCyclePeriod();
     }
 
     /**
-     * Sync counter overflow value (Object 0x1019).
+     * Set object 0x1006 - Communication cycle period.
      *
-     * @type {number}
+     * @param {number} period - communication cycle period.
+     * @deprecated
      */
-    get overflow() {
-        if(this._overflow !== undefined)
-            return this._overflow;
-
-        const obj1019 = this.eds.getEntry(0x1019);
-        if (obj1019)
-            return obj1019.value;
-
-        return null;
+    set cyclePeriod(period) {
+        this.eds.setSyncCyclePeriod(period);
     }
 
-    set overflow(value) {
-        this._overflow = value;
+    /**
+     * Get object 0x1019 - Synchronous counter overflow value.
+     *
+     * @returns {number} Sync counter overflow value.
+     * @deprecated
+     */
+    get overflow() {
+        return this.eds.getSyncOverflow();
+    }
+
+    /**
+     * Set object 0x1019 - Synchronous counter overflow value.
+     *
+     * @param {number} overflow - Sync overflow value.
+     * @deprecated
+     */
+    set overflow(overflow) {
+        this.eds.setSyncOverflow(overflow);
     }
 
     /**
@@ -116,29 +117,34 @@ class Sync extends Protocol {
      * @fires Protocol#start
      */
     start() {
-        if(this.syncTimer !== null)
+        if (this.syncTimer !== null)
             return;
 
-        if (this.generate) {
-            if (!this.cobId)
+        if (this.eds.getSyncGenerationEnable()) {
+            const cobId = this.eds.getSyncCobId();
+            if (!cobId)
                 throw new EdsError('COB-ID SYNC may not be 0');
 
-            if (!this.cyclePeriod)
+            this._cobId = cobId;
+
+            const cyclePeriod = this.eds.getSyncCyclePeriod();
+            if (!cyclePeriod)
                 throw new EdsError('communication cycle period may not be 0');
 
-            if (this.overflow) {
+            const overflow = this.eds.getSyncOverflow();
+            if (overflow) {
                 this.syncTimer = setInterval(() => {
                     this.syncCounter += 1;
-                    if (this.syncCounter > this.overflow)
+                    if (this.syncCounter > overflow)
                         this.syncCounter = 1;
 
-                    this.write(this.syncCounter);
-                }, this.cyclePeriod / 1000);
+                    this.send(cobId, Buffer.from([this.syncCounter]));
+                }, cyclePeriod / 1000);
             }
             else {
                 this.syncTimer = setInterval(() => {
-                    this.write();
-                }, this.cyclePeriod / 1000);
+                    this.send(cobId, Buffer.alloc(0));
+                }, cyclePeriod / 1000);
             }
         }
 
@@ -164,13 +170,17 @@ class Sync extends Protocol {
      * @fires Protocol#message
      */
     write(counter = null) {
-        if (!this.generate)
+        if(!this.eds.getSyncGenerationEnable())
             throw new EdsError('SYNC generation is disabled');
 
-        this.emit('message', {
-            id: this.cobId,
-            data: (counter) ? Buffer.from([counter]) : Buffer.alloc(0),
-        });
+        const cobId = this.eds.getSyncCobId();
+        if (!cobId)
+            throw new EdsError('COB-ID SYNC may not be 0');
+
+        if(counter !== null)
+            this.send(cobId, Buffer.from([counter]));
+        else
+            this.send(cobId, Buffer.alloc(0));
     }
 
     /**
@@ -182,7 +192,7 @@ class Sync extends Protocol {
      * @fires Sync#sync
      */
     receive({ id, data }) {
-        if ((id & 0x7FF) === this.cobId) {
+        if (this._cobId === id) {
             if (data)
                 data = data[0];
 
@@ -195,18 +205,20 @@ class Sync extends Protocol {
             this.emit('sync', data);
         }
     }
-
-    ////////////////////////////// Deprecated //////////////////////////////
-
-    /**
-     * Initialize the device and audit the object dictionary.
-     *
-     * @deprecated since 6.0.0
-     */
-    init() {
-        deprecate(() => this.start(),
-            'init() is deprecated. Use start() instead.');
-    }
 }
+
+////////////////////////////////// Deprecated //////////////////////////////////
+
+/**
+ * Initialize the device and audit the object dictionary.
+ *
+ * @deprecated Use {@link Sync#start} instead.
+ * @function
+ */
+Sync.prototype.init = deprecate(
+    function () {
+        this.start();
+    }, 'Sync.init() is deprecated. Use Sync.start() instead.');
+
 
 module.exports = exports = { Sync };

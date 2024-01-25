@@ -16,7 +16,7 @@ function rand32() {
 }
 
 describe('Lss', function () {
-    it('should configure 0x1018', function () {
+    it('should get 0x1018', function () {
         const device = new Device({ enableLss: true });
         expect(device.lss.vendorId).to.equal(0);
         expect(device.lss.productCode).to.equal(0);

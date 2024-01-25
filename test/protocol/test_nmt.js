@@ -6,28 +6,28 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Nmt', function () {
-    it('should configure 0x1016', function () {
+    it('should get 0x1016', function () {
         const device = new Device({ id: 0xA });
 
         device.eds.addHeartbeatConsumer(0xB, 100);
-        expect(device.nmt.consumers[0].deviceId).to.equal(0xB);
-        expect(device.nmt.consumers[0].heartbeatTime).to.equal(100);
+        expect(device.eds.getHeartbeatConsumers()[0].deviceId).to.equal(0xB);
+        expect(device.eds.getHeartbeatConsumers()[0].heartbeatTime).to.equal(100);
 
         device.eds.removeHeartbeatConsumer(0xB);
-        expect(device.nmt.consumers).to.be.an('array').that.is.empty;
+        expect(device.eds.getHeartbeatConsumers()).to.be.an('array').that.is.empty;
     });
 
-    it('should configure 0x1017', function () {
+    it('should get 0x1017', function () {
         const device = new Device({ id: 0xA });
-        expect(device.nmt.producerTime).to.be.null;
+        expect(device.eds.getHeartbeatProducerTime()).to.be.null;
 
         device.eds.setHeartbeatProducerTime(500);
-        expect(device.nmt.producerTime).to.equal(500);
+        expect(device.eds.getHeartbeatProducerTime()).to.equal(500);
     });
 
     it('should emit on heartbeat detected', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setHeartbeatProducerTime(500);
+        device.eds.setHeartbeatProducerTime(10);
         device.eds.addHeartbeatConsumer(device.id, 10);
 
         device.nmt.addListener('heartbeat', (deviceId) => {

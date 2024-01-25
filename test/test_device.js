@@ -6,11 +6,7 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Device', function () {
-    it('should be constructable', function () {
-        new Device({ id: 0xA, loopback: true });
-    });
-
-    it('should require id be in range 1-127', function () {
+    it('should require id be in range [1-127]', function () {
         expect(() => {
             new Device({ id: null, loopback: true });
         }).to.throw(RangeError);
@@ -25,6 +21,35 @@ describe('Device', function () {
         }).to.throw(RangeError);
     });
 
+    it('should get 0x1002', function () {
+        const device = new Device();
+
+        device.eds.setStatusRegister(100);
+        expect(device.eds.getStatusRegister()).to.equal(100);
+
+        const raw = Buffer.from('abcd');
+        device.eds.setStatusRegister(raw);
+        expect(device.eds.getStatusRegister()).to.equal(raw.readUInt32LE());
+    });
+
+    it('should get 0x1008', function () {
+        const device = new Device();
+        device.eds.setDeviceName('node-canopen');
+        expect(device.eds.getDeviceName()).to.equal('node-canopen');
+    });
+
+    it('should get 0x1009', function () {
+        const device = new Device();
+        device.eds.setHardwareVersion('A');
+        expect(device.eds.getHardwareVersion()).to.equal('A');
+    });
+
+    it('should get 0x100A', function () {
+        const device = new Device();
+        device.eds.setSoftwareVersion('1.0');
+        expect(device.eds.getSoftwareVersion()).to.equal('1.0');
+    });
+
     describe('mapRemoteNode', function() {
         it('should map Emcy', function() {
             const remote = new Device({ id: 0xA });
@@ -33,8 +58,8 @@ describe('Device', function () {
             const local = new Device({ id: 0xB });
             local.mapRemoteNode(remote);
 
-            expect(local.emcy.consumers).to.be.an('array');
-            expect(local.emcy.consumers[0]).to.equal(0x8B);
+            expect(local.eds.getEmcyConsumers()).to.be.an('array');
+            expect(local.eds.getEmcyConsumers()[0]).to.equal(0x8B);
         });
 
         it('should map Nmt', function() {
@@ -44,10 +69,11 @@ describe('Device', function () {
             const local = new Device({ id: 0xB });
             local.mapRemoteNode(remote);
 
-            expect(local.nmt.consumers).to.be.an('array');
-            expect(local.nmt.consumers[0]).to.exist;
-            expect(local.nmt.consumers[0].deviceId).to.equal(0xA);
-            expect(local.nmt.consumers[0].heartbeatTime).to.equal(1000);
+            const consumers = local.eds.getHeartbeatConsumers();
+            expect(consumers).to.be.an('array');
+            expect(consumers[0]).to.exist;
+            expect(consumers[0].deviceId).to.equal(0xA);
+            expect(consumers[0].heartbeatTime).to.equal(1000);
         });
 
         it('should map Sdo', function() {
@@ -57,9 +83,10 @@ describe('Device', function () {
             const local = new Device({ id: 0xB });
             local.mapRemoteNode(remote);
 
-            expect(local.sdo.servers).to.be.an('array');
-            expect(local.sdo.servers[0]).to.exist;
-            expect(local.sdo.servers[0].deviceId).to.equal(0xA);
+            const servers = local.eds.getSdoClientParameters();
+            expect(servers).to.be.an('array');
+            expect(servers[0]).to.exist;
+            expect(servers[0].deviceId).to.equal(0xA);
         });
 
         it('should map Pdo', function() {
@@ -79,9 +106,11 @@ describe('Device', function () {
             local.mapRemoteNode(remote);
 
             expect(local.eds.getEntry(0x2000)).to.exist;
-            expect(local.pdo.rpdo).to.be.an('array');
-            expect(local.pdo.rpdo[0]).to.exist;
-            expect(local.pdo.rpdo[0].cobId).to.equal(0x180);
+
+            const rpdo = local.eds.getReceivePdos();
+            expect(rpdo).to.be.an('array');
+            expect(rpdo[0]).to.exist;
+            expect(rpdo[0].cobId).to.equal(0x180);
         });
     });
 });

@@ -47,6 +47,6 @@ describe('Pdo', function () {
             done();
         });
 
-        device.eds.setValue(0x02, 1);
+        device.setValue(0x02, 1);
     });
 });
