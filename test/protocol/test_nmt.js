@@ -43,8 +43,8 @@ describe('Nmt', function () {
         device.eds.setHeartbeatProducerTime(1);
         device.eds.addHeartbeatConsumer(device.id, 10);
 
-        device.nmt.addListener('changeState', ({ newState }) => {
-            if (newState) {
+        device.nmt.addListener('changeState', (state) => {
+            if (state) {
                 device.nmt.stop();
                 done();
             }

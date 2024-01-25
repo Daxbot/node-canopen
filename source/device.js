@@ -10,7 +10,7 @@ const { deprecate } = require('util');
 const { Emcy } = require('./protocol/emcy');
 const { Lss } = require('./protocol/lss');
 const { Nmt, NmtState } = require('./protocol/nmt');
-const { Pdo } = require('./protocol/pdo');
+const { Pdo, parsePdo } = require('./protocol/pdo');
 const SdoClient = require('./protocol/sdo_client');
 const SdoServer = require('./protocol/sdo_server');
 const { Sync } = require('./protocol/sync');
@@ -319,8 +319,8 @@ class Device extends EventEmitter {
      * This may be called multiple times to map more than one EDS.
      *
      * @param {object} args - method arguments.
-     * @param {Eds | string} args.eds - the server's EDS.
      * @param {number} args.deviceId - the remote node's CAN identifier.
+     * @param {Eds | string} args.eds - the server's EDS.
      * @param {number} [args.dataStart] - start index for SDO entries.
      * @param {boolean} [args.skipEmcy] - Skip EMCY producer -> consumer.
      * @param {boolean} [args.skipNmt] - Skip NMT producer -> consumer.
@@ -329,7 +329,7 @@ class Device extends EventEmitter {
      * @since 6.0.0
      */
     mapRemoteNode(args={}) {
-        const deviceId = args.deviceId || args.serverId;
+        const deviceId = args.deviceId || args.id;
 
         let eds = args.eds;
         if (typeof eds === 'string')
@@ -337,32 +337,42 @@ class Device extends EventEmitter {
 
         if (!args.skipEmcy) {
             // Map EMCY producer -> consumer
-            const cobId = eds.getEmcyCobId();
-            if (cobId)
-                this.eds.addEmcyConsumer(cobId);
+            const obj1014 = eds.getEntry(0x1014);
+            if (obj1014)
+                this.eds.addEmcyConsumer(obj1014.value);
         }
 
         if (!args.skipNmt) {
             // Map heartbeat producer -> consumer
-            const producerTime = eds.getHeartbeatProducerTime();
-            if (producerTime) {
-                if (!deviceId)
-                    throw new ReferenceError('deviceId not defined');
+            const obj1017 = eds.getEntry(0x1017);
+            if (obj1017) {
+                if (!args.id)
+                    throw new ReferenceError('id not defined');
 
-                this.eds.addHeartbeatConsumer({
-                    deviceId,
-                    timeout: producerTime * 2
-                });
+                this.eds.addHeartbeatConsumer(deviceId, obj1017.value * 2);
             }
         }
 
         if (!args.skipSdo) {
-            for(const parameter of eds.getSdoServerParameters()) {
-                this.eds.addSdoClientParameter({
-                    deviceId,
-                    cobIdTx: parameter.cobIdRx, // client -> server
-                    cobIdRx: parameter.cobIdTx, // server -> client
-                });
+            for (let [index, entry] of Object.entries(eds.dataObjects)) {
+                index = parseInt(index);
+                if (index < 0x1200 || index > 0x127F)
+                    continue;
+
+                const subObj3 = entry.at(3);
+                if(subObj3) {
+                    const clientId = subObj3.value;
+                    if(clientId && clientId !== this.id)
+                        continue;
+                }
+
+                if (!deviceId)
+                    throw new ReferenceError('deviceId not defined');
+
+                const cobIdTx = entry[1].value; // client -> server
+                const cobIdRx = entry[2].value; // server -> client
+
+                this.eds.addSdoClientParameter(deviceId, cobIdTx, cobIdRx);
             }
         }
 
@@ -372,7 +382,13 @@ class Device extends EventEmitter {
                 throw new RangeError('dataStart must be >= 0x2000');
 
             const mapped = [];
-            for(const pdo of Object.values(eds.getTransmitPdos())) {
+            for (let index of Object.keys(eds.dataObjects)) {
+                index = parseInt(index);
+                if (index < 0x1800 || index > 0x19FF)
+                    continue;
+
+                const pdo = parsePdo(eds, index);
+
                 const dataObjects = [];
                 for ( let obj of pdo.dataObjects) {
                     // Find the next open SDO index

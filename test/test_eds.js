@@ -10,10 +10,6 @@ chai.use(chaiBytes);
 
 describe('Eds', function () {
     describe('Initialization', function () {
-        it('should be constructable', function () {
-            new Eds();
-        });
-
         it('should configure 0x1000', function () {
             const eds = new Eds();
 

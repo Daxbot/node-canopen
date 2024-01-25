@@ -8,6 +8,117 @@ const Protocol = require('./protocol');
 const { DataObject, Eds, EdsError } = require('../eds');
 const { deprecate } = require('util');
 
+
+/**
+ * Parse a pair of PDO communication/mapping parameters.
+ *
+ * @param {Eds} eds - Eds object.
+ * @param {number} index - PDO communication parameter index.
+ * @returns {object} parsed PDO data.
+ */
+function parsePdo(eds, index) {
+    const commEntry = eds.getEntry(index);
+    if (!commEntry) {
+        index = '0x' + index.toString(16);
+        throw new EdsError(`missing PDO communication parameter (${index})`);
+    }
+
+    const mapEntry = eds.getEntry(index + 0x200);
+    if (!mapEntry) {
+        index = '0x' + (index + 0x200).toString(16);
+        throw new EdsError(`missing PDO mapping parameter (${index})`);
+    }
+
+    /* sub-index 1 (mandatory):
+        *   bit 0..10      11-bit CAN base frame.
+        *   bit 11..28     29-bit CAN extended frame.
+        *   bit 29         Frame type.
+        *   bit 30         RTR allowed.
+        *   bit 31         PDO valid.
+        */
+    if (commEntry[1] === undefined)
+        throw new EdsError('missing PDO COB-ID');
+
+    let cobId = commEntry[1].value;
+    if (!cobId || ((cobId >> 31) & 0x1) == 0x1)
+        return;
+
+    if (((cobId >> 29) & 0x1) == 0x1)
+        throw new EdsError('CAN extended frames are not supported');
+
+    cobId &= 0x7FF;
+
+    /* sub-index 2 (mandatory):
+        *   bit 0..7       Transmission type.
+        */
+    if (commEntry[2] === undefined)
+        throw new EdsError('missing PDO transmission type');
+
+    const transmissionType = commEntry[2].value;
+
+    /* sub-index 3 (optional):
+        *   bit 0..15      Inhibit time.
+        */
+    const inhibitTime = (commEntry[3] !== undefined)
+        ? commEntry[3].value : 0;
+
+    /* sub-index 5 (optional):
+        *   bit 0..15      Event timer value.
+        */
+    const eventTime = (commEntry[5] !== undefined)
+        ? commEntry[5].value : 0;
+
+    /* sub-index 6 (optional):
+        *   bit 0..7       SYNC start value.
+        */
+    const syncStart = (commEntry[6] !== undefined)
+        ? commEntry[6].value : 0;
+
+    let pdo = {
+        cobId,
+        transmissionType,
+        inhibitTime,
+        eventTime,
+        syncStart,
+        dataObjects: [],
+        dataSize: 0,
+    };
+
+    if (mapEntry[0].value == 0xFE)
+        throw new EdsError('SAM-MPDO not supported');
+
+    if (mapEntry[0].value == 0xFF)
+        throw new EdsError('DAM-MPDO not supported');
+
+    if (mapEntry[0].value > 0x40) {
+        throw new EdsError('invalid PDO mapping value '
+            + `(${mapEntry[0].value})`);
+    }
+
+    for (let i = 1; i <= mapEntry[0].value; ++i) {
+        if (mapEntry[i].raw.length == 0)
+            continue;
+
+        /* sub-index 1+:
+            *   bit 0..7       Bit length.
+            *   bit 8..15      Sub-index.
+            *   bit 16..31     Index.
+            */
+        const dataLength = mapEntry[i].raw.readUInt8(0);
+        const dataSubIndex = mapEntry[i].raw.readUInt8(1);
+        const dataIndex = mapEntry[i].raw.readUInt16LE(2);
+
+        let obj = eds.getEntry(dataIndex);
+        if (dataSubIndex)
+            obj = obj[dataSubIndex];
+
+        pdo.dataObjects[i - 1] = obj;
+        pdo.dataSize += dataLength / 8;
+    }
+
+    return pdo;
+}
+
 /**
  * CANopen PDO protocol handler.
  *
@@ -23,7 +134,7 @@ class Pdo extends Protocol {
     constructor(eds) {
         super();
 
-        if(!Eds.isEds(eds))
+        if (!Eds.isEds(eds))
             throw new TypeError('not an Eds');
 
         this.eds = eds;
@@ -51,7 +162,7 @@ class Pdo extends Protocol {
             if (index < 0x1400 || index > 0x15FF)
                 continue;
 
-            const pdo = this._parsePdo(index);
+            const pdo = parsePdo(this.eds, index);
             delete pdo.syncStart; // Not used by RPDOs
 
             rpdo.push(pdo);
@@ -76,7 +187,7 @@ class Pdo extends Protocol {
             if (index < 0x1800 || index > 0x19FF)
                 continue;
 
-            const pdo = this._parsePdo(index);
+            const pdo = parsePdo(this.eds, index);
             tpdo.push(pdo);
         }
 
@@ -89,15 +200,15 @@ class Pdo extends Protocol {
      * @fires Protocol#start
      */
     start() {
-        if(this.started)
+        if (this.started)
             return;
 
         this.receiveMap = {};
-        for( const pdo of this.rpdo)
+        for (const pdo of this.rpdo)
             this.receiveMap[pdo.cobId] = pdo;
 
         this.transmitMap = {};
-        for( const pdo of this.tpdo)
+        for (const pdo of this.tpdo)
             this.transmitMap[pdo.cobId] = pdo;
 
         for (const pdo of Object.values(this.transmitMap)) {
@@ -162,7 +273,7 @@ class Pdo extends Protocol {
             }
         }
 
-        if(this.syncTpdo.length > 0)
+        if (this.syncTpdo.length > 0)
             this.syncCobId = this.eds.getSyncCobId().cobId;
 
         super.start();
@@ -219,7 +330,7 @@ class Pdo extends Protocol {
     receive({ id, data }) {
         if ((id & 0x7FF) === this.syncCobId) {
             const counter = data[1];
-            for( const pdo of this.syncTpdo) {
+            for (const pdo of this.syncTpdo) {
                 if (pdo.started) {
                     if (pdo.transmissionType == 0) {
                         // Acyclic - send only if data changed
@@ -285,117 +396,6 @@ class Pdo extends Protocol {
         this.emit('pdo', pdo);
     }
 
-    /**
-     * Parse a pair of PDO communication/mapping parameters.
-     *
-     * @param {number} index - PDO communication parameter index.
-     * @returns {object} parsed PDO data.
-     * @private
-     */
-    _parsePdo(index) {
-        const commEntry = this.eds.getEntry(index);
-        if (!commEntry) {
-            index = '0x' + index.toString(16);
-            throw new EdsError(
-                `missing PDO communication parameter (${index})`);
-        }
-
-        const mapEntry = this.eds.getEntry(index + 0x200);
-        if (!mapEntry) {
-            index = '0x' + (index + 0x200).toString(16);
-            throw new EdsError(`missing PDO mapping parameter (${index})`);
-        }
-
-        /* sub-index 1 (mandatory):
-         *   bit 0..10      11-bit CAN base frame.
-         *   bit 11..28     29-bit CAN extended frame.
-         *   bit 29         Frame type.
-         *   bit 30         RTR allowed.
-         *   bit 31         PDO valid.
-         */
-        if (commEntry[1] === undefined)
-            throw new EdsError('missing PDO COB-ID');
-
-        let cobId = commEntry[1].value;
-        if (!cobId || ((cobId >> 31) & 0x1) == 0x1)
-            return;
-
-        if (((cobId >> 29) & 0x1) == 0x1)
-            throw new EdsError('CAN extended frames are not supported');
-
-        cobId &= 0x7FF;
-
-        /* sub-index 2 (mandatory):
-         *   bit 0..7       Transmission type.
-         */
-        if (commEntry[2] === undefined)
-            throw new EdsError('missing PDO transmission type');
-
-        const transmissionType = commEntry[2].value;
-
-        /* sub-index 3 (optional):
-         *   bit 0..15      Inhibit time.
-         */
-        const inhibitTime = (commEntry[3] !== undefined)
-            ? commEntry[3].value : 0;
-
-        /* sub-index 5 (optional):
-         *   bit 0..15      Event timer value.
-         */
-        const eventTime = (commEntry[5] !== undefined)
-            ? commEntry[5].value : 0;
-
-        /* sub-index 6 (optional):
-         *   bit 0..7       SYNC start value.
-         */
-        const syncStart = (commEntry[6] !== undefined)
-            ? commEntry[6].value : 0;
-
-        let pdo = {
-            cobId,
-            transmissionType,
-            inhibitTime,
-            eventTime,
-            syncStart,
-            dataObjects: [],
-            dataSize: 0,
-        };
-
-        if (mapEntry[0].value == 0xFE)
-            throw new EdsError('SAM-MPDO not supported');
-
-        if (mapEntry[0].value == 0xFF)
-            throw new EdsError('DAM-MPDO not supported');
-
-        if (mapEntry[0].value > 0x40) {
-            throw new EdsError('invalid PDO mapping value '
-                + `(${mapEntry[0].value})`);
-        }
-
-        for (let i = 1; i <= mapEntry[0].value; ++i) {
-            if (mapEntry[i].raw.length == 0)
-                continue;
-
-            /* sub-index 1+:
-             *   bit 0..7       Bit length.
-             *   bit 8..15      Sub-index.
-             *   bit 16..31     Index.
-             */
-            const dataLength = mapEntry[i].raw.readUInt8(0);
-            const dataSubIndex = mapEntry[i].raw.readUInt8(1);
-            const dataIndex = mapEntry[i].raw.readUInt16LE(2);
-
-            let obj = this.eds.getEntry(dataIndex);
-            if (dataSubIndex)
-                obj = obj[dataSubIndex];
-
-            pdo.dataObjects[i - 1] = obj;
-            pdo.dataSize += dataLength / 8;
-        }
-
-        return pdo;
-    }
-
     ////////////////////////////// Deprecated //////////////////////////////
 
     /**
@@ -417,12 +417,12 @@ class Pdo extends Protocol {
      */
     getReceive(cobId) {
         return deprecate(() => {
-            for(let [index, entry] of Object.entries(this.eds.dataObjects)) {
+            for (let [index, entry] of Object.entries(this.eds.dataObjects)) {
                 index = parseInt(index);
-                if(index < 0x1400 || index > 0x15FF)
+                if (index < 0x1400 || index > 0x15FF)
                     continue;
 
-                if(entry[1] !== undefined && entry[1].value === cobId)
+                if (entry[1] !== undefined && entry[1].value === cobId)
                     return entry;
             }
 
@@ -442,7 +442,7 @@ class Pdo extends Protocol {
      * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
      * @deprecated since 6.0.0
      */
-    addReceive(cobId, entries, args={}) {
+    addReceive(cobId, entries, args = {}) {
         args.cobId = cobId;
         args.dataObjects = entries;
         deprecate(() => this.eds.addReceivePdo(args),
@@ -469,12 +469,12 @@ class Pdo extends Protocol {
      */
     getTransmit(cobId) {
         return deprecate(() => {
-            for(let [index, entry] of Object.entries(this.eds.dataObjects)) {
+            for (let [index, entry] of Object.entries(this.eds.dataObjects)) {
                 index = parseInt(index);
-                if(index < 0x1800 || index > 0x19FF)
+                if (index < 0x1800 || index > 0x19FF)
                     continue;
 
-                if(entry[1] !== undefined && entry[1].value === cobId)
+                if (entry[1] !== undefined && entry[1].value === cobId)
                     return entry;
             }
 
@@ -494,7 +494,7 @@ class Pdo extends Protocol {
      * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
      * @deprecated since 6.0.0
      */
-    addTransmit(cobId, entries, args={}) {
+    addTransmit(cobId, entries, args = {}) {
         args.cobId = cobId;
         args.dataObjects = entries;
         deprecate(() => this.eds.addTransmitPdo(args),
@@ -513,4 +513,4 @@ class Pdo extends Protocol {
     }
 }
 
-module.exports = exports = { Pdo };
+module.exports = exports = { Pdo, parsePdo };
