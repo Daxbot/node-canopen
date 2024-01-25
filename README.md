@@ -5,10 +5,47 @@ can be found on the [CiA site](http://www.can-cia.org/)
 
 This library allows the manipulation of CANopen devices as defined in CiA 301.
 
+## Porting Guide (Version 5 -> 6)
+
+When updating from version 5 to version 6 be aware of the following changes:
+
+1. Modifying the Eds via the protocol modules has been deprecated and the
+preferred method is to use the new dedicated methods in the Eds class itself.
+This change was made to allow easy configuration without needing to create
+a Device object first. The following table is non-exhaustive and serves only
+to illustrate potential code changes:
+
+  Old method                      | New method
+  ------------------------------- | --------------------------------
+  `device.emcy.cobId = 0x8A`      | `device.eds.setEmcyCobId(0x8A)`
+  `device.nmt.producerTime = 500` | `device.eds.setHeartbeatProducerTime(500)`
+  `device.sdo.addServer(0x8B)`    | `device.eds.addSdoClientParameter(0x8B)`
+  `device.sync.generate = true`   | `device.eds.setSyncGenerationEnable(true)`
+
+2. NMT state now matters. Prior to version 6 the NMT state was available, but
+not used internally. The Device object is now aware of the NMT state and will
+bring up and shutdown protocol objects as the state changes. If your PDOs are
+not firing after the update make sure you are calling Nmt#startNode to switch
+to NmtState.OPERATIONAL. To preserve old behavior Device#init() will do this
+for you.
+
+3. Timers and internal protocol values will no longer automatically update when
+the Eds value changes during operation. Relevant values are read and cached when
+the module start() method is called (typically on entering
+NmtState.PRE_OPERATIONAL). If you need to change a communication parameter
+dynamically you can stop/start any of the protocol modules to force a re-load,
+or use Nmt#resetCommunication().
+
+4. Events have been refactored and moved to their respective protocol modules.
+Old events are still available, but will only fire if the Device#init() method
+has been called.
+
 ## Documentation
 
 Pre-built documentation for the latest release is available
 [here](https://daxbot.github.io/node-canopen/).
+
+Examples for each protocol are also available in the `examples` folder.
 
 ## Device
 The Device class represents a CANopen device and provides context for the
@@ -17,7 +54,7 @@ It contains the Eds and protocol objects.
 
  OD Entry | Description                   | Supported
  -------- | ----------------------------- | ------------------------
-  0x1000  | Device type                   | :heavy_check_mark:
+  0x1000  | Device type                   | :x:
   0x1002  | Manufacturer status register  | :heavy_check_mark:
   0x1008  | Manufacturer device name      | :heavy_check_mark:
   0x1009  | Manufacturer hardware version | :heavy_check_mark:
@@ -76,7 +113,7 @@ The CANopen network management protocol is used to manipulate the state of
 NMT consumer devices on the network and is responsible for the device heartbeat.
 Heartbeat generation will begin automatically when 'Producer heartbeat time'
 is set. If a 'Consumer heartbeat time' entry is present, then the Nmt module
-will emit [event:changeState][4] and [event:timeout][5].
+will emit [event:timeout][5] if the consumer heartbeat is lost.
 
  OD Entry | Description             | Supported
  -------- | ----------------------- | ------------------------
