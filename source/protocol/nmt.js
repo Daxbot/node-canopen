@@ -105,7 +105,7 @@ class Nmt extends Protocol {
      * @type {number}
      */
     get producerTime() {
-        if(this._producerTime !== undefined)
+        if (this._producerTime !== undefined)
             return this._producerTime;
 
         const obj1017 = this.eds.getEntry(0x1017);
@@ -225,7 +225,7 @@ class Nmt extends Protocol {
      */
     getConsumerTime(deviceId) {
         const subObj = this.eds.getHeartbeatConsumer(deviceId);
-        if(subObj)
+        if (subObj)
             return subObj.raw.readUInt16LE(0);
 
         return null;
@@ -234,14 +234,19 @@ class Nmt extends Protocol {
     /**
      * Get a device's NMT state.
      *
-     * @param {number} [deviceId] - CAN identifier.
-     * @param {number} [timeout] - How long to wait (ms).
-     * @returns {Promise<NmtState | null>} The node NMT state.
+     * @param {object} args - arguments.
+     * @param {number} args.deviceId - CAN identifier (defaults to this device).
+     * @param {boolean} args.fresh - if true, then wait for a fresh heartbeat.
+     * @param {number} args.timeout - How long to wait for a new heartbeat (ms).
+     * @returns {Promise<NmtState | null>} The node NMT state or null.
      * @since 6.0.0
      */
-    async getNodeState(deviceId, timeout) {
-        if (!deviceId)
+    async getNodeState({ deviceId, fresh, timeout }) {
+        if (!deviceId || deviceId === this.deviceId)
             return this.state;
+
+        if (!fresh && this.heartbeatMap[deviceId])
+            return this.heartbeatMap[deviceId].state;
 
         let interval = this.getConsumerTime(deviceId);
         if (interval === null)
@@ -386,6 +391,14 @@ class Nmt extends Protocol {
                         this.heartbeatMap[deviceId].state = null;
                         this.heartbeatTimers[deviceId] = null;
                     }, interval);
+
+                    /**
+                     * A consumer heartbeat was detected.
+                     *
+                     * @event Nmt#heartbeat
+                     * @type {number}
+                     */
+                    this.emit('heartbeat', deviceId);
                 }
                 else {
                     this.heartbeatTimers[deviceId].refresh();
@@ -498,14 +511,14 @@ class Nmt extends Protocol {
     getConsumer(deviceId) {
         return deprecate(() => {
             const obj1016 = this.getEntry(0x1016);
-            if(obj1016) {
+            if (obj1016) {
                 const maxSubIndex = obj1016[0].value;
                 for (let i = 1; i <= maxSubIndex; ++i) {
                     const subObj = obj1016.at(i);
-                    if(!subObj)
+                    if (!subObj)
                         continue;
 
-                    if(subObj.raw.readUInt8(2) === deviceId)
+                    if (subObj.raw.readUInt8(2) === deviceId)
                         return subObj;
                 }
             }

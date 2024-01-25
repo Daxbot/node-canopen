@@ -25,11 +25,26 @@ describe('Nmt', function () {
         expect(device.nmt.producerTime).to.equal(500);
     });
 
+    it('should emit on heartbeat detected', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setHeartbeatProducerTime(500);
+        device.eds.addHeartbeatConsumer(device.id, 10);
+
+        device.nmt.addListener('heartbeat', (deviceId) => {
+            expect(deviceId).to.equal(device.id);
+            device.nmt.stop();
+            done();
+        });
+
+        device.nmt.start();
+    });
+
     it('should emit on heartbeat timeout', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
         device.eds.addHeartbeatConsumer(device.id, 10);
 
-        device.nmt.addListener('timeout', () => {
+        device.nmt.addListener('timeout', (deviceId) => {
+            expect(deviceId).to.equal(device.id);
             device.nmt.stop();
             done();
         });

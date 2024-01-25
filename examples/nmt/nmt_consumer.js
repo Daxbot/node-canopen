@@ -14,17 +14,14 @@ const { Device } = require('../../index.js');
  */
 async function main(device, consumerId) {
     await new Promise((resolve) => {
-        device.nmt.addListener('changeState', ({ deviceId, newState }) => {
-            if (deviceId == device.id)
-                return;
-
-            deviceId = '0x' + deviceId.toString(16);
-            console.log('Device ' + deviceId + ' changed to state', newState);
-        });
-
-        device.nmt.addListener('timeout', () => {
+        device.nmt.addListener('timeout', (deviceId) => {
+            console.log('Heartbeat timeout for 0x' +  deviceId.toString(16));
             device.stop();
             resolve();
+        });
+
+        device.nmt.addListener('heartbeat', (deviceId) => {
+            console.log('Heartbeat detected for 0x' +  deviceId.toString(16));
         });
 
         device.eds.addHeartbeatConsumer(consumerId, 200);

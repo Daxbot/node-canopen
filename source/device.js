@@ -151,6 +151,12 @@ class Device extends EventEmitter {
             this.emit('nmtTimeout', deviceId);
         });
 
+        this.nmt.on('heartbeat', (deviceId) => {
+            this.nmt.getNodeState({ deviceId }).then((state) => {
+                this.emit('nmtChangeState', deviceId, state);
+            });
+        });
+
         this.pdo.on('pdo', (pdo) => {
             /**
              * PDO received (deprecated).
