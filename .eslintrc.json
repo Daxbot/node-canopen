@@ -49,6 +49,12 @@
                 "allowTemplateLiterals": true
             }
         ],
+        "jsdoc/no-undefined-types": [
+            "warn",
+            {
+                "definedTypes": [ "Iterable" ]
+            }
+        ],
         "no-trailing-spaces": "error",
         "no-control-regex": "off",
         "no-unused-vars": "error",

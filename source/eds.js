@@ -46,6 +46,9 @@ function edsToEntry(data) {
  * @private
  */
 function entryToEds(entry) {
+    if(!DataObject.isDataObject(entry))
+        throw new TypeError('entry is not a DataObject');
+
     let data = {};
 
     data['ParameterName'] = entry.parameterName;
@@ -120,11 +123,12 @@ class DataObject extends EventEmitter {
     constructor(key, data) {
         super();
 
+        Object.assign(this, data);
+        this.parent = null;
+
         this.key = key;
         if (this.key === undefined)
             throw new ReferenceError('key must be defined');
-
-        Object.assign(this, data);
 
         if (this.parameterName === undefined)
             throw new EdsError('parameterName is mandatory for DataObject');
@@ -272,7 +276,7 @@ class DataObject extends EventEmitter {
      * @type {number}
      */
     get index() {
-        return Number('0x' + this.key.split('sub')[0]);
+        return parseInt(this.key.split('sub')[0], 16);
     }
 
     /**
@@ -285,7 +289,7 @@ class DataObject extends EventEmitter {
         if (key.length < 2)
             return null;
 
-        return Number('0x' + key[1]);
+        return parseInt(key[1], 16);
     }
 
     /**
@@ -530,6 +534,8 @@ class DataObject extends EventEmitter {
 
         const key = this.key + 'sub' + subIndex;
         const entry = new DataObject(key, data);
+        entry.parent = this;
+
         this._subObjects[subIndex] = entry;
 
         // Emit update from parent if sub-entry value changes
@@ -690,6 +696,10 @@ class Eds {
             revisionNumber: info.revisionNumber,
             serialNumber: 0,
         });
+    }
+
+    [Symbol.iterator]() {
+        return this.values();
     }
 
     /**
@@ -1013,7 +1023,7 @@ class Eds {
     get nrOfRXPDO() {
         let count = 0;
         for (let index of Object.keys(this.dataObjects)) {
-            index = parseInt(index);
+            index = parseInt(index, 16);
             if (index >= 0x1400 && index <= 0x15FF)
                 count++;
         }
@@ -1029,7 +1039,7 @@ class Eds {
     get nrOfTXPDO() {
         let count = 0;
         for (let index of Object.keys(this.dataObjects)) {
-            index = parseInt(index);
+            index = parseInt(index, 16);
             if (index >= 0x1800 && index <= 0x19FF)
                 count++;
         }
@@ -1155,24 +1165,24 @@ class Eds {
         let mfrObjects = {};
         let mfrCount = 0;
 
-        for (const key of Object.keys(this.dataObjects)) {
-            let index = parseInt(key);
+        for (const key of this.keys()) {
+            let index = parseInt(key, 16);
 
             if ([0x1000, 0x1001, 0x1018].includes(index)) {
                 mandCount += 1;
-                mandObjects[mandCount] = '0x' + index.toString(16);
+                mandObjects[mandCount] = '0x' + key;
             }
             else if (index >= 0x1000 && index < 0x1FFF) {
                 optCount += 1;
-                optObjects[optCount] = '0x' + index.toString(16);
+                optObjects[optCount] = '0x' + key;
             }
             else if (index >= 0x2000 && index < 0x5FFF) {
                 mfrCount += 1;
-                mfrObjects[mfrCount] = '0x' + index.toString(16);
+                mfrObjects[mfrCount] = '0x' + key;
             }
             else if (index >= 0x6000 && index < 0xFFFF) {
                 optCount += 1;
-                optObjects[optCount] = '0x' + index.toString(16);
+                optObjects[optCount] = '0x' + key;
             }
         }
 
@@ -1199,10 +1209,37 @@ class Eds {
     }
 
     /**
+     * Returns a new iterator object that iterates the keys for each entry.
+     *
+     * @returns {Iterable.<string>} Iterable keys.
+     */
+    keys() {
+        return Object.keys(this.dataObjects).values();
+    }
+
+    /**
+     * Returns a new iterator object that iterates DataObjects.
+     *
+     * @returns {Iterable.<DataObject>} Iterable DataObjects.
+     */
+    values() {
+        return Object.values(this.dataObjects).values();
+    }
+
+    /**
+     * Returns a new iterator object that iterates key/DataObjects pairs.
+     *
+     * @returns {Iterable.<Array>} Iterable [key, DataObjects].
+     */
+    entries() {
+        return Object.entries(this.dataObjects).values();
+    }
+
+    /**
      * Reset objects to their default values.
      */
     reset() {
-        for (const [entry] of Object.value(this.dataObjects))
+        for (const entry of this.values())
             entry.value = entry.defaultValue;
     }
 
@@ -1228,7 +1265,7 @@ class Eds {
      */
     getEntry(index) {
         let entry = null;
-        if (typeof index == 'string') {
+        if (typeof index === 'string') {
             // Name lookup
             entry = this.findEntry(index);
             if (entry.length > 1)
@@ -1237,8 +1274,9 @@ class Eds {
             entry = entry[0];
         }
         else {
-            // Index lookup
-            entry = this.dataObjects[index];
+            // Index lookup.
+            const key = index.toString(16).padStart(4, '0');
+            entry = this.dataObjects[key];
         }
 
         return entry;
@@ -1252,15 +1290,15 @@ class Eds {
      * @returns {DataObject} - the newly created entry.
      */
     addEntry(index, data) {
-        let entry = this.dataObjects[index];
-        if (entry !== undefined) {
-            index = '0x' + index.toString(16);
-            throw new EdsError(`${index} already exists`);
-        }
+        if(typeof index !== 'number')
+            throw new TypeError('index must be a number');
 
-        const key = index.toString(16);
-        entry = new DataObject(key, data);
-        this.dataObjects[index] = entry;
+        const key = index.toString(16).padStart(4, '0');
+        if (this.dataObjects[key] !== undefined)
+            throw new EdsError(`${key} already exists`);
+
+        const entry = new DataObject(key, data);
+        this.dataObjects[key] = entry;
 
         if (this.nameLookup[entry.parameterName] === undefined)
             this.nameLookup[entry.parameterName] = [];
@@ -1276,11 +1314,9 @@ class Eds {
      * @param {number} index - index of the data object.
      */
     removeEntry(index) {
-        const entry = this.dataObjects[index];
-        if (entry === undefined) {
-            index = '0x' + index.toString(16);
-            throw new EdsError(`${index} does not exist`);
-        }
+        const entry = this.getEntry(index);
+        if (entry === undefined)
+            throw new EdsError(`${index.toString(16)} does not exist`);
 
         this.nameLookup[entry.parameterName].splice(
             this.nameLookup[entry.parameterName].indexOf(entry), 1);
@@ -1288,7 +1324,7 @@ class Eds {
         if (this.nameLookup[entry.parameterName].length == 0)
             delete this.nameLookup[entry.parameterName];
 
-        delete this.dataObjects[entry.index];
+        delete this.dataObjects[entry.key];
     }
 
     /**
@@ -1301,14 +1337,12 @@ class Eds {
     getSubEntry(index, subIndex) {
         const entry = this.getEntry(index);
 
-        if (entry === undefined) {
-            index = '0x' + index.toString(16);
-            throw new EdsError(`${index} does not exist`);
-        }
+        if (entry === undefined)
+            throw new EdsError(`${index.toString(16)} does not exist`);
 
         if (entry.subNumber === undefined) {
-            index = '0x' + index.toString(16);
-            throw new EdsError(`${index} does not support sub objects`);
+            throw new EdsError(
+                `${index.toString(16)} does not support sub objects`);
         }
 
         return entry[subIndex] || null;
@@ -1323,16 +1357,13 @@ class Eds {
      * @returns {DataObject} - the newly created sub-entry.
      */
     addSubEntry(index, subIndex, data) {
-        const entry = this.dataObjects[index];
-
-        if (entry === undefined) {
-            index = '0x' + index.toString(16);
-            throw new EdsError(`${index} does not exist`);
-        }
+        const entry = this.getEntry(index);
+        if (entry === undefined)
+            throw new EdsError(`${index.toString(16)} does not exist`);
 
         if (entry.subNumber === undefined) {
-            index = '0x' + index.toString(16);
-            throw new EdsError(`${index} does not support sub objects`);
+            throw new EdsError(
+                `${index.toString(16)} does not support sub objects`);
         }
 
         // Add the new entry
@@ -1346,19 +1377,16 @@ class Eds {
      * @param {number} subIndex - subIndex of the data object.
      */
     removeSubEntry(index, subIndex) {
-        const entry = this.dataObjects[index];
-
+        const entry = this.getEntry(index);
         if (subIndex < 1)
             throw new EdsError('subIndex must be >= 1');
 
-        if (entry === undefined) {
-            index = '0x' + index.toString(16);
-            throw new EdsError(`${index} does not exist`);
-        }
+        if (entry === undefined)
+            throw new EdsError(`${index.toString(16)} does not exist`);
 
         if (entry.subNumber === undefined) {
-            index = '0x' + index.toString(16);
-            throw new EdsError(`${index} does not support sub objects`);
+            throw new EdsError(
+                `${index.toString(16)} does not support sub objects`);
         }
 
         if (entry[subIndex] === undefined)
@@ -2515,23 +2543,35 @@ class Eds {
     getSdoServerParameters() {
         const parameters = [];
 
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1200 || index > 0x127F)
                 continue;
 
-            let cobIdRx = entry[1].value;
+            const subObj1 = entry.at(1);
+            if(!subObj1)
+                continue;
+
+            let cobIdRx = subObj1.value;
             if (!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
                 continue;
 
-            let cobIdTx = entry[2].value;
+            const subObj2 = entry.at(2);
+            if(!subObj2)
+                continue;
+
+            let cobIdTx = subObj2.value;
             if (!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
                 continue;
 
             cobIdRx &= 0x7FF;
             cobIdTx &= 0x7FF;
 
-            const deviceId = entry[3].value || 0;
+            let deviceId = 0;
+
+            const subObj3 = entry.at(3);
+            if(subObj3)
+                deviceId = subObj3.value;
 
             parameters.push({ deviceId, cobIdTx, cobIdRx });
         }
@@ -2570,8 +2610,8 @@ class Eds {
         if (deviceId < 0 || deviceId > 0x7F)
             throw RangeError('deviceId must be in range [0-127]');
 
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1200 || index > 0x127F)
                 continue;
 
@@ -2636,8 +2676,8 @@ class Eds {
      * @since 6.0.0
      */
     removeSdoServerParameter(deviceId) {
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1200 || index > 0x127F)
                 continue;
 
@@ -2657,8 +2697,8 @@ class Eds {
     getSdoClientParameters() {
         const parameters = [];
 
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1280 || index > 0x12FF)
                 continue;
 
@@ -2714,8 +2754,8 @@ class Eds {
         if (!deviceId || deviceId < 1 || deviceId > 0x7F)
             throw new RangeError('deviceId must be in range [1-127]');
 
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1280 || index > 0x12FF)
                 continue;
 
@@ -2780,8 +2820,8 @@ class Eds {
      * @since 6.0.0
      */
     removeSdoClientParameter(deviceId) {
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1280 || index > 0x12FF)
                 continue;
 
@@ -2801,8 +2841,8 @@ class Eds {
     getReceivePdos() {
         const rpdo = [];
 
-        for (let index of Object.keys(this.dataObjects)) {
-            index = parseInt(index);
+        for (let index of this.keys()) {
+            index = parseInt(index, 16);
             if (index < 0x1400 || index > 0x15FF)
                 continue;
 
@@ -2854,8 +2894,8 @@ class Eds {
      * @since 6.0.0
      */
     addReceivePdo(pdo, options = {}) {
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1400 || index > 0x15FF)
                 continue;
 
@@ -2984,8 +3024,8 @@ class Eds {
      * @since 6.0.0
      */
     removeReceivePdo(cobId) {
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1400 || index > 0x15FF)
                 continue;
 
@@ -3009,8 +3049,8 @@ class Eds {
     getTransmitPdos() {
         const tpdo = [];
 
-        for (let index of Object.keys(this.dataObjects)) {
-            index = parseInt(index);
+        for (let index of this.keys()) {
+            index = parseInt(index, 16);
             if (index < 0x1800 || index > 0x19FF)
                 continue;
 
@@ -3064,8 +3104,8 @@ class Eds {
      * @since 6.0.0
      */
     addTransmitPdo(pdo, options = {}) {
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1800 || index > 0x19FF)
                 continue;
 
@@ -3199,8 +3239,8 @@ class Eds {
      * @since 6.0.0
      */
     removeTransmitPdo(cobId) {
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1800 || index > 0x19FF)
                 continue;
 
@@ -3381,8 +3421,8 @@ class Eds {
             if (key == 'SupportedObjects')
                 continue;
 
-            const index = parseInt(value);
-            const dataObject = this.dataObjects[index];
+            const index = parseInt(value, 16);
+            const dataObject = this.dataObjects[index.toString(16)];
 
             // Write top level object
             const section = index.toString(16);
