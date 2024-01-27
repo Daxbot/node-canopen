@@ -217,16 +217,25 @@ class Nmt extends Protocol {
      *
      * @param {object} args - arguments.
      * @param {number} args.deviceId - CAN identifier (defaults to this device).
-     * @param {boolean} args.fresh - if true, then wait for a fresh heartbeat.
      * @param {number} args.timeout - How long to wait for a new heartbeat (ms).
      * @returns {Promise<NmtState | null>} The node NMT state or null.
      * @since 6.0.0
      */
-    async getNodeState({ deviceId, fresh, timeout }) {
+    async getNodeState(...args) {
+        let deviceId, timeout;
+        if(typeof args[0] === 'object') {
+            deviceId = args.deviceId;
+            timeout = args.timeout;
+        }
+        else {
+            deviceId = args[0];
+            timeout = args[1];
+        }
+
         if (!deviceId || deviceId === this.deviceId)
             return this.state;
 
-        if (!fresh && this.heartbeatMap[deviceId])
+        if (!timeout && this.heartbeatMap[deviceId])
             return this.heartbeatMap[deviceId].state;
 
         let interval = this.getConsumerTime(deviceId);

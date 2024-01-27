@@ -42,6 +42,7 @@ class Device extends EventEmitter {
 
         this.protocol = {
             emcy: new Emcy(this.eds),
+            lss: new Lss(this.eds),
             nmt: new Nmt(this.eds),
             pdo: new Pdo(this.eds),
             sdoClient: new SdoClient(this.eds),
@@ -73,8 +74,6 @@ class Device extends EventEmitter {
             args.enableLss = this.eds.lssSupported;
 
         if (args.enableLss) {
-            this.protocol.lss = new Lss(this.eds);
-            this.lss.on('message', (m) => this.emit('message', m));
             this.lss.on('changeDeviceId', (id) => this.id = id);
             this.lss.start();
         }
