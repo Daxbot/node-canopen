@@ -196,9 +196,18 @@ class Nmt extends Protocol {
      * @since 5.1.0
      */
     getConsumerTime(deviceId) {
-        const subObj = this.eds.getHeartbeatConsumer(deviceId);
-        if (subObj)
-            return subObj.raw.readUInt16LE(0);
+        const obj1016 = this.eds.getEntry(0x1016);
+        if (obj1016) {
+            const maxSubIndex = obj1016[0].value;
+            for (let i = 1; i <= maxSubIndex; ++i) {
+                const subObj = obj1016.at(i);
+                if (!subObj)
+                    continue;
+
+                if(deviceId === subObj.raw.readUInt8(2))
+                    return subObj.raw.readUInt16LE(0);
+            }
+        }
 
         return null;
     }
