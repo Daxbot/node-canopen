@@ -35,7 +35,7 @@ class Sync extends Protocol {
      * Get object 0x1005 [bit 30] - Sync generation enable.
      *
      * @returns {boolean} Sync generation enable.
-     * @deprecated
+     * @deprecated Use {@link Eds#getSyncGenerationEnable} instead.
      */
     get generate() {
         return this.eds.getSyncGenerationEnable();
@@ -45,7 +45,7 @@ class Sync extends Protocol {
      * Set object 0x1005 [bit 30] - Sync generation enable.
      *
      * @param {boolean} enable - Sync generation enable.
-     * @deprecated
+     * @deprecated Use {@link Eds#setSyncGenerationEnable} instead.
      */
     set generate(enable) {
         this.eds.setSyncGenerationEnable(enable);
@@ -55,7 +55,7 @@ class Sync extends Protocol {
      * Get object 0x1005 - COB-ID SYNC.
      *
      * @returns {number} Sync COB-ID.
-     * @deprecated
+     * @deprecated Use {@link Eds#getSyncCobId} instead.
      */
     get cobId() {
         return this.eds.getSyncCobId();
@@ -65,7 +65,7 @@ class Sync extends Protocol {
      * Set object 0x1005 - COB-ID SYNC.
      *
      * @param {number} cobId - Sync COB-ID (typically 0x80).
-     * @deprecated
+     * @deprecated Use {@link Eds#setSyncCobId} instead.
      */
     set cobId(cobId) {
         this.eds.setSyncCobId(cobId);
@@ -75,7 +75,7 @@ class Sync extends Protocol {
      * Get object 0x1006 - Communication cycle period.
      *
      * @returns {number} Sync interval in μs.
-     * @deprecated
+     * @deprecated Use {@link Eds#getSyncCyclePeriod} instead.
      */
     get cyclePeriod() {
         return this.eds.getSyncCyclePeriod();
@@ -85,7 +85,7 @@ class Sync extends Protocol {
      * Set object 0x1006 - Communication cycle period.
      *
      * @param {number} period - communication cycle period.
-     * @deprecated
+     * @deprecated Use {@link Eds#setSyncCyclePeriod} instead.
      */
     set cyclePeriod(period) {
         this.eds.setSyncCyclePeriod(period);
@@ -95,7 +95,7 @@ class Sync extends Protocol {
      * Get object 0x1019 - Synchronous counter overflow value.
      *
      * @returns {number} Sync counter overflow value.
-     * @deprecated
+     * @deprecated Use {@link Eds#getSyncOverflow} instead.
      */
     get overflow() {
         return this.eds.getSyncOverflow();
@@ -105,7 +105,7 @@ class Sync extends Protocol {
      * Set object 0x1019 - Synchronous counter overflow value.
      *
      * @param {number} overflow - Sync overflow value.
-     * @deprecated
+     * @deprecated Use {@link Eds#setSyncOverflow} instead.
      */
     set overflow(overflow) {
         this.eds.setSyncOverflow(overflow);

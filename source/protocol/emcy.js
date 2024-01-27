@@ -306,7 +306,7 @@ class Emcy extends Protocol {
      * Get object 0x1001 - Error register.
      *
      * @returns {number} error register value.
-     * @deprecated
+     * @deprecated Use {@link Eds#getErrorRegister} instead.
      */
     get register() {
         return this.eds.getErrorRegister();
@@ -316,7 +316,7 @@ class Emcy extends Protocol {
      * Set object 0x1001 - Error register.
      *
      * @param {number} flags - error flags.
-     * @deprecated
+     * @deprecated Use {@link Eds#setErrorRegister} instead.
      */
     set register(flags) {
         this.eds.setErrorRegister(flags);
@@ -326,7 +326,7 @@ class Emcy extends Protocol {
      * Get object 0x1014 [bit 31] - EMCY valid.
      *
      * @returns {boolean} Emcy valid.
-     * @deprecated
+     * @deprecated Use {@link Eds#getEmcyValid} instead.
      */
     get valid() {
         return this.eds.getEmcyValid();
@@ -336,7 +336,7 @@ class Emcy extends Protocol {
      * Set object 0x1014 [bit 31] - EMCY valid.
      *
      * @param {number} valid - Emcy valid.
-     * @deprecated
+     * @deprecated Use {@link Eds#setEmcyValid} instead.
      */
     set valid(valid) {
         this.eds.setEmcyValid(valid);
@@ -346,7 +346,7 @@ class Emcy extends Protocol {
      * Get object 0x1014 - COB-ID EMCY.
      *
      * @returns {number} Emcy COB-ID.
-     * @deprecated
+     * @deprecated Use {@link Eds#getEmcyCobId} instead.
      */
     get cobId() {
         return this.eds.getEmcyCobId();
@@ -356,7 +356,7 @@ class Emcy extends Protocol {
      * Set object 0x1014 - COB-ID EMCY.
      *
      * @param {number} value - Emcy COB-ID.
-     * @deprecated
+     * @deprecated Use {@link Eds#setEmcyCobId} instead.
      */
     set cobId(value) {
         this.eds.setEmcyCobId(value);
@@ -366,7 +366,7 @@ class Emcy extends Protocol {
      * Get object 0x1015 - Inhibit time EMCY.
      *
      * @returns {number} Emcy inhibit time in ms.
-     * @deprecated
+     * @deprecated Use {@link Eds#getEmcyInhibitTime} instead.
      */
     get inhibitTime() {
         return this.eds.getEmcyInhibitTime();
@@ -376,7 +376,7 @@ class Emcy extends Protocol {
      * Set object 0x1015 - Inhibit time EMCY.
      *
      * @param {number} value - inhibit time in multiples of 100 μs.
-     * @deprecated
+     * @deprecated Use {@link Eds#setEmcyInhibitTime} instead.
      */
     set inhibitTime(value) {
         this.eds.setEmcyInhibitTime(value);

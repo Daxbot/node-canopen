@@ -36,7 +36,7 @@ class Time extends Protocol {
      * Get object 0x1012 [bit 30] - Time producer enable.
      *
      * @returns {boolean} Time producer enable.
-     * @deprecated
+     * @deprecated Use {@link Eds#getTimeProducerEnable} instead.
      */
     get produce() {
         return this.eds.getTimeProducerEnable();
@@ -46,7 +46,7 @@ class Time extends Protocol {
      * Set object 0x1012 [bit 30] - Time producer enable.
      *
      * @param {boolean} enable - Time producer enable.
-     * @deprecated
+     * @deprecated Use {@link Eds#setTimeProducerEnable} instead.
      */
     set produce(enable) {
         this.eds.setTimeProducerEnable(enable);
@@ -56,7 +56,7 @@ class Time extends Protocol {
      * Get object 0x1012 [bit 31] - Time consumer enable.
      *
      * @returns {boolean} Time consumer enable.
-     * @deprecated
+     * @deprecated Use {@link Eds#getTimeConsumerEnable} instead.
      */
     get consume() {
         return this.eds.getTimeConsumerEnable();
@@ -66,7 +66,7 @@ class Time extends Protocol {
      * Set object 0x1012 [bit 31] - Time consumer enable.
      *
      * @param {boolean} enable - Time consumer enable.
-     * @deprecated
+     * @deprecated Use {@link Eds#setTimeConsumerEnable} instead.
      */
     set consume(enable) {
         this.eds.setTimeConsumerEnable(enable);
@@ -76,7 +76,7 @@ class Time extends Protocol {
      * Get object 0x1012 - COB-ID TIME.
      *
      * @returns {number} Time COB-ID.
-     * @deprecated
+     * @deprecated Use {@link Eds#getTimeCobId} instead.
      */
     get cobId() {
         return this.eds.getTimeCobId();
@@ -86,7 +86,7 @@ class Time extends Protocol {
      * Set object 0x1012 - COB-ID TIME.
      *
      * @param {number} cobId - Time COB-ID (typically 0x100).
-     * @deprecated
+     * @deprecated Use {@link Eds#setTimeCobId} instead.
      */
     set cobId(cobId) {
         this.eds.setTimeCobId(cobId);

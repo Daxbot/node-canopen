@@ -152,7 +152,7 @@ class Lss extends Protocol {
      * Vendor id.
      *
      * @type {number}
-     * @deprecated
+     * @deprecated Use {@link Eds#getIdentity} instead.
      */
     get vendorId() {
         return this.eds.getSubEntry(0x1018, 1).value;
@@ -162,7 +162,7 @@ class Lss extends Protocol {
      * Vendor id.
      *
      * @param {number} value - value to set.
-     * @deprecated
+     * @deprecated Use {@link Eds#setIdentity} instead.
      */
     set vendorId(value) {
         this.eds.getSubEntry(0x1018, 1).value = value;
@@ -172,7 +172,7 @@ class Lss extends Protocol {
      * Product code.
      *
      * @type {number}
-     * @deprecated
+     * @deprecated Use {@link Eds#getIdentity} instead.
      */
     get productCode() {
         return this.eds.getSubEntry(0x1018, 2).value;
@@ -182,7 +182,7 @@ class Lss extends Protocol {
      * Product code.
      *
      * @param {number} value - value to set.
-     * @deprecated
+     * @deprecated Use {@link Eds#setIdentity} instead.
      */
     set productCode(value) {
         this.eds.getSubEntry(0x1018, 2).value = value;
@@ -192,7 +192,7 @@ class Lss extends Protocol {
      * Revision number.
      *
      * @type {number}
-     * @deprecated
+     * @deprecated Use {@link Eds#getIdentity} instead.
      */
     get revisionNumber() {
         return this.eds.getSubEntry(0x1018, 3).value;
@@ -202,7 +202,7 @@ class Lss extends Protocol {
      * Revision number.
      *
      * @param {number} value - value to set.
-     * @deprecated
+     * @deprecated Use {@link Eds#setIdentity} instead.
      */
     set revisionNumber(value) {
         this.eds.getSubEntry(0x1018, 3).value = value;
@@ -212,7 +212,7 @@ class Lss extends Protocol {
      * Serial number.
      *
      * @type {number}
-     * @deprecated
+     * @deprecated Use {@link Eds#getIdentity} instead.
      */
     get serialNumber() {
         return this.eds.getSubEntry(0x1018, 4).value;
@@ -222,7 +222,7 @@ class Lss extends Protocol {
      * Serial number.
      *
      * @param {number} value - value to set.
-     * @deprecated
+     * @deprecated Use {@link Eds#setIdentity} instead.
      */
     set serialNumber(value) {
         this.eds.getSubEntry(0x1018, 4).value = value;
