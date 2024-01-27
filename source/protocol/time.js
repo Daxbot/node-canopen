@@ -98,14 +98,7 @@ class Time extends Protocol {
      * @fires Protocol#start
      */
     start() {
-        if(this.eds.getTimeConsumerEnable()) {
-            const cobId = this.eds.getTimeCobId();
-            if(!cobId)
-                throw new EdsError('COB-ID TIME may not be 0');
-
-            this._cobId = cobId;
-        }
-
+        this._init();
         super.start();
     }
 
@@ -159,6 +152,16 @@ class Time extends Protocol {
             this.emit('time', date);
         }
     }
+
+    /**
+     * Initialize Time object consumptions.
+     *
+     * @private
+     */
+    _init() {
+        if(this.eds.getTimeConsumerEnable())
+            this._cobId = this.eds.getTimeCobId();
+    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -171,7 +174,7 @@ class Time extends Protocol {
  */
 Time.prototype.init = deprecate(
     function () {
-        this.start();
+        this._init();
     }, 'Time.init() is deprecated. Use Time.start() instead.');
 
 module.exports = exports = { Time };

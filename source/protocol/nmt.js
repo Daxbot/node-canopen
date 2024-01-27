@@ -5,7 +5,7 @@
  */
 
 const Protocol = require('./protocol');
-const { DataObject, Eds, EdsError } = require('../eds');
+const { DataObject, Eds } = require('../eds');
 const { deprecate } = require('util');
 
 /**
@@ -81,8 +81,8 @@ class Nmt extends Protocol {
 
         this.eds = eds;
         this.deviceId = null;
-        this.heartbeatMap = {};
-        this.heartbeatTimers = {};
+        this.consumers = {};
+        this.timers = {};
         this._state = NmtState.INITIALIZING;
     }
 
@@ -128,24 +128,13 @@ class Nmt extends Protocol {
         if (this.state !== NmtState.INITIALIZING)
             return;
 
+        this._init();
+
         const producerTime = this.eds.getHeartbeatProducerTime();
-        const consumers = this.eds.getHeartbeatConsumers();
-
-        this.heartbeatMap = {};
-        for (const { deviceId, heartbeatTime } of consumers) {
-            this.heartbeatMap[deviceId] = {
-                state: null,
-                interval: heartbeatTime,
-            };
-        }
-
-        if (producerTime !== null) {
-            if (producerTime === 0)
-                throw new EdsError('producerTime may not be 0');
-
+        if (producerTime > 0) {
             // Start heartbeat timer
-            this.heartbeatTimers[0] = setInterval(() => {
-                if (this.deviceId)
+            this.timers[0] = setInterval(() => {
+                if (this.deviceId && this.deviceId < 0x80)
                     this._sendHeartbeat(this.deviceId);
             }, producerTime);
         }
@@ -160,11 +149,11 @@ class Nmt extends Protocol {
      * @fires Protocol#stop
      */
     stop() {
-        for (const timer of Object.values(this.heartbeatTimers))
+        for (const timer of Object.values(this.timers))
             clearTimeout(timer);
 
         this.state = NmtState.INITIALIZING;
-        this.heartbeatTimers = {};
+        this.timers = {};
         super.stop();
     }
 
@@ -235,8 +224,8 @@ class Nmt extends Protocol {
         if (!deviceId || deviceId === this.deviceId)
             return this.state;
 
-        if (!timeout && this.heartbeatMap[deviceId])
-            return this.heartbeatMap[deviceId].state;
+        if (!timeout && this.consumers[deviceId])
+            return this.consumers[deviceId].state;
 
         let interval = this.getConsumerTime(deviceId);
         if (interval === null)
@@ -252,7 +241,7 @@ class Nmt extends Protocol {
             let intervalTimer = null;
 
             timeoutTimer = setTimeout(() => {
-                const heartbeat = this.heartbeatMap[deviceId];
+                const heartbeat = this.consumers[deviceId];
                 if (heartbeat && heartbeat.last > start)
                     resolve(heartbeat.state);
                 else
@@ -262,7 +251,7 @@ class Nmt extends Protocol {
             }, timeout);
 
             intervalTimer = setInterval(() => {
-                const heartbeat = this.heartbeatMap[deviceId];
+                const heartbeat = this.consumers[deviceId];
                 if (heartbeat && heartbeat.last > start) {
                     clearTimeout(timeoutTimer);
                     clearInterval(intervalTimer);
@@ -349,6 +338,7 @@ class Nmt extends Protocol {
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @fires Nmt#changeState
+     * @fires Nmt#heartbeat
      * @fires Nmt#timeout
      */
     receive({ id, data }) {
@@ -359,18 +349,29 @@ class Nmt extends Protocol {
         }
         else if ((id & 0x700) == 0x700) {
             const deviceId = id & 0x7F;
-            if (deviceId in this.heartbeatMap) {
-                this.heartbeatMap[deviceId].last = Date.now();
+            if (deviceId in this.consumers) {
+                this.consumers[deviceId].last = Date.now();
 
-                const newState = data[0];
-                const oldState = this.heartbeatMap[deviceId].state;
-                if (newState !== oldState)
-                    this.heartbeatMap[deviceId].state = newState;
+                const state = data[0];
+                const oldState = this.consumers[deviceId].state;
+                if (state !== oldState) {
+                    this.consumers[deviceId].state = state;
 
-                if (!this.heartbeatTimers[deviceId]) {
+                    /**
+                     * A consumer NMT state changed.
+                     *
+                     * @event Nmt#heartbeat
+                     * @type {object}
+                     * @property {number} deviceId - device identifier.
+                     * @property {NmtState} state - new device NMT state.
+                     */
+                    this.emit('heartbeat', { deviceId, state });
+                }
+
+                if (!this.timers[deviceId]) {
                     // First heartbeat - start timer.
-                    const interval = this.heartbeatMap[deviceId].interval;
-                    this.heartbeatTimers[deviceId] = setTimeout(() => {
+                    const interval = this.consumers[deviceId].interval;
+                    this.timers[deviceId] = setTimeout(() => {
                         /**
                          * A consumer heartbeat timed out.
                          *
@@ -378,20 +379,12 @@ class Nmt extends Protocol {
                          * @type {number}
                          */
                         this.emit('timeout', deviceId);
-                        this.heartbeatMap[deviceId].state = null;
-                        this.heartbeatTimers[deviceId] = null;
+                        this.consumers[deviceId].state = null;
+                        this.timers[deviceId] = null;
                     }, interval);
-
-                    /**
-                     * A consumer heartbeat was detected.
-                     *
-                     * @event Nmt#heartbeat
-                     * @type {number}
-                     */
-                    this.emit('heartbeat', deviceId);
                 }
                 else {
-                    this.heartbeatTimers[deviceId].refresh();
+                    this.timers[deviceId].refresh();
                 }
             }
         }
@@ -476,6 +469,23 @@ class Nmt extends Protocol {
          */
         this.emit('reset', resetNode);
     }
+
+    /**
+     * Initialize the heartbeat consumer map.
+     *
+     * @private
+     */
+    _init() {
+        const consumers = this.eds.getHeartbeatConsumers();
+
+        this.consumers = {};
+        for (const { deviceId, heartbeatTime } of consumers) {
+            this.consumers[deviceId] = {
+                state: null,
+                interval: heartbeatTime,
+            };
+        }
+    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -488,7 +498,7 @@ class Nmt extends Protocol {
  */
 Nmt.prototype.init = deprecate(
     function () {
-        this.start();
+        this._init();
     }, 'Nmt.init() is deprecated. Use Nmt.start() instead.');
 
 /**

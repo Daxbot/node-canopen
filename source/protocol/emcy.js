@@ -391,7 +391,7 @@ class Emcy extends Protocol {
         if(this.sendTimer !== null)
             return;
 
-        this.consumers = this.eds.getEmcyConsumers();
+        this._init();
 
         const inhibitTime = this.eds.getEmcyInhibitTime();
         if(inhibitTime) {
@@ -489,6 +489,15 @@ class Emcy extends Protocol {
             }
         }
     }
+
+    /**
+     * Initialize the Emcy consumers array.
+     *
+     * @private
+     */
+    _init() {
+        this.consumers = this.eds.getEmcyConsumers();
+    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -501,7 +510,7 @@ class Emcy extends Protocol {
  */
 Emcy.prototype.init = deprecate(
     function() {
-        this.start();
+        this._init();
     }, 'Emcy.init() is deprecated. Use Emcy.start() instead.');
 
 /**

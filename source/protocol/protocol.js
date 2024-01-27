@@ -57,6 +57,9 @@ class Protocol extends EventEmitter {
      * @fires Protocol#message
      */
     send(id, data) {
+        if(data === undefined)
+            data = Buffer.alloc(0);
+
         /**
          * A CAN message is ready to send.
          *

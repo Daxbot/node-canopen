@@ -120,31 +120,29 @@ class Sync extends Protocol {
         if (this.syncTimer !== null)
             return;
 
+        this._init();
+
         if (this.eds.getSyncGenerationEnable()) {
-            const cobId = this.eds.getSyncCobId();
-            if (!cobId)
+            if (!this._cobId)
                 throw new EdsError('COB-ID SYNC may not be 0');
 
-            this._cobId = cobId;
-
             const cyclePeriod = this.eds.getSyncCyclePeriod();
-            if (!cyclePeriod)
-                throw new EdsError('communication cycle period may not be 0');
+            if (cyclePeriod > 0) {
+                const overflow = this.eds.getSyncOverflow();
+                if (overflow) {
+                    this.syncTimer = setInterval(() => {
+                        this.syncCounter += 1;
+                        if (this.syncCounter > overflow)
+                            this.syncCounter = 1;
 
-            const overflow = this.eds.getSyncOverflow();
-            if (overflow) {
-                this.syncTimer = setInterval(() => {
-                    this.syncCounter += 1;
-                    if (this.syncCounter > overflow)
-                        this.syncCounter = 1;
-
-                    this.send(cobId, Buffer.from([this.syncCounter]));
-                }, cyclePeriod / 1000);
-            }
-            else {
-                this.syncTimer = setInterval(() => {
-                    this.send(cobId, Buffer.alloc(0));
-                }, cyclePeriod / 1000);
+                        this.send(this._cobId, Buffer.from([this.syncCounter]));
+                    }, cyclePeriod / 1000);
+                }
+                else {
+                    this.syncTimer = setInterval(() => {
+                        this.send(this._cobId, Buffer.alloc(0));
+                    }, cyclePeriod / 1000);
+                }
             }
         }
 
@@ -180,7 +178,7 @@ class Sync extends Protocol {
         if(counter !== null)
             this.send(cobId, Buffer.from([counter]));
         else
-            this.send(cobId, Buffer.alloc(0));
+            this.send(cobId);
     }
 
     /**
@@ -205,6 +203,15 @@ class Sync extends Protocol {
             this.emit('sync', data);
         }
     }
+
+    /**
+     * Initialize Sync message consumption.
+     *
+     * @private
+     */
+    _init() {
+        this._cobId = this.eds.getSyncCobId();
+    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -217,7 +224,7 @@ class Sync extends Protocol {
  */
 Sync.prototype.init = deprecate(
     function () {
-        this.start();
+        this._init();
     }, 'Sync.init() is deprecated. Use Sync.start() instead.');
 
 

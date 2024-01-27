@@ -114,16 +114,7 @@ class SdoClient extends Protocol {
         if (this.started)
             return;
 
-        const servers = this.eds.getSdoClientParameters();
-
-        this.serverMap = {};
-        for (const { deviceId, cobIdTx, cobIdRx } of servers) {
-            this.serverMap[deviceId] = {
-                cobIdTx,
-                cobIdRx,
-                queue: new Queue(),
-            };
-        }
+        this._init();
 
         super.start();
     }
@@ -822,6 +813,24 @@ class SdoClient extends Protocol {
         this.send(transfer.cobId, sendBuffer);
         transfer.reject(code);
     }
+
+    /**
+     * Initialize SDO servers.
+     *
+     * @private
+     */
+    _init() {
+        const servers = this.eds.getSdoClientParameters();
+
+        this.serverMap = {};
+        for (const { deviceId, cobIdTx, cobIdRx } of servers) {
+            this.serverMap[deviceId] = {
+                cobIdTx,
+                cobIdRx,
+                queue: new Queue(),
+            };
+        }
+    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -834,7 +843,7 @@ class SdoClient extends Protocol {
  */
 SdoClient.prototype.init = deprecate(
     function () {
-        this.start();
+        this._init();
     }, 'SdoClient.init() is deprecated. Use SdoClient.start() instead.');
 
 /**

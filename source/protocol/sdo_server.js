@@ -62,12 +62,7 @@ class SdoServer extends Protocol {
         if (this.started)
             return;
 
-        const clients = this.eds.getSdoServerParameters();
-
-        this.transfers = {};
-        for (const { cobIdTx, cobIdRx } of clients)
-            this.transfers[cobIdRx] = new SdoTransfer({ cobId: cobIdTx });
-
+        this._init();
         super.start();
     }
 
@@ -84,7 +79,6 @@ class SdoServer extends Protocol {
 
         super.stop();
     }
-
 
     /**
      * Call when a new CAN message is received.
@@ -726,6 +720,19 @@ class SdoServer extends Protocol {
         this.send(transfer.cobId, sendBuffer);
         transfer.reject(code);
     }
+
+    /**
+     * Initialize SDO clients.
+     *
+     * @private
+     */
+    _init() {
+        const clients = this.eds.getSdoServerParameters();
+
+        this.transfers = {};
+        for (const { cobIdTx, cobIdRx } of clients)
+            this.transfers[cobIdRx] = new SdoTransfer({ cobId: cobIdTx });
+    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -736,10 +743,9 @@ class SdoServer extends Protocol {
  * @deprecated Use {@link SdoServer#start} instead.
  * @function
  */
-SdoServer.prototype.init = deprecate(
-    function () {
-        this.start();
-    }, 'SdoServer.init() is deprecated. Use SdoServer.start() instead.');
+SdoServer.prototype.init = deprecate(function () {
+    this._init();
+}, 'SdoServer.init() is deprecated. Use SdoServer.start() instead.');
 
 /**
  * Get an SDO client parameter entry.

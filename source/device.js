@@ -229,7 +229,7 @@ class Device extends EventEmitter {
      * This may be called multiple times to map more than one EDS.
      *
      * @param {object} args - method arguments.
-     * @param {number} args.deviceId - the remote node's CAN identifier.
+     * @param {number} args.id - the remote node's CAN identifier.
      * @param {Eds | string} args.eds - the server's EDS.
      * @param {number} [args.dataStart] - start index for SDO entries.
      * @param {boolean} [args.skipEmcy] - Skip EMCY producer -> consumer.
@@ -239,8 +239,6 @@ class Device extends EventEmitter {
      * @since 6.0.0
      */
     mapRemoteNode(args = {}) {
-        const deviceId = args.deviceId || args.id;
-
         let eds = args.eds;
         if (typeof eds === 'string')
             eds = Eds.fromFile(eds);
@@ -257,9 +255,9 @@ class Device extends EventEmitter {
             const ms = eds.getHeartbeatProducerTime();
             if (ms) {
                 if (!args.id)
-                    throw new ReferenceError('id not defined');
+                    throw new ReferenceError('id required to map NMT');
 
-                this.eds.addHeartbeatConsumer(deviceId, ms * 2);
+                this.eds.addHeartbeatConsumer(args.id, ms * 2);
             }
         }
 
@@ -270,13 +268,13 @@ class Device extends EventEmitter {
                 if (clientId > 0 && clientId !== this.id)
                     continue;
 
-                if (!deviceId)
-                    throw new ReferenceError('deviceId not defined');
+                if (!args.id)
+                    throw new ReferenceError('id required to map SDO');
 
                 const cobIdTx = client.cobIdRx; // client -> server
                 const cobIdRx = client.cobIdTx; // server -> client
 
-                this.eds.addSdoClientParameter(deviceId, cobIdTx, cobIdRx);
+                this.eds.addSdoClientParameter(args.id, cobIdTx, cobIdRx);
             }
         }
 
@@ -291,7 +289,7 @@ class Device extends EventEmitter {
                 const dataObjects = [];
                 for (let obj of pdo.dataObjects) {
                     // Find the next open SDO index
-                    while (this.eds.dataObjects[dataIndex] !== undefined) {
+                    while (this.eds.getEntry(dataIndex) !== undefined) {
                         if (dataIndex >= 0xFFFF)
                             throw new RangeError('dataIndex must be <= 0xFFFF');
 
@@ -685,6 +683,10 @@ Device.prototype.init = deprecate(
             this._onChangeState(state);
         });
 
+        this.nmt.on('heartbeat', ({ deviceId, state }) => {
+            this.emit('nmtChangeState', deviceId, state);
+        });
+
         this.nmt.on('timeout', (deviceId) => {
             /**
              * NMT consumer timeout (deprecated).
@@ -696,12 +698,6 @@ Device.prototype.init = deprecate(
              * @deprecated Use {@link Nmt#event:timeout} instead.
              */
             this.emit('nmtTimeout', deviceId);
-        });
-
-        this.nmt.on('heartbeat', (deviceId) => {
-            this.nmt.getNodeState({ deviceId }).then((state) => {
-                this.emit('nmtChangeState', deviceId, state);
-            });
         });
 
         this.pdo.on('pdo', (pdo) => {
@@ -771,11 +767,10 @@ Device.prototype.init = deprecate(
             });
         }
 
-        // Call start on the next loop to allow the channel to start.
-        setImmediate(() => {
-            this.start();
-            this.nmt.startNode();
-        });
+        for (const obj of Object.values(this.protocol)) {
+            if(typeof obj._init === 'function')
+                obj._init();
+        }
 
     }, 'Device.init() is deprecated. Use Device.start() instead.');
 
@@ -793,5 +788,19 @@ Device.prototype.setTransmitFunction = deprecate(
     function (send) {
         this.on('message', send);
     }, "Device.setTransmitFunction() is deprecated. Use Device.on('message') instead.");
+
+/**
+ * Old name for mapRemoteNode() that was available in the development version.
+ *
+ * @deprecated
+ * @ignore
+ */
+Device.prototype.mapEds = deprecate(
+    function (args) {
+        if(args.serverId !== undefined)
+            args.deviceId = args.serverId;
+
+        this.mapRemoteNode(args);
+    }, 'Device.mapEds() is deprecated. Use Device.mapRemoteNode() instead.');
 
 module.exports = exports = Device;
