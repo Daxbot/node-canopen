@@ -538,9 +538,6 @@ class DataObject extends EventEmitter {
 
         this._subObjects[subIndex] = entry;
 
-        // Emit update from parent if sub-entry value changes
-        entry.on('update', () => this._emitUpdate());
-
         // Allow access to the sub-object using bracket notation
         if (!Object.prototype.hasOwnProperty.call(this, subIndex)) {
             Object.defineProperty(this, subIndex, {
@@ -557,6 +554,12 @@ class DataObject extends EventEmitter {
         for (let i = 1; i <= this._subObjects[0].value; ++i) {
             if (this._subObjects[i] !== undefined)
                 this.subNumber += 1;
+        }
+
+        if(subIndex > 0) {
+            // Emit update from parent if sub-entry value changes
+            entry.on('update', (obj) => this._emitUpdate(obj));
+            this._emitUpdate(entry);
         }
 
         return entry;
@@ -600,15 +603,16 @@ class DataObject extends EventEmitter {
     /**
      * Emit the update event.
      *
+     * @param {DataObject} [obj] - updated object.
      * @private
      */
-    _emitUpdate() {
+    _emitUpdate(obj) {
         /**
          * The DataObject value was changed.
          *
          * @event DataObject#update
          */
-        this.emit('update', this);
+        this.emit('update', obj || this);
     }
 }
 
@@ -1657,7 +1661,7 @@ class Eds {
     getSyncCobId() {
         const obj1005 = this.getEntry(0x1005);
         if (obj1005)
-            return obj1005.value & 0x7FF;
+            return obj1005.raw.readUInt16LE() & 0x7FF;
 
         return null;
     }
@@ -2094,7 +2098,7 @@ class Eds {
     /**
      * Get object 0x1015 - Inhibit time EMCY.
      *
-     * @returns {number} Emcy inhibit time in ms.
+     * @returns {number} Emcy inhibit time in 100 μs.
      * @since 6.0.0
      */
     getEmcyInhibitTime() {

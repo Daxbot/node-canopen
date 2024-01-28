@@ -130,13 +130,21 @@ class Nmt extends Protocol {
 
         this._init();
 
-        const producerTime = this.eds.getHeartbeatProducerTime();
-        if (producerTime > 0) {
-            // Start heartbeat timer
-            this.timers[0] = setInterval(() => {
-                if (this.deviceId && this.deviceId < 0x80)
-                    this._sendHeartbeat(this.deviceId);
-            }, producerTime);
+        const obj1016 = this.eds.getEntry(0x1016);
+        if(obj1016) {
+            obj1016.on('update', (obj) => {
+                if(obj.subIndex > 0) {
+                    const heartbeatTime = obj.raw.readUInt16LE();
+                    const deviceId = obj.raw.readUInt8(2);
+                    this._startConsumer(deviceId, heartbeatTime);
+                }
+            });
+        }
+
+        const obj1017 = this.eds.getEntry(0x1017);
+        if(obj1017) {
+            obj1017.on('update', (obj) => this._startHeartbeat(obj.value));
+            this._startHeartbeat(obj1017.value);
         }
 
         this.state = NmtState.PRE_OPERATIONAL;
@@ -428,27 +436,28 @@ class Nmt extends Protocol {
      * Parse an NMT command.
      *
      * @param {NmtCommand} command - NMT command to handle.
+     * @fires Nmt#changeState
      * @fires Nmt#reset
      * @private
      */
     _handleNmt(command) {
         switch (command) {
             case NmtCommand.ENTER_OPERATIONAL:
-                this.state = NmtState.OPERATIONAL;
+                this.setState(NmtState.OPERATIONAL);
                 break;
             case NmtCommand.ENTER_STOPPED:
-                this.state = NmtState.STOPPED;
+                this.setState(NmtState.STOPPED);
                 break;
             case NmtCommand.ENTER_PRE_OPERATIONAL:
-                this.state = NmtState.PRE_OPERATIONAL;
+                this.setState(NmtState.PRE_OPERATIONAL);
                 break;
             case NmtCommand.RESET_NODE:
+                this.setState(NmtState.INITIALIZING);
                 this._emitReset(true);
-                this.state = NmtState.INITIALIZING;
                 break;
             case NmtCommand.RESET_COMMUNICATION:
+                this.setState(NmtState.INITIALIZING);
                 this._emitReset(true);
-                this.state = NmtState.INITIALIZING;
                 break;
         }
     }
@@ -471,7 +480,46 @@ class Nmt extends Protocol {
     }
 
     /**
-     * Initialize the heartbeat consumer map.
+     * Start producing the heartbeat message.
+     *
+     * @param {number} producerTime - producer heartbeat time in ms.
+     * @private
+     */
+    _startHeartbeat(producerTime) {
+        if(this.timers[0]) {
+            clearInterval(this.timers[0]);
+            delete this.timers[0];
+        }
+
+        if (producerTime > 0) {
+            // Start heartbeat timer
+            this.timers[0] = setInterval(() => {
+                if (this.deviceId && this.deviceId < 0x80)
+                    this._sendHeartbeat(this.deviceId);
+            }, producerTime);
+        }
+    }
+
+    /**
+     * Initialize a heartbeat consumer.
+     *
+     * @param {number} deviceId - device identifier.
+     * @param {number} heartbeatTime - consumer heartbeat time in ms.
+     */
+    _startConsumer(deviceId, heartbeatTime) {
+        if(this.timers[deviceId]) {
+            clearInterval(this.timers[deviceId]);
+            delete this.timers[deviceId];
+        }
+
+        this.consumers[deviceId] = {
+            state: null,
+            interval: heartbeatTime,
+        };
+    }
+
+    /**
+     * Initialize consumer values
      *
      * @private
      */
@@ -479,12 +527,8 @@ class Nmt extends Protocol {
         const consumers = this.eds.getHeartbeatConsumers();
 
         this.consumers = {};
-        for (const { deviceId, heartbeatTime } of consumers) {
-            this.consumers[deviceId] = {
-                state: null,
-                interval: heartbeatTime,
-            };
-        }
+        for (const { deviceId, heartbeatTime } of consumers)
+            this._startConsumer(deviceId, heartbeatTime);
     }
 }
 

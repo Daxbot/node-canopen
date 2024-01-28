@@ -365,7 +365,7 @@ class Emcy extends Protocol {
     /**
      * Get object 0x1015 - Inhibit time EMCY.
      *
-     * @returns {number} Emcy inhibit time in ms.
+     * @returns {number} Emcy inhibit time in 100 μs.
      * @deprecated Use {@link Eds#getEmcyInhibitTime} instead.
      */
     get inhibitTime() {
@@ -388,21 +388,17 @@ class Emcy extends Protocol {
      * @fires Protocol#start
      */
     start() {
-        if(this.sendTimer !== null)
-            return;
-
         this._init();
 
-        const inhibitTime = this.eds.getEmcyInhibitTime();
-        if(inhibitTime) {
-            const delay = inhibitTime / 10; // 100 μs
-            this.sendTimer = setInterval(() => {
-                if(this.sendQueue.length > 0) {
-                    const [ id, data ] = this.sendQueue.shift();
-                    this.send(id, data);
-                }
-            }, delay);
+        const obj1015 = this.eds.getEntry(0x1015);
+        if(obj1015) {
+            obj1015.on('update', (obj) => this._updateSendTimer(obj.value));
+            this._updateSendTimer(obj1015.value);
         }
+
+        const obj1028 = this.eds.getEntry(0x1028);
+        if(obj1028)
+            obj1028.on('update', () => this._init());
 
         super.start();
     }
@@ -413,8 +409,11 @@ class Emcy extends Protocol {
      * @fires Protocol#stop
      */
     stop() {
-        clearInterval(this.sendTimer);
-        this.sendTimer = null;
+        if(this.sendTimer) {
+            clearInterval(this.sendTimer);
+            this.sendTimer = null;
+        }
+
         super.stop();
     }
 
@@ -486,6 +485,37 @@ class Emcy extends Protocol {
                     }),
                 });
                 break;
+            }
+        }
+    }
+
+    /**
+     * Update the inhibit timer.
+     *
+     * @param {number} inhibitTime - Emcy inhibit time in 100 μs.
+     * @private
+     */
+    _updateSendTimer(inhibitTime) {
+        if(this.sendTimer) {
+            // Clear the old timer
+            clearInterval(this.sendTimer);
+            this.sendTimer = null;
+        }
+
+        if(inhibitTime > 0) {
+            const delay = inhibitTime / 10; // 100 μs
+            this.sendTimer = setInterval(() => {
+                if(this.sendQueue.length > 0) {
+                    const [ id, data ] = this.sendQueue.shift();
+                    this.send(id, data);
+                }
+            }, delay);
+        }
+        else {
+            // If the inhibitTime is 0, then send all queued messages
+            while(this.sendQueue.length > 0) {
+                const [ id, data ] = this.sendQueue.shift();
+                this.send(id, data);
             }
         }
     }

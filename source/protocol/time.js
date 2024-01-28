@@ -99,6 +99,11 @@ class Time extends Protocol {
      */
     start() {
         this._init();
+
+        const obj1012 = this.eds.getEntry(0x1012);
+        if(obj1012)
+            obj1012.on('update', () => this._init());
+
         super.start();
     }
 
@@ -128,7 +133,7 @@ class Time extends Protocol {
         if(!date)
             date = new Date();
 
-        this.send(this.cobId, typeToRaw(date, DataType.TIME_OF_DAY));
+        this.send(cobId, typeToRaw(date, DataType.TIME_OF_DAY));
     }
 
     /**
@@ -161,6 +166,8 @@ class Time extends Protocol {
     _init() {
         if(this.eds.getTimeConsumerEnable())
             this._cobId = this.eds.getTimeCobId();
+        else
+            this._cobId = null;
     }
 }
 

@@ -133,6 +133,12 @@ class Lss extends Protocol {
         this.pending = {};
         this.select = [];
         this.scanState = 0;
+        this.identity = {
+            vendorId: 0,
+            productCode: 0,
+            revisionNumber: 0,
+            serialNumber: 0,
+        };
     }
 
     /**
@@ -234,6 +240,28 @@ class Lss extends Protocol {
      * @fires Protocol#start
      */
     start() {
+        const obj1018 = this.eds.getEntry(0x1018);
+        if(obj1018) {
+            obj1018.on('update', (obj) => {
+                switch(obj.subIndex) {
+                    case 1:
+                        this.identity.vendorId = obj.value;
+                        break;
+                    case 2:
+                        this.identity.productCode = obj.value;
+                        break;
+                    case 3:
+                        this.identity.revisionNumber = obj.value;
+                        break;
+                    case 4:
+                        this.identity.serialNumber = obj.value;
+                        break;
+                }
+            });
+        }
+
+        this.identity = this.eds.getIdentity();
+
         super.start();
     }
 
@@ -792,8 +820,6 @@ class Lss extends Protocol {
         else if (id === 0x7e5) {
             const cs = data[0];
 
-            const identity = this.eds.getIdentity();
-
             if (cs === LssCommand.FASTSCAN) {
                 // Fastscan is only available for unconfigured nodes.
                 const bitCheck = data[5];
@@ -817,24 +843,24 @@ class Lss extends Protocol {
                         case 0:
                             // Test vendor id
                             match = maskCompare(
-                                identity.vendorId, value, mask);
+                                this.identity.vendorId, value, mask);
                             break;
 
                         case 1:
                             // Test product code
                             match = maskCompare(
-                                identity.productCode, value, mask);
+                                this.identity.productCode, value, mask);
                             break;
 
                         case 2:
                             // Test revision number
                             match = maskCompare(
-                                identity.revisionNumber, value, mask);
+                                this.identity.revisionNumber, value, mask);
                             break;
 
                         case 3:
                             match = maskCompare(
-                                identity.serialNumber, value, mask);
+                                this.identity.serialNumber, value, mask);
                             break;
                     }
 
@@ -870,7 +896,7 @@ class Lss extends Protocol {
 
                 case LssCommand.SWITCH_MODE_SERIAL_NUMBER:
                     this.select[3] = data.readUInt32LE(1);
-                    if (checkLssAddress(identity, this.select))
+                    if (checkLssAddress(this.identity, this.select))
                         this.setMode(LssMode.CONFIGURATION);
                     return;
             }
@@ -908,19 +934,19 @@ class Lss extends Protocol {
                     return;
 
                 case LssCommand.INQUIRE_VENDOR_ID:
-                    this._sendLssResponse(cs, identity.vendorId);
+                    this._sendLssResponse(cs, this.identity.vendorId);
                     return;
 
                 case LssCommand.INQUIRE_PRODUCT_CODE:
-                    this._sendLssResponse(cs, identity.productCode);
+                    this._sendLssResponse(cs, this.identity.productCode);
                     return;
 
                 case LssCommand.INQUIRE_REVISION_NUMBER:
-                    this._sendLssResponse(cs, identity.revisionNumber);
+                    this._sendLssResponse(cs, this.identity.revisionNumber);
                     return;
 
                 case LssCommand.INQUIRE_SERIAL_NUMBER:
-                    this._sendLssResponse(cs, identity.serialNumber);
+                    this._sendLssResponse(cs, this.identity.serialNumber);
                     return;
             }
         }

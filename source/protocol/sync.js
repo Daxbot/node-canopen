@@ -122,29 +122,28 @@ class Sync extends Protocol {
 
         this._init();
 
-        if (this.eds.getSyncGenerationEnable()) {
-            if (!this._cobId)
-                throw new EdsError('COB-ID SYNC may not be 0');
-
-            const cyclePeriod = this.eds.getSyncCyclePeriod();
-            if (cyclePeriod > 0) {
-                const overflow = this.eds.getSyncOverflow();
-                if (overflow) {
-                    this.syncTimer = setInterval(() => {
-                        this.syncCounter += 1;
-                        if (this.syncCounter > overflow)
-                            this.syncCounter = 1;
-
-                        this.send(this._cobId, Buffer.from([this.syncCounter]));
-                    }, cyclePeriod / 1000);
-                }
-                else {
-                    this.syncTimer = setInterval(() => {
-                        this.send(this._cobId, Buffer.alloc(0));
-                    }, cyclePeriod / 1000);
-                }
-            }
+        const obj1005 = this.eds.getEntry(0x1005);
+        if(obj1005) {
+            obj1005.on('update', (obj) => {
+                this._cobId = obj.raw.readUInt16LE() & 0x7ff;
+                const generate = (obj.raw[3] & (1 << 6));
+                this._updateSendTimer({ generate, cobId: this._cobId });
+            });
         }
+
+        const obj1006 = this.eds.getEntry(0x1006);
+        if(obj1006) {
+            obj1006.on('update',
+                (obj) => this._updateSendTimer({ cyclePeriod: obj.value }));
+        }
+
+        const obj1019 = this.eds.getEntry(0x1019);
+        if(obj1019) {
+            obj1019.on('update',
+                (obj) => this._updateSendTimer({ overflow: obj.value }));
+        }
+
+        this._updateSendTimer({});
 
         super.start();
     }
@@ -201,6 +200,55 @@ class Sync extends Protocol {
              * @type {number}
              */
             this.emit('sync', data);
+        }
+    }
+
+    /**
+     * Update the sync generation timer.
+     *
+     * @param {object} args - arguments.
+     * @param {boolean} args.generate - Sync generation enable.
+     * @param {number} args.cobId - COB-ID SYNC.
+     * @param {number} args.cyclePeriod - Emcy inhibit time in 100 μs.
+     * @param {number} args.overflow - counter overflow value.
+     * @private
+     */
+    _updateSendTimer({ generate, cobId, cyclePeriod, overflow }) {
+        if(this.syncTimer) {
+            // Clear the old timer
+            clearInterval(this.syncTimer);
+            this.syncTimer = null;
+        }
+
+        if(generate === undefined)
+            generate = this.eds.getSyncGenerationEnable();
+
+        if(generate) {
+            if(cobId === undefined)
+                cobId = this.eds.getSyncCobId();
+
+            if(cyclePeriod === undefined)
+                cyclePeriod = this.eds.getSyncCyclePeriod();
+
+            if (cobId > 0 && cyclePeriod > 0) {
+                if(overflow === undefined)
+                    overflow = this.eds.getSyncOverflow();
+
+                if (overflow) {
+                    this.syncTimer = setInterval(() => {
+                        this.syncCounter += 1;
+                        if (this.syncCounter > overflow)
+                            this.syncCounter = 1;
+
+                        this.send(cobId, Buffer.from([this.syncCounter]));
+                    }, cyclePeriod / 1000);
+                }
+                else {
+                    this.syncTimer = setInterval(() => {
+                        this.send(cobId, Buffer.alloc(0));
+                    }, cyclePeriod / 1000);
+                }
+            }
         }
     }
 

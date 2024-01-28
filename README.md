@@ -11,9 +11,9 @@ When updating from version 5 to version 6 be aware of the following changes:
 
 1. Modifying the Eds via the protocol modules has been deprecated and the
 preferred method is to use the new dedicated methods in the Eds class itself.
-This change was made to allow easy configuration without needing to create
+This change was made to allow configuration without needing to create
 a Device object first. The following table is non-exhaustive and serves only
-to illustrate potential code changes:
+to illustrate the change:
 
   Old method                      | New method
   ------------------------------- | --------------------------------
@@ -26,19 +26,16 @@ to illustrate potential code changes:
 not used internally. The Device object is now aware of the NMT state and will
 bring up and shutdown protocol objects as the state changes. If your PDOs are
 not firing after the update make sure you are calling Nmt#startNode to switch
-to NmtState.OPERATIONAL. To preserve old behavior Device#init() will do this
-for you.
+to NmtState.OPERATIONAL.
 
-3. Timers and internal protocol values will no longer automatically update when
-the Eds value changes during operation. Relevant values are read and cached when
-the module start() method is called (typically on entering
-NmtState.PRE_OPERATIONAL). If you need to change a communication parameter
-dynamically you can stop/start any of the protocol modules to force a re-load,
-or use Nmt#resetCommunication().
-
-4. Events have been refactored and moved to their respective protocol modules.
+3. Events have been refactored and moved to their respective protocol modules.
 Old events are still available, but will only fire if the Device#init() method
 has been called.
+
+4. The Eds.dataObjects array is now keyed from the hex value rather than the
+decimal value to make debug printing less confusing. If you iterate over the
+Eds at all be sure to parseInt with a radix of 16. Anything using Eds#getEntry
+will be unaffected.
 
 ## Documentation
 

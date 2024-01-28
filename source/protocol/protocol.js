@@ -21,15 +21,17 @@ class Protocol extends EventEmitter {
      * @fires Protocol#start
      */
     start() {
-        this.started = true;
+        if(!this.started) {
+            this.started = true;
 
-        /**
-         * The module has been started.
-         *
-         * @event Protocol#start
-         * @since 6.0.0
-         */
-        this.emit('start');
+            /**
+             * The module has been started.
+             *
+             * @event Protocol#start
+             * @since 6.0.0
+             */
+            this.emit('start');
+        }
     }
 
     /**
@@ -38,15 +40,17 @@ class Protocol extends EventEmitter {
      * @fires Protocol#stop
      */
     stop() {
-        this.started = false;
+        if(this.started) {
+            this.started = false;
 
-        /**
-         * The module has been stopped.
-         *
-         * @event Protocol#stop
-         * @since 6.0.0
-         */
-        this.emit('stop');
+            /**
+             * The module has been stopped.
+             *
+             * @event Protocol#stop
+             * @since 6.0.0
+             */
+            this.emit('stop');
+        }
     }
 
     /**
