@@ -62,7 +62,12 @@ class SdoServer extends Protocol {
         if (this.started)
             return;
 
-        this._init();
+        const clients = this.eds.getSdoServerParameters();
+
+        this.transfers = {};
+        for (const { cobIdTx, cobIdRx } of clients)
+            this.transfers[cobIdRx] = new SdoTransfer({ cobId: cobIdTx });
+
         super.start();
     }
 
@@ -720,19 +725,6 @@ class SdoServer extends Protocol {
         this.send(transfer.cobId, sendBuffer);
         transfer.reject(code);
     }
-
-    /**
-     * Initialize SDO clients.
-     *
-     * @private
-     */
-    _init() {
-        const clients = this.eds.getSdoServerParameters();
-
-        this.transfers = {};
-        for (const { cobIdTx, cobIdRx } of clients)
-            this.transfers[cobIdRx] = new SdoTransfer({ cobId: cobIdTx });
-    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -744,7 +736,7 @@ class SdoServer extends Protocol {
  * @function
  */
 SdoServer.prototype.init = deprecate(function () {
-    this._init();
+    this.start();
 }, 'SdoServer.init() is deprecated. Use SdoServer.start() instead.');
 
 /**

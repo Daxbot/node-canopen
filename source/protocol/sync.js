@@ -120,8 +120,6 @@ class Sync extends Protocol {
         if (this.syncTimer !== null)
             return;
 
-        this._init();
-
         const obj1005 = this.eds.getEntry(0x1005);
         if(obj1005) {
             obj1005.on('update', (obj) => {
@@ -143,6 +141,7 @@ class Sync extends Protocol {
                 (obj) => this._updateSendTimer({ overflow: obj.value }));
         }
 
+        this._cobId = this.eds.getSyncCobId();
         this._updateSendTimer({});
 
         super.start();
@@ -251,15 +250,6 @@ class Sync extends Protocol {
             }
         }
     }
-
-    /**
-     * Initialize Sync message consumption.
-     *
-     * @private
-     */
-    _init() {
-        this._cobId = this.eds.getSyncCobId();
-    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -272,7 +262,36 @@ class Sync extends Protocol {
  */
 Sync.prototype.init = deprecate(
     function () {
-        this._init();
+        const { ObjectType, DataType } = require('../types');
+
+        let obj1005 = this.eds.getEntry(0x1005);
+        if(obj1005 === undefined) {
+            obj1005 = this.eds.addEntry(0x1005, {
+                parameterName:  'COB-ID SYNC',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+            });
+        }
+
+        let obj1006 = this.eds.getEntry(0x1006);
+        if(obj1006 === undefined) {
+            obj1006 = this.eds.addEntry(0x1006, {
+                parameterName:  'Communication cycle period',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+            });
+        }
+
+        let obj1019 = this.eds.getEntry(0x1019);
+        if(obj1019 === undefined) {
+            obj1019 = this.eds.addEntry(0x1019, {
+                parameterName:  'Synchronous counter overflow value',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED8,
+            });
+        }
+
+        this.start();
     }, 'Sync.init() is deprecated. Use Sync.start() instead.');
 
 

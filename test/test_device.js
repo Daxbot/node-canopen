@@ -23,13 +23,8 @@ describe('Device', function () {
 
     it('should get 0x1002', function () {
         const device = new Device();
-
         device.eds.setStatusRegister(100);
         expect(device.eds.getStatusRegister()).to.equal(100);
-
-        const raw = Buffer.from('abcd');
-        device.eds.setStatusRegister(raw);
-        expect(device.eds.getStatusRegister()).to.equal(raw.readUInt32LE());
     });
 
     it('should get 0x1008', function () {

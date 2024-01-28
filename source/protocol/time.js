@@ -98,11 +98,18 @@ class Time extends Protocol {
      * @fires Protocol#start
      */
     start() {
-        this._init();
-
         const obj1012 = this.eds.getEntry(0x1012);
-        if(obj1012)
-            obj1012.on('update', () => this._init());
+        if(obj1012) {
+            obj1012.on('update', (obj) => {
+                if(obj.raw[3] & (1 << 7))
+                    this._cobId = obj.raw.readUInt16LE() & 0x7FF;
+                else
+                    this._cobId = null;
+            });
+
+            if(obj1012.raw[3] & (1 << 7))
+                this._cobId = obj1012.raw.readUInt16LE() & 0x7FF;
+        }
 
         super.start();
     }
@@ -157,18 +164,6 @@ class Time extends Protocol {
             this.emit('time', date);
         }
     }
-
-    /**
-     * Initialize Time object consumptions.
-     *
-     * @private
-     */
-    _init() {
-        if(this.eds.getTimeConsumerEnable())
-            this._cobId = this.eds.getTimeCobId();
-        else
-            this._cobId = null;
-    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -181,7 +176,18 @@ class Time extends Protocol {
  */
 Time.prototype.init = deprecate(
     function () {
-        this._init();
+        const { ObjectType, DataType } = require('../types');
+
+        let obj1012 = this.eds.getEntry(0x1012);
+        if(obj1012 === undefined) {
+            obj1012 = this.eds.addEntry(0x1012, {
+                parameterName:  'COB-ID TIME',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+            });
+        }
+
+        this.start();
     }, 'Time.init() is deprecated. Use Time.start() instead.');
 
 module.exports = exports = { Time };

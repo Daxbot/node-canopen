@@ -128,8 +128,6 @@ class Nmt extends Protocol {
         if (this.state !== NmtState.INITIALIZING)
             return;
 
-        this._init();
-
         const obj1016 = this.eds.getEntry(0x1016);
         if(obj1016) {
             obj1016.on('update', (obj) => {
@@ -146,6 +144,12 @@ class Nmt extends Protocol {
             obj1017.on('update', (obj) => this._startHeartbeat(obj.value));
             this._startHeartbeat(obj1017.value);
         }
+
+        const consumers = this.eds.getHeartbeatConsumers();
+
+        this.consumers = {};
+        for (const { deviceId, heartbeatTime } of consumers)
+            this._startConsumer(deviceId, heartbeatTime);
 
         this.state = NmtState.PRE_OPERATIONAL;
         super.start();
@@ -424,12 +428,12 @@ class Nmt extends Protocol {
     /**
      * Serve a Heartbeat object.
      *
-     * @param {number} deviceId - device identifier [1-127].
      * @fires Protocol#message
      * @private
      */
-    _sendHeartbeat(deviceId) {
-        this.send(0x700 + deviceId, Buffer.from([this.state]));
+    _sendHeartbeat() {
+        if (this.deviceId && this.deviceId < 0x80)
+            this.send(0x700 + this.deviceId, Buffer.from([this.state]));
     }
 
     /**
@@ -493,10 +497,8 @@ class Nmt extends Protocol {
 
         if (producerTime > 0) {
             // Start heartbeat timer
-            this.timers[0] = setInterval(() => {
-                if (this.deviceId && this.deviceId < 0x80)
-                    this._sendHeartbeat(this.deviceId);
-            }, producerTime);
+            this.timers[0] = setInterval(
+                () => this._sendHeartbeat(), producerTime);
         }
     }
 
@@ -517,19 +519,6 @@ class Nmt extends Protocol {
             interval: heartbeatTime,
         };
     }
-
-    /**
-     * Initialize consumer values
-     *
-     * @private
-     */
-    _init() {
-        const consumers = this.eds.getHeartbeatConsumers();
-
-        this.consumers = {};
-        for (const { deviceId, heartbeatTime } of consumers)
-            this._startConsumer(deviceId, heartbeatTime);
-    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -542,7 +531,26 @@ class Nmt extends Protocol {
  */
 Nmt.prototype.init = deprecate(
     function () {
-        this._init();
+        const { ObjectType, DataType } = require('../types');
+
+        let obj1016 = this.eds.getEntry(0x1016);
+        if(obj1016 === undefined) {
+            obj1016 = this.eds.addEntry(0x1016, {
+                parameterName:  'Consumer heartbeat time',
+                objectType:     ObjectType.ARRAY,
+            });
+        }
+
+        let obj1017 = this.eds.getEntry(0x1017);
+        if(obj1017 === undefined) {
+            obj1017 = this.eds.addEntry(0x1017, {
+                parameterName:  'Producer heartbeat time',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+            });
+        }
+
+        this.start();
     }, 'Nmt.init() is deprecated. Use Nmt.start() instead.');
 
 /**
@@ -555,7 +563,7 @@ Nmt.prototype.init = deprecate(
  */
 Nmt.prototype.getConsumer = deprecate(
     function (deviceId) {
-        const obj1016 = this.getEntry(0x1016);
+        const obj1016 = this.eds.getEntry(0x1016);
         if (obj1016) {
             const maxSubIndex = obj1016[0].value;
             for (let i = 1; i <= maxSubIndex; ++i) {

@@ -44,7 +44,78 @@ class Pdo extends Protocol {
         if (this.started)
             return;
 
-        this._init();
+        this.receiveMap = {};
+        for (const pdo of this.eds.getReceivePdos())
+            this.receiveMap[pdo.cobId] = pdo;
+
+        this.transmitMap = {};
+        for (const pdo of this.eds.getTransmitPdos())
+            this.transmitMap[pdo.cobId] = pdo;
+
+        for (const pdo of Object.values(this.transmitMap)) {
+            if (pdo.transmissionType < 0xF1) {
+                if (!pdo.syncStart) {
+                    pdo.started = true;
+                    pdo.counter = 0;
+                }
+                this.syncTpdo.push(pdo);
+            }
+            else if (pdo.transmissionType == 0xFE) {
+                if (pdo.eventTime > 0) {
+                    // Send on a timer
+                    const timer = setInterval(() => {
+                        this.write(pdo.cobId);
+                    }, pdo.eventTime);
+
+                    this.eventTimers[pdo.cobId] = timer;
+                }
+                else if (pdo.inhibitTime > 0) {
+                    // Send on value change, but no faster than inhibit time
+                    for (const obj of pdo.dataObjects) {
+                        const func = () => {
+                            // TODO - fix this, it should keep track of the last
+                            // send time and count off that rather than using
+                            // a naive timer.
+                            if (!this.eventTimers[pdo.cobId]) {
+                                const timer = setTimeout(() => {
+                                    this.eventTimers[pdo.cobId] = null;
+                                    this.write(pdo.cobId);
+                                }, pdo.inhibitTime);
+
+                                this.eventTimers[pdo.cobId] = timer;
+                            }
+                        };
+
+                        let entry = this.eds.getEntry(obj.index);
+                        if (entry.subNumber > 0)
+                            entry = entry[obj.subIndex];
+
+                        this.events.push([entry, 'update', func]);
+                        entry.on('update', func);
+                    }
+                }
+                else {
+                    // Send immediately on value change
+                    for (const obj of pdo.dataObjects) {
+                        const func = () => this.write(pdo.cobId);
+
+                        let entry = this.eds.getEntry(obj.index);
+                        if (entry.subNumber > 0)
+                            entry = entry[obj.subIndex];
+
+                        this.events.push([entry, 'update', func]);
+                        entry.on('update', func);
+                    }
+                }
+            }
+            else {
+                throw TypeError(
+                    `unsupported TPDO type (${pdo.transmissionType})`);
+            }
+        }
+
+        if (this.syncTpdo.length > 0)
+            this.syncCobId = this.eds.getSyncCobId();
 
         super.start();
     }
@@ -163,86 +234,6 @@ class Pdo extends Protocol {
          */
         this.emit('pdo', pdo);
     }
-
-    /**
-     * Initialize the PDO maps.
-     *
-     * @private
-     */
-    _init() {
-        this.receiveMap = {};
-        for (const pdo of this.eds.getReceivePdos())
-            this.receiveMap[pdo.cobId] = pdo;
-
-        this.transmitMap = {};
-        for (const pdo of this.eds.getTransmitPdos())
-            this.transmitMap[pdo.cobId] = pdo;
-
-        for (const pdo of Object.values(this.transmitMap)) {
-            if (pdo.transmissionType < 0xF1) {
-                if (!pdo.syncStart) {
-                    pdo.started = true;
-                    pdo.counter = 0;
-                }
-                this.syncTpdo.push(pdo);
-            }
-            else if (pdo.transmissionType == 0xFE) {
-                if (pdo.eventTime > 0) {
-                    // Send on a timer
-                    const timer = setInterval(() => {
-                        this.write(pdo.cobId);
-                    }, pdo.eventTime);
-
-                    this.eventTimers[pdo.cobId] = timer;
-                }
-                else if (pdo.inhibitTime > 0) {
-                    // Send on value change, but no faster than inhibit time
-                    for (const obj of pdo.dataObjects) {
-                        const func = () => {
-                            // TODO - fix this, it should keep track of the last
-                            // send time and count off that rather than using
-                            // a naive timer.
-                            if (!this.eventTimers[pdo.cobId]) {
-                                const timer = setTimeout(() => {
-                                    this.eventTimers[pdo.cobId] = null;
-                                    this.write(pdo.cobId);
-                                }, pdo.inhibitTime);
-
-                                this.eventTimers[pdo.cobId] = timer;
-                            }
-                        };
-
-                        let entry = this.eds.getEntry(obj.index);
-                        if (entry.subNumber > 0)
-                            entry = entry[obj.subIndex];
-
-                        this.events.push([entry, 'update', func]);
-                        entry.on('update', func);
-                    }
-                }
-                else {
-                    // Send immediately on value change
-                    for (const obj of pdo.dataObjects) {
-                        const func = () => this.write(pdo.cobId);
-
-                        let entry = this.eds.getEntry(obj.index);
-                        if (entry.subNumber > 0)
-                            entry = entry[obj.subIndex];
-
-                        this.events.push([entry, 'update', func]);
-                        entry.on('update', func);
-                    }
-                }
-            }
-            else {
-                throw TypeError(
-                    `unsupported TPDO type (${pdo.transmissionType})`);
-            }
-        }
-
-        if (this.syncTpdo.length > 0)
-            this.syncCobId = this.eds.getSyncCobId();
-    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -255,7 +246,7 @@ class Pdo extends Protocol {
  */
 Pdo.prototype.init = deprecate(
     function () {
-        this._init();
+        this.start();
     }, 'Pdo.init() is deprecated. Use Pdo.start() instead.');
 
 /**

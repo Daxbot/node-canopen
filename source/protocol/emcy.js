@@ -388,8 +388,6 @@ class Emcy extends Protocol {
      * @fires Protocol#start
      */
     start() {
-        this._init();
-
         const obj1015 = this.eds.getEntry(0x1015);
         if(obj1015) {
             obj1015.on('update', (obj) => this._updateSendTimer(obj.value));
@@ -397,8 +395,13 @@ class Emcy extends Protocol {
         }
 
         const obj1028 = this.eds.getEntry(0x1028);
-        if(obj1028)
-            obj1028.on('update', () => this._init());
+        if(obj1028) {
+            obj1028.on('update', () => {
+                this.consumers = this.eds.getEmcyConsumers();
+            });
+        }
+
+        this.consumers = this.eds.getEmcyConsumers();
 
         super.start();
     }
@@ -519,15 +522,6 @@ class Emcy extends Protocol {
             }
         }
     }
-
-    /**
-     * Initialize the Emcy consumers array.
-     *
-     * @private
-     */
-    _init() {
-        this.consumers = this.eds.getEmcyConsumers();
-    }
 }
 
 ////////////////////////////////// Deprecated //////////////////////////////////
@@ -540,7 +534,34 @@ class Emcy extends Protocol {
  */
 Emcy.prototype.init = deprecate(
     function() {
-        this._init();
+        const { ObjectType, DataType } = require('../types');
+
+        this.register = 0;
+
+        let obj1014 = this.eds.getEntry(0x1014);
+        if(obj1014 === undefined) {
+            obj1014 = this.eds.addEntry(0x1014, {
+                parameterName:  'COB-ID EMCY',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+            });
+        }
+
+        let obj1015 = this.eds.getEntry(0x1015);
+        if(obj1015 === undefined) {
+            obj1015 = this.eds.addEntry(0x1015, {
+                parameterName:  'Inhibit time EMCY',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED16,
+            });
+        }
+
+        if((this.cobId & 0xF) == 0)
+            this.cobId |= this.deviceId;
+
+        this.eds.addEmcyConsumer(this.cobId);
+
+        this.start();
     }, 'Emcy.init() is deprecated. Use Emcy.start() instead.');
 
 /**

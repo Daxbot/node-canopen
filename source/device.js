@@ -767,9 +767,11 @@ Device.prototype.init = deprecate(
             });
         }
 
+        this.emcy.deviceId = this.id;
+
         for (const obj of Object.values(this.protocol)) {
-            if(typeof obj._init === 'function')
-                obj._init();
+            if(typeof obj.init === 'function')
+                obj.init();
         }
 
     }, 'Device.init() is deprecated. Use Device.start() instead.');

@@ -437,7 +437,7 @@ class DataObject extends EventEmitter {
         if (raw === undefined || raw === null)
             raw = typeToRaw(0, this.dataType);
 
-        if (this.raw && Buffer.compare(raw, this.raw) == 0)
+        if(this.raw && Buffer.compare(raw, this.raw) == 0)
             return;
 
         this._raw = raw;
@@ -538,6 +538,11 @@ class DataObject extends EventEmitter {
 
         this._subObjects[subIndex] = entry;
 
+        if(subIndex > 0) {
+            // Emit update from parent if sub-entry value changes
+            entry.on('update', (obj) => this._emitUpdate(obj));
+        }
+
         // Allow access to the sub-object using bracket notation
         if (!Object.prototype.hasOwnProperty.call(this, subIndex)) {
             Object.defineProperty(this, subIndex, {
@@ -554,12 +559,6 @@ class DataObject extends EventEmitter {
         for (let i = 1; i <= this._subObjects[0].value; ++i) {
             if (this._subObjects[i] !== undefined)
                 this.subNumber += 1;
-        }
-
-        if(subIndex > 0) {
-            // Emit update from parent if sub-entry value changes
-            entry.on('update', (obj) => this._emitUpdate(obj));
-            this._emitUpdate(entry);
         }
 
         return entry;
@@ -1521,7 +1520,7 @@ class Eds {
     /**
      * Set object 0x1002 - Manufacturer status register.
      *
-     * @param {Buffer | number} status - status register.
+     * @param {number} status - status register.
      * @param {object} [options] - DataObject creation options.
      * @param {boolean} [options.saveDefault] - save value as default.
      * @since 6.0.0
@@ -1537,16 +1536,7 @@ class Eds {
             });
         }
 
-        if (typeof status === 'number') {
-            obj1002.value = status;
-        }
-        else {
-            if (!Buffer.isBuffer(status))
-                status = Buffer.from(status);
-
-            status.copy(obj1002.raw);
-        }
-
+        obj1002.value = status;
         if (options.saveDefault)
             obj1002.defaultValue = obj1002.value;
     }
@@ -1593,27 +1583,28 @@ class Eds {
 
         const maxSubIndex = obj1003[0].value;
         if (maxSubIndex > 1) {
-            // Shift objects
-            const lastObj = obj1003._subObjects[maxSubIndex];
+            // Shift buffers
             for (let i = maxSubIndex; i > 1; --i)
-                obj1003._subObjects[i] = obj1003._subObjects[i - 1];
+                obj1003.at(i).raw = obj1003.at(i - 1).raw;
 
-            obj1003._subObjects[1] = lastObj;
         }
 
         // Write new value to sub-index 1
-        obj1003[1].raw.writeUInt16LE(code, 0);
+        const raw = Buffer.alloc(4);
+        raw.writeUInt16LE(code, 0);
         if (info) {
             if (typeof info === 'number') {
-                obj1003[1].raw.writeUInt16LE(info, 2);
+                raw.writeUInt16LE(info, 2);
             }
             else {
                 if (!Buffer.isBuffer(info))
                     info = Buffer.from(info);
 
-                info.copy(obj1003[1].raw, 2);
+                info.copy(raw, 2);
             }
         }
+
+        obj1003.at(1).raw = raw;
     }
 
     /**
@@ -1688,7 +1679,10 @@ class Eds {
             });
         }
 
-        obj1005.raw.writeUInt16LE(cobId & 0x7FF);
+        const raw = Buffer.from(obj1005.raw);
+        raw.writeUInt16LE(cobId & 0x7FF);
+
+        obj1005.raw = raw;
         if (options.saveDefault)
             obj1005.defaultValue = obj1005.value;
     }
@@ -1726,11 +1720,13 @@ class Eds {
             });
         }
 
+        const raw = Buffer.from(obj1005.raw);
         if (enable)
-            obj1005.raw[3] |= (1 << 6);
+            raw[3] |= (1 << 6);
         else
-            obj1005.raw[3] &= ~(1 << 6);
+            raw[3] &= ~(1 << 6);
 
+        obj1005.raw = raw;
         if (options.saveDefault)
             obj1005.defaultValue = obj1005.value;
     }
@@ -1899,7 +1895,7 @@ class Eds {
     getTimeCobId() {
         const obj1012 = this.getEntry(0x1012);
         if (obj1012)
-            return obj1012.value & 0x7FF;
+            return obj1012.raw.readUInt16LE() & 0x7FF;
 
         return null;
     }
@@ -1926,7 +1922,10 @@ class Eds {
             });
         }
 
-        obj1012.raw.writeUInt16LE(cobId & 0x7FF);
+        const raw = Buffer.from(obj1012.raw);
+        raw.writeUInt16LE(cobId & 0x7FF);
+
+        obj1012.raw = raw;
         if (options.saveDefault)
             obj1012.defaultValue = obj1012.value;
     }
@@ -1964,11 +1963,13 @@ class Eds {
             });
         }
 
+        const raw = Buffer.from(obj1012.raw);
         if (enable)
-            obj1012.raw[3] |= (1 << 6);
+            raw[3] |= (1 << 6);
         else
-            obj1012.raw[3] &= ~(1 << 6);
+            raw[3] &= ~(1 << 6);
 
+        obj1012.raw = raw;
         if (options.saveDefault)
             obj1012.defaultValue = obj1012.value;
     }
@@ -2006,11 +2007,13 @@ class Eds {
             });
         }
 
+        const raw = Buffer.from(obj1012.raw);
         if (enable)
-            obj1012.raw[3] |= (1 << 7);
+            raw[3] |= (1 << 7);
         else
-            obj1012.raw[3] &= ~(1 << 7);
+            raw[3] &= ~(1 << 7);
 
+        obj1012.raw = raw;
         if (options.saveDefault)
             obj1012.defaultValue = obj1012.value;
     }
@@ -2024,7 +2027,7 @@ class Eds {
     getEmcyCobId() {
         const obj1014 = this.getEntry(0x1014);
         if (obj1014)
-            return obj1014.raw.readUInt16LE();
+            return obj1014.raw.readUInt16LE() & 0x7FF;
 
         return null;
     }
@@ -2048,7 +2051,10 @@ class Eds {
             });
         }
 
-        obj1014.raw.writeUInt16LE(cobId & 0x7FF);
+        const raw = Buffer.from(obj1014.raw);
+        raw.writeUInt16LE(cobId & 0x7FF);
+
+        obj1014.raw = raw;
         if (options.saveDefault)
             obj1014.defaultValue = obj1014.value;
     }
@@ -2086,11 +2092,13 @@ class Eds {
             });
         }
 
+        const raw = Buffer.from(obj1014.raw);
         if (valid)
-            obj1014.raw[3] |= (1 << 7);
+            raw[3] |= (1 << 7);
         else
-            obj1014.raw[3] &= ~(1 << 7);
+            raw[3] &= ~(1 << 7);
 
+        obj1014.raw = raw;
         if (options.saveDefault)
             obj1014.defaultValue = obj1014.value;
     }
@@ -2219,8 +2227,11 @@ class Eds {
             accessType: options.accessType || AccessType.READ_WRITE,
         });
 
-        subObj.raw.writeUInt16LE(timeout, 0);
-        subObj.raw.writeUInt8(deviceId, 2);
+        const raw = Buffer.alloc(4);
+        raw.writeUInt16LE(timeout, 0);
+        raw.writeUInt8(deviceId, 2);
+
+        subObj.raw = raw;
         if (options.saveDefault)
             subObj.defaultValue = subObj.value;
     }
@@ -2228,10 +2239,10 @@ class Eds {
     /**
      * Remove an entry from object 0x1016 - Consumer heartbeat time.
      *
-     * @param {number} cobId - COB-ID of the entry to remove.
+     * @param {number} deviceId - id of the entry to remove.
      * @since 6.0.0
      */
-    removeHeartbeatConsumer(cobId) {
+    removeHeartbeatConsumer(deviceId) {
         const obj1016 = this.getEntry(0x1016);
         if (obj1016 !== undefined) {
             const maxSubIndex = obj1016[0].value;
@@ -2240,7 +2251,7 @@ class Eds {
                 if (subObj === undefined)
                     continue;
 
-                if (subObj.raw.readUInt8(2) === cobId) {
+                if (subObj.raw.readUInt8(2) === deviceId) {
                     obj1016.removeSubObject(i);
                     break;
                 }

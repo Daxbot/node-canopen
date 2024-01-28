@@ -998,6 +998,8 @@ class Lss extends Protocol {
  * @function
  */
 Lss.prototype.init = deprecate(
-    function() {}, 'Lss.init() is deprecated. Use Lss.start() instead.');
+    function() {
+        this.start();
+    }, 'Lss.init() is deprecated. Use Lss.start() instead.');
 
 module.exports = exports = { LssMode, LssError, Lss };
