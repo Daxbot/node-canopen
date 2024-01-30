@@ -369,8 +369,8 @@ Pdo.prototype.init = deprecate(
  */
 Pdo.prototype.getReceive = deprecate(
     function (cobId) {
-        for (let [index, entry] of Object.entries(this.eds.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.eds.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1400 || index > 0x15FF)
                 continue;
 
@@ -423,8 +423,8 @@ Pdo.prototype.removeReceive = deprecate(
  */
 Pdo.prototype.getTransmit = deprecate(
     function (cobId) {
-        for (let [index, entry] of Object.entries(this.eds.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.eds.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1800 || index > 0x19FF)
                 continue;
 

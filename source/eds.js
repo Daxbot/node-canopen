@@ -1280,8 +1280,10 @@ class Eds extends EventEmitter {
      * @since 6.0.0
      */
     reset() {
-        for (const entry of this.values())
-            entry.value = entry.defaultValue;
+        for (const entry of this.values()) {
+            if(entry.objectType === ObjectType.VAR)
+                entry.value = entry.defaultValue;
+        }
     }
 
     /**

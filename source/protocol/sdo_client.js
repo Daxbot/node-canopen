@@ -870,8 +870,8 @@ SdoClient.prototype.init = deprecate(
  */
 SdoClient.prototype.getServer = deprecate(
     function (serverId) {
-        for (let [index, entry] of Object.entries(this.dataObjects)) {
-            index = parseInt(index);
+        for (let [index, entry] of this.eds.entries()) {
+            index = parseInt(index, 16);
             if (index < 0x1280 || index > 0x12FF)
                 continue;
 
@@ -893,7 +893,13 @@ SdoClient.prototype.getServer = deprecate(
  * @function
  */
 SdoClient.prototype.addServer = deprecate(
-    function (serverId, cobIdTx, cobIdRx) {
+    function (serverId, cobIdTx=0x600, cobIdRx=0x580) {
+        if((cobIdTx & 0xF) == 0x0)
+            cobIdTx |= serverId;
+
+        if((cobIdRx & 0xF) == 0x0)
+            cobIdRx |= serverId;
+
         this.eds.addSdoClientParameter(serverId, cobIdTx, cobIdRx);
     }, 'SdoClient.addServer() is deprecated. Use Eds.addSdoClientParameter() instead.');
 
