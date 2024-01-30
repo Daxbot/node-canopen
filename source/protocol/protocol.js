@@ -11,6 +11,7 @@ const { Eds } = require('../eds');
  * A base class extended by the protocol modules.
  *
  * @param {Eds} eds - Eds object.
+ * @since 6.0.0
  */
 class Protocol extends EventEmitter {
     constructor(eds) {

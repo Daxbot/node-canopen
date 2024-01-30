@@ -1248,6 +1248,7 @@ class Eds extends EventEmitter {
      * Returns a new iterator object that iterates the keys for each entry.
      *
      * @returns {Iterable.<string>} Iterable keys.
+     * @since 6.0.0
      */
     keys() {
         return Object.keys(this.dataObjects).values();
@@ -1257,6 +1258,7 @@ class Eds extends EventEmitter {
      * Returns a new iterator object that iterates DataObjects.
      *
      * @returns {Iterable.<DataObject>} Iterable DataObjects.
+     * @since 6.0.0
      */
     values() {
         return Object.values(this.dataObjects).values();
@@ -1266,6 +1268,7 @@ class Eds extends EventEmitter {
      * Returns a new iterator object that iterates key/DataObjects pairs.
      *
      * @returns {Iterable.<Array>} Iterable [key, DataObjects].
+     * @since 6.0.0
      */
     entries() {
         return Object.entries(this.dataObjects).values();
@@ -1273,6 +1276,8 @@ class Eds extends EventEmitter {
 
     /**
      * Reset objects to their default values.
+     *
+     * @since 6.0.0
      */
     reset() {
         for (const entry of this.values())
@@ -1284,6 +1289,7 @@ class Eds extends EventEmitter {
      *
      * @param {string} name - name of the data object.
      * @returns {Array<DataObject>} - all entries matching name.
+     * @since 6.0.0
      */
     findEntry(name) {
         let result = this.nameLookup[name];
@@ -3106,6 +3112,7 @@ class Eds extends EventEmitter {
          *
          * @event Eds#newRpdo
          * @type {object}
+         * @since 6.0.0
          */
         this.emit('newRpdo', this._parsePdo(index));
 
@@ -3139,6 +3146,7 @@ class Eds extends EventEmitter {
                  *
                  * @event Eds#newTpdo
                  * @type {object}
+                 * @since 6.0.0
                  */
                 this.emit('removeTpdo', pdo);
 
@@ -3345,6 +3353,7 @@ class Eds extends EventEmitter {
          *
          * @event Eds#newTpdo
          * @type {object}
+         * @since 6.0.0
          */
         this.emit('newTpdo', this._parsePdo(index));
     }
@@ -3375,6 +3384,7 @@ class Eds extends EventEmitter {
                  *
                  * @event Eds#newTpdo
                  * @type {object}
+                 * @since 6.0.0
                  */
                 this.emit('removeTpdo', pdo);
 
@@ -3501,6 +3511,7 @@ class Eds extends EventEmitter {
      * @param {DataObject} entry - entry to parse.
      * @returns {null | Array<number>} parsed data.
      * @since 6.0.0
+     * @private
      */
     _parseSdoParameter(entry) {
         let result = [];

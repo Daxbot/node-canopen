@@ -202,6 +202,8 @@ class Device extends EventEmitter {
 
     /**
      * Initialize the device and audit the object dictionary.
+     *
+     * @since 6.0.0
      */
     start() {
         if (!this.id)
@@ -212,6 +214,8 @@ class Device extends EventEmitter {
 
     /**
      * Cleanup timers and shutdown the device.
+     *
+     * @since 6.0.0
      */
     stop() {
         for (const obj of Object.values(this.protocol))
