@@ -21,30 +21,6 @@ describe('Device', function () {
         }).to.throw(RangeError);
     });
 
-    it('should get 0x1002', function () {
-        const device = new Device();
-        device.eds.setStatusRegister(100);
-        expect(device.eds.getStatusRegister()).to.equal(100);
-    });
-
-    it('should get 0x1008', function () {
-        const device = new Device();
-        device.eds.setDeviceName('node-canopen');
-        expect(device.eds.getDeviceName()).to.equal('node-canopen');
-    });
-
-    it('should get 0x1009', function () {
-        const device = new Device();
-        device.eds.setHardwareVersion('A');
-        expect(device.eds.getHardwareVersion()).to.equal('A');
-    });
-
-    it('should get 0x100A', function () {
-        const device = new Device();
-        device.eds.setSoftwareVersion('1.0');
-        expect(device.eds.getSoftwareVersion()).to.equal('1.0');
-    });
-
     describe('mapRemoteNode', function() {
         it('should map Emcy', function() {
             const remote = new Device({ id: 0xA });

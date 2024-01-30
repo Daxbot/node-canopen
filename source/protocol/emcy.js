@@ -5,7 +5,7 @@
  */
 
 const Protocol = require('./protocol');
-const { Eds, EdsError } = require('../eds');
+const { DataObject, Eds, EdsError } = require('../eds');
 const { deprecate } = require('util');
 
 /**
@@ -291,15 +291,13 @@ class EmcyMessage {
  */
 class Emcy extends Protocol {
     constructor(eds) {
-        super();
+        super(eds);
 
-        if(!Eds.isEds(eds))
-            throw new TypeError('not an Eds');
-
-        this.eds = eds;
         this.sendQueue = [];
         this.sendTimer = null;
         this.consumers = [];
+        this._valid = false;
+        this._cobId = null;
     }
 
     /**
@@ -383,44 +381,6 @@ class Emcy extends Protocol {
     }
 
     /**
-     * Start the module.
-     *
-     * @fires Protocol#start
-     */
-    start() {
-        const obj1015 = this.eds.getEntry(0x1015);
-        if(obj1015) {
-            obj1015.on('update', (obj) => this._updateSendTimer(obj.value));
-            this._updateSendTimer(obj1015.value);
-        }
-
-        const obj1028 = this.eds.getEntry(0x1028);
-        if(obj1028) {
-            obj1028.on('update', () => {
-                this.consumers = this.eds.getEmcyConsumers();
-            });
-        }
-
-        this.consumers = this.eds.getEmcyConsumers();
-
-        super.start();
-    }
-
-    /**
-     * Stop the module.
-     *
-     * @fires Protocol#stop
-     */
-    stop() {
-        if(this.sendTimer) {
-            clearInterval(this.sendTimer);
-            this.sendTimer = null;
-        }
-
-        super.stop();
-    }
-
-    /**
      * Service: EMCY write.
      *
      * @param {object} args - arguments.
@@ -429,11 +389,10 @@ class Emcy extends Protocol {
      * @fires Protocol#message
      */
     write(...args) {
-        if(!this.eds.getEmcyValid())
+        if(!this._valid)
             throw new EdsError('EMCY production is disabled');
 
-        const cobId = this.eds.getEmcyCobId();
-        if (!cobId)
+        if (!this._cobId)
             throw new EdsError('COB-ID EMCY may not be 0');
 
         let code, info;
@@ -452,10 +411,55 @@ class Emcy extends Protocol {
         const em = new EmcyMessage({ code, register, info });
 
         if(this.sendTimer)
-            this.sendQueue.push([ cobId, em.toBuffer() ]);
+            this.sendQueue.push([ this._cobId, em.toBuffer() ]);
         else
-            this.send(cobId, em.toBuffer());
+            this.send(this._cobId, em.toBuffer());
     }
+
+    /**
+     * Start the module.
+     *
+     * @protected
+     */
+    _start() {
+        const obj1014 = this.eds.getEntry(0x1014);
+        if(obj1014)
+            this._addEntry(obj1014);
+
+        const obj1015 = this.eds.getEntry(0x1015);
+        if(obj1015)
+            this._addEntry(obj1015);
+
+        const obj1028 = this.eds.getEntry(0x1028);
+        if(obj1028)
+            this._addEntry(obj1028);
+
+        this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+        this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+    }
+
+    /**
+     * Stop the module.
+     *
+     * @protected
+     */
+    _stop() {
+        this.removeEdsCallback('newEntry');
+        this.removeEdsCallback('removeEntry');
+
+        const obj1014 = this.eds.getEntry(0x1014);
+        if(obj1014)
+            this._removeEntry(obj1014);
+
+        const obj1015 = this.eds.getEntry(0x1015);
+        if(obj1015)
+            this._removeEntry(obj1015);
+
+        const obj1028 = this.eds.getEntry(0x1028);
+        if(obj1028)
+            this._removeEntry(obj1028);
+    }
+
 
     /**
      * Call when a new CAN message is received.
@@ -464,8 +468,9 @@ class Emcy extends Protocol {
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @fires Emcy#emergency
+     * @protected
      */
-    receive({ id, data }) {
+    _receive({ id, data }) {
         if (data.length != 8)
             return;
 
@@ -493,19 +498,96 @@ class Emcy extends Protocol {
     }
 
     /**
-     * Update the inhibit timer.
+     * Listens for new Eds entries.
      *
-     * @param {number} inhibitTime - Emcy inhibit time in 100 μs.
+     * @param {DataObject} entry - new entry.
+     * @protected
+     */
+    _addEntry(entry) {
+        switch(entry.index) {
+            case 0x1014:
+                this.addUpdateCallback(entry, (obj) => this._parse1014(obj));
+                this._parse1014(entry);
+                break;
+            case 0x1015:
+                this.addUpdateCallback(entry, (obj) => this._parse1015(obj));
+                this._parse1015(entry);
+                break;
+            case 0x1028:
+                this.addUpdateCallback(entry, (obj) => this._parse1028(obj));
+                this._parse1028(entry);
+                break;
+        }
+    }
+
+    /**
+     * Listens for removed Eds entries.
+     *
+     * @param {DataObject} entry - removed entry.
+     * @protected
+     */
+    _removeEntry(entry) {
+        switch(entry.index) {
+            case 0x1014:
+                this.removeUpdateCallback(entry);
+                this._clear1014();
+                break;
+            case 0x1015:
+                this.removeUpdateCallback(entry);
+                this._clear1015();
+                break;
+            case 0x1028:
+                this.removeUpdateCallback(entry);
+                this._clear1028();
+                break;
+        }
+    }
+
+    /**
+     * Called when 0x1014 (COB-ID EMCY) is updated.
+     *
+     * @param {DataObject} entry - updated DataObject.
+     * @listens DataObject#update
      * @private
      */
-    _updateSendTimer(inhibitTime) {
-        if(this.sendTimer) {
-            // Clear the old timer
-            clearInterval(this.sendTimer);
-            this.sendTimer = null;
-        }
+    _parse1014(entry) {
+        const value = entry.value;
+        const valid = (value >> 31) & 0x1;
+        const rtr = (value >> 29) & 0x1;
+        const cobId = value & 0x7FF;
 
-        if(inhibitTime > 0) {
+        if(rtr != 0x1) {
+            this._valid = !valid;
+            this._cobId = cobId;
+        }
+        else {
+            this._clear1014();
+        }
+    }
+
+    /**
+     * Called when 0x1014 (COB-ID EMCY) is removed.
+     *
+     * @private
+     */
+    _clear1014() {
+        this._valid = false;
+        this._cobId = null;
+    }
+
+    /**
+     * Called when 0x1015 (Inhibit time EMCY) is updated.
+     *
+     * @param {DataObject} entry - updated DataObject.
+     * @listens DataObject#update
+     * @private
+     */
+    _parse1015(entry) {
+        // Clear the old timer
+        this._clear1015();
+
+        const inhibitTime = entry.value;
+        if(inhibitTime) {
             const delay = inhibitTime / 10; // 100 μs
             this.sendTimer = setInterval(() => {
                 if(this.sendQueue.length > 0) {
@@ -521,6 +603,35 @@ class Emcy extends Protocol {
                 this.send(id, data);
             }
         }
+    }
+
+    /**
+     * Called when 0x1015 (Inhibit time EMCY) is removed.
+     *
+     * @private
+     */
+    _clear1015() {
+        clearInterval(this.sendTimer);
+        this.sendTimer = null;
+    }
+
+    /**
+     * Called when 0x1028 (Emergency consumer object) is updated.
+     *
+     * @listens DataObject#update
+     * @private
+     */
+    _parse1028() {
+        this.consumers = this.eds.getEmcyConsumers();
+    }
+
+    /**
+     * Called when 0x1028 (Emergency consumer object) is removed.
+     *
+     * @private
+     */
+    _clear1028() {
+        this.consumers = [];
     }
 }
 

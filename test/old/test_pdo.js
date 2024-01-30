@@ -32,7 +32,7 @@ describe('Pdo', function() {
 
         device.pdo.addReceive(0x200, [entry]);
         expect(() => {
-            device.pdo.addReceive(0x200, [entry])
+            device.pdo.addReceive(0x200, [entry]);
         }).to.throw(EdsError);
         done();
     });
@@ -45,7 +45,7 @@ describe('Pdo', function() {
 
         device.pdo.addTransmit(0x180, [entry]);
         expect(() => {
-            device.pdo.addTransmit(0x180, [entry])
+            device.pdo.addTransmit(0x180, [entry]);
         }).to.throw(EdsError);
         done();
     });

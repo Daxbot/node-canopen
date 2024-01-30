@@ -16,6 +16,36 @@ const rawToType = require('./functions/raw_to_type');
 const typeToRaw = require('./functions/type_to_raw');
 
 /**
+ * Parse EDS date and time.
+ *
+ * @param {string} time - time string (hh:mm[AM|PM]).
+ * @param {string} date - date string (mm-dd-yyyy).
+ * @returns {Date} parsed Date.
+ * @private
+ */
+function parseDate(time, date) {
+    const postMeridiem = time.includes('PM');
+
+    time = time
+        .replace('AM', '')
+        .replace('PM', '');
+
+    let [hours, minutes] = time.split(':');
+    let [month, day, year] = date.split('-');
+
+    hours = parseInt(hours);
+    minutes = parseInt(minutes);
+    month = parseInt(month);
+    day = parseInt(day);
+    year = parseInt(year);
+
+    if (postMeridiem)
+        hours += 12;
+
+    return new Date(year, month - 1, day, hours, minutes);
+}
+
+/**
  * Helper method to turn EDS file data into {@link DataObject} data.
  *
  * @param {object} data - EDS style data to convert.
@@ -538,11 +568,6 @@ class DataObject extends EventEmitter {
 
         this._subObjects[subIndex] = entry;
 
-        if(subIndex > 0) {
-            // Emit update from parent if sub-entry value changes
-            entry.on('update', (obj) => this._emitUpdate(obj));
-        }
-
         // Allow access to the sub-object using bracket notation
         if (!Object.prototype.hasOwnProperty.call(this, subIndex)) {
             Object.defineProperty(this, subIndex, {
@@ -603,15 +628,21 @@ class DataObject extends EventEmitter {
      * Emit the update event.
      *
      * @param {DataObject} [obj] - updated object.
+     * @fires DataObject#update
      * @private
      */
     _emitUpdate(obj) {
-        /**
-         * The DataObject value was changed.
-         *
-         * @event DataObject#update
-         */
-        this.emit('update', obj || this);
+        if(this.parent) {
+            this.parent._emitUpdate(this);
+        }
+        else {
+            /**
+             * The DataObject value was changed.
+             *
+             * @event DataObject#update
+             */
+            this.emit('update', obj || this);
+        }
     }
 }
 
@@ -637,11 +668,14 @@ class DataObject extends EventEmitter {
  * @param {boolean} info.lssSupported - true if LSS is supported.
  * @see CiA306 "Electronic data sheet specification for CANopen"
  */
-class Eds {
+class Eds extends EventEmitter {
     constructor(info = {}) {
+        super();
+
         this.fileInfo = {
             EDSVersion: '4.0'
         };
+
         this.deviceInfo = {
             SimpleBootUpMaster: 0,
             SimpleBootUpSlave: 0,
@@ -650,6 +684,7 @@ class Eds {
             CompactPDO: 0,
             GroupMessaging: 0,
         };
+
         this.dummyUsage = {};
         this.dataObjects = {};
         this.comments = [];
@@ -765,7 +800,7 @@ class Eds {
     get creationDate() {
         const time = this.fileInfo['CreationTime'];
         const date = this.fileInfo['CreationDate'];
-        return this._parseDate(time, date);
+        return parseDate(time, date);
     }
 
     set creationDate(value) {
@@ -803,7 +838,7 @@ class Eds {
     get modificationDate() {
         const time = this.fileInfo['ModificationTime'];
         const date = this.fileInfo['ModificationDate'];
-        return this._parseDate(time, date);
+        return parseDate(time, date);
     }
 
     set modificationDate(value) {
@@ -1191,14 +1226,12 @@ class Eds {
 
         // Write data objects
         mandObjects['SupportedObjects'] = mandCount;
-        this._write(fd, ini.encode(
-            mandObjects, { section: 'MandatoryObjects' }));
+        this._write(fd, ini.encode(mandObjects, { section: 'MandatoryObjects' }));
 
         this._writeObjects(fd, mandObjects);
 
         optObjects['SupportedObjects'] = optCount;
-        this._write(fd, ini.encode(
-            optObjects, { section: 'OptionalObjects' }));
+        this._write(fd, ini.encode(optObjects, { section: 'OptionalObjects' }));
 
         this._writeObjects(fd, optObjects);
 
@@ -1291,6 +1324,7 @@ class Eds {
      * @param {number} index - index of the data object.
      * @param {object} data - data passed to the {@link DataObject} constructor.
      * @returns {DataObject} - the newly created entry.
+     * @fires Eds#newEntry
      */
     addEntry(index, data) {
         if(typeof index !== 'number')
@@ -1301,6 +1335,15 @@ class Eds {
             throw new EdsError(`${key} already exists`);
 
         const entry = new DataObject(key, data);
+
+        /**
+         * A DataObject was added to the Eds.
+         *
+         * @event Eds#newEntry
+         * @type {DataObject}
+         */
+        this.emit('newEntry', entry);
+
         this.dataObjects[key] = entry;
 
         if (this.nameLookup[entry.parameterName] === undefined)
@@ -1315,6 +1358,8 @@ class Eds {
      * Delete an entry.
      *
      * @param {number} index - index of the data object.
+     * @returns {DataObject} the deleted entry.
+     * @fires Eds#removeEntry
      */
     removeEntry(index) {
         const entry = this.getEntry(index);
@@ -1328,6 +1373,16 @@ class Eds {
             delete this.nameLookup[entry.parameterName];
 
         delete this.dataObjects[entry.key];
+
+        /**
+         * A DataObject was removed from the Eds.
+         *
+         * @event Eds#removeEntry
+         * @type {DataObject}
+         */
+        this.emit('removeEntry', entry);
+
+        return entry;
     }
 
     /**
@@ -2563,32 +2618,14 @@ class Eds {
             if (index < 0x1200 || index > 0x127F)
                 continue;
 
-            const subObj1 = entry.at(1);
-            if(!subObj1)
-                continue;
-
-            let cobIdRx = subObj1.value;
-            if (!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
-                continue;
-
-            const subObj2 = entry.at(2);
-            if(!subObj2)
-                continue;
-
-            let cobIdTx = subObj2.value;
-            if (!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
-                continue;
-
-            cobIdRx &= 0x7FF;
-            cobIdTx &= 0x7FF;
-
-            let deviceId = 0;
-
-            const subObj3 = entry.at(3);
-            if(subObj3)
-                deviceId = subObj3.value;
-
-            parameters.push({ deviceId, cobIdTx, cobIdRx });
+            const result = this._parseSdoParameter(entry);
+            if(result) {
+                parameters.push({
+                    cobIdRx: result[0],
+                    cobIdTx: result[1],
+                    deviceId: result[2],
+                });
+            }
         }
 
         return parameters;
@@ -2682,6 +2719,14 @@ class Eds {
             subObj2.defaultValue = cobIdTx;
             subObj3.defaultValue = deviceId;
         }
+
+        /**
+         * A SDO server parameter object was added.
+         *
+         * @event Eds#newSdoClient
+         * @type {object}
+         */
+        this.emit('newSdoClient', { deviceId, cobIdRx, cobIdTx });
     }
 
     /**
@@ -2696,8 +2741,22 @@ class Eds {
             if (index < 0x1200 || index > 0x127F)
                 continue;
 
-            if (entry[3] !== undefined && entry[3].value === deviceId) {
+            const result = this._parseSdoParameter(entry);
+            if(result && result[2] === deviceId) {
                 this.removeEntry(index);
+
+                /**
+                 * A SDO server parameter object was removed.
+                 *
+                 * @event Eds#removeSdoClient
+                 * @type {object}
+                 */
+                this.emit('removeSdoClient', {
+                    cobIdRx: result[0],
+                    cobIdTx: result[1],
+                    deviceId: result[2],
+                });
+
                 break;
             }
         }
@@ -2717,22 +2776,14 @@ class Eds {
             if (index < 0x1280 || index > 0x12FF)
                 continue;
 
-            const deviceId = entry[3].value;
-            if (!deviceId)
-                continue;
-
-            let cobIdTx = entry[1].value;
-            if (!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
-                continue;
-
-            let cobIdRx = entry[2].value;
-            if (!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
-                continue;
-
-            cobIdTx &= 0x7FF;
-            cobIdRx &= 0x7FF;
-
-            parameters.push({ deviceId, cobIdTx, cobIdRx });
+            const result = this._parseSdoParameter(entry);
+            if(result) {
+                parameters.push({
+                    cobIdTx: result[0],
+                    cobIdRx: result[1],
+                    deviceId: result[2],
+                });
+            }
         }
 
         return parameters;
@@ -2826,6 +2877,14 @@ class Eds {
             subObj2.defaultValue = cobIdRx;
             subObj3.defaultValue = deviceId;
         }
+
+        /**
+         * An SDO client parameter object was added.
+         *
+         * @event Eds#newSdoServer
+         * @type {object}
+         */
+        this.emit('newSdoServer', { deviceId, cobIdRx, cobIdTx });
     }
 
     /**
@@ -2840,8 +2899,22 @@ class Eds {
             if (index < 0x1280 || index > 0x12FF)
                 continue;
 
-            if (entry[3] !== undefined && entry[3].value === deviceId) {
+            const result = this._parseSdoParameter(entry);
+            if (result && result[2] === deviceId) {
                 this.removeEntry(index);
+
+                /**
+                 * An SDO client parameter object was removed.
+                 *
+                 * @event Eds#removeSdoServer
+                 * @type {object}
+                 */
+                this.emit('removeSdoServer', {
+                    cobIdTx: result[0],
+                    cobIdRx: result[1],
+                    deviceId: result[2],
+                });
+
                 break;
             }
         }
@@ -3028,6 +3101,14 @@ class Eds {
                 mapSub.defaultValue = value;
         }
 
+        /**
+         * A new receive PDO was mapped.
+         *
+         * @event Eds#newRpdo
+         * @type {object}
+         */
+        this.emit('newRpdo', this._parsePdo(index));
+
         // Update deviceInfo
         this.deviceInfo['NrOfRXPDO'] = this.nrOfRXPDO;
     }
@@ -3036,23 +3117,36 @@ class Eds {
      * Remove an RPDO communication/mapping parameter object.
      *
      * @param {number} cobId - COB-ID used by the RPDO.
+     * @returns {object} removed RPDO.
      * @since 6.0.0
      */
     removeReceivePdo(cobId) {
-        for (let [index, entry] of this.entries()) {
+        for (let index of this.keys()) {
             index = parseInt(index, 16);
             if (index < 0x1400 || index > 0x15FF)
                 continue;
 
-            if (entry[1] !== undefined && entry[1].value === cobId) {
+            const pdo = this._parsePdo(index);
+            if (pdo.cobId === cobId) {
                 this.removeEntry(index);
                 this.removeEntry(index + 0x200);
-                break;
+
+                // Update deviceInfo
+                this.deviceInfo['NrOfRXPDO'] = this.nrOfRXPDO;
+
+                /**
+                 * A transmit PDO was removed.
+                 *
+                 * @event Eds#newTpdo
+                 * @type {object}
+                 */
+                this.emit('removeTpdo', pdo);
+
+                return pdo;
             }
         }
 
-        // Update deviceInfo
-        this.deviceInfo['NrOfRXPDO'] = this.nrOfRXPDO;
+        return null;
     }
 
     /**
@@ -3245,59 +3339,50 @@ class Eds {
 
         // Update deviceInfo
         this.deviceInfo['NrOfTXPDO'] = this.nrOfTXPDO;
+
+        /**
+         * A new transmit PDO was mapped.
+         *
+         * @event Eds#newTpdo
+         * @type {object}
+         */
+        this.emit('newTpdo', this._parsePdo(index));
     }
 
     /**
      * Remove a TPDO communication/mapping parameter object.
      *
      * @param {number} cobId - COB-ID used by the TPDO.
+     * @returns {object} removed TPDO.
      * @since 6.0.0
      */
     removeTransmitPdo(cobId) {
-        for (let [index, entry] of this.entries()) {
+        for (let index of this.keys()) {
             index = parseInt(index, 16);
             if (index < 0x1800 || index > 0x19FF)
                 continue;
 
-            if (entry[1] !== undefined && entry[1].value === cobId) {
+            const pdo = this._parsePdo(index);
+            if (pdo.cobId === cobId) {
                 this.removeEntry(index);
                 this.removeEntry(index + 0x200);
-                break;
+
+                // Update deviceInfo
+                this.deviceInfo['NrOfTXPDO'] = this.nrOfTXPDO;
+
+                /**
+                 * A transmit PDO was removed.
+                 *
+                 * @event Eds#newTpdo
+                 * @type {object}
+                 */
+                this.emit('removeTpdo', pdo);
+
+                return pdo;
             }
         }
 
-        // Update deviceInfo
-        this.deviceInfo['NrOfTXPDO'] = this.nrOfTXPDO;
-    }
-
-    /**
-     * Parse EDS date and time.
-     *
-     * @param {string} time - time string (hh:mm[AM|PM]).
-     * @param {string} date - date string (mm-dd-yyyy).
-     * @returns {Date} parsed Date.
-     * @private
-     */
-    _parseDate(time, date) {
-        const postMeridiem = time.includes('PM');
-
-        time = time
-            .replace('AM', '')
-            .replace('PM', '');
-
-        let [hours, minutes] = time.split(':');
-        let [month, day, year] = date.split('-');
-
-        hours = parseInt(hours);
-        minutes = parseInt(minutes);
-        month = parseInt(month);
-        day = parseInt(day);
-        year = parseInt(year);
-
-        if (postMeridiem)
-            hours += 12;
-
-        return new Date(year, month - 1, day, hours, minutes);
+        return null;
     }
 
     /**
@@ -3305,6 +3390,7 @@ class Eds {
      *
      * @param {number} index - PDO communication parameter index.
      * @returns {object} parsed PDO data.
+     * @private
      */
     _parsePdo(index) {
         const commEntry = this.getEntry(index);
@@ -3409,6 +3495,44 @@ class Eds {
         return pdo;
     }
 
+    /**
+     * Parse an SDO client/server parameter object.
+     *
+     * @param {DataObject} entry - entry to parse.
+     * @returns {null | Array<number>} parsed data.
+     * @since 6.0.0
+     */
+    _parseSdoParameter(entry) {
+        let result = [];
+
+        const subObj1 = entry[1];
+        if(!subObj1)
+            return null;
+
+        const subObj2 = entry[2];
+        if(!subObj2)
+            return null;
+
+        const cobIdRx = subObj1.value;
+        if (!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
+            throw new EdsError('CAN extended frames are not supported');
+
+        result[0] = cobIdRx & 0x7FF;
+
+        const cobIdTx = subObj2.value;
+        if (!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
+            throw new EdsError('CAN extended frames are not supported');
+
+        result[1] = cobIdTx & 0x7FF;
+
+        const subObj3 = entry[3];
+        if(subObj3)
+            result[2] = subObj3.value;
+        else
+            result[2] = 0;
+
+        return result;
+    }
 
     /**
      * Helper method to write strings to an EDS file.
@@ -3423,6 +3547,7 @@ class Eds {
         if (data.length > 0)
             fs.writeSync(fd, data + EOL);
     }
+
 
     /**
      * Helper method to write objects to an EDS file.
@@ -3441,16 +3566,18 @@ class Eds {
 
             // Write top level object
             const section = index.toString(16);
-            this._write(fd, ini.encode(
-                entryToEds(dataObject), { section: section }));
+            this._write(fd, ini.encode(entryToEds(dataObject), {
+                section: section
+            }));
 
             // Write sub-objects
             for (let i = 0; i < dataObject.subNumber; i++) {
                 if (dataObject[i]) {
                     const subSection = section + 'sub' + i;
                     const subObject = dataObject[i];
-                    this._write(fd, ini.encode(
-                        entryToEds(subObject), { section: subSection }));
+                    this._write(fd, ini.encode(entryToEds(subObject), {
+                        section: subSection
+                    }));
                 }
             }
         }

@@ -75,18 +75,13 @@ class Queue {
  */
 class SdoClient extends Protocol {
     constructor(eds) {
-        super();
+        super(eds);
 
-        if (!Eds.isEds(eds))
-            throw new TypeError('not an Eds');
-
-        this.eds = eds;
         this.serverMap = {};
         this.transfers = {};
         this._blockSize = 127;
         // Minimum timeout for the sdo block download.
         this._blockDownloadTimeout = 1;
-        this.started = false;
     }
 
     /**
@@ -103,43 +98,6 @@ class SdoClient extends Protocol {
             throw RangeError('blockSize must be in range [1-127]');
 
         this._blockSize = value;
-    }
-
-    /**
-     * Start the module.
-     *
-     * @fires Protocol#start
-     */
-    start() {
-        if (this.started)
-            return;
-
-        const servers = this.eds.getSdoClientParameters();
-
-        this.serverMap = {};
-        for (const { deviceId, cobIdTx, cobIdRx } of servers) {
-            this.serverMap[deviceId] = {
-                cobIdTx,
-                cobIdRx,
-                queue: new Queue(),
-            };
-        }
-
-        super.start();
-    }
-
-    /**
-     * Stop the module.
-     *
-     * @fires Protocol#stop
-     */
-    stop() {
-        for (const transfer of Object.values(this.transfers)) {
-            if (transfer.active)
-                this._abortTransfer(transfer, SdoCode.DEVICE_STATE);
-        }
-
-        super.stop();
     }
 
     /**
@@ -355,14 +313,44 @@ class SdoClient extends Protocol {
     }
 
     /**
+     * Start the module.
+     *
+     * @protected
+     */
+    _start() {
+        this.serverMap = {};
+        for (const server of this.eds.getSdoClientParameters())
+            this._addServer(server);
+
+        this.addEdsCallback('newSdoServer',
+            (server) => this._addServer(server));
+
+        this.addEdsCallback('removeSdoServer',
+            (server) => this._removeServer(server));
+    }
+
+    /**
+     * Stop the module.
+     *
+     * @protected
+     */
+    _stop() {
+        this.removeEdsCallback('newSdoServer');
+        this.removeEdsCallback('removeSdoServer');
+
+        for (const server of this.eds.getSdoClientParameters())
+            this._removeServer(server);
+    }
+
+    /**
      * Call when a new CAN message is received.
      *
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @fires Protocol#message
+     * @protected
      */
-    receive({ id, data }) {
+    _receive({ id, data }) {
         // Handle transfers as a client (remote object dictionary)
         const transfer = this.transfers[id];
         if (transfer === undefined || !transfer.active)
@@ -445,6 +433,41 @@ class SdoClient extends Protocol {
                 this._abortTransfer(transfer, SdoCode.BAD_COMMAND);
                 break;
         }
+    }
+
+    /**
+     * Add an SDO server.
+     *
+     * @param {object} args - SDO client parameters.
+     * @param {number} args.deviceId - device identifier.
+     * @param {number} args.cobIdTx - COB-ID client -> server.
+     * @param {number} args.cobIdRx - COB-ID server -> client.
+     */
+    _addServer({ deviceId, cobIdTx, cobIdRx }) {
+        this.serverMap[deviceId] = {
+            cobIdTx,
+            cobIdRx,
+            queue: new Queue(),
+        };
+    }
+
+    /**
+     * Remove an SDO server.
+     *
+     * @param {object} args - SDO client parameters.
+     * @param {number} args.deviceId - device identifier.
+     * @param {number} args.cobIdRx - COB-ID server -> client.
+     */
+    _removeServer({ deviceId, cobIdRx }) {
+        const transfer = this.transfers[cobIdRx];
+        if (transfer) {
+            if(transfer.active)
+                this._abortTransfer(transfer, SdoCode.DEVICE_STATE);
+
+            delete this.transfers[cobIdRx];
+        }
+
+        delete this.serverMap[deviceId];
     }
 
     /**

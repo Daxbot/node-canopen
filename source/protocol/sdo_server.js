@@ -26,15 +26,10 @@ const { deprecate } = require('util');
  */
 class SdoServer extends Protocol {
     constructor(eds) {
-        super();
+        super(eds);
 
-        if (!Eds.isEds(eds))
-            throw new TypeError('not an Eds');
-
-        this.eds = eds;
         this.transfers = {};
         this._blockSize = 127;
-        this.started = false;
     }
 
     /**
@@ -56,33 +51,31 @@ class SdoServer extends Protocol {
     /**
      * Start the module.
      *
-     * @fires Protocol#start
+     * @protected
      */
-    start() {
-        if (this.started)
-            return;
-
-        const clients = this.eds.getSdoServerParameters();
-
+    _start() {
         this.transfers = {};
-        for (const { cobIdTx, cobIdRx } of clients)
-            this.transfers[cobIdRx] = new SdoTransfer({ cobId: cobIdTx });
+        for (const client of this.eds.getSdoServerParameters())
+            this._addClient(client);
 
-        super.start();
+        this.addEdsCallback('newSdoClient',
+            (client) => this._addClient(client));
+
+        this.addEdsCallback('removeSdoClient',
+            (client) => this._removeClient(client));
     }
 
     /**
      * Stop the module.
      *
-     * @fires Protocol#stop
+     * @protected
      */
-    stop() {
-        for (const transfer of Object.values(this.transfers)) {
-            if (transfer.active)
-                this._abortTransfer(transfer, SdoCode.DEVICE_STATE);
-        }
+    _stop() {
+        this.removeEdsCallback('newSdoClient');
+        this.removeEdsCallback('removeSdoClient');
 
-        super.stop();
+        for (const client of this.eds.getSdoServerParameters())
+            this._removeClient(client);
     }
 
     /**
@@ -93,7 +86,7 @@ class SdoServer extends Protocol {
      * @param {Buffer} message.data - CAN message data;
      * @fires Protocol#message
      */
-    receive({ id, data }) {
+    _receive({ id, data }) {
         // Handle transfers as a server (local object dictionary)
         const client = this.transfers[id];
         if (client === undefined)
@@ -179,6 +172,33 @@ class SdoServer extends Protocol {
             default:
                 this._abortTransfer(client, SdoCode.BAD_COMMAND);
                 break;
+        }
+    }
+
+    /**
+     * Add an SDO client.
+     *
+     * @param {object} args - SDO client parameters.
+     * @param {number} args.cobIdTx - COB-ID server -> client.
+     * @param {number} args.cobIdRx - COB-ID client -> server.
+     */
+    _addClient({ cobIdTx, cobIdRx }) {
+        this.transfers[cobIdRx] = new SdoTransfer({ cobId: cobIdTx });
+    }
+
+    /**
+     * Remove an SDO client.
+     *
+     * @param {object} args - SDO client parameters.
+     * @param {number} args.cobIdRx - COB-ID client -> server.
+     */
+    _removeClient({ cobIdRx }) {
+        const transfer = this.transfers[cobIdRx];
+        if(transfer) {
+            if (transfer.active)
+                this._abortTransfer(transfer, SdoCode.DEVICE_STATE);
+
+            delete this.transfers[cobIdRx];
         }
     }
 

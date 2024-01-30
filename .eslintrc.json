@@ -52,7 +52,7 @@
         "jsdoc/no-undefined-types": [
             "warn",
             {
-                "definedTypes": [ "Iterable" ]
+                "definedTypes": [ "DataObject", "Iterable" ]
             }
         ],
         "no-trailing-spaces": "error",

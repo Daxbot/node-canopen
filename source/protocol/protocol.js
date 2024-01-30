@@ -5,14 +5,23 @@
  */
 
 const EventEmitter = require('events');
+const { Eds } = require('../eds');
 
 /**
  * A base class extended by the protocol modules.
+ *
+ * @param {Eds} eds - Eds object.
  */
 class Protocol extends EventEmitter {
-    constructor() {
+    constructor(eds) {
         super();
+
+        if(!Eds.isEds(eds))
+            throw new TypeError('not an Eds');
+
+        this.eds = eds;
         this.started = false;
+        this.callbacks = {};
     }
 
     /**
@@ -23,6 +32,9 @@ class Protocol extends EventEmitter {
     start() {
         if(!this.started) {
             this.started = true;
+
+            if(typeof this._start === 'function')
+                this._start();
 
             /**
              * The module has been started.
@@ -41,6 +53,9 @@ class Protocol extends EventEmitter {
      */
     stop() {
         if(this.started) {
+            if(typeof this._stop === 'function')
+                this._stop();
+
             this.started = false;
 
             /**
@@ -74,6 +89,74 @@ class Protocol extends EventEmitter {
          * @since 6.0.0
          */
         this.emit('message', { id, data });
+    }
+
+    /**
+     * Call when a new CAN message is received.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     */
+    receive(message) {
+        if(typeof this._receive === 'function')
+            this._receive(message);
+    }
+
+    /**
+     * Add a listener to the Eds.
+     *
+     * @param {string} eventName - the name of the event.
+     * @param {Function} listener - the callback function.
+     */
+    addEdsCallback(eventName, listener) {
+        if(this.callbacks[eventName])
+            throw new Error(eventName + ' already exists');
+
+        this.callbacks[eventName] = listener;
+        this.eds.addListener(eventName, listener);
+    }
+
+    /**
+     * Remove a listener from the Eds.
+     *
+     * @param {string} eventName - the name of the event.
+     */
+    removeEdsCallback(eventName) {
+        this.eds.removeListener(eventName, this.callbacks[eventName]);
+        delete this.callbacks[eventName];
+    }
+
+    /**
+     * Add an 'update' listener to a DataObject.
+     *
+     * @param {DataObject} entry - event emitter.
+     * @param {Function} listener - event listener.
+     * @param {string} [key] - event key.
+     */
+    addUpdateCallback(entry, listener, key='') {
+        if(!key)
+            key = entry.key;
+
+        if(this.callbacks[key])
+            throw new Error(key + ' already exists');
+
+        this.callbacks[key] = listener;
+        entry.addListener('update', listener);
+    }
+
+    /**
+     * Remove an 'update' listener from a DataObject.
+     *
+     * @param {DataObject} entry - event emitter.
+     * @param {string} [key] - event key.
+     */
+    removeUpdateCallback(entry, key='') {
+        if(!key)
+            key = entry.key;
+
+        entry.removeListener('update', this.callbacks[key]);
+        delete this.callbacks[key];
     }
 }
 

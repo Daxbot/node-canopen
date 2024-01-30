@@ -1,6 +1,6 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const { Device, LssMode } = require('../../index');
+const { Eds, Device, LssMode } = require('../../index');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
@@ -16,13 +16,45 @@ function rand32() {
 }
 
 describe('Lss', function () {
-    it('should get 0x1018', function () {
-        const device = new Device({ enableLss: true });
-        expect(device.lss.vendorId).to.equal(0);
-        expect(device.lss.productCode).to.equal(0);
-        expect(device.lss.revisionNumber).to.equal(0);
-        expect(device.lss.serialNumber).to.equal(0);
+    it('should listen to Eds#newEntry', function () {
+        const eds = new Eds();
+        eds.removeEntry(0x1018);
 
+        const device = new Device({ eds, enableLss: true });
+        expect(device.lss.identity.vendorId).to.be.null;
+        expect(device.lss.identity.productCode).to.be.null;
+        expect(device.lss.identity.revisionNumber).to.be.null;
+        expect(device.lss.identity.serialNumber).to.be.null;
+
+        eds.setIdentity({
+            vendorId: 1,
+            productCode: 2,
+            revisionNumber: 3,
+            serialNumber: 4,
+        });
+
+        expect(device.lss.identity.vendorId).to.equal(1);
+        expect(device.lss.identity.productCode).to.equal(2);
+        expect(device.lss.identity.revisionNumber).to.equal(3);
+        expect(device.lss.identity.serialNumber).to.equal(4);
+    });
+
+    it('should listen to Eds#removeEntry', function () {
+        const device = new Device({ enableLss: true });
+        expect(device.lss.identity.vendorId).to.equal(0);
+        expect(device.lss.identity.productCode).to.equal(0);
+        expect(device.lss.identity.revisionNumber).to.equal(0);
+        expect(device.lss.identity.serialNumber).to.equal(0);
+
+        device.eds.removeEntry(0x1018);
+        expect(device.lss.identity.vendorId).to.be.null;
+        expect(device.lss.identity.productCode).to.be.null;
+        expect(device.lss.identity.revisionNumber).to.be.null;
+        expect(device.lss.identity.serialNumber).to.be.null;
+    });
+
+    it('should listen to DataObject#update', function () {
+        const device = new Device({ enableLss: true });
         device.eds.setIdentity({
             vendorId: 1,
             productCode: 2,
@@ -30,10 +62,10 @@ describe('Lss', function () {
             serialNumber: 4,
         });
 
-        expect(device.lss.vendorId).to.equal(1);
-        expect(device.lss.productCode).to.equal(2);
-        expect(device.lss.revisionNumber).to.equal(3);
-        expect(device.lss.serialNumber).to.equal(4);
+        expect(device.lss.identity.vendorId).to.equal(1);
+        expect(device.lss.identity.productCode).to.equal(2);
+        expect(device.lss.identity.revisionNumber).to.equal(3);
+        expect(device.lss.identity.serialNumber).to.equal(4);
     });
 
     describe('Mode switching', function () {

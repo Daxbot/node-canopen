@@ -20,15 +20,13 @@ const { deprecate } = require('util');
  */
 class Sync extends Protocol {
     constructor(eds) {
-        super();
+        super(eds);
 
-        if (!Eds.isEds(eds))
-            throw new TypeError('not an Eds');
-
-        this.eds = eds;
         this.syncCounter = 0;
         this.syncTimer = null;
+        this._overflow = 0;
         this._cobId = null;
+        this._generate = false;
     }
 
     /**
@@ -112,71 +110,66 @@ class Sync extends Protocol {
     }
 
     /**
-     * Start the module;
-     *
-     * @fires Protocol#start
-     */
-    start() {
-        if (this.syncTimer !== null)
-            return;
-
-        const obj1005 = this.eds.getEntry(0x1005);
-        if(obj1005) {
-            obj1005.on('update', (obj) => {
-                this._cobId = obj.raw.readUInt16LE() & 0x7ff;
-                const generate = (obj.raw[3] & (1 << 6));
-                this._updateSendTimer({ generate, cobId: this._cobId });
-            });
-        }
-
-        const obj1006 = this.eds.getEntry(0x1006);
-        if(obj1006) {
-            obj1006.on('update',
-                (obj) => this._updateSendTimer({ cyclePeriod: obj.value }));
-        }
-
-        const obj1019 = this.eds.getEntry(0x1019);
-        if(obj1019) {
-            obj1019.on('update',
-                (obj) => this._updateSendTimer({ overflow: obj.value }));
-        }
-
-        this._cobId = this.eds.getSyncCobId();
-        this._updateSendTimer({});
-
-        super.start();
-    }
-
-    /**
-     * Stop the module.
-     *
-     * @fires Protocol#stop
-     */
-    stop() {
-        clearInterval(this.syncTimer);
-        this.syncTimer = null;
-        this.syncCounter = 0;
-        super.stop();
-    }
-
-    /**
      * Service: SYNC write.
      *
      * @param {number | null} counter - sync counter;
      * @fires Protocol#message
      */
     write(counter = null) {
-        if(!this.eds.getSyncGenerationEnable())
+        if(!this._generate)
             throw new EdsError('SYNC generation is disabled');
 
-        const cobId = this.eds.getSyncCobId();
-        if (!cobId)
+        if (!this._cobId)
             throw new EdsError('COB-ID SYNC may not be 0');
 
         if(counter !== null)
-            this.send(cobId, Buffer.from([counter]));
+            this.send(this._cobId, Buffer.from([counter]));
         else
-            this.send(cobId);
+            this.send(this._cobId);
+    }
+
+    /**
+     * Start the module;
+     *
+     * @protected
+     */
+    _start() {
+        const obj1005 = this.eds.getEntry(0x1005);
+        if(obj1005)
+            this._addEntry(obj1005);
+
+        const obj1006 = this.eds.getEntry(0x1006);
+        if(obj1006)
+            this._addEntry(obj1006);
+
+        const obj1019 = this.eds.getEntry(0x1019);
+        if(obj1019)
+            this._addEntry(obj1019);
+
+        this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+        this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+    }
+
+    /**
+     * Stop the module.
+     *
+     * @protected
+     */
+    _stop() {
+        this.removeEdsCallback('newEntry');
+        this.removeEdsCallback('removeEntry');
+
+        const obj1005 = this.eds.getEntry(0x1005);
+        if(obj1005)
+            this._removeEntry(obj1005);
+
+        const obj1006 = this.eds.getEntry(0x1006);
+        if(obj1006)
+            this._removeEntry(obj1006);
+
+        const obj1019 = this.eds.getEntry(0x1019);
+        if(obj1019)
+            this._removeEntry(obj1019);
     }
 
     /**
@@ -186,8 +179,9 @@ class Sync extends Protocol {
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @fires Sync#sync
+     * @protected
      */
-    receive({ id, data }) {
+    _receive({ id, data }) {
         if (this._cobId === id) {
             if (data)
                 data = data[0];
@@ -203,52 +197,136 @@ class Sync extends Protocol {
     }
 
     /**
-     * Update the sync generation timer.
+     * Listens for new Eds entries.
      *
-     * @param {object} args - arguments.
-     * @param {boolean} args.generate - Sync generation enable.
-     * @param {number} args.cobId - COB-ID SYNC.
-     * @param {number} args.cyclePeriod - Emcy inhibit time in 100 μs.
-     * @param {number} args.overflow - counter overflow value.
+     * @param {DataObject} entry - new entry.
+     * @listens Eds#newEntry
+     * @protected
+     */
+    _addEntry(entry) {
+        switch(entry.index) {
+            case 0x1005:
+                this.addUpdateCallback(entry, (obj) => this._parse1005(obj));
+                this._parse1005(entry);
+                break;
+            case 0x1006:
+                this.addUpdateCallback(entry, (obj) => this._parse1006(obj));
+                this._parse1006(entry);
+                break;
+            case 0x1019:
+                this.addUpdateCallback(entry, (obj) => this._parse1019(obj));
+                this._parse1019(entry);
+                break;
+        }
+    }
+
+    /**
+     * Listens for removed Eds entries.
+     *
+     * @param {DataObject} entry - removed entry.
+     * @listens Eds#newEntry
      * @private
      */
-    _updateSendTimer({ generate, cobId, cyclePeriod, overflow }) {
-        if(this.syncTimer) {
-            // Clear the old timer
-            clearInterval(this.syncTimer);
-            this.syncTimer = null;
+    _removeEntry(entry) {
+        switch(entry.index) {
+            case 0x1005:
+                this.removeUpdateCallback(entry);
+                this._clear1005();
+                break;
+            case 0x1006:
+                this.removeUpdateCallback(entry);
+                this._clear1006();
+                break;
+            case 0x1019:
+                this.removeUpdateCallback(entry);
+                this._clear1019();
+                break;
         }
+    }
 
-        if(generate === undefined)
-            generate = this.eds.getSyncGenerationEnable();
+    /**
+     * Called when 0x1005 (COB-ID SYNC) is updated.
+     *
+     * @param {DataObject} entry - updated DataObject.
+     * @private
+     */
+    _parse1005(entry) {
+        const value = entry.value;
+        const gen = (value >> 30) & 0x1;
+        const rtr = (value >> 29) & 0x1;
+        const cobId = value & 0x7FF;
 
-        if(generate) {
-            if(cobId === undefined)
-                cobId = this.eds.getSyncCobId();
+        if(rtr != 0x1) {
+            this._generate = !!gen;
+            this._cobId = cobId;
+        }
+        else {
+            this._clear1005();
+        }
+    }
 
-            if(cyclePeriod === undefined)
-                cyclePeriod = this.eds.getSyncCyclePeriod();
+    /**
+     * Called when 0x1005 (COB-ID SYNC) is removed.
+     *
+     * @private
+     */
+    _clear1005() {
+        this._generate = false;
+        this._cobId = null;
+    }
 
-            if (cobId > 0 && cyclePeriod > 0) {
-                if(overflow === undefined)
-                    overflow = this.eds.getSyncOverflow();
+    /**
+     * Called when 0x1006 (Communication cycle period) is updated.
+     *
+     * @param {DataObject} entry - updated DataObject.
+     * @private
+     */
+    _parse1006(entry) {
+        // Clear the old timer
+        this._clear1006();
 
-                if (overflow) {
-                    this.syncTimer = setInterval(() => {
-                        this.syncCounter += 1;
-                        if (this.syncCounter > overflow)
-                            this.syncCounter = 1;
+        const cyclePeriod = entry.value;
+        if(cyclePeriod > 0) {
+            this.syncTimer = setInterval(() => {
+                if(!this._generate || !this._cobId)
+                    return;
 
-                        this.send(cobId, Buffer.from([this.syncCounter]));
-                    }, cyclePeriod / 1000);
+                if(this._overflow > 0) {
+                    this.syncCounter += 1;
+                    if (this.syncCounter > this._overflow)
+                        this.syncCounter = 1;
+
+                    this.send(this._cobId, Buffer.from([this.syncCounter]));
                 }
                 else {
-                    this.syncTimer = setInterval(() => {
-                        this.send(cobId, Buffer.alloc(0));
-                    }, cyclePeriod / 1000);
+                    this.send(this._cobId, Buffer.alloc(0));
                 }
-            }
+            }, this._cyclePeriod / 1000);
         }
+    }
+
+    _clear1006() {
+        clearInterval(this.syncTimer);
+        this.syncTimer = null;
+    }
+
+    /**
+     * Called when 0x1019 (Synchronous counter overflow value) is updated.
+     *
+     * @param {DataObject} entry - updated DataObject.
+     * @private
+     */
+    _parse1019(entry) {
+        this._overflow = entry.value;
+    }
+
+    /**
+     * Called when 0x1019 (Synchronous counter overflow value) is removed.
+     *
+     * @private
+     */
+    _clear1019() {
+        this._overflow = 0;
     }
 }
 

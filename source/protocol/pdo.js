@@ -21,121 +21,15 @@ const { deprecate } = require('util');
  */
 class Pdo extends Protocol {
     constructor(eds) {
-        super();
+        super(eds);
 
-        if (!Eds.isEds(eds))
-            throw new TypeError('not an Eds');
-
-        this.eds = eds;
         this.receiveMap = {};
         this.transmitMap = {};
         this.eventTimers = {};
         this.events = [];
-        this.syncTpdo = [];
+        this.syncTpdo = {};
         this.syncCobId = null;
-    }
-
-    /**
-     * Begin TPDO generation.
-     *
-     * @fires Protocol#start
-     */
-    start() {
-        if (this.started)
-            return;
-
-        this.receiveMap = {};
-        for (const pdo of this.eds.getReceivePdos())
-            this.receiveMap[pdo.cobId] = pdo;
-
-        this.transmitMap = {};
-        for (const pdo of this.eds.getTransmitPdos())
-            this.transmitMap[pdo.cobId] = pdo;
-
-        for (const pdo of Object.values(this.transmitMap)) {
-            if (pdo.transmissionType < 0xF1) {
-                if (!pdo.syncStart) {
-                    pdo.started = true;
-                    pdo.counter = 0;
-                }
-                this.syncTpdo.push(pdo);
-            }
-            else if (pdo.transmissionType == 0xFE) {
-                if (pdo.eventTime > 0) {
-                    // Send on a timer
-                    const timer = setInterval(() => {
-                        this.write(pdo.cobId);
-                    }, pdo.eventTime);
-
-                    this.eventTimers[pdo.cobId] = timer;
-                }
-                else if (pdo.inhibitTime > 0) {
-                    // Send on value change, but no faster than inhibit time
-                    for (const obj of pdo.dataObjects) {
-                        const func = () => {
-                            // TODO - fix this, it should keep track of the last
-                            // send time and count off that rather than using
-                            // a naive timer.
-                            if (!this.eventTimers[pdo.cobId]) {
-                                const timer = setTimeout(() => {
-                                    this.eventTimers[pdo.cobId] = null;
-                                    this.write(pdo.cobId);
-                                }, pdo.inhibitTime);
-
-                                this.eventTimers[pdo.cobId] = timer;
-                            }
-                        };
-
-                        let entry = this.eds.getEntry(obj.index);
-                        if (entry.subNumber > 0)
-                            entry = entry[obj.subIndex];
-
-                        this.events.push([entry, 'update', func]);
-                        entry.on('update', func);
-                    }
-                }
-                else {
-                    // Send immediately on value change
-                    for (const obj of pdo.dataObjects) {
-                        const func = () => this.write(pdo.cobId);
-
-                        let entry = this.eds.getEntry(obj.index);
-                        if (entry.subNumber > 0)
-                            entry = entry[obj.subIndex];
-
-                        this.events.push([entry, 'update', func]);
-                        entry.on('update', func);
-                    }
-                }
-            }
-            else {
-                throw TypeError(
-                    `unsupported TPDO type (${pdo.transmissionType})`);
-            }
-        }
-
-        if (this.syncTpdo.length > 0)
-            this.syncCobId = this.eds.getSyncCobId();
-
-        super.start();
-    }
-
-    /**
-     * Stop TPDO generation.
-     *
-     * @fires Protocol#stop
-     */
-    stop() {
-        for (const [emitter, eventName, func] of this.events)
-            emitter.removeListener(eventName, func);
-
-        for (const timer of Object.values(this.eventTimers))
-            clearInterval(timer);
-
-        this.eventTimers = {};
-        this.events = [];
-        this.syncTpdo = [];
-        super.stop();
+        this.updateFlags = {};
     }
 
     /**
@@ -161,17 +55,72 @@ class Pdo extends Protocol {
     }
 
     /**
+     * Start the module.
+     *
+     * @protected
+     */
+    _start() {
+        const obj1005 = this.eds.getEntry(0x1005);
+        if(obj1005)
+            this._addEntry(obj1005);
+
+        this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+        this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+
+        this.receiveMap = {};
+        for (const pdo of this.eds.getReceivePdos())
+            this._addRpdo(pdo);
+
+        this.addEdsCallback('newRpdo', (pdo) => this._addRpdo(pdo));
+        this.addEdsCallback('removeRpdo', (pdo) => this._removeRpdo(pdo));
+
+        this.transmitMap = {};
+        for (const pdo of this.eds.getTransmitPdos())
+            this._addTpdo(pdo);
+
+        this.addEdsCallback('newTpdo', (pdo) => this._addTpdo(pdo));
+        this.addEdsCallback('removeTpdo', (pdo) => this._removeTpdo(pdo));
+    }
+
+    /**
+     * Stop the module.
+     *
+     * @protected
+     */
+    _stop() {
+        this.removeEdsCallback('newEntry');
+        this.removeEdsCallback('removeEntry');
+
+        const obj1005 = this.eds.getEntry(0x1005);
+        if(obj1005)
+            this._removeEntry(obj1005);
+
+        this.removeEdsCallback('newRpdo');
+        this.removeEdsCallback('removeRpdo');
+
+        for (const pdo of this.eds.getReceivePdos())
+            this._removeRpdo(pdo);
+
+        this.removeEdsCallback('newTpdo');
+        this.removeEdsCallback('removeTpdo');
+
+        for (const pdo of this.eds.getTransmitPdos())
+            this._removeTpdo(pdo);
+    }
+
+    /**
      * Call when a new CAN message is received.
      *
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @fires Pdo#pdo
+     * @protected
      */
-    receive({ id, data }) {
+    _receive({ id, data }) {
         if ((id & 0x7FF) === this.syncCobId) {
             const counter = data[1];
-            for (const pdo of this.syncTpdo) {
+            for (const pdo of Object.values(this.syncTpdo)) {
                 if (pdo.started) {
                     if (pdo.transmissionType == 0) {
                         // Acyclic - send only if data changed
@@ -188,30 +137,191 @@ class Pdo extends Protocol {
                     pdo.counter = 0;
                 }
             }
+            return;
         }
-        else if (id >= 0x180 && id < 0x580) {
-            if (id in this.receiveMap) {
-                const pdo = this.receiveMap[id];
-                let dataOffset = 0;
 
-                let updated = false;
+        const pdo = this.receiveMap[id];
+        if(pdo) {
+            let dataOffset = 0;
+
+            let updated = false;
+            for (const obj of pdo.dataObjects) {
+                const size = obj.size;
+                if (data.length < dataOffset + size)
+                    continue;
+
+                const lastValue = obj.value;
+                data.copy(obj.raw, 0, dataOffset, dataOffset + size);
+                dataOffset += obj.raw.length;
+
+                if (!updated && lastValue !== obj.value)
+                    updated = true;
+            }
+
+            if (updated)
+                this._emitPdo(pdo);
+        }
+    }
+
+    /**
+     * Listens for new Eds entries.
+     *
+     * @param {DataObject} entry - new entry.
+     * @protected
+     */
+    _addEntry(entry) {
+        if(entry.index === 0x1005) {
+            this.addUpdateCallback(entry, (obj) => this._parse1005(obj));
+            this._parse1005(entry);
+        }
+    }
+
+    /**
+     * Listens for removed Eds entries.
+     *
+     * @param {DataObject} entry - removed entry.
+     * @protected
+     */
+    _removeEntry(entry) {
+        if(entry.index === 0x1005) {
+            this.removeUpdateCallback(entry);
+            this._clear1005();
+        }
+    }
+
+    /**
+     * Called when 0x1005 (COB-ID SYNC) is updated.
+     *
+     * @param {DataObject} entry - updated DataObject.
+     * @private
+     */
+    _parse1005(entry) {
+        const value = entry.value;
+        const rtr = (value >> 29) & 0x1;
+        const cobId = value & 0x7FF;
+
+        if(rtr != 0x1)
+            this.syncCobId = cobId;
+        else
+            this._clear1005();
+    }
+
+    /**
+     * Called when 0x1005 (COB-ID SYNC) is removed.
+     */
+    _clear1005() {
+        this.syncCobId = null;
+    }
+
+    /**
+     * Add an RPDO.
+     *
+     * @param {object} pdo - PDO data.
+     */
+    _addRpdo(pdo) {
+        this.receiveMap[pdo.cobId] = pdo;
+    }
+
+    /**
+     * Remove an RPDO.
+     *
+     * @param {object} pdo - PDO data.
+     */
+    _removeRpdo(pdo) {
+        delete this.receiveMap[pdo.cobId];
+    }
+
+    /**
+     * Add a TPDO.
+     *
+     * @param {object} pdo - PDO data.
+     */
+    _addTpdo(pdo) {
+        this.transmitMap[pdo.cobId] = pdo;
+
+        if (pdo.transmissionType < 0xF1) {
+            // Sent on SYNC
+            if (!pdo.syncStart) {
+                pdo.started = true;
+                pdo.counter = 0;
+            }
+
+            this.syncTpdo[pdo.cobId] = pdo;
+        }
+        else if (pdo.transmissionType == 0xFE) {
+            if (pdo.eventTime > 0) {
+                // Send on a timer
+                const timer = setInterval(
+                    () => this.write(pdo.cobId), pdo.eventTime);
+
+                this.eventTimers[pdo.cobId] = timer;
+            }
+            else if (pdo.inhibitTime > 0) {
+                // Send on update, but no faster than the inhibit time
+                this.updateFlags[pdo.cobId] = false;
+                this.eventTimers[pdo.cobId] = setInterval(() => {
+                    if(this.updateFlags[pdo.cobId]) {
+                        this.updateFlags[pdo.cobId] = false;
+                        this.write(pdo.cobId);
+                    }
+                }, pdo.inhibitTime);
+
                 for (const obj of pdo.dataObjects) {
-                    const size = obj.size;
-                    if (data.length < dataOffset + size)
-                        continue;
+                    const key = pdo.cobId.toString(16) + ':' + obj.key;
+                    const callback = () => {
+                        this.updateFlags[pdo.cobId] = true;
+                    };
 
-                    const lastValue = obj.value;
-                    data.copy(obj.raw, 0, dataOffset, dataOffset + size);
-                    dataOffset += obj.raw.length;
-
-                    if (!updated && lastValue !== obj.value)
-                        updated = true;
+                    this.addUpdateCallback(obj, callback, key);
                 }
+            }
+            else {
+                // Send immediately on value change
+                for (const obj of pdo.dataObjects) {
+                    const key = pdo.cobId.toString(16) + ':' + obj.key;
+                    const callback = () => {
+                        this.write(pdo.cobId);
+                    };
 
-                if (updated)
-                    this._emitPdo(pdo);
+                    this.addUpdateCallback(obj, callback, key);
+                }
             }
         }
+    }
+
+    /**
+     * Remove a TPDO.
+     *
+     * @param {object} pdo - PDO data.
+     */
+    _removeTpdo(pdo) {
+        if (pdo.transmissionType < 0xF1) {
+            delete this.syncTpdo[pdo.cobId];
+        }
+        else if (pdo.transmissionType == 0xFE) {
+            if (pdo.eventTime > 0) {
+                clearInterval(this.eventTimers[pdo.cobId]);
+                delete this.eventTimers[pdo.cobId];
+            }
+            else if (pdo.inhibitTime > 0) {
+                clearInterval(this.eventTimers[pdo.cobId]);
+                delete this.eventTimers[pdo.cobId];
+                delete this.updateFlags[pdo.cobId];
+
+                for (const obj of pdo.dataObjects) {
+                    const key = pdo.cobId.toString(16) + ':' + obj.key;
+                    this.removeUpdateCallback(obj, key);
+                }
+            }
+            else {
+                for (const obj of pdo.dataObjects) {
+                    const key = pdo.cobId.toString(16) + ':' + obj.key;
+                    this.removeUpdateCallback(obj, key);
+                }
+            }
+        }
+
+        delete this.transmitMap[pdo.cobId];
     }
 
     /**

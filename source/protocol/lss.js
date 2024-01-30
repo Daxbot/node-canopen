@@ -123,21 +123,17 @@ class LssError extends Error {
  */
 class Lss extends Protocol {
     constructor(eds) {
-        super();
+        super(eds);
 
-        if(!Eds.isEds(eds))
-            throw new TypeError('not an Eds');
-
-        this.eds = eds;
         this._mode = LssMode.OPERATION;
         this.pending = {};
         this.select = [];
         this.scanState = 0;
         this.identity = {
-            vendorId: 0,
-            productCode: 0,
-            revisionNumber: 0,
-            serialNumber: 0,
+            vendorId: null,
+            productCode: null,
+            revisionNumber: null,
+            serialNumber: null,
         };
     }
 
@@ -232,46 +228,6 @@ class Lss extends Protocol {
      */
     set serialNumber(value) {
         this.eds.getSubEntry(0x1018, 4).value = value;
-    }
-
-    /**
-     * Start the module.
-     *
-     * @fires Protocol#start
-     */
-    start() {
-        const obj1018 = this.eds.getEntry(0x1018);
-        if(obj1018) {
-            obj1018.on('update', (obj) => {
-                switch(obj.subIndex) {
-                    case 1:
-                        this.identity.vendorId = obj.value;
-                        break;
-                    case 2:
-                        this.identity.productCode = obj.value;
-                        break;
-                    case 3:
-                        this.identity.revisionNumber = obj.value;
-                        break;
-                    case 4:
-                        this.identity.serialNumber = obj.value;
-                        break;
-                }
-            });
-        }
-
-        this.identity = this.eds.getIdentity();
-
-        super.start();
-    }
-
-    /**
-     * Stop the module.
-     *
-     * @fires Protocol#stop
-     */
-    stop() {
-        super.stop();
     }
 
     /**
@@ -801,6 +757,34 @@ class Lss extends Protocol {
     }
 
     /**
+     * Start the module.
+     *
+     * @protected
+     */
+    _start() {
+        const obj1018 = this.eds.getEntry(0x1018);
+        if(obj1018)
+            this._addEntry(obj1018);
+
+        this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+        this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+    }
+
+    /**
+     * Stop the module.
+     *
+     * @protected
+     */
+    _stop() {
+        this.removeEdsCallback('newEntry');
+        this.removeEdsCallback('removeEntry');
+
+        const obj1018 = this.eds.getEntry(0x1018);
+        if(obj1018)
+            this._removeEntry(obj1018);
+    }
+
+    /**
      * Call when a new CAN message is received.
      *
      * @param {object} message - CAN frame.
@@ -808,8 +792,9 @@ class Lss extends Protocol {
      * @param {Buffer} message.data - CAN message data;
      * @fires Lss#changeMode
      * @fires Lss#changeDeviceId
+     * @protected
      */
-    receive({ id, data }) {
+    _receive({ id, data }) {
         if (id === 0x7e4) {
             const cs = data[0];
             if (this.pending[cs] !== undefined) {
@@ -950,6 +935,81 @@ class Lss extends Protocol {
                     return;
             }
         }
+    }
+
+    /**
+     * Listens for new Eds entries.
+     *
+     * @param {DataObject} entry - new entry.
+     * @protected
+     */
+    _addEntry(entry) {
+        if(entry.index === 0x1018) {
+            this.addUpdateCallback(entry, (obj) => this._parse1018(obj));
+            this._parse1018(entry);
+        }
+    }
+
+    /**
+     * Listens for removed Eds entries.
+     *
+     * @param {DataObject} entry - removed entry.
+     * @protected
+     */
+    _removeEntry(entry) {
+        if(entry.index === 0x1018) {
+            this.removeUpdateCallback(entry);
+            this._clear1018();
+        }
+    }
+
+    /**
+     * Called when 0x1018 (Identity object) is updated.
+     *
+     * @param {DataObject} entry - updated DataObject.
+     * @listens DataObject#update
+     * @private
+     */
+    _parse1018(entry) {
+        if(!entry)
+            return;
+
+        const subIndex = entry.subIndex;
+        if(subIndex === null) {
+            const maxSubIndex = entry[0].value;
+            for(let i = 1; i <= maxSubIndex; ++i)
+                this._parse1018(entry.at(i));
+        }
+        else {
+            switch(subIndex) {
+                case 1:
+                    this.identity.vendorId = entry.value;
+                    break;
+                case 2:
+                    this.identity.productCode = entry.value;
+                    break;
+                case 3:
+                    this.identity.revisionNumber = entry.value;
+                    break;
+                case 4:
+                    this.identity.serialNumber = entry.value;
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Called when 0x1018 (Identity object) is removed.
+     *
+     * @private
+     */
+    _clear1018() {
+        this.identity = {
+            vendorId: null,
+            productCode: null,
+            revisionNumber: null,
+            serialNumber: null,
+        };
     }
 
     /**

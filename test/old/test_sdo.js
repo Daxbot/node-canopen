@@ -47,7 +47,7 @@ describe('Sdo', function() {
 
     describe('Expediated transfer', function() {
         for(let [type, value] of shortTypes) {
-            it("should transfer " + type, function() {
+            it('should transfer ' + type, function() {
                 device.init();
 
                 const index = DataType[type];
@@ -76,7 +76,7 @@ describe('Sdo', function() {
 
     describe('Segmented transfer', function() {
         for(let [type, value] of longTypes) {
-            it("should transfer " + type, function() {
+            it('should transfer ' + type, function() {
                 device.init();
 
                 const index = DataType[type];
@@ -107,7 +107,7 @@ describe('Sdo', function() {
         }
 
         it('should transfer subindexes >= 1', async function() {
-            const testString = 'I am a long string that will take multiple messages to transfer'
+            const testString = 'I am a long string that will take multiple messages to transfer';
             device.init();
             device.eds.addEntry(0x1234, {
                 parameterName:  'Test entry',
@@ -128,7 +128,7 @@ describe('Sdo', function() {
                 dataType: DataType.VISIBLE_STRING
             });
 
-            expect(result).to.equal(testString)
+            expect(result).to.equal(testString);
 
             return device.sdo.download({
                 serverId: device.id,
@@ -142,7 +142,7 @@ describe('Sdo', function() {
 
     describe('Block transfer', function() {
         for(let [type, value] of shortTypes) {
-            it("should transfer " + type, function() {
+            it('should transfer ' + type, function() {
                 device.init();
 
                 const index = DataType[type];
@@ -171,7 +171,7 @@ describe('Sdo', function() {
         }
 
         for(let [type, value] of longTypes) {
-            it("should transfer " + type, function() {
+            it('should transfer ' + type, function() {
                 device.init();
 
                 const index = DataType[type];

@@ -23,12 +23,9 @@ const { deprecate } = require('util');
  */
 class Time extends Protocol {
     constructor(eds) {
-        super();
-
-        if(!Eds.isEds(eds))
-            throw new TypeError('not an Eds');
-
-        this.eds = eds;
+        super(eds);
+        this._consume = false;
+        this._produce = false;
         this._cobId = null;
     }
 
@@ -93,54 +90,50 @@ class Time extends Protocol {
     }
 
     /**
-     * Start the module.
-     *
-     * @fires Protocol#start
-     */
-    start() {
-        const obj1012 = this.eds.getEntry(0x1012);
-        if(obj1012) {
-            obj1012.on('update', (obj) => {
-                if(obj.raw[3] & (1 << 7))
-                    this._cobId = obj.raw.readUInt16LE() & 0x7FF;
-                else
-                    this._cobId = null;
-            });
-
-            if(obj1012.raw[3] & (1 << 7))
-                this._cobId = obj1012.raw.readUInt16LE() & 0x7FF;
-        }
-
-        super.start();
-    }
-
-    /**
-     * Stop the module.
-     *
-     * @fires Protocol#start
-     */
-    stop() {
-        super.stop();
-    }
-
-    /**
      * Service: TIME write.
      *
      * @param {Date} date - date to write.
      * @fires Protocol#message
      */
     write(date) {
-        if (!this.eds.getTimeProducerEnable())
+        if (!this._produce)
             throw new EdsError('TIME production is disabled');
 
-        const cobId = this.eds.getTimeCobId();
-        if(!cobId)
+        if(!this._cobId)
             throw new EdsError('COB-ID TIME may not be 0');
 
         if(!date)
             date = new Date();
 
-        this.send(cobId, typeToRaw(date, DataType.TIME_OF_DAY));
+        this.send(this._cobId, typeToRaw(date, DataType.TIME_OF_DAY));
+    }
+
+    /**
+     * Start the module.
+     *
+     * @protected
+     */
+    _start() {
+        const obj1012 = this.eds.getEntry(0x1012);
+        if(obj1012)
+            this._addEntry(obj1012);
+
+        this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+        this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+    }
+
+    /**
+     * Stop the module.
+     *
+     * @protected
+     */
+    _stop() {
+        this.removeEdsCallback('newEntry');
+        this.removeEdsCallback('removeEntry');
+
+        const obj1012 = this.eds.getEntry(0x1012);
+        if(obj1012)
+            this._removeEntry(obj1012);
     }
 
     /**
@@ -150,9 +143,10 @@ class Time extends Protocol {
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @fires Time#time
+     * @protected
      */
-    receive({ id, data }) {
-        if (this._cobId === id) {
+    _receive({ id, data }) {
+        if (this._consume && this._cobId === id) {
             const date = rawToType(data, DataType.TIME_OF_DAY);
 
             /**
@@ -163,6 +157,64 @@ class Time extends Protocol {
              */
             this.emit('time', date);
         }
+    }
+
+    /**
+     * Listens for new Eds entries.
+     *
+     * @param {DataObject} entry - new entry.
+     * @protected
+     */
+    _addEntry(entry) {
+        if(entry.index === 0x1012) {
+            this.addUpdateCallback(entry, (obj) => this._parse1012(obj));
+            this._parse1012(entry);
+        }
+    }
+
+    /**
+     * Listens for removed Eds entries.
+     *
+     * @param {DataObject} entry - removed entry.
+     * @protected
+     */
+    _removeEntry(entry) {
+        if(entry.index === 0x1012) {
+            this.removeUpdateCallback(entry);
+            this._clear1012();
+        }
+    }
+
+    /**
+     * Called when 0x1012 (COB-ID TIME) is updated.
+     *
+     * @param {DataObject} data - updated DataObject.
+     * @private
+     */
+    _parse1012(data) {
+        const value = data.value;
+        const consume = (value >> 31) & 0x1;
+        const produce = (value >> 30) & 0x1;
+        const rtr = (value >> 29) & 0x1;
+        const cobId = value & 0x7FF;
+
+        if(rtr != 0x1) {
+            this._consume = !!consume;
+            this._produce = !!produce;
+            this._cobId = cobId;
+        }
+        else {
+            this._clear1012();
+        }
+    }
+
+    /**
+     * Called when 0x1012 (COB-ID TIME) is removed.
+     */
+    _clear1012() {
+        this._consume = false;
+        this._produce = false;
+        this._cobId = null;
     }
 }
 

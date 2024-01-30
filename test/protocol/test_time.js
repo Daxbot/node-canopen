@@ -6,29 +6,6 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Time', function () {
-    it('should get 0x1012', function () {
-        const device = new Device({ id: 0xA });
-        expect(device.eds.getTimeCobId()).to.be.null;
-        expect(device.eds.getTimeProducerEnable()).to.be.false;
-        expect(device.eds.getTimeConsumerEnable()).to.be.false;
-
-        device.eds.setTimeCobId(0x100);
-        expect(device.eds.getTimeCobId()).to.equal(0x100);
-
-        device.eds.setTimeProducerEnable(true);
-        expect(device.eds.getTimeProducerEnable()).to.be.true;
-        expect(device.eds.getTimeConsumerEnable()).to.be.false;
-        device.eds.setTimeProducerEnable(false);
-
-        device.eds.setTimeConsumerEnable(true);
-        expect(device.eds.getTimeProducerEnable()).to.be.false;
-        expect(device.eds.getTimeConsumerEnable()).to.be.true;
-        device.eds.setTimeConsumerEnable(false);
-
-        expect(device.eds.getTimeProducerEnable()).to.be.false;
-        expect(device.eds.getTimeConsumerEnable()).to.be.false;
-    });
-
     it('should reference time from January 1, 1984', function () {
         const date = new Date('1984-01-01');
         const raw = typeToRaw(date, DataType.TIME_OF_DAY);
@@ -55,6 +32,50 @@ describe('Time', function () {
         device.eds.setTimeCobId(0x100);
         device.time.start();
 
-        return expect(() => device.time.write()).to.throw(EdsError);
+        expect(() => device.time.write()).to.throw(EdsError);
+    });
+
+    it('should listen to Eds#newEntry', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.time.start();
+
+        device.time.on('time', () => {
+            device.time.stop();
+            done();
+        });
+
+        device.eds.setTimeCobId(0x100);
+        device.eds.setTimeProducerEnable(true);
+        device.eds.setTimeConsumerEnable(true);
+        device.time.write();
+    });
+
+    it('should listen to Eds#removeEntry', function () {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setTimeCobId(0x100);
+        device.eds.setTimeProducerEnable(true);
+        device.time.start();
+
+        device.eds.removeEntry(0x1012);
+        expect(() => device.time.write()).to.throw(EdsError);
+    });
+
+    it('should listen to DataObject#update', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setTimeCobId(0x100);
+        device.eds.setTimeProducerEnable(false);
+        device.eds.setTimeConsumerEnable(false);
+        device.time.start();
+
+        device.time.on('time', () => {
+            device.time.stop();
+            done();
+        });
+
+        expect(() => device.time.write()).to.throw(EdsError);
+
+        device.eds.setTimeProducerEnable(true);
+        device.eds.setTimeConsumerEnable(true);
+        device.time.write();
     });
 });
