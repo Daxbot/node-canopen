@@ -6,7 +6,6 @@
   "scripts": {
     "test": "mocha ./test/test*.js ./test/protocol/test*.js",
     "test:examples": "mocha ./test/examples/test*.js",
-    "test:old": "mocha --exit ./test/old/test*.js",
     "jsdoc": "jsdoc -c .jsdoc.json -R README.md source",
     "lint": "eslint index.js examples source test",
     "lint:fix": "npm run lint -- --fix"
