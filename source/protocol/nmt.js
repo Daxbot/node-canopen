@@ -91,10 +91,6 @@ class Nmt extends Protocol {
         return this._state;
     }
 
-    set state(value) {
-        this.setState(value);
-    }
-
     /**
      * Get object 0x1017 - Producer heartbeat time.
      *
@@ -298,7 +294,7 @@ class Nmt extends Protocol {
         this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
         this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
 
-        this.state = NmtState.PRE_OPERATIONAL;
+        this.setState(NmtState.PRE_OPERATIONAL);
     }
 
     /**
@@ -318,7 +314,7 @@ class Nmt extends Protocol {
         if(obj1017)
             this._removeEntry(obj1017);
 
-        this.state = NmtState.INITIALIZING;
+        this.setState(NmtState.INITIALIZING);
     }
 
     /**
