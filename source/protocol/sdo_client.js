@@ -115,7 +115,7 @@ class SdoClient extends Protocol {
      * @returns {Promise<Buffer | number | bigint | string | Date>} resolves when the upload is complete.
      * @fires Protocol#message
      */
-    upload(args) {
+    async upload(args) {
         const deviceId = args.deviceId || args.serverId;
         const index = args.index;
         const subIndex = args.subIndex || null;
@@ -150,7 +150,7 @@ class SdoClient extends Protocol {
         if (index === undefined)
             throw ReferenceError('index must be defined');
 
-        return server.queue.push(() => {
+        const data = await server.queue.push(() => {
             return new Promise((resolve, reject) => {
                 this.transfers[server.cobIdRx] = new SdoTransfer({
                     resolve,
@@ -185,10 +185,9 @@ class SdoClient extends Protocol {
 
                 this.send(server.cobIdTx, sendBuffer);
             });
-        })
-            .then((data) => {
-                return rawToType(data, dataType);
-            });
+        });
+
+        return rawToType(data, dataType);
     }
 
     /**
@@ -204,10 +203,9 @@ class SdoClient extends Protocol {
      * @param {DataType} [args.dataType] - type of data to download.
      * @param {number} [args.timeout] - time before transfer is aborted.
      * @param {boolean} [args.blockTransfer] - use block transfer protocol.
-     * @returns {Promise} resolves when the download is complete.
      * @fires Protocol#message
      */
-    download(args) {
+    async download(args) {
         const deviceId = args.deviceId || args.serverId;
         const index = args.index;
         const subIndex = args.subIndex || null;
@@ -257,7 +255,7 @@ class SdoClient extends Protocol {
             }
         }
 
-        return server.queue.push(() => {
+        await server.queue.push(() => {
             return new Promise((resolve, reject) => {
                 this.transfers[server.cobIdRx] = new SdoTransfer({
                     cobId: server.cobIdTx,
