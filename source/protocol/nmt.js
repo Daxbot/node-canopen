@@ -92,6 +92,20 @@ class Nmt extends Protocol {
     }
 
     /**
+     * Consumer heartbeat timers (deprecated).
+     *
+     * @type {Array}
+     * @deprecated
+     */
+    get timers() {
+        let timers = {};
+        for(const [key, consumer] of Object.entries(this.consumers))
+            timers[key] = consumer.timer;
+
+        return timers;
+    }
+
+    /**
      * Get object 0x1017 - Producer heartbeat time.
      *
      * @returns {number} heartbeat time in ms.
