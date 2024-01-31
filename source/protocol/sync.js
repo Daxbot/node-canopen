@@ -32,7 +32,7 @@ class Sync extends Protocol {
     /**
      * Get object 0x1005 [bit 30] - Sync generation enable.
      *
-     * @returns {boolean} Sync generation enable.
+     * @type {boolean}
      * @deprecated Use {@link Eds#getSyncGenerationEnable} instead.
      */
     get generate() {
@@ -42,7 +42,7 @@ class Sync extends Protocol {
     /**
      * Set object 0x1005 [bit 30] - Sync generation enable.
      *
-     * @param {boolean} enable - Sync generation enable.
+     * @type {boolean}
      * @deprecated Use {@link Eds#setSyncGenerationEnable} instead.
      */
     set generate(enable) {
@@ -52,7 +52,7 @@ class Sync extends Protocol {
     /**
      * Get object 0x1005 - COB-ID SYNC.
      *
-     * @returns {number} Sync COB-ID.
+     * @type {number}
      * @deprecated Use {@link Eds#getSyncCobId} instead.
      */
     get cobId() {
@@ -62,7 +62,7 @@ class Sync extends Protocol {
     /**
      * Set object 0x1005 - COB-ID SYNC.
      *
-     * @param {number} cobId - Sync COB-ID (typically 0x80).
+     * @type {number}
      * @deprecated Use {@link Eds#setSyncCobId} instead.
      */
     set cobId(cobId) {
@@ -72,7 +72,7 @@ class Sync extends Protocol {
     /**
      * Get object 0x1006 - Communication cycle period.
      *
-     * @returns {number} Sync interval in μs.
+     * @type {number}
      * @deprecated Use {@link Eds#getSyncCyclePeriod} instead.
      */
     get cyclePeriod() {
@@ -82,7 +82,7 @@ class Sync extends Protocol {
     /**
      * Set object 0x1006 - Communication cycle period.
      *
-     * @param {number} period - communication cycle period.
+     * @type {number}
      * @deprecated Use {@link Eds#setSyncCyclePeriod} instead.
      */
     set cyclePeriod(period) {
@@ -92,7 +92,7 @@ class Sync extends Protocol {
     /**
      * Get object 0x1019 - Synchronous counter overflow value.
      *
-     * @returns {number} Sync counter overflow value.
+     * @type {number}
      * @deprecated Use {@link Eds#getSyncOverflow} instead.
      */
     get overflow() {
@@ -102,7 +102,7 @@ class Sync extends Protocol {
     /**
      * Set object 0x1019 - Synchronous counter overflow value.
      *
-     * @param {number} overflow - Sync overflow value.
+     * @type {number}
      * @deprecated Use {@link Eds#setSyncOverflow} instead.
      */
     set overflow(overflow) {

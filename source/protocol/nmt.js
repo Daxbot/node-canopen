@@ -108,7 +108,7 @@ class Nmt extends Protocol {
     /**
      * Get object 0x1017 - Producer heartbeat time.
      *
-     * @returns {number} heartbeat time in ms.
+     * @type {number}
      * @deprecated Use {@link Eds#getHeartbeatProducerTime} instead.
      */
     get producerTime() {
@@ -118,7 +118,7 @@ class Nmt extends Protocol {
     /**
      * Set object 0x1017 - Producer heartbeat time.
      *
-     * @param {number} value - Producer heartbeat time in ms.
+     * @type {number}
      * @deprecated Use {@link Eds#setHeartbeatProducerTime} instead.
      */
     set producerTime(value) {

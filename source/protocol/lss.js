@@ -146,10 +146,6 @@ class Lss extends Protocol {
         return this._mode;
     }
 
-    set mode(value) {
-        this.setMode(value);
-    }
-
     /**
      * Vendor id.
      *
@@ -163,7 +159,7 @@ class Lss extends Protocol {
     /**
      * Vendor id.
      *
-     * @param {number} value - value to set.
+     * @type {number}
      * @deprecated Use {@link Eds#setIdentity} instead.
      */
     set vendorId(value) {
@@ -183,7 +179,7 @@ class Lss extends Protocol {
     /**
      * Product code.
      *
-     * @param {number} value - value to set.
+     * @type {number}
      * @deprecated Use {@link Eds#setIdentity} instead.
      */
     set productCode(value) {
@@ -203,7 +199,7 @@ class Lss extends Protocol {
     /**
      * Revision number.
      *
-     * @param {number} value - value to set.
+     * @type {number}
      * @deprecated Use {@link Eds#setIdentity} instead.
      */
     set revisionNumber(value) {
@@ -223,7 +219,7 @@ class Lss extends Protocol {
     /**
      * Serial number.
      *
-     * @param {number} value - value to set.
+     * @type {number}
      * @deprecated Use {@link Eds#setIdentity} instead.
      */
     set serialNumber(value) {

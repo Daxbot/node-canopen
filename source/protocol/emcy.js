@@ -303,7 +303,7 @@ class Emcy extends Protocol {
     /**
      * Get object 0x1001 - Error register.
      *
-     * @returns {number} error register value.
+     * @type {number}
      * @deprecated Use {@link Eds#getErrorRegister} instead.
      */
     get register() {
@@ -313,7 +313,7 @@ class Emcy extends Protocol {
     /**
      * Set object 0x1001 - Error register.
      *
-     * @param {number} flags - error flags.
+     * @type {number}
      * @deprecated Use {@link Eds#setErrorRegister} instead.
      */
     set register(flags) {
@@ -323,7 +323,7 @@ class Emcy extends Protocol {
     /**
      * Get object 0x1014 [bit 31] - EMCY valid.
      *
-     * @returns {boolean} Emcy valid.
+     * @type {boolean}
      * @deprecated Use {@link Eds#getEmcyValid} instead.
      */
     get valid() {
@@ -333,7 +333,7 @@ class Emcy extends Protocol {
     /**
      * Set object 0x1014 [bit 31] - EMCY valid.
      *
-     * @param {number} valid - Emcy valid.
+     * @type {boolean}
      * @deprecated Use {@link Eds#setEmcyValid} instead.
      */
     set valid(valid) {
@@ -343,7 +343,7 @@ class Emcy extends Protocol {
     /**
      * Get object 0x1014 - COB-ID EMCY.
      *
-     * @returns {number} Emcy COB-ID.
+     * @type {number}
      * @deprecated Use {@link Eds#getEmcyCobId} instead.
      */
     get cobId() {
@@ -353,7 +353,7 @@ class Emcy extends Protocol {
     /**
      * Set object 0x1014 - COB-ID EMCY.
      *
-     * @param {number} value - Emcy COB-ID.
+     * @type {number}
      * @deprecated Use {@link Eds#setEmcyCobId} instead.
      */
     set cobId(value) {
@@ -363,7 +363,7 @@ class Emcy extends Protocol {
     /**
      * Get object 0x1015 - Inhibit time EMCY.
      *
-     * @returns {number} Emcy inhibit time in 100 μs.
+     * @type {number}
      * @deprecated Use {@link Eds#getEmcyInhibitTime} instead.
      */
     get inhibitTime() {
@@ -373,7 +373,7 @@ class Emcy extends Protocol {
     /**
      * Set object 0x1015 - Inhibit time EMCY.
      *
-     * @param {number} value - inhibit time in multiples of 100 μs.
+     * @type {number}
      * @deprecated Use {@link Eds#setEmcyInhibitTime} instead.
      */
     set inhibitTime(value) {

@@ -76,7 +76,6 @@ class Queue {
 class SdoClient extends Protocol {
     constructor(eds) {
         super(eds);
-
         this.serverMap = {};
         this.transfers = {};
         this._blockSize = 127;
@@ -93,7 +92,13 @@ class SdoClient extends Protocol {
         return this._blockSize;
     }
 
-    set blockSize(value) {
+    /**
+     * Set the number of segments per block when serving block transfers.
+     *
+     * @param {number} value - block size [1-127].
+     * @since 6.0.0
+     */
+    setBlockSize(value) {
         if (value < 1 || value > 127)
             throw RangeError('blockSize must be in range [1-127]');
 

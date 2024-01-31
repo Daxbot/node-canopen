@@ -32,7 +32,7 @@ class Time extends Protocol {
     /**
      * Get object 0x1012 [bit 30] - Time producer enable.
      *
-     * @returns {boolean} Time producer enable.
+     * @type {boolean}
      * @deprecated Use {@link Eds#getTimeProducerEnable} instead.
      */
     get produce() {
@@ -42,7 +42,7 @@ class Time extends Protocol {
     /**
      * Set object 0x1012 [bit 30] - Time producer enable.
      *
-     * @param {boolean} enable - Time producer enable.
+     * @type {boolean}
      * @deprecated Use {@link Eds#setTimeProducerEnable} instead.
      */
     set produce(enable) {
@@ -52,7 +52,7 @@ class Time extends Protocol {
     /**
      * Get object 0x1012 [bit 31] - Time consumer enable.
      *
-     * @returns {boolean} Time consumer enable.
+     * @type {boolean}
      * @deprecated Use {@link Eds#getTimeConsumerEnable} instead.
      */
     get consume() {
@@ -62,7 +62,7 @@ class Time extends Protocol {
     /**
      * Set object 0x1012 [bit 31] - Time consumer enable.
      *
-     * @param {boolean} enable - Time consumer enable.
+     * @type {boolean}
      * @deprecated Use {@link Eds#setTimeConsumerEnable} instead.
      */
     set consume(enable) {
@@ -72,7 +72,7 @@ class Time extends Protocol {
     /**
      * Get object 0x1012 - COB-ID TIME.
      *
-     * @returns {number} Time COB-ID.
+     * @type {number}
      * @deprecated Use {@link Eds#getTimeCobId} instead.
      */
     get cobId() {
@@ -82,7 +82,7 @@ class Time extends Protocol {
     /**
      * Set object 0x1012 - COB-ID TIME.
      *
-     * @param {number} cobId - Time COB-ID (typically 0x100).
+     * @type {number}
      * @deprecated Use {@link Eds#setTimeCobId} instead.
      */
     set cobId(cobId) {
