@@ -1,10 +1,18 @@
 const Device = require('./source/device');
 const { EdsError, DataObject, Eds } = require('./source/eds');
 const { ObjectType, AccessType, DataType } = require('./source/types');
-const { EmcyType, EmcyCode, EmcyMessage } = require('./source/protocol/emcy');
-const { LssError, LssMode } = require('./source/protocol/lss');
-const { NmtState } = require('./source/protocol/nmt');
-const { SdoCode, SdoError } = require('./source/protocol/sdo');
+
+const {
+    EmcyType,
+    EmcyCode,
+    EmcyMessage,
+    LssError,
+    LssMode,
+    NmtState,
+    SdoCode,
+    SdoError
+} = require('./source/protocol');
+
 const {
     calculateCrc,
     typeToRaw,
