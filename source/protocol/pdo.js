@@ -18,6 +18,7 @@ const { deprecate } = require('util');
  *
  * @param {Eds} eds - Eds object.
  * @see CiA301 "Process data objects (PDO)" (§7.2.2)
+ * @implements {Protocol}
  */
 class Pdo extends Protocol {
     constructor(eds) {
@@ -57,55 +58,63 @@ class Pdo extends Protocol {
     /**
      * Start the module.
      *
-     * @protected
+     * @override
      */
-    _start() {
-        const obj1005 = this.eds.getEntry(0x1005);
-        if(obj1005)
-            this._addEntry(obj1005);
+    start() {
+        if(!this.started) {
+            const obj1005 = this.eds.getEntry(0x1005);
+            if(obj1005)
+                this._addEntry(obj1005);
 
-        this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
-        this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+            this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+            this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
 
-        this.receiveMap = {};
-        for (const pdo of this.eds.getReceivePdos())
-            this._addRpdo(pdo);
+            this.receiveMap = {};
+            for (const pdo of this.eds.getReceivePdos())
+                this._addRpdo(pdo);
 
-        this.addEdsCallback('newRpdo', (pdo) => this._addRpdo(pdo));
-        this.addEdsCallback('removeRpdo', (pdo) => this._removeRpdo(pdo));
+            this.addEdsCallback('newRpdo', (pdo) => this._addRpdo(pdo));
+            this.addEdsCallback('removeRpdo', (pdo) => this._removeRpdo(pdo));
 
-        this.transmitMap = {};
-        for (const pdo of this.eds.getTransmitPdos())
-            this._addTpdo(pdo);
+            this.transmitMap = {};
+            for (const pdo of this.eds.getTransmitPdos())
+                this._addTpdo(pdo);
 
-        this.addEdsCallback('newTpdo', (pdo) => this._addTpdo(pdo));
-        this.addEdsCallback('removeTpdo', (pdo) => this._removeTpdo(pdo));
+            this.addEdsCallback('newTpdo', (pdo) => this._addTpdo(pdo));
+            this.addEdsCallback('removeTpdo', (pdo) => this._removeTpdo(pdo));
+
+            super.start();
+        }
     }
 
     /**
      * Stop the module.
      *
-     * @protected
+     * @override
      */
-    _stop() {
-        this.removeEdsCallback('newEntry');
-        this.removeEdsCallback('removeEntry');
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newEntry');
+            this.removeEdsCallback('removeEntry');
 
-        const obj1005 = this.eds.getEntry(0x1005);
-        if(obj1005)
-            this._removeEntry(obj1005);
+            const obj1005 = this.eds.getEntry(0x1005);
+            if(obj1005)
+                this._removeEntry(obj1005);
 
-        this.removeEdsCallback('newRpdo');
-        this.removeEdsCallback('removeRpdo');
+            this.removeEdsCallback('newRpdo');
+            this.removeEdsCallback('removeRpdo');
 
-        for (const pdo of this.eds.getReceivePdos())
-            this._removeRpdo(pdo);
+            for (const pdo of this.eds.getReceivePdos())
+                this._removeRpdo(pdo);
 
-        this.removeEdsCallback('newTpdo');
-        this.removeEdsCallback('removeTpdo');
+            this.removeEdsCallback('newTpdo');
+            this.removeEdsCallback('removeTpdo');
 
-        for (const pdo of this.eds.getTransmitPdos())
-            this._removeTpdo(pdo);
+            for (const pdo of this.eds.getTransmitPdos())
+                this._removeTpdo(pdo);
+
+            super.stop();
+        }
     }
 
     /**
@@ -115,9 +124,9 @@ class Pdo extends Protocol {
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @fires Pdo#pdo
-     * @protected
+     * @override
      */
-    _receive({ id, data }) {
+    receive({ id, data }) {
         if ((id & 0x7FF) === this.syncCobId) {
             const counter = data[1];
             for (const pdo of Object.values(this.syncTpdo)) {
@@ -167,7 +176,7 @@ class Pdo extends Protocol {
      * Listens for new Eds entries.
      *
      * @param {DataObject} entry - new entry.
-     * @protected
+     * @private
      */
     _addEntry(entry) {
         if(entry.index === 0x1005) {
@@ -180,7 +189,7 @@ class Pdo extends Protocol {
      * Listens for removed Eds entries.
      *
      * @param {DataObject} entry - removed entry.
-     * @protected
+     * @private
      */
     _removeEntry(entry) {
         if(entry.index === 0x1005) {
@@ -208,6 +217,8 @@ class Pdo extends Protocol {
 
     /**
      * Called when 0x1005 (COB-ID SYNC) is removed.
+     *
+     * @private
      */
     _clear1005() {
         this.syncCobId = null;
@@ -217,6 +228,7 @@ class Pdo extends Protocol {
      * Add an RPDO.
      *
      * @param {object} pdo - PDO data.
+     * @private
      */
     _addRpdo(pdo) {
         this.receiveMap[pdo.cobId] = pdo;
@@ -226,6 +238,7 @@ class Pdo extends Protocol {
      * Remove an RPDO.
      *
      * @param {object} pdo - PDO data.
+     * @private
      */
     _removeRpdo(pdo) {
         delete this.receiveMap[pdo.cobId];
@@ -235,6 +248,7 @@ class Pdo extends Protocol {
      * Add a TPDO.
      *
      * @param {object} pdo - PDO data.
+     * @private
      */
     _addTpdo(pdo) {
         this.transmitMap[pdo.cobId] = pdo;
@@ -293,6 +307,7 @@ class Pdo extends Protocol {
      * Remove a TPDO.
      *
      * @param {object} pdo - PDO data.
+     * @private
      */
     _removeTpdo(pdo) {
         if (pdo.transmissionType < 0xF1) {

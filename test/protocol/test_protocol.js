@@ -7,29 +7,6 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Protocol', function () {
-    it('should emit start once', function (done) {
-        const eds = new Eds();
-        const protocol = new Protocol(eds);
-
-        protocol.on('start', () => done());
-
-        protocol.start();
-        protocol.start();
-        protocol.start();
-    });
-
-    it('should emit stop once', function (done) {
-        const eds = new Eds();
-        const protocol = new Protocol(eds);
-        protocol.start();
-
-        protocol.on('stop', () => done());
-
-        protocol.stop();
-        protocol.stop();
-        protocol.stop();
-    });
-
     it('should add Eds callbacks', function (done) {
         const eds = new Eds();
         expect(eds.listenerCount('newEntry')).to.equal(0);

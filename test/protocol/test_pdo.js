@@ -6,6 +6,23 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Pdo', function () {
+    it('should emit start once', function (done) {
+        const device = new Device({ id: 0xA});
+
+        device.pdo.on('start', () => done());
+        device.pdo.start();
+        device.pdo.start();
+    });
+
+    it('should emit stop once', function (done) {
+        const device = new Device({ id: 0xA});
+        device.pdo.start();
+
+        device.pdo.on('stop', () => done());
+        device.pdo.stop();
+        device.pdo.stop();
+    });
+
     it('should produce a PDO object', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
         const obj0005 = device.eds.getEntry(0x5);

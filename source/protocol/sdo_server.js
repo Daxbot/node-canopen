@@ -22,7 +22,7 @@ const { deprecate } = require('util');
  *
  * @param {Eds} eds - parent device.
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
- * @fires 'message' on preparing a CAN message to send.
+ * @implements {Protocol}
  */
 class SdoServer extends Protocol {
     constructor(eds) {
@@ -56,31 +56,39 @@ class SdoServer extends Protocol {
     /**
      * Start the module.
      *
-     * @protected
+     * @override
      */
-    _start() {
-        this.transfers = {};
-        for (const client of this.eds.getSdoServerParameters())
-            this._addClient(client);
+    start() {
+        if(!this.started) {
+            this.transfers = {};
+            for (const client of this.eds.getSdoServerParameters())
+                this._addClient(client);
 
-        this.addEdsCallback('newSdoClient',
-            (client) => this._addClient(client));
+            this.addEdsCallback('newSdoClient',
+                (client) => this._addClient(client));
 
-        this.addEdsCallback('removeSdoClient',
-            (client) => this._removeClient(client));
+            this.addEdsCallback('removeSdoClient',
+                (client) => this._removeClient(client));
+
+            super.start();
+        }
     }
 
     /**
      * Stop the module.
      *
-     * @protected
+     * @override
      */
-    _stop() {
-        this.removeEdsCallback('newSdoClient');
-        this.removeEdsCallback('removeSdoClient');
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newSdoClient');
+            this.removeEdsCallback('removeSdoClient');
 
-        for (const client of this.eds.getSdoServerParameters())
-            this._removeClient(client);
+            for (const client of this.eds.getSdoServerParameters())
+                this._removeClient(client);
+
+            super.stop();
+        }
     }
 
     /**
@@ -89,9 +97,9 @@ class SdoServer extends Protocol {
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @fires Protocol#message
+     * @override
      */
-    _receive({ id, data }) {
+    receive({ id, data }) {
         // Handle transfers as a server (local object dictionary)
         const client = this.transfers[id];
         if (client === undefined)
@@ -186,6 +194,7 @@ class SdoServer extends Protocol {
      * @param {object} args - SDO client parameters.
      * @param {number} args.cobIdTx - COB-ID server -> client.
      * @param {number} args.cobIdRx - COB-ID client -> server.
+     * @private
      */
     _addClient({ cobIdTx, cobIdRx }) {
         this.transfers[cobIdRx] = new SdoTransfer({ cobId: cobIdTx });
@@ -196,6 +205,7 @@ class SdoServer extends Protocol {
      *
      * @param {object} args - SDO client parameters.
      * @param {number} args.cobIdRx - COB-ID client -> server.
+     * @private
      */
     _removeClient({ cobIdRx }) {
         const transfer = this.transfers[cobIdRx];

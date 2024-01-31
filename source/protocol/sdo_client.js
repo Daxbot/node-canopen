@@ -72,6 +72,7 @@ class Queue {
  *
  * @param {Eds} eds - Eds object.
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
+ * @implements {Protocol}
  */
 class SdoClient extends Protocol {
     constructor(eds) {
@@ -318,31 +319,39 @@ class SdoClient extends Protocol {
     /**
      * Start the module.
      *
-     * @protected
+     * @override
      */
-    _start() {
-        this.serverMap = {};
-        for (const server of this.eds.getSdoClientParameters())
-            this._addServer(server);
+    start() {
+        if(!this.started) {
+            this.serverMap = {};
+            for (const server of this.eds.getSdoClientParameters())
+                this._addServer(server);
 
-        this.addEdsCallback('newSdoServer',
-            (server) => this._addServer(server));
+            this.addEdsCallback('newSdoServer',
+                (server) => this._addServer(server));
 
-        this.addEdsCallback('removeSdoServer',
-            (server) => this._removeServer(server));
+            this.addEdsCallback('removeSdoServer',
+                (server) => this._removeServer(server));
+
+            super.start();
+        }
     }
 
     /**
      * Stop the module.
      *
-     * @protected
+     * @override
      */
-    _stop() {
-        this.removeEdsCallback('newSdoServer');
-        this.removeEdsCallback('removeSdoServer');
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newSdoServer');
+            this.removeEdsCallback('removeSdoServer');
 
-        for (const server of this.eds.getSdoClientParameters())
-            this._removeServer(server);
+            for (const server of this.eds.getSdoClientParameters())
+                this._removeServer(server);
+
+            super.stop();
+        }
     }
 
     /**
@@ -351,9 +360,9 @@ class SdoClient extends Protocol {
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @protected
+     * @override
      */
-    _receive({ id, data }) {
+    receive({ id, data }) {
         // Handle transfers as a client (remote object dictionary)
         const transfer = this.transfers[id];
         if (transfer === undefined || !transfer.active)
@@ -445,6 +454,7 @@ class SdoClient extends Protocol {
      * @param {number} args.deviceId - device identifier.
      * @param {number} args.cobIdTx - COB-ID client -> server.
      * @param {number} args.cobIdRx - COB-ID server -> client.
+     * @private
      */
     _addServer({ deviceId, cobIdTx, cobIdRx }) {
         this.serverMap[deviceId] = {
@@ -460,6 +470,7 @@ class SdoClient extends Protocol {
      * @param {object} args - SDO client parameters.
      * @param {number} args.deviceId - device identifier.
      * @param {number} args.cobIdRx - COB-ID server -> client.
+     * @private
      */
     _removeServer({ deviceId, cobIdRx }) {
         const transfer = this.transfers[cobIdRx];

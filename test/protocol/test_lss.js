@@ -16,6 +16,23 @@ function rand32() {
 }
 
 describe('Lss', function () {
+    it('should emit start once', function (done) {
+        const device = new Device({ id: 0xA});
+
+        device.lss.on('start', () => done());
+        device.lss.start();
+        device.lss.start();
+    });
+
+    it('should emit stop once', function (done) {
+        const device = new Device({ id: 0xA});
+        device.lss.start();
+
+        device.lss.on('stop', () => done());
+        device.lss.stop();
+        device.lss.stop();
+    });
+
     it('should listen to Eds#newEntry', function () {
         const eds = new Eds();
         eds.removeEntry(0x1018);

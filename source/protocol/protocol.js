@@ -11,6 +11,7 @@ const { Eds } = require('../eds');
  * A base class extended by the protocol modules.
  *
  * @param {Eds} eds - Eds object.
+ * @interface
  * @since 6.0.0
  */
 class Protocol extends EventEmitter {
@@ -29,44 +30,48 @@ class Protocol extends EventEmitter {
      * Start the module.
      *
      * @fires Protocol#start
+     * @abstract
      */
     start() {
-        if(!this.started) {
-            this.started = true;
+        this.started = true;
 
-            if(typeof this._start === 'function')
-                this._start();
-
-            /**
-             * The module has been started.
-             *
-             * @event Protocol#start
-             * @since 6.0.0
-             */
-            this.emit('start');
-        }
+        /**
+         * The module has been started.
+         *
+         * @event Protocol#start
+         * @since 6.0.0
+         */
+        this.emit('start');
     }
 
     /**
      * Stop the module.
      *
      * @fires Protocol#stop
+     * @abstract
      */
     stop() {
-        if(this.started) {
-            if(typeof this._stop === 'function')
-                this._stop();
+        this.started = false;
 
-            this.started = false;
+        /**
+         * The module has been stopped.
+         *
+         * @event Protocol#stop
+         * @since 6.0.0
+         */
+        this.emit('stop');
+    }
 
-            /**
-             * The module has been stopped.
-             *
-             * @event Protocol#stop
-             * @since 6.0.0
-             */
-            this.emit('stop');
-        }
+    /**
+     * Call when a new CAN message is received.
+     *
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @abstract
+     */
+    receive(message) {
+        (message);
     }
 
     /**
@@ -90,18 +95,6 @@ class Protocol extends EventEmitter {
          * @since 6.0.0
          */
         this.emit('message', { id, data });
-    }
-
-    /**
-     * Call when a new CAN message is received.
-     *
-     * @param {object} message - CAN frame.
-     * @param {number} message.id - CAN message identifier.
-     * @param {Buffer} message.data - CAN message data;
-     */
-    receive(message) {
-        if(typeof this._receive === 'function')
-            this._receive(message);
     }
 
     /**

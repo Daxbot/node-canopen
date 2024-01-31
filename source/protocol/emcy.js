@@ -288,6 +288,7 @@ class EmcyMessage {
  *
  * @param {Eds} eds - Eds object.
  * @see CiA301 "Emergency object" (§7.2.7)
+ * @implements {Protocol}
  */
 class Emcy extends Protocol {
     constructor(eds) {
@@ -386,7 +387,6 @@ class Emcy extends Protocol {
      * @param {object} args - arguments.
      * @param {number} args.code - error code.
      * @param {Buffer} [args.info] - error info.
-     * @fires Protocol#message
      */
     write(...args) {
         if(!this._valid)
@@ -419,45 +419,53 @@ class Emcy extends Protocol {
     /**
      * Start the module.
      *
-     * @protected
+     * @override
      */
-    _start() {
-        const obj1014 = this.eds.getEntry(0x1014);
-        if(obj1014)
-            this._addEntry(obj1014);
+    start() {
+        if(!this.started) {
+            const obj1014 = this.eds.getEntry(0x1014);
+            if(obj1014)
+                this._addEntry(obj1014);
 
-        const obj1015 = this.eds.getEntry(0x1015);
-        if(obj1015)
-            this._addEntry(obj1015);
+            const obj1015 = this.eds.getEntry(0x1015);
+            if(obj1015)
+                this._addEntry(obj1015);
 
-        const obj1028 = this.eds.getEntry(0x1028);
-        if(obj1028)
-            this._addEntry(obj1028);
+            const obj1028 = this.eds.getEntry(0x1028);
+            if(obj1028)
+                this._addEntry(obj1028);
 
-        this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
-        this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+            this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+            this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+
+            super.start();
+        }
     }
 
     /**
      * Stop the module.
      *
-     * @protected
+     * @override
      */
-    _stop() {
-        this.removeEdsCallback('newEntry');
-        this.removeEdsCallback('removeEntry');
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newEntry');
+            this.removeEdsCallback('removeEntry');
 
-        const obj1014 = this.eds.getEntry(0x1014);
-        if(obj1014)
-            this._removeEntry(obj1014);
+            const obj1014 = this.eds.getEntry(0x1014);
+            if(obj1014)
+                this._removeEntry(obj1014);
 
-        const obj1015 = this.eds.getEntry(0x1015);
-        if(obj1015)
-            this._removeEntry(obj1015);
+            const obj1015 = this.eds.getEntry(0x1015);
+            if(obj1015)
+                this._removeEntry(obj1015);
 
-        const obj1028 = this.eds.getEntry(0x1028);
-        if(obj1028)
-            this._removeEntry(obj1028);
+            const obj1028 = this.eds.getEntry(0x1028);
+            if(obj1028)
+                this._removeEntry(obj1028);
+
+            super.stop();
+        }
     }
 
 
@@ -468,9 +476,9 @@ class Emcy extends Protocol {
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @fires Emcy#emergency
-     * @protected
+     * @override
      */
-    _receive({ id, data }) {
+    receive({ id, data }) {
         if (data.length != 8)
             return;
 
@@ -501,7 +509,7 @@ class Emcy extends Protocol {
      * Listens for new Eds entries.
      *
      * @param {DataObject} entry - new entry.
-     * @protected
+     * @private
      */
     _addEntry(entry) {
         switch(entry.index) {
@@ -524,7 +532,7 @@ class Emcy extends Protocol {
      * Listens for removed Eds entries.
      *
      * @param {DataObject} entry - removed entry.
-     * @protected
+     * @private
      */
     _removeEntry(entry) {
         switch(entry.index) {

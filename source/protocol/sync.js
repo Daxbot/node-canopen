@@ -17,6 +17,7 @@ const { deprecate } = require('util');
  *
  * @param {Eds} eds - Eds object.
  * @see CiA301 "Synchronization object (SYNC)" (§7.2.5)
+ * @implements {Protocol}
  */
 class Sync extends Protocol {
     constructor(eds) {
@@ -131,45 +132,53 @@ class Sync extends Protocol {
     /**
      * Start the module;
      *
-     * @protected
+     * @override
      */
-    _start() {
-        const obj1005 = this.eds.getEntry(0x1005);
-        if(obj1005)
-            this._addEntry(obj1005);
+    start() {
+        if(!this.started) {
+            const obj1005 = this.eds.getEntry(0x1005);
+            if(obj1005)
+                this._addEntry(obj1005);
 
-        const obj1006 = this.eds.getEntry(0x1006);
-        if(obj1006)
-            this._addEntry(obj1006);
+            const obj1006 = this.eds.getEntry(0x1006);
+            if(obj1006)
+                this._addEntry(obj1006);
 
-        const obj1019 = this.eds.getEntry(0x1019);
-        if(obj1019)
-            this._addEntry(obj1019);
+            const obj1019 = this.eds.getEntry(0x1019);
+            if(obj1019)
+                this._addEntry(obj1019);
 
-        this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
-        this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+            this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+            this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+
+            super.start();
+        }
     }
 
     /**
      * Stop the module.
      *
-     * @protected
+     * @override
      */
-    _stop() {
-        this.removeEdsCallback('newEntry');
-        this.removeEdsCallback('removeEntry');
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newEntry');
+            this.removeEdsCallback('removeEntry');
 
-        const obj1005 = this.eds.getEntry(0x1005);
-        if(obj1005)
-            this._removeEntry(obj1005);
+            const obj1005 = this.eds.getEntry(0x1005);
+            if(obj1005)
+                this._removeEntry(obj1005);
 
-        const obj1006 = this.eds.getEntry(0x1006);
-        if(obj1006)
-            this._removeEntry(obj1006);
+            const obj1006 = this.eds.getEntry(0x1006);
+            if(obj1006)
+                this._removeEntry(obj1006);
 
-        const obj1019 = this.eds.getEntry(0x1019);
-        if(obj1019)
-            this._removeEntry(obj1019);
+            const obj1019 = this.eds.getEntry(0x1019);
+            if(obj1019)
+                this._removeEntry(obj1019);
+
+            super.stop();
+        }
     }
 
     /**
@@ -179,9 +188,9 @@ class Sync extends Protocol {
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @fires Sync#sync
-     * @protected
+     * @override
      */
-    _receive({ id, data }) {
+    receive({ id, data }) {
         if (this._cobId === id) {
             if (data)
                 data = data[0];
@@ -201,7 +210,7 @@ class Sync extends Protocol {
      *
      * @param {DataObject} entry - new entry.
      * @listens Eds#newEntry
-     * @protected
+     * @private
      */
     _addEntry(entry) {
         switch(entry.index) {
@@ -305,6 +314,11 @@ class Sync extends Protocol {
         }
     }
 
+    /**
+     * Called when 0x1006 (Communication cycle period) is removed.
+     *
+     * @private
+     */
     _clear1006() {
         clearInterval(this.syncTimer);
         this.syncTimer = null;

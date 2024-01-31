@@ -6,6 +6,23 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Time', function () {
+    it('should emit start once', function (done) {
+        const device = new Device({ id: 0xA});
+
+        device.time.on('start', () => done());
+        device.time.start();
+        device.time.start();
+    });
+
+    it('should emit stop once', function (done) {
+        const device = new Device({ id: 0xA});
+        device.time.start();
+
+        device.time.on('stop', () => done());
+        device.time.stop();
+        device.time.stop();
+    });
+
     it('should reference time from January 1, 1984', function () {
         const date = new Date('1984-01-01');
         const raw = typeToRaw(date, DataType.TIME_OF_DAY);

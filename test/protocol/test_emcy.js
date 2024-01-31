@@ -6,6 +6,23 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Emcy', function () {
+    it('should emit start once', function (done) {
+        const device = new Device({ id: 0xA});
+
+        device.emcy.on('start', () => done());
+        device.emcy.start();
+        device.emcy.start();
+    });
+
+    it('should emit stop once', function (done) {
+        const device = new Device({ id: 0xA});
+        device.emcy.start();
+
+        device.emcy.on('stop', () => done());
+        device.emcy.stop();
+        device.emcy.stop();
+    });
+
     it('should produce an emergency object', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
         device.eds.setEmcyCobId(0x8A);

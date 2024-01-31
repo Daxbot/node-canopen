@@ -6,6 +6,23 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Sync', function () {
+    it('should emit start once', function (done) {
+        const device = new Device({ id: 0xA});
+
+        device.sync.on('start', () => done());
+        device.sync.start();
+        device.sync.start();
+    });
+
+    it('should emit stop once', function (done) {
+        const device = new Device({ id: 0xA});
+        device.sync.start();
+
+        device.sync.on('stop', () => done());
+        device.sync.stop();
+        device.sync.stop();
+    });
+
     it('should produce a sync object', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
         device.eds.setSyncCobId(0x80);

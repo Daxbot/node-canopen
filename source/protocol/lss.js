@@ -120,6 +120,7 @@ class LssError extends Error {
  *
  * @param {Eds} eds - Eds object.
  * @see CiA305 "Layer Settings Services and Protocol (LSS)"
+ * @implements {Protocol}
  */
 class Lss extends Protocol {
     constructor(eds) {
@@ -259,7 +260,6 @@ class Lss extends Protocol {
      * @param {number} [args.serialNumber] - serial-number hint.
      * @param {number} [args.timeout] - how long to wait for nodes to respond.
      * @returns {Promise<null | object>} resolves to the discovered device's id (or null).
-     * @fires Protocol#message
      * @see https://www.can-cia.org/fileadmin/resources/documents/proceedings/2008_pfeiffer.pdf
      */
     async fastscan(args={}) {
@@ -449,7 +449,6 @@ class Lss extends Protocol {
      * Service: switch mode global.
      *
      * @param {LssMode} mode - LSS mode to switch to.
-     * @fires Protocol#message
      * @see CiA305 "Switch Mode Global" (§3.9.1)
      */
     switchModeGlobal(mode) {
@@ -470,7 +469,6 @@ class Lss extends Protocol {
      * @param {number} args.serialNumber - LSS consumer serial-number.
      * @param {number} [args.timeout] - time until promise is rejected.
      * @returns {Promise<LssMode>} - the actual mode of the LSS consumer.
-     * @fires Protocol#message
      * @see CiA305 "Switch Mode Selective" (§3.9.2)
      */
     switchModeSelective(...args) {
@@ -520,7 +518,6 @@ class Lss extends Protocol {
      * @param {number} nodeId - new node-id
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise} resolves when the service is finished.
-     * @fires Protocol#message
      * @see CiA305 "Configure Node-ID Protocol" (§3.10.1)
      */
     async configureNodeId(nodeId, timeout = 20) {
@@ -563,7 +560,6 @@ class Lss extends Protocol {
      * @param {number} tableIndex - the entry in the selected table to use.
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise} resolves when the service is finished.
-     * @fires Protocol#message
      * @see CiA305 "Configure Bit Timing Parameters Protocol" (§3.10.2)
      */
     async configureBitTiming(tableSelect, tableIndex, timeout = 20) {
@@ -604,7 +600,6 @@ class Lss extends Protocol {
      * Service: activate bit timing parameters.
      *
      * @param {number} delay - switch delay in ms.
-     * @fires Protocol#message
      * @see CiA305 "Activate Bit Timing Parameters Protocol" (§3.10.3)
      */
     activateBitTiming(delay) {
@@ -618,7 +613,6 @@ class Lss extends Protocol {
      *
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise} resolves when the service is finished.
-     * @fires Protocol#message
      * @see CiA305 "Store Configuration Protocol" (§3.10.4)
      */
     async storeConfiguration(timeout = 20) {
@@ -661,7 +655,6 @@ class Lss extends Protocol {
      *
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise<number>} - LSS consumer vendor-id.
-     * @fires Protocol#message
      * @see CiA305 "Inquire Identity Vendor-ID Protocol" (§3.11.1.1)
      */
     async inquireVendorId(timeout = 20) {
@@ -685,7 +678,6 @@ class Lss extends Protocol {
      *
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise<number>} - LSS consumer product-code.
-     * @fires Protocol#message
      * @see CiA305 "Inquire Identity Product-Code Protocol" (§3.11.1.2)
      */
     async inquireProductCode(timeout = 20) {
@@ -709,7 +701,6 @@ class Lss extends Protocol {
      *
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise<number>} - LSS consumer revision-number.
-     * @fires Protocol#message
      * @see CiA305 "Inquire Identity Revision-Number Protocol" (§3.11.1.3)
      */
     async inquireRevisionNumber(timeout = 20) {
@@ -733,7 +724,6 @@ class Lss extends Protocol {
      *
      * @param {number} timeout - time until promise is rejected.
      * @returns {Promise<number>} - LSS consumer serial-number.
-     * @fires Protocol#message
      * @see CiA305 "Inquire Identity Serial-Number Protocol" (§3.11.1.4)
      */
     async inquireSerialNumber(timeout = 20) {
@@ -755,29 +745,37 @@ class Lss extends Protocol {
     /**
      * Start the module.
      *
-     * @protected
+     * @override
      */
-    _start() {
-        const obj1018 = this.eds.getEntry(0x1018);
-        if(obj1018)
-            this._addEntry(obj1018);
+    start() {
+        if(!this.started) {
+            const obj1018 = this.eds.getEntry(0x1018);
+            if(obj1018)
+                this._addEntry(obj1018);
 
-        this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
-        this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+            this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+            this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+
+            super.start();
+        }
     }
 
     /**
      * Stop the module.
      *
-     * @protected
+     * @override
      */
-    _stop() {
-        this.removeEdsCallback('newEntry');
-        this.removeEdsCallback('removeEntry');
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newEntry');
+            this.removeEdsCallback('removeEntry');
 
-        const obj1018 = this.eds.getEntry(0x1018);
-        if(obj1018)
-            this._removeEntry(obj1018);
+            const obj1018 = this.eds.getEntry(0x1018);
+            if(obj1018)
+                this._removeEntry(obj1018);
+
+            super.stop();
+        }
     }
 
     /**
@@ -788,9 +786,9 @@ class Lss extends Protocol {
      * @param {Buffer} message.data - CAN message data;
      * @fires Lss#changeMode
      * @fires Lss#changeDeviceId
-     * @protected
+     * @override
      */
-    _receive({ id, data }) {
+    receive({ id, data }) {
         if (id === 0x7e4) {
             const cs = data[0];
             if (this.pending[cs] !== undefined) {
@@ -937,7 +935,7 @@ class Lss extends Protocol {
      * Listens for new Eds entries.
      *
      * @param {DataObject} entry - new entry.
-     * @protected
+     * @private
      */
     _addEntry(entry) {
         if(entry.index === 0x1018) {
@@ -950,7 +948,7 @@ class Lss extends Protocol {
      * Listens for removed Eds entries.
      *
      * @param {DataObject} entry - removed entry.
-     * @protected
+     * @private
      */
     _removeEntry(entry) {
         if(entry.index === 0x1018) {
@@ -1013,7 +1011,6 @@ class Lss extends Protocol {
      *
      * @param {LssCommand} command - LSS command specifier.
      * @param {Buffer} data - command data.
-     * @fires Protocol#message
      * @private
      */
     _sendLssRequest(command, data) {
@@ -1032,7 +1029,6 @@ class Lss extends Protocol {
      * @param {LssCommand} command - LSS command specifier.
      * @param {number} code - response code.
      * @param {number} info - response info.
-     * @fires Protocol#message
      * @private
      */
     _sendLssResponse(command, code, info = 0) {

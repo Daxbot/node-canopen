@@ -20,6 +20,7 @@ const { deprecate } = require('util');
  *
  * @param {Eds} eds - Eds object.
  * @see CiA301 "Time stamp object (TIME)" (§7.2.6)
+ * @implements {Protocol}
  */
 class Time extends Protocol {
     constructor(eds) {
@@ -111,29 +112,37 @@ class Time extends Protocol {
     /**
      * Start the module.
      *
-     * @protected
+     * @override
      */
-    _start() {
-        const obj1012 = this.eds.getEntry(0x1012);
-        if(obj1012)
-            this._addEntry(obj1012);
+    start() {
+        if(!this.started) {
+            const obj1012 = this.eds.getEntry(0x1012);
+            if(obj1012)
+                this._addEntry(obj1012);
 
-        this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
-        this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+            this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+            this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+
+            super.start();
+        }
     }
 
     /**
      * Stop the module.
      *
-     * @protected
+     * @override
      */
-    _stop() {
-        this.removeEdsCallback('newEntry');
-        this.removeEdsCallback('removeEntry');
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newEntry');
+            this.removeEdsCallback('removeEntry');
 
-        const obj1012 = this.eds.getEntry(0x1012);
-        if(obj1012)
-            this._removeEntry(obj1012);
+            const obj1012 = this.eds.getEntry(0x1012);
+            if(obj1012)
+                this._removeEntry(obj1012);
+
+            super.stop();
+        }
     }
 
     /**
@@ -143,9 +152,9 @@ class Time extends Protocol {
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
      * @fires Time#time
-     * @protected
+     * @override
      */
-    _receive({ id, data }) {
+    receive({ id, data }) {
         if (this._consume && this._cobId === id) {
             const date = rawToType(data, DataType.TIME_OF_DAY);
 
@@ -163,7 +172,7 @@ class Time extends Protocol {
      * Listens for new Eds entries.
      *
      * @param {DataObject} entry - new entry.
-     * @protected
+     * @private
      */
     _addEntry(entry) {
         if(entry.index === 0x1012) {
@@ -176,7 +185,7 @@ class Time extends Protocol {
      * Listens for removed Eds entries.
      *
      * @param {DataObject} entry - removed entry.
-     * @protected
+     * @private
      */
     _removeEntry(entry) {
         if(entry.index === 0x1012) {
@@ -210,6 +219,8 @@ class Time extends Protocol {
 
     /**
      * Called when 0x1012 (COB-ID TIME) is removed.
+     *
+     * @private
      */
     _clear1012() {
         this._consume = false;

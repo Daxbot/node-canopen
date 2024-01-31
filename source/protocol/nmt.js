@@ -71,6 +71,7 @@ const NmtCommand = {
  *
  * @param {Eds} eds - Eds object.
  * @see CiA301 "Network management" (§7.2.8)
+ * @implements {Protocol}
  */
 class Nmt extends Protocol {
     constructor(eds) {
@@ -292,43 +293,53 @@ class Nmt extends Protocol {
     }
 
     /**
-     * Begin heartbeat generation.
+     * Start the module.
      *
-     * @protected
+     * @fires Nmt#changeState
+     * @override
      */
-    _start() {
-        const obj1016 = this.eds.getEntry(0x1016);
-        if(obj1016)
-            this._addEntry(obj1016);
+    start() {
+        if(!this.started) {
+            const obj1016 = this.eds.getEntry(0x1016);
+            if(obj1016)
+                this._addEntry(obj1016);
 
-        const obj1017 = this.eds.getEntry(0x1017);
-        if(obj1017)
-            this._addEntry(obj1017);
+            const obj1017 = this.eds.getEntry(0x1017);
+            if(obj1017)
+                this._addEntry(obj1017);
 
-        this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
-        this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+            this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+            this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
 
-        this.setState(NmtState.PRE_OPERATIONAL);
+            super.start();
+
+            this.setState(NmtState.PRE_OPERATIONAL);
+        }
     }
 
     /**
-     * Stop heartbeat generation.
+     * Stop the module.
      *
-     * @protected
+     * @fires Nmt#changeState
+     * @override
      */
-    _stop() {
-        this.removeEdsCallback('newEntry');
-        this.removeEdsCallback('removeEntry');
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newEntry');
+            this.removeEdsCallback('removeEntry');
 
-        const obj1016 = this.eds.getEntry(0x1016);
-        if(obj1016)
-            this._removeEntry(obj1016);
+            const obj1016 = this.eds.getEntry(0x1016);
+            if(obj1016)
+                this._removeEntry(obj1016);
 
-        const obj1017 = this.eds.getEntry(0x1017);
-        if(obj1017)
-            this._removeEntry(obj1017);
+            const obj1017 = this.eds.getEntry(0x1017);
+            if(obj1017)
+                this._removeEntry(obj1017);
 
-        this.setState(NmtState.INITIALIZING);
+            this.setState(NmtState.INITIALIZING);
+
+            super.stop();
+        }
     }
 
     /**
@@ -340,9 +351,9 @@ class Nmt extends Protocol {
      * @fires Nmt#changeState
      * @fires Nmt#heartbeat
      * @fires Nmt#timeout
-     * @protected
+     * @override
      */
-    _receive({ id, data }) {
+    receive({ id, data }) {
         if ((id & 0x7FF) == 0x0) {
             const nodeId = data[1];
             if (nodeId == 0 || nodeId == this.deviceId)
@@ -397,7 +408,7 @@ class Nmt extends Protocol {
      *
      * @param {DataObject} entry - new entry.
      * @listens Eds#newEntry
-     * @protected
+     * @private
      */
     _addEntry(entry) {
         switch(entry.index) {
@@ -417,7 +428,7 @@ class Nmt extends Protocol {
      *
      * @param {DataObject} entry - removed entry.
      * @listens Eds#newEntry
-     * @protected
+     * @private
      */
     _removeEntry(entry) {
         switch(entry.index) {

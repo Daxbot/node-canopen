@@ -6,6 +6,23 @@ const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Nmt', function () {
+    it('should emit start once', function (done) {
+        const device = new Device({ id: 0xA});
+
+        device.nmt.on('start', () => done());
+        device.nmt.start();
+        device.nmt.start();
+    });
+
+    it('should emit stop once', function (done) {
+        const device = new Device({ id: 0xA});
+        device.nmt.start();
+
+        device.nmt.on('stop', () => done());
+        device.nmt.stop();
+        device.nmt.stop();
+    });
+
     it('should emit on heartbeat detected', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
         device.eds.setHeartbeatProducerTime(10);
