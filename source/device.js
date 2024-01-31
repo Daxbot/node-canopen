@@ -54,7 +54,7 @@ class Device extends EventEmitter {
         };
 
         for (const obj of Object.values(this.protocol))
-            obj.on('message', (m) => this.emit('message', m));
+            obj.addListener('message', (m) => this.emit('message', m));
 
         if (args.id !== undefined) {
             if (args.id < 1 || args.id > 0x7F)
@@ -64,7 +64,7 @@ class Device extends EventEmitter {
         }
 
         if (args.loopback) {
-            this.on('message', (m) => {
+            this.addListener('message', (m) => {
                 /* We use setImmediate here to allow the method that called
                  * send() to run to completion before receive() is processed.
                  */
@@ -76,7 +76,7 @@ class Device extends EventEmitter {
             args.enableLss = this.eds.lssSupported;
 
         if (args.enableLss) {
-            this.lss.on('changeDeviceId', (id) => this.id = id);
+            this.lss.addListener('changeDeviceId', (id) => this.id = id);
             this.lss.start();
         }
     }
@@ -647,7 +647,7 @@ class Device extends EventEmitter {
  */
 Device.prototype.init = deprecate(
     function () {
-        this.emcy.on('emergency', ({ cobId, em }) => {
+        this.emcy.addListener('emergency', ({ cobId, em }) => {
             /**
              * Emcy object consumed (deprecated).
              *
@@ -660,7 +660,7 @@ Device.prototype.init = deprecate(
             this.emit('emergency', (cobId & 0xF), em);
         });
 
-        this.nmt.on('reset', (resetNode) => {
+        this.nmt.addListener('reset', (resetNode) => {
             if (resetNode) {
                 /**
                  * NMT reset node (deprecated).
@@ -689,7 +689,7 @@ Device.prototype.init = deprecate(
             this._reset(resetNode);
         });
 
-        this.nmt.on('changeState', (state) => {
+        this.nmt.addListener('changeState', (state) => {
             /**
              * NMT state changed (deprecated).
              *
@@ -703,11 +703,11 @@ Device.prototype.init = deprecate(
             this._changeState(state);
         });
 
-        this.nmt.on('heartbeat', ({ deviceId, state }) => {
+        this.nmt.addListener('heartbeat', ({ deviceId, state }) => {
             this.emit('nmtChangeState', deviceId, state);
         });
 
-        this.nmt.on('timeout', (deviceId) => {
+        this.nmt.addListener('timeout', (deviceId) => {
             /**
              * NMT consumer timeout (deprecated).
              *
@@ -720,7 +720,7 @@ Device.prototype.init = deprecate(
             this.emit('nmtTimeout', deviceId);
         });
 
-        this.pdo.on('pdo', (pdo) => {
+        this.pdo.addListener('pdo', (pdo) => {
             /**
              * PDO received (deprecated).
              *
@@ -733,7 +733,7 @@ Device.prototype.init = deprecate(
             this.emit('pdo', pdo.dataObjects, pdo.cobId);
         });
 
-        this.sync.on('sync', (count) => {
+        this.sync.addListener('sync', (count) => {
             /**
              * Sync object consumed (deprecated).
              *
@@ -746,7 +746,7 @@ Device.prototype.init = deprecate(
             this.emit('sync', count);
         });
 
-        this.time.on('time', (date) => {
+        this.time.addListener('time', (date) => {
             /**
              * Time object consumed (deprecated).
              *
@@ -760,7 +760,7 @@ Device.prototype.init = deprecate(
         });
 
         if(this.lss) {
-            this.lss.on('changeMode', (mode) => {
+            this.lss.addListener('changeMode', (mode) => {
                 /**
                  * Change of LSS mode (deprecated).
                  *
@@ -773,7 +773,7 @@ Device.prototype.init = deprecate(
                 this.emit('lssChangeMode', mode);
             });
 
-            this.lss.on('changeDeviceId', (id) => {
+            this.lss.addListener('changeDeviceId', (id) => {
                 /**
                  * Change of device id (deprecated).
                  *
@@ -808,7 +808,7 @@ Device.prototype.init = deprecate(
  */
 Device.prototype.setTransmitFunction = deprecate(
     function (send) {
-        this.on('message', send);
+        this.addListener('message', send);
     }, "Device.setTransmitFunction() is deprecated. Use Device.on('message') instead.");
 
 /**

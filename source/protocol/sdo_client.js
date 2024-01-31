@@ -185,7 +185,7 @@ class SdoClient extends Protocol {
                 const transfer = this.transfers[server.cobIdRx];
                 transfer.start();
 
-                transfer.on('abort',
+                transfer.addListener('abort',
                     (code) => this._abortTransfer(transfer, code));
 
                 this.send(server.cobIdTx, sendBuffer);
@@ -307,7 +307,7 @@ class SdoClient extends Protocol {
                 const transfer = this.transfers[server.cobIdRx];
                 transfer.start();
 
-                transfer.on('abort',
+                transfer.addListener('abort',
                     (code) => this._abortTransfer(transfer, code));
 
                 this.send(server.cobIdTx, sendBuffer);
