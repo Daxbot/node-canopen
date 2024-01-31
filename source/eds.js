@@ -690,50 +690,55 @@ class Eds extends EventEmitter {
         this.comments = [];
         this.nameLookup = {};
 
-        // fileInfo
-        this.fileName = info.fileName || '';
-        this.fileVersion = info.fileVersion || 1;
-        this.fileRevision = info.fileRevision || 1;
-        this.description = info.description || '';
-        this.creationDate = info.creationDate || new Date();
-        this.createdBy = info.createdBy || 'node-canopen';
+        if(typeof info === 'object') {
+            // fileInfo
+            this.fileName = info.fileName || '';
+            this.fileVersion = info.fileVersion || 1;
+            this.fileRevision = info.fileRevision || 1;
+            this.description = info.description || '';
+            this.creationDate = info.creationDate || new Date();
+            this.createdBy = info.createdBy || 'node-canopen';
 
-        // deviceInfo
-        this.vendorName = info.vendorName || '';
-        this.vendorNumber = info.vendorNumber || 0;
-        this.productName = info.productName || '';
-        this.productNumber = info.productNumber || 0;
-        this.revisionNumber = info.revisionNumber || 0;
-        this.orderCode = info.orderCode || '';
-        this.baudRates = info.baudRates || [];
-        this.lssSupported = info.lssSupported || false;
+            // deviceInfo
+            this.vendorName = info.vendorName || '';
+            this.vendorNumber = info.vendorNumber || 0;
+            this.productName = info.productName || '';
+            this.productNumber = info.productNumber || 0;
+            this.revisionNumber = info.revisionNumber || 0;
+            this.orderCode = info.orderCode || '';
+            this.baudRates = info.baudRates || [];
+            this.lssSupported = info.lssSupported || false;
 
-        // Add default data types
-        for (const [name, index] of Object.entries(DataType)) {
-            this.addEntry(index, {
-                parameterName: name,
-                objectType: ObjectType.DEFTYPE,
-                dataType: DataType[name],
-                accessType: AccessType.READ_WRITE,
+            // Add default data types
+            for (const [name, index] of Object.entries(DataType)) {
+                this.addEntry(index, {
+                    parameterName: name,
+                    objectType: ObjectType.DEFTYPE,
+                    dataType: DataType[name],
+                    accessType: AccessType.READ_WRITE,
+                });
+            }
+
+            // Add mandatory objects (0x1000, 0x1001, 0x1018)
+            this.addEntry(0x1000, {
+                parameterName: 'Device type',
+                objectType: ObjectType.VAR,
+                dataType: DataType.UNSIGNED32,
+                accessType: AccessType.READ_ONLY,
+            });
+
+            this.setErrorRegister(0);
+
+            this.setIdentity({
+                vendorId: info.vendorNumber,
+                productCode: info.productNumber,
+                revisionNumber: info.revisionNumber,
+                serialNumber: 0,
             });
         }
-
-        // Add mandatory objects (0x1000, 0x1001, 0x1018)
-        this.addEntry(0x1000, {
-            parameterName: 'Device type',
-            objectType: ObjectType.VAR,
-            dataType: DataType.UNSIGNED32,
-            accessType: AccessType.READ_ONLY,
-        });
-
-        this.setErrorRegister(0);
-
-        this.setIdentity({
-            vendorId: info.vendorNumber,
-            productCode: info.productNumber,
-            revisionNumber: info.revisionNumber,
-            serialNumber: 0,
-        });
+        else if(typeof info === 'string') {
+            this.load(info);
+        }
     }
 
     [Symbol.iterator]() {
