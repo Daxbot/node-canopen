@@ -31,6 +31,8 @@ const { Eds, EdsError } = require('./eds');
 class Device extends EventEmitter {
     constructor(args = {}) {
         super();
+        this._stateListener = null;
+        this._resetListener = null;
 
         if (typeof args.eds === 'string')
             this.eds = Eds.fromFile(args.eds);
@@ -77,9 +79,6 @@ class Device extends EventEmitter {
             this.lss.on('changeDeviceId', (id) => this.id = id);
             this.lss.start();
         }
-
-        this.nmt.on('reset', (resetNode) => this._onReset(resetNode));
-        this.nmt.on('changeState', (state) => this._onChangeState(state));
     }
 
     /**
@@ -209,6 +208,16 @@ class Device extends EventEmitter {
         if (!this.id)
             throw new Error('id must be set');
 
+        if(!this._resetListener) {
+            this._resetListener = (resetEds) => this._reset(resetEds);
+            this.nmt.addListener('reset', this._resetListener);
+        }
+
+        if(!this._stateListener) {
+            this._stateListener = (state) => this._changeState(state);
+            this.nmt.addListener('changeState', this._stateListener);
+        }
+
         this.nmt.start();
     }
 
@@ -218,6 +227,12 @@ class Device extends EventEmitter {
      * @since 6.0.0
      */
     stop() {
+        this.nmt.removeListener('reset', this._resetListener);
+        this._resetListener = null;
+
+        this.nmt.removeListener('changeState', this._stateListener);
+        this._stateListener = null;
+
         for (const obj of Object.values(this.protocol))
             obj.stop();
     }
@@ -557,14 +572,14 @@ class Device extends EventEmitter {
     }
 
     /**
-     * Called on Nmt#reset.
+     * Reset the Device.
      *
-     * @param {boolean} resetNode - if true, then perform a full reset.
+     * @param {boolean} [resetEds] - if true, then perform an Eds reset.
      * @listens Nmt#reset
      * @private
      */
-    _onReset(resetNode) {
-        if (resetNode)
+    _reset(resetEds=false) {
+        if (resetEds)
             this.eds.reset();
 
         setImmediate(() => {
@@ -583,7 +598,7 @@ class Device extends EventEmitter {
      * @listens Nmt#changeState
      * @private
      */
-    _onChangeState(state) {
+    _changeState(state) {
         switch (state) {
             case NmtState.PRE_OPERATIONAL:
                 // Start all...
@@ -607,6 +622,7 @@ class Device extends EventEmitter {
                 this.pdo.start();
                 break;
 
+            case NmtState.INITIALIZING:
             case NmtState.STOPPED:
                 // Stop all except Nmt
                 this.emcy.stop();
@@ -670,7 +686,7 @@ Device.prototype.init = deprecate(
                 this.emit('nmtResetCommunication');
             }
 
-            this._onReset(resetNode);
+            this._reset(resetNode);
         });
 
         this.nmt.on('changeState', (state) => {
@@ -684,7 +700,7 @@ Device.prototype.init = deprecate(
              * @deprecated Use {@link Nmt#event:changeState} or {@link Nmt#event:heartbeat} instead.
              */
             this.emit('nmtChangeState', this.deviceId, state);
-            this._onChangeState(state);
+            this._changeState(state);
         });
 
         this.nmt.on('heartbeat', ({ deviceId, state }) => {
@@ -804,7 +820,7 @@ Device.prototype.setTransmitFunction = deprecate(
 Device.prototype.mapEds = deprecate(
     function (args) {
         if(args.serverId !== undefined)
-            args.deviceId = args.serverId;
+            args.id = args.serverId;
 
         this.mapRemoteNode(args);
     }, 'Device.mapEds() is deprecated. Use Device.mapRemoteNode() instead.');
