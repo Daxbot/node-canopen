@@ -556,7 +556,8 @@ class DataObject extends EventEmitter {
      * @param {DataObject | object} data - An existing {@link DataObject} or
      * the data to create one.
      * @returns {DataObject} new DataObject.
-     * @protected
+     * @see {@link Eds#addSubEntry}
+     * @private
      */
     addSubObject(subIndex, data) {
         if (!this._subObjects)
@@ -590,11 +591,12 @@ class DataObject extends EventEmitter {
     }
 
     /**
-     * Remove a sub-entry from the array and return it.
+     * Remove a sub-entry and return it.
      *
      * @param {number} subIndex - sub-entry index to remove.
      * @returns {DataObject} removed DataObject.
-     * @protected
+     * @see {@link Eds#removeSubEntry}
+     * @private
      */
     removeSubObject(subIndex) {
         if (!this._subObjects)
