@@ -546,7 +546,7 @@ class DataObject extends EventEmitter {
         if (!this._subObjects)
             throw new TypeError('not an Array type');
 
-        return this._subObjects.at(index);
+        return this._subObjects[index];
     }
 
     /**
