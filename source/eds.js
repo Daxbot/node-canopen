@@ -3441,12 +3441,12 @@ class Eds extends EventEmitter {
         }
 
         /* sub-index 1 (mandatory):
-            *   bit 0..10      11-bit CAN base frame.
-            *   bit 11..28     29-bit CAN extended frame.
-            *   bit 29         Frame type.
-            *   bit 30         RTR allowed.
-            *   bit 31         PDO valid.
-            */
+         *   bit 0..10      11-bit CAN base frame.
+         *   bit 11..28     29-bit CAN extended frame.
+         *   bit 29         Frame type.
+         *   bit 30         RTR allowed.
+         *   bit 31         PDO valid.
+         */
         if (commEntry[1] === undefined)
             throw new EdsError('missing PDO COB-ID');
 
@@ -3460,28 +3460,28 @@ class Eds extends EventEmitter {
         cobId &= 0x7FF;
 
         /* sub-index 2 (mandatory):
-            *   bit 0..7       Transmission type.
-            */
+         *   bit 0..7       Transmission type.
+         */
         if (commEntry[2] === undefined)
             throw new EdsError('missing PDO transmission type');
 
         const transmissionType = commEntry[2].value;
 
         /* sub-index 3 (optional):
-            *   bit 0..15      Inhibit time.
-            */
+         *   bit 0..15      Inhibit time.
+         */
         const inhibitTime = (commEntry[3] !== undefined)
             ? commEntry[3].value : 0;
 
         /* sub-index 5 (optional):
-            *   bit 0..15      Event timer value.
-            */
+         *   bit 0..15      Event timer value.
+         */
         const eventTime = (commEntry[5] !== undefined)
             ? commEntry[5].value : 0;
 
         /* sub-index 6 (optional):
-            *   bit 0..7       SYNC start value.
-            */
+         *   bit 0..7       SYNC start value.
+         */
         const syncStart = (commEntry[6] !== undefined)
             ? commEntry[6].value : 0;
 
@@ -3511,20 +3511,22 @@ class Eds extends EventEmitter {
                 continue;
 
             /* sub-index 1+:
-                *   bit 0..7       Bit length.
-                *   bit 8..15      Sub-index.
-                *   bit 16..31     Index.
-                */
+             *   bit 0..7       Bit length.
+             *   bit 8..15      Sub-index.
+             *   bit 16..31     Index.
+             */
             const dataLength = mapEntry[i].raw.readUInt8(0);
             const dataSubIndex = mapEntry[i].raw.readUInt8(1);
             const dataIndex = mapEntry[i].raw.readUInt16LE(2);
 
             let obj = this.getEntry(dataIndex);
-            if (dataSubIndex)
-                obj = obj[dataSubIndex];
+            if(obj) {
+                if (dataSubIndex)
+                    obj = obj[dataSubIndex];
 
-            pdo.dataObjects[i - 1] = obj;
-            pdo.dataSize += dataLength / 8;
+                pdo.dataObjects.push(obj);
+                pdo.dataSize += dataLength / 8;
+            }
         }
 
         return pdo;
