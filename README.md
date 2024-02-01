@@ -26,16 +26,18 @@ to illustrate the change:
 not used internally. The Device object is now aware of the NMT state and will
 bring up and shutdown protocol objects as the state changes. If your PDOs are
 not firing after the update make sure you are calling Nmt#startNode to switch
-to NmtState.OPERATIONAL.
+to NmtState.OPERATIONAL. This new behavior should only take effect upon calling
+Device#start().
 
 3. Events have been refactored and moved to their respective protocol modules.
 Old events are still available, but will only fire if the Device#init() method
 has been called.
 
-4. The Eds.dataObjects array is now keyed from the hex value rather than the
-decimal value to make debug printing less confusing. If you iterate over the
-Eds at all be sure to parseInt with a radix of 16. Anything using Eds#getEntry
-will be unaffected.
+4. The internal Eds array of DataObjects is now keyed from the hex index rather
+than the decimal index to make debug printing less confusing. A getter with the
+old indexing is provided so that iterating directly on Eds.dataObjects will
+still work as expected, however you should switch to using the new iterator
+methods (Eds.values(), Eds.entries(), Eds.keys()).
 
 ## Documentation
 
