@@ -688,7 +688,7 @@ class Eds extends EventEmitter {
         };
 
         this.dummyUsage = {};
-        this.dataObjects = {};
+        this._dataObjects = {};
         this.comments = [];
         this.nameLookup = {};
 
@@ -741,6 +741,22 @@ class Eds extends EventEmitter {
         else if(typeof info === 'string') {
             this.load(info);
         }
+    }
+
+    /**
+     * Constructs and returns the Eds DataObjects keyed by decimal string. This
+     * is provided to support old tools. For new code use the new Eds iterator
+     * methods (keyed by hex string) instead.
+     *
+     * @type {object}
+     * @deprecated Use {@link Eds#entries} instead.
+     */
+    get dataObjects() {
+        const entries = {};
+        for(const entry of this.values())
+            entries[entry.index] = entry;
+
+        return entries;
     }
 
     [Symbol.iterator]() {
@@ -1067,7 +1083,7 @@ class Eds extends EventEmitter {
      */
     get nrOfRXPDO() {
         let count = 0;
-        for (let index of Object.keys(this.dataObjects)) {
+        for (let index of Object.keys(this._dataObjects)) {
             index = parseInt(index, 16);
             if (index >= 0x1400 && index <= 0x15FF)
                 count++;
@@ -1083,7 +1099,7 @@ class Eds extends EventEmitter {
      */
     get nrOfTXPDO() {
         let count = 0;
-        for (let index of Object.keys(this.dataObjects)) {
+        for (let index of Object.keys(this._dataObjects)) {
             index = parseInt(index, 16);
             if (index >= 0x1800 && index <= 0x19FF)
                 count++;
@@ -1139,7 +1155,7 @@ class Eds extends EventEmitter {
         const file = ini.parse(fs.readFileSync(path, 'utf-8'));
 
         // Clear existing entries
-        this.dataObjects = {};
+        this._dataObjects = {};
         this.nameLookup = {};
 
         // Extract header fields
@@ -1258,7 +1274,7 @@ class Eds extends EventEmitter {
      * @since 6.0.0
      */
     keys() {
-        return Object.keys(this.dataObjects).values();
+        return Object.keys(this._dataObjects).values();
     }
 
     /**
@@ -1268,7 +1284,7 @@ class Eds extends EventEmitter {
      * @since 6.0.0
      */
     values() {
-        return Object.values(this.dataObjects).values();
+        return Object.values(this._dataObjects).values();
     }
 
     /**
@@ -1278,7 +1294,7 @@ class Eds extends EventEmitter {
      * @since 6.0.0
      */
     entries() {
-        return Object.entries(this.dataObjects).values();
+        return Object.entries(this._dataObjects).values();
     }
 
     /**
@@ -1327,7 +1343,7 @@ class Eds extends EventEmitter {
         else {
             // Index lookup.
             const key = index.toString(16).padStart(4, '0');
-            entry = this.dataObjects[key];
+            entry = this._dataObjects[key];
         }
 
         return entry;
@@ -1346,7 +1362,7 @@ class Eds extends EventEmitter {
             throw new TypeError('index must be a number');
 
         const key = index.toString(16).padStart(4, '0');
-        if (this.dataObjects[key] !== undefined)
+        if (this._dataObjects[key] !== undefined)
             throw new EdsError(`${key} already exists`);
 
         const entry = new DataObject(key, data);
@@ -1359,7 +1375,7 @@ class Eds extends EventEmitter {
          */
         this.emit('newEntry', entry);
 
-        this.dataObjects[key] = entry;
+        this._dataObjects[key] = entry;
 
         if (this.nameLookup[entry.parameterName] === undefined)
             this.nameLookup[entry.parameterName] = [];
@@ -1387,7 +1403,7 @@ class Eds extends EventEmitter {
         if (this.nameLookup[entry.parameterName].length == 0)
             delete this.nameLookup[entry.parameterName];
 
-        delete this.dataObjects[entry.key];
+        delete this._dataObjects[entry.key];
 
         /**
          * A DataObject was removed from the Eds.
@@ -3582,7 +3598,7 @@ class Eds extends EventEmitter {
                 continue;
 
             const index = parseInt(value, 16);
-            const dataObject = this.dataObjects[index.toString(16)];
+            const dataObject = this._dataObjects[index.toString(16)];
 
             // Write top level object
             const section = index.toString(16);

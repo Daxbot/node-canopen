@@ -82,6 +82,16 @@ class Device extends EventEmitter {
     }
 
     /**
+     * Accessor for version 5 Eds DataObjects. Do not use.
+     *
+     * @type {object}
+     * @deprecated Use {@link Eds#entries} instead.
+     */
+    get dataObjects() {
+        return this.eds.dataObjects;
+    }
+
+    /**
      * The device id.
      *
      * @type {number}
