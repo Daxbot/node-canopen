@@ -1,117 +1,114 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const { Device, EdsError } = require('../../index');
+const { Device } = require('../../index');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-describe('Nmt', function() {
-    let device = null;
+describe('Nmt', function () {
+    it('should emit start once', function (done) {
+        const device = new Device({ id: 0xA});
 
-    describe('Object dictionary', function() {
-        before(function() {
-            device = new Device({ id: 0xA, loopback: true });
-            device.init();
-        });
-
-        it('should add entries to 0x1016', function() {
-            device.nmt.addConsumer(0xB, 1000);
-            expect(device.eds.getSubEntry(0x1016, 1)).to.exist;
-        });
-
-        it('should throw on repeated add', function() {
-            expect(() => device.nmt.addConsumer(0xB, 1000)).to.throw(EdsError);
-        });
-
-        it('should get entries from 0x1016', function() {
-            expect(device.nmt.getConsumer(0xB)).to.exist;
-            expect(device.nmt.getConsumer(0xC)).to.be.null;
-        });
-
-        it('should get the consumer heartbeat time', function() {
-            expect(device.nmt.getConsumerTime(0xB)).to.equal(1000);
-            expect(device.nmt.getConsumerTime(0xC)).to.be.null;
-        });
-
-        it('should remove entries from 0x1016', function() {
-            device.nmt.removeConsumer(0xB);
-            expect(device.nmt.getConsumer(0xB)).to.be.null;
-        });
-
-        it('should throw on repeated remove', function() {
-            expect(() => device.nmt.removeConsumer(0xB)).to.throw(EdsError);
-        });
-
-        it('should listen for updates to 0x1016', function(done) {
-            const obj1016 = device.eds.getEntry(0x1016);
-            obj1016.addListener('update', (entry) => {
-                setImmediate(() => {
-                    expect(entry[1].value & 0xFFFF).to.equal(200);
-                    done();
-                });
-            });
-
-            device.nmt.addConsumer(0xD, 200);
-        });
-
-        it('should listen for updates to 0x1017', function(done) {
-            device.nmt.producerTime = 100;
-
-            const obj1017 = device.eds.getEntry(0x1017);
-            obj1017.addListener('update', (entry) => {
-                setImmediate(() => {
-                    expect(entry.value).to.equal(200);
-                    done();
-                });
-            });
-
-            obj1017.value = 200;
-        });
+        device.nmt.on('start', () => done());
+        device.nmt.start();
+        device.nmt.start();
     });
 
-    describe('Producer', function() {
-        beforeEach(function() {
-            device = new Device({ id: 0xA, loopback: true });
-            device.init();
-        });
+    it('should emit stop once', function (done) {
+        const device = new Device({ id: 0xA});
+        device.nmt.start();
 
-        it('should throw if producer time is 0', function() {
-            device.nmt.producerTime = 0;
-            return expect(() => device.nmt.start()).to.throw(EdsError);
-        });
-
-        it('should produce a heartbeat object', function(done) {
-            device.addListener('message', () => done());
-            device.nmt.producerTime = 10;
-            device.nmt._sendHeartbeat();
-        });
+        device.nmt.on('stop', () => done());
+        device.nmt.stop();
+        device.nmt.stop();
     });
 
-    describe('Consumer', function() {
-        beforeEach(function() {
-            device = new Device({ id: 0xA, loopback: true });
-            device.init();
+    it('should emit on heartbeat detected', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setHeartbeatProducerTime(10);
+        device.eds.addHeartbeatConsumer(device.id, 10);
+
+        device.nmt.addListener('heartbeat', ({ deviceId }) => {
+            expect(deviceId).to.equal(device.id);
+            device.nmt.stop();
+            done();
         });
 
-        it('should emit on heartbeat timeout', function(done) {
-            device.on('nmtTimeout', () => done());
-            device.nmt.addConsumer(device.id, 10);
-            device.nmt._sendHeartbeat();
+        device.nmt.start();
+    });
+
+    it('should emit on heartbeat timeout', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.addHeartbeatConsumer(device.id, 10);
+
+        device.nmt.addListener('timeout', (deviceId) => {
+            expect(deviceId).to.equal(device.id);
+            device.nmt.stop();
+            done();
         });
 
-        it('should emit on NMT state change', function(done) {
-            device.on('nmtChangeState', () => done());
-            device.nmt.addConsumer(device.id, 10);
-            device.nmt.startNode(device.id);
+        device.nmt.start();
+        device.nmt._sendHeartbeat(device.id);
+    });
+
+    it('should emit on NMT state change', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setHeartbeatProducerTime(1);
+        device.eds.addHeartbeatConsumer(device.id, 10);
+
+        device.nmt.addListener('changeState', (state) => {
+            if (state) {
+                device.nmt.stop();
+                done();
+            }
         });
 
-        it('should emit on the next heartbeat after timeout', function(done) {
-            device.on('nmtTimeout', () => {
-                device.on('nmtChangeState', () => done());
+        device.nmt.start();
+    });
+
+    it('should listen to Eds#newEntry', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.nmt.start();
+
+        expect(device.eds.getHeartbeatProducerTime()).to.be.null;
+        expect(device.eds.getHeartbeatConsumers()).to.be.an('array').that.is.empty;
+
+        device.nmt.once('heartbeat', () => {
+            device.nmt.stop();
+            done();
+        });
+
+        device.eds.setHeartbeatProducerTime(1);
+        device.eds.addHeartbeatConsumer(device.id, 10);
+    });
+
+    it('should listen to Eds#removeEntry', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setHeartbeatProducerTime(1);
+        device.eds.addHeartbeatConsumer(device.id, 10);
+
+        device.nmt.once('heartbeat', () => {
+            device.nmt.once('timeout', () => {
+                done();
             });
-            device.nmt.addConsumer(device.id, 10);
-            device.nmt._sendHeartbeat();
-            setTimeout(() => device.nmt._sendHeartbeat(), 30);
+
+            device.eds.removeEntry(0x1017); // Producer time
         });
+
+        device.nmt.start();
+    });
+
+    it('should listen to DataObject#update', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setHeartbeatProducerTime(1);
+        device.eds.addHeartbeatConsumer(0x7F, 10); // Not our device
+        device.nmt.start();
+
+        device.nmt.once('heartbeat', () => {
+            device.nmt.stop();
+            done();
+        });
+
+        device.eds.addHeartbeatConsumer(device.id, 10); // Our device
     });
 });

@@ -1,0 +1,136 @@
+[FileInfo]
+EDSVersion=4.0
+FileName=example.eds
+FileVersion=1
+FileRevision=1
+Description=An example EDS file
+CreationTime=13:51
+CreationDate=01-19-2024
+CreatedBy=ww
+ModificationTime=13:51
+ModificationDate=01-19-2024
+ModifiedBy=
+
+[DeviceInfo]
+SimpleBootUpMaster=0
+SimpleBootUpSlave=0
+Granularity=8
+DynamicChannelsSupported=0
+CompactPDO=0
+GroupMessaging=0
+VendorName=
+VendorNumber=0
+ProductName=
+ProductNumber=0
+RevisionNumber=0
+OrderCode=
+BaudRate_10=0
+BaudRate_20=0
+BaudRate_50=0
+BaudRate_125=0
+BaudRate_250=0
+BaudRate_500=0
+BaudRate_800=0
+BaudRate_1000=0
+LSS_Supported=0
+NrOfTXPDO=0
+NrOfRXPDO=0
+
+[MandatoryObjects]
+1=0x1000
+2=0x1001
+3=0x1018
+SupportedObjects=3
+
+[1000]
+ParameterName=Device type
+ObjectType=0x7
+DataType=0x7
+AccessType=ro
+PDOMapping=0
+
+[1001]
+ParameterName=Error register
+ObjectType=0x7
+DataType=0x5
+AccessType=ro
+PDOMapping=0
+
+[1018]
+ParameterName=Identity object
+ObjectType=0x9
+SubNumber=0x5
+
+[1018sub0]
+ParameterName=Max sub-index
+ObjectType=0x7
+DataType=0x5
+AccessType=rw
+PDOMapping=0
+
+[1018sub1]
+ParameterName=Vendor-ID
+ObjectType=0x7
+DataType=0x7
+AccessType=ro
+DefaultValue=0
+PDOMapping=0
+
+[1018sub2]
+ParameterName=Product code
+ObjectType=0x7
+DataType=0x7
+AccessType=ro
+DefaultValue=0
+PDOMapping=0
+
+[1018sub3]
+ParameterName=Revision number
+ObjectType=0x7
+DataType=0x7
+AccessType=ro
+DefaultValue=0
+PDOMapping=0
+
+[1018sub4]
+ParameterName=Serial number
+ObjectType=0x7
+DataType=0x7
+AccessType=ro
+PDOMapping=0
+
+[OptionalObjects]
+1=0x1016
+SupportedObjects=1
+
+[1016]
+ParameterName=Consumer heartbeat time
+ObjectType=0x8
+SubNumber=0x3
+
+[1016sub0]
+ParameterName=Max sub-index
+ObjectType=0x7
+DataType=0x5
+AccessType=rw
+PDOMapping=0
+
+[1016sub1]
+ParameterName=Heartbeat consumer 1
+ObjectType=0x7
+DataType=0x7
+AccessType=rw
+DefaultValue=196618
+PDOMapping=0
+
+[1016sub2]
+ParameterName=Device 0x4
+ObjectType=0x7
+DataType=0x7
+AccessType=rw
+DefaultValue=262154
+PDOMapping=0
+
+[ManufacturerObjects]
+SupportedObjects=0
+

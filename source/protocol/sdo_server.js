@@ -1,15 +1,16 @@
 /**
  * @file Implements the CANopen Service Data Object (SDO) protocol server.
  * @author Wilkins White
- * @copyright 2021 Daxbot
+ * @copyright 2024 Daxbot
  */
 
-const Device = require('../device');
-const { EdsError, DataObject } = require('../eds');
-const { ObjectType, AccessType, DataType } = require('../types');
+const Protocol = require('./protocol');
+const { DataObject, Eds } = require('../eds');
+const { AccessType } = require('../types');
 const { SdoCode, SdoTransfer, ClientCommand, ServerCommand } = require('./sdo');
 const calculateCrc = require('../functions/crc');
 const rawToType = require('../functions/raw_to_type');
+const { deprecate } = require('util');
 
 /**
  * CANopen SDO protocol handler (Server).
@@ -19,33 +20,14 @@ const rawToType = require('../functions/raw_to_type');
  * dictionary. An SDO is transfered as a sequence of segments with basic
  * error checking.
  *
- * @param {Device} device - parent device.
+ * @param {Eds} eds - parent device.
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
- * @example
- * const can = require('socketcan');
- *
- * const channel = can.createRawChannel('can0');
- * const device = new Device({ id: 0xB });
- *
- * channel.addListener('onMessage', (message) => device.receive(message));
- * device.setTransmitFunction((message) => channel.send(message));
- *
- * device.init();
- * channel.start();
- *
- * device.eds.addEntry(0x2000, {
- *     parameterName:  'Test string',
- *     objectType:     ObjectType.VAR,
- *     dataType:       DataType.VISIBLE_STRING,
- *     accessType:     AccessType.READ_WRITE,
- * });
- *
- * device.sdoServer.addClient(0xA);
+ * @implements {Protocol}
  */
-class SdoServer {
-    constructor(device) {
-        this.device = device;
-        this.clients = {};
+class SdoServer extends Protocol {
+    constructor(eds) {
+        super(eds);
+        this.transfers = {};
         this._blockSize = 127;
     }
 
@@ -58,165 +40,181 @@ class SdoServer {
         return this._blockSize;
     }
 
-    set blockSize(value) {
-        if(value < 1 || value > 127)
-            throw RangeError('blockSize must be in range 1-127');
+    /**
+     * Set the number of segments per block when serving block transfers.
+     *
+     * @param {number} value - block size [1-127].
+     * @since 6.0.0
+     */
+    setBlockSize(value) {
+        if (value < 1 || value > 127)
+            throw RangeError('blockSize must be in range [1-127]');
 
         this._blockSize = value;
     }
 
-    /** Initialize members and begin serving SDO transfers. */
-    init() {
-        for(let index of Object.keys(this.device.dataObjects)) {
-            index = parseInt(index);
-            if(index < 0x1200 || index > 0x127F)
-                continue;
+    /**
+     * Start the module.
+     *
+     * @override
+     */
+    start() {
+        if(!this.started) {
+            this.transfers = {};
+            for (const client of this.eds.getSdoServerParameters())
+                this._addClient(client);
 
-            this._parseSdo(index);
+            this.addEdsCallback('newSdoClient',
+                (client) => this._addClient(client));
+
+            this.addEdsCallback('removeSdoClient',
+                (client) => this._removeClient(client));
+
+            super.start();
         }
-
-        this.device.addListener('message', this._onMessage.bind(this));
     }
 
     /**
-     * Get an SDO server parameter entry.
+     * Stop the module.
      *
-     * @param {number} clientId - client COB-ID of the entry to get.
-     * @returns {DataObject | null} the matching entry.
+     * @override
      */
-    getClient(clientId) {
-        for(let [index, entry] of Object.entries(this.device.dataObjects)) {
-            index = parseInt(index);
-            if(index < 0x1200 || index > 0x127F)
-                continue;
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newSdoClient');
+            this.removeEdsCallback('removeSdoClient');
 
-            if(entry[3] !== undefined && entry[3].value === clientId)
-                return entry;
+            for (const client of this.eds.getSdoServerParameters())
+                this._removeClient(client);
+
+            super.stop();
         }
-
-        return null;
     }
 
     /**
-     * Add an SDO server parameter entry.
+     * Call when a new CAN message is received.
      *
-     * @param {number} clientId - client COB-ID to add.
-     * @param {number} cobIdTx - Sdo COB-ID for outgoing messages (to client).
-     * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from client).
+     * @param {object} message - CAN frame.
+     * @param {number} message.id - CAN message identifier.
+     * @param {Buffer} message.data - CAN message data;
+     * @override
      */
-    addClient(clientId, cobIdTx=0x580, cobIdRx=0x600) {
-        if(clientId < 0 || clientId > 0x7F)
-            throw RangeError('clientId must be in range 0-127');
+    receive({ id, data }) {
+        // Handle transfers as a server (local object dictionary)
+        const client = this.transfers[id];
+        if (client === undefined)
+            return;
 
-        if(this.getClient(clientId) !== null) {
-            clientId = '0x' + clientId.toString(16);
-            throw new EdsError(`entry for client ${clientId} already exists`);
+        if (client.blockTransfer) {
+            // Block transfer in progress
+            if ((data[0] & 0x7f) === client.blockSequence + 1) {
+                client.data = Buffer.concat([client.data, data.slice(1)]);
+                client.blockSequence++;
+                if (data[0] & 0x80) {
+                    client.blockFinished = true;
+                    client.blockTransfer = false;
+                }
+            }
+
+            if (client.blockSequence > 127) {
+                this._abortTransfer(client, SdoCode.BAD_BLOCK_SEQUENCE);
+                return;
+            }
+
+            // Awknowledge block
+            if (client.blockFinished
+                || client.blockSequence == this.blockSize) {
+
+                const header = (ServerCommand.BLOCK_DOWNLOAD << 5)
+                    | (2 << 0); // Block download response
+
+                const sendBuffer = Buffer.alloc(8);
+                sendBuffer.writeUInt8(header);
+                sendBuffer.writeInt8(client.blockSequence, 1);
+                sendBuffer.writeUInt8(this.blockSize, 2);
+
+                this.send(client.cobId, sendBuffer);
+
+                // Reset sequence
+                client.blockSequence = 0;
+            }
+
+            client.refresh();
+            return;
         }
 
-        let index = 0x1200;
-        for(; index <= 0x127F; ++index) {
-            if(this.device.eds.getEntry(index) === undefined)
+        switch (data[0] >> 5) {
+            case ClientCommand.DOWNLOAD_SEGMENT:
+                this._downloadSegment(client, data);
+                break;
+            case ClientCommand.DOWNLOAD_INITIATE:
+                this._downloadInitiate(client, data);
+                break;
+            case ClientCommand.UPLOAD_INITIATE:
+                this._uploadInitiate(client, data);
+                break;
+            case ClientCommand.UPLOAD_SEGMENT:
+                this._uploadSegment(client, data);
+                break;
+            case ClientCommand.ABORT:
+                client.reject();
+                break;
+            case ClientCommand.BLOCK_UPLOAD:
+                switch (data[0] & 0x3) {
+                    case 0:
+                        // Initiate upload
+                        this._blockUploadInitiate(client, data);
+                        break;
+                    case 1:
+                        // End upload
+                        this._blockUploadEnd(client);
+                        break;
+                    case 2:
+                        // Confirm block
+                        this._blockUploadConfirm(client, data);
+                        break;
+                    case 3:
+                        // Start upload
+                        this._blockUploadProcess(client);
+                        break;
+                }
+                break;
+            case ClientCommand.BLOCK_DOWNLOAD:
+                this._blockDownload(client, data);
+                break;
+            default:
+                this._abortTransfer(client, SdoCode.BAD_COMMAND);
                 break;
         }
-
-        this.device.eds.addEntry(index, {
-            parameterName:  'SDO server parameter',
-            objectType:     ObjectType.RECORD,
-        });
-
-        this.device.eds.addSubEntry(index, 1, {
-            parameterName:  'COB-ID client to server',
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_WRITE,
-            defaultValue:   cobIdRx
-        });
-
-        this.device.eds.addSubEntry(index, 2, {
-            parameterName:  'COB-ID server to client',
-            dataType:       DataType.UNSIGNED32,
-            accessType:     AccessType.READ_WRITE,
-            defaultValue:   cobIdTx
-        });
-
-        this.device.eds.addSubEntry(index, 3, {
-            parameterName:  'Node-ID of the SDO client',
-            dataType:       DataType.UNSIGNED8,
-            accessType:     AccessType.READ_WRITE,
-            defaultValue:   clientId
-        });
-
-        this._parseSdo(index);
     }
 
     /**
-     * Remove an SDO server parameter entry.
+     * Add an SDO client.
      *
-     * @param {number} clientId - client COB-ID of the entry to remove.
-     */
-    removeClient(clientId) {
-        const entry = this.getClient(clientId);
-        if(entry === null)
-            throw ReferenceError(`entry for client ${clientId} does not exist`);
-
-        this.device.eds.removeEntry(entry.index);
-    }
-
-    /**
-     * Parse a SDO client parameter.
-     *
-     * @param {number} index - entry index.
+     * @param {object} args - SDO client parameters.
+     * @param {number} args.cobIdTx - COB-ID server -> client.
+     * @param {number} args.cobIdRx - COB-ID client -> server.
      * @private
      */
-    _parseSdo(index) {
-        const entry = this.device.eds.getEntry(index);
-        if(!entry) {
-            index = '0x' + (index + 0x200).toString(16);
-            throw new EdsError(`missing SDO server parameter (${index})`);
+    _addClient({ cobIdTx, cobIdRx }) {
+        this.transfers[cobIdRx] = new SdoTransfer({ cobId: cobIdTx });
+    }
+
+    /**
+     * Remove an SDO client.
+     *
+     * @param {object} args - SDO client parameters.
+     * @param {number} args.cobIdRx - COB-ID client -> server.
+     * @private
+     */
+    _removeClient({ cobIdRx }) {
+        const transfer = this.transfers[cobIdRx];
+        if(transfer) {
+            if (transfer.active)
+                this._abortTransfer(transfer, SdoCode.DEVICE_STATE);
+
+            delete this.transfers[cobIdRx];
         }
-
-        /* Object 0x1200..0x127F - SDO server parameter.
-         *   sub-index 1/2:
-         *     bit 0..10      11-bit CAN base frame.
-         *     bit 11..28     29-bit CAN extended frame.
-         *     bit 29         Frame type (base or extended).
-         *     bit 30         Dynamically allocated.
-         *     bit 31         SDO exists / is valid.
-         *
-         *   sub-index 3 (optional):
-         *     bit 0..7      Node-ID of the SDO client.
-         */
-        let cobIdRx = entry[1].value;
-        if(!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
-            return;
-
-        if(((cobIdRx >> 30) & 0x1) == 0x1)
-            throw TypeError('dynamic assignment is not supported.');
-
-        if(((cobIdRx >> 29) & 0x1) == 0x1)
-            throw TypeError('CAN extended frames are not supported.');
-
-        cobIdRx &= 0x7FF;
-        if((cobIdRx & 0xF) == 0x0)
-            cobIdRx |= this.device.id;
-
-        let cobIdTx = entry[2].value;
-        if(!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
-            return;
-
-        if(((cobIdTx >> 30) & 0x1) == 0x1)
-            throw TypeError('dynamic assignment is not supported.');
-
-        if(((cobIdTx >> 29) & 0x1) == 0x1)
-            throw TypeError('CAN extended frames are not supported.');
-
-        cobIdTx &= 0x7FF;
-        if((cobIdTx & 0xF) == 0x0)
-            cobIdTx |= this.device.id;
-
-        this.clients[cobIdRx] = new SdoTransfer({
-            device: this.device,
-            cobId: cobIdTx
-        });
     }
 
     /**
@@ -224,46 +222,47 @@ class SdoServer {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _downloadInitiate(client, data) {
         client.index = data.readUInt16LE(1);
         client.subIndex = data.readUInt8(3);
 
-        if(data[0] & 0x02) {
+        if (data[0] & 0x02) {
             // Expedited client
-            let entry = this.device.eds.getEntry(client.index);
-            if(entry === undefined) {
-                client.abort(SdoCode.OBJECT_UNDEFINED);
+            let entry = this.eds.getEntry(client.index);
+            if (entry === undefined) {
+                this._abortTransfer(client, SdoCode.OBJECT_UNDEFINED);
                 return;
             }
 
-            if(entry.subNumber > 0) {
+            if (entry.subNumber > 0) {
                 entry = entry[client.subIndex];
-                if(entry === undefined) {
-                    client.abort(SdoCode.BAD_SUB_INDEX);
+                if (entry === undefined) {
+                    this._abortTransfer(client, SdoCode.BAD_SUB_INDEX);
                     return;
                 }
             }
 
-            if(entry.accessType == AccessType.CONSTANT
-            || entry.accessType == AccessType.READ_ONLY) {
-                client.abort(SdoCode.READ_ONLY);
+            if (entry.accessType == AccessType.CONSTANT
+                || entry.accessType == AccessType.READ_ONLY) {
+                this._abortTransfer(client, SdoCode.READ_ONLY);
                 return;
             }
 
             const count = (data[0] & 1) ? (4 - ((data[0] >> 2) & 3)) : 4;
             const raw = Buffer.alloc(count);
-            data.copy(raw, 0, 4, count+4);
+            data.copy(raw, 0, 4, count + 4);
 
             const value = rawToType(raw, entry.dataType);
-            if(entry.highLimit !== undefined && value > entry.highLimit) {
-                client.abort(SdoCode.VALUE_HIGH);
+            if (entry.highLimit !== undefined && value > entry.highLimit) {
+                this._abortTransfer(client, SdoCode.VALUE_HIGH);
                 return;
             }
 
-            if(entry.lowLimit !== undefined && value < entry.lowLimit) {
-                client.abort(SdoCode.VALUE_LOW);
+            if (entry.lowLimit !== undefined && value < entry.lowLimit) {
+                this._abortTransfer(client, SdoCode.VALUE_LOW);
                 return;
             }
 
@@ -274,10 +273,7 @@ class SdoServer {
             sendBuffer.writeUInt16LE(client.index, 1);
             sendBuffer.writeUInt8(client.subIndex, 3);
 
-            this.device.send({
-                id: client.cobId,
-                data: sendBuffer,
-            });
+            this.send(client.cobId, sendBuffer);
         }
         else {
             // Segmented client
@@ -290,10 +286,7 @@ class SdoServer {
             sendBuffer.writeUInt16LE(client.index, 1);
             sendBuffer.writeUInt8(client.subIndex, 3);
 
-            this.device.send({
-                id: client.cobId,
-                data: sendBuffer,
-            });
+            this.send(client.cobId, sendBuffer);
 
             client.start();
         }
@@ -304,37 +297,38 @@ class SdoServer {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _uploadInitiate(client, data) {
         client.index = data.readUInt16LE(1);
         client.subIndex = data.readUInt8(3);
 
-        let entry = this.device.eds.getEntry(client.index);
-        if(entry === undefined) {
-            client.abort(SdoCode.OBJECT_UNDEFINED);
+        let entry = this.eds.getEntry(client.index);
+        if (entry === undefined) {
+            this._abortTransfer(client, SdoCode.OBJECT_UNDEFINED);
             return;
         }
 
-        if(entry.subNumber > 0) {
+        if (entry.subNumber > 0) {
             entry = entry[client.subIndex];
-            if(entry === undefined) {
-                client.abort(SdoCode.BAD_SUB_INDEX);
+            if (entry === undefined) {
+                this._abortTransfer(client, SdoCode.BAD_SUB_INDEX);
                 return;
             }
         }
 
-        if(entry.accessType == AccessType.WRITE_ONLY) {
-            client.abort(SdoCode.WRITE_ONLY);
+        if (entry.accessType == AccessType.WRITE_ONLY) {
+            this._abortTransfer(client, SdoCode.WRITE_ONLY);
             return;
         }
 
-        if(entry.size <= 4) {
+        if (entry.size <= 4) {
             // Expedited client
             const sendBuffer = Buffer.alloc(8);
             const header = (ServerCommand.UPLOAD_INITIATE << 5)
-                         | ((4-entry.size) << 2)
-                         | 0x2;
+                | ((4 - entry.size) << 2)
+                | 0x2;
 
             sendBuffer.writeUInt8(header, 0);
             sendBuffer.writeUInt16LE(client.index, 1);
@@ -342,13 +336,10 @@ class SdoServer {
 
             entry.raw.copy(sendBuffer, 4);
 
-            if(entry.size < 4)
+            if (entry.size < 4)
                 sendBuffer[0] |= ((4 - entry.size) << 2) | 0x1;
 
-            this.device.send({
-                id: client.cobId,
-                data: sendBuffer,
-            });
+            this.send(client.cobId, sendBuffer);
         }
         else {
             // Segmented client
@@ -364,10 +355,7 @@ class SdoServer {
             sendBuffer.writeUInt8(client.subIndex, 3);
             sendBuffer.writeUInt32LE(client.data.length, 4);
 
-            this.device.send({
-                id: client.cobId,
-                data: sendBuffer,
-            });
+            this.send(client.cobId, sendBuffer);
 
             client.start();
         }
@@ -378,11 +366,12 @@ class SdoServer {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _uploadSegment(client, data) {
-        if((data[0] & 0x10) != (client.toggle << 4)) {
-            client.abort(SdoCode.TOGGLE_BIT);
+        if ((data[0] & 0x10) != (client.toggle << 4)) {
+            this._abortTransfer(client, SdoCode.TOGGLE_BIT);
             return;
         }
 
@@ -391,8 +380,8 @@ class SdoServer {
         client.data.copy(
             sendBuffer, 1, client.size, client.size + count);
 
-        let header = (client.toggle << 4) | (7-count) << 1;
-        if(client.size == client.data.length) {
+        let header = (client.toggle << 4) | (7 - count) << 1;
+        if (client.size == client.data.length) {
             header |= 1;
             client.resolve();
         }
@@ -401,10 +390,7 @@ class SdoServer {
         client.toggle ^= 1;
         client.size += count;
 
-        this.device.send({
-            id: client.cobId,
-            data: sendBuffer,
-        });
+        this.send(client.cobId, sendBuffer);
 
         client.refresh();
     }
@@ -414,38 +400,39 @@ class SdoServer {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _downloadSegment(client, data) {
-        if((data[0] & 0x10) != (client.toggle << 4)) {
-            client.abort(SdoCode.TOGGLE_BIT);
+        if ((data[0] & 0x10) != (client.toggle << 4)) {
+            this._abortTransfer(client, SdoCode.TOGGLE_BIT);
             return;
         }
 
         const count = (7 - ((data[0] >> 1) & 0x7));
-        const payload = data.slice(1, count+1);
+        const payload = data.slice(1, count + 1);
         const size = client.data.length + count;
 
         client.data = Buffer.concat([client.data, payload], size);
 
-        if(data[0] & 1) {
-            let entry = this.device.eds.getEntry(client.index);
-            if(entry === undefined) {
-                client.abort(SdoCode.OBJECT_UNDEFINED);
+        if (data[0] & 1) {
+            let entry = this.eds.getEntry(client.index);
+            if (entry === undefined) {
+                this._abortTransfer(client, SdoCode.OBJECT_UNDEFINED);
                 return;
             }
 
-            if(entry.subNumber > 0) {
+            if (entry.subNumber > 0) {
                 entry = entry[client.subIndex];
-                if(entry === undefined) {
-                    client.abort(SdoCode.BAD_SUB_INDEX);
+                if (entry === undefined) {
+                    this._abortTransfer(client, SdoCode.BAD_SUB_INDEX);
                     return;
                 }
             }
 
-            if(entry.accessType == AccessType.CONSTANT
-            || entry.accessType == AccessType.READ_ONLY) {
-                client.abort(SdoCode.READ_ONLY);
+            if (entry.accessType == AccessType.CONSTANT
+                || entry.accessType == AccessType.READ_ONLY) {
+                this._abortTransfer(client, SdoCode.READ_ONLY);
                 return;
             }
 
@@ -453,13 +440,13 @@ class SdoServer {
             client.data.copy(raw);
 
             const value = rawToType(raw, entry.dataType);
-            if(entry.highLimit !== undefined && value > entry.highLimit) {
-                client.abort(SdoCode.VALUE_HIGH);
+            if (entry.highLimit !== undefined && value > entry.highLimit) {
+                this._abortTransfer(client, SdoCode.VALUE_HIGH);
                 return;
             }
 
-            if(entry.lowLimit !== undefined && value < entry.lowLimit) {
-                client.abort(SdoCode.VALUE_LOW);
+            if (entry.lowLimit !== undefined && value < entry.lowLimit) {
+                this._abortTransfer(client, SdoCode.VALUE_LOW);
                 return;
             }
 
@@ -469,15 +456,13 @@ class SdoServer {
         }
 
         const sendBuffer = Buffer.alloc(8);
-        const header = (ServerCommand.DOWNLOAD_SEGMENT << 5) | (client.toggle << 4);
+        const header = (ServerCommand.DOWNLOAD_SEGMENT << 5)
+            | (client.toggle << 4);
 
         sendBuffer.writeUInt8(header);
         client.toggle ^= 1;
 
-        this.device.send({
-            id: client.cobId,
-            data: sendBuffer,
-        });
+        this.send(client.cobId, sendBuffer);
 
         client.refresh();
     }
@@ -489,16 +474,17 @@ class SdoServer {
      * large transfers.
      *
      * @param {SdoTransfer} client - SDO context.
+     * @fires Protocol#message
      * @private
      */
     _blockUploadProcess(client) {
-        if(client.blockInterval) {
+        if (client.blockInterval) {
             // Re-schedule timer
             clearInterval(client.blockInterval);
         }
 
         client.blockInterval = setInterval(() => {
-            if(!client.active) {
+            if (!client.active) {
                 // Transfer was interrupted
                 clearInterval(client.blockInterval);
                 client.blockInterval = null;
@@ -510,20 +496,17 @@ class SdoServer {
                 + (client.blockCount * client.blockSize));
 
             sendBuffer[0] = ++client.blockSequence;
-            if((offset + 7) >= client.data.length) {
+            if ((offset + 7) >= client.data.length) {
                 sendBuffer[0] |= 0x80; // Last block
                 client.blockFinished = true;
             }
 
             client.data.copy(sendBuffer, 1, offset, offset + 7);
-            this.device.send({
-                id: client.cobId,
-                data: sendBuffer,
-            });
+            this.send(client.cobId, sendBuffer);
 
             client.refresh();
 
-            if(client.blockFinished
+            if (client.blockFinished
                 || client.blockSequence >= client.blockSize) {
                 clearInterval(client.blockInterval);
                 client.blockInterval = null;
@@ -536,6 +519,7 @@ class SdoServer {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _blockUploadInitiate(client, data) {
@@ -544,22 +528,22 @@ class SdoServer {
         client.blockSize = data.readUInt32LE(4);
         client.blockCrc = !!(data[0] & (1 << 2));
 
-        let entry = this.device.eds.getEntry(client.index);
-        if(entry === undefined) {
-            client.abort(SdoCode.OBJECT_UNDEFINED);
+        let entry = this.eds.getEntry(client.index);
+        if (entry === undefined) {
+            this._abortTransfer(client, SdoCode.OBJECT_UNDEFINED);
             return;
         }
 
-        if(entry.subNumber > 0) {
+        if (entry.subNumber > 0) {
             entry = entry[client.subIndex];
-            if(entry === undefined) {
-                client.abort(SdoCode.BAD_SUB_INDEX);
+            if (entry === undefined) {
+                this._abortTransfer(client, SdoCode.BAD_SUB_INDEX);
                 return;
             }
         }
 
-        if(entry.accessType == AccessType.WRITE_ONLY) {
-            client.abort(SdoCode.WRITE_ONLY);
+        if (entry.accessType == AccessType.WRITE_ONLY) {
+            this._abortTransfer(client, SdoCode.WRITE_ONLY);
             return;
         }
 
@@ -580,10 +564,7 @@ class SdoServer {
         sendBuffer.writeUInt8(client.subIndex, 3);
         sendBuffer.writeUInt16LE(client.data.length, 4);
 
-        this.device.send({
-            id: client.cobId,
-            data: sendBuffer,
-        });
+        this.send(client.cobId, sendBuffer);
 
         client.start();
     }
@@ -593,15 +574,16 @@ class SdoServer {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _blockUploadConfirm(client, data) {
         // Check that all sub-blocks were received.
-        if(data[1] === client.blockSequence) {
+        if (data[1] === client.blockSequence) {
             client.blockCount += 1;
             client.blockSequence = 0;
 
-            if(client.blockFinished) {
+            if (client.blockFinished) {
                 // End block upload
                 const sendBuffer = Buffer.alloc(8);
 
@@ -609,21 +591,18 @@ class SdoServer {
                     | (1 << 0); // End block upload
 
                 const emptyBytes = client.data.length % 7;
-                if(emptyBytes)
+                if (emptyBytes)
                     header |= (7 - emptyBytes) << 2;
 
                 sendBuffer.writeUInt8(header);
 
                 // Write CRC (if supported)
-                if(client.blockCrc) {
+                if (client.blockCrc) {
                     const crcValue = calculateCrc(client.data);
                     sendBuffer.writeUInt16LE(crcValue, 1);
                 }
 
-                this.device.send({
-                    id: client.cobId,
-                    data: sendBuffer,
-                });
+                this.send(client.cobId, sendBuffer);
 
                 client.refresh();
                 return;
@@ -632,8 +611,8 @@ class SdoServer {
 
         // Update block size for next transfer.
         client.blockSize = data[2];
-        if(client.blockSize < 1 || client.blockSize > 127) {
-            client.abort(SdoCode.BAD_BLOCK_SIZE);
+        if (client.blockSize < 1 || client.blockSize > 127) {
+            this._abortTransfer(client, SdoCode.BAD_BLOCK_SIZE);
             return;
         }
 
@@ -645,6 +624,7 @@ class SdoServer {
      * Handle ClientCommand.BLOCK_UPLOAD.
      *
      * @param {SdoTransfer} client - SDO context.
+     * @fires Protocol#message
      * @private
      */
     _blockUploadEnd(client) {
@@ -656,68 +636,69 @@ class SdoServer {
      *
      * @param {SdoTransfer} client - SDO context.
      * @param {Buffer} data - message data.
+     * @fires Protocol#message
      * @private
      */
     _blockDownload(client, data) {
-        if(client.blockFinished) {
+        if (client.blockFinished) {
             // Number of bytes that do not contain segment data
             const count = (data[0] >> 2) & 7;
-            if(count) {
+            if (count) {
                 const size = client.data.length - count;
                 client.data = client.data.slice(0, size);
             }
 
             // Check size
-            if(client.data.length < client.size) {
-                client.abort(SdoCode.DATA_SHORT);
+            if (client.data.length < client.size) {
+                this._abortTransfer(client, SdoCode.DATA_SHORT);
                 return;
             }
 
-            if(client.data.length > client.size) {
-                client.abort(SdoCode.DATA_LONG);
+            if (client.data.length > client.size) {
+                this._abortTransfer(client, SdoCode.DATA_LONG);
                 return;
             }
 
             // Check CRC (if supported)
-            if(client.blockCrc) {
+            if (client.blockCrc) {
                 const crcValue = data.readUInt16LE(1);
-                if(crcValue !== calculateCrc(client.data)) {
-                    client.abort(SdoCode.BAD_BLOCK_CRC);
+                if (crcValue !== calculateCrc(client.data)) {
+                    this._abortTransfer(client, SdoCode.BAD_BLOCK_CRC);
                     return;
                 }
             }
 
             // Get entry
-            let entry = this.device.eds.getEntry(client.index);
-            if(entry === undefined) {
-                client.abort(SdoCode.OBJECT_UNDEFINED);
+            let entry = this.eds.getEntry(client.index);
+            if (entry === undefined) {
+                this._abortTransfer(client, SdoCode.OBJECT_UNDEFINED);
                 return;
             }
 
-            if(entry.subNumber > 0) {
+            if (entry.subNumber > 0) {
                 entry = entry[client.subIndex];
-                if(entry === undefined) {
-                    client.abort(SdoCode.BAD_SUB_INDEX);
+                if (entry === undefined) {
+                    this._abortTransfer(client, SdoCode.BAD_SUB_INDEX);
                     return;
                 }
             }
 
             // Check that the entry has write access
-            if(entry.accessType == AccessType.CONSTANT
-            || entry.accessType == AccessType.READ_ONLY) {
-                client.abort(SdoCode.READ_ONLY);
+            if (entry.accessType == AccessType.CONSTANT
+                || entry.accessType == AccessType.READ_ONLY) {
+                this._abortTransfer(client, SdoCode.READ_ONLY);
                 return;
             }
 
             // Check value limits
             const value = rawToType(client.data, entry.dataType);
-            if(entry.highLimit !== undefined && value > entry.highLimit) {
-                client.abort(SdoCode.VALUE_HIGH);
+            if (entry.highLimit !== undefined && value > entry.highLimit) {
+                this._abortTransfer(client, SdoCode.VALUE_HIGH);
                 return;
             }
 
-            if(entry.lowLimit !== undefined && value < entry.lowLimit) {
-                client.abort(SdoCode.VALUE_LOW);
+            if (entry.lowLimit !== undefined && value < entry.lowLimit) {
+                this._abortTransfer(client, SdoCode.VALUE_LOW);
                 return;
             }
 
@@ -731,10 +712,7 @@ class SdoServer {
             const sendBuffer = Buffer.alloc(8);
             sendBuffer.writeUInt8(header);
 
-            this.device.send({
-                id: client.cobId,
-                data: sendBuffer,
-            });
+            this.send(client.cobId, sendBuffer);
 
             client.resolve();
         }
@@ -759,114 +737,95 @@ class SdoServer {
             sendBuffer.writeUInt8(client.subIndex, 3);
             sendBuffer.writeUInt8(this.blockSize, 4);
 
-            this.device.send({
-                id: client.cobId,
-                data: sendBuffer,
-            });
+            this.send(client.cobId, sendBuffer);
 
             client.start();
         }
     }
 
     /**
-     * Called when a new CAN message is received.
+     * Abort a transfer.
      *
-     * @param {object} message - CAN frame.
-     * @param {number} message.id - CAN message identifier.
-     * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
+     * @param {SdoTransfer} transfer - SDO context.
+     * @param {SdoCode} code - SDO abort code.
+     * @fires Protocol#message
      * @private
      */
-    _onMessage(message) {
-        // Handle transfers as a server (local object dictionary)
-        const client = this.clients[message.id];
-        if(client === undefined)
-            return;
-
-        if(client.blockTransfer) {
-            // Block transfer in progress
-            const data = message.data;
-            if((data[0] & 0x7f) === client.blockSequence + 1) {
-                client.data = Buffer.concat([client.data, data.slice(1)]);
-                client.blockSequence++;
-                if(data[0] & 0x80) {
-                    client.blockFinished = true;
-                    client.blockTransfer = false;
-                }
-            }
-
-            if(client.blockSequence > 127) {
-                client.abort(SdoCode.BAD_BLOCK_SEQUENCE);
-                return;
-            }
-
-            // Awknowledge block
-            if(client.blockFinished || client.blockSequence == this.blockSize) {
-                const header = (ServerCommand.BLOCK_DOWNLOAD << 5)
-                | (2 << 0); // Block download response
-
-                const sendBuffer = Buffer.alloc(8);
-                sendBuffer.writeUInt8(header);
-                sendBuffer.writeInt8(client.blockSequence, 1);
-                sendBuffer.writeUInt8(this.blockSize, 2);
-
-                this.device.send({
-                    id: client.cobId,
-                    data: sendBuffer,
-                });
-
-                // Reset sequence
-                client.blockSequence = 0;
-            }
-
-            client.refresh();
-            return;
-        }
-
-        switch(message.data[0] >> 5) {
-            case ClientCommand.DOWNLOAD_SEGMENT:
-                this._downloadSegment(client, message.data);
-                break;
-            case ClientCommand.DOWNLOAD_INITIATE:
-                this._downloadInitiate(client, message.data);
-                break;
-            case ClientCommand.UPLOAD_INITIATE:
-                this._uploadInitiate(client, message.data);
-                break;
-            case ClientCommand.UPLOAD_SEGMENT:
-                this._uploadSegment(client, message.data);
-                break;
-            case ClientCommand.ABORT:
-                client.reject();
-                break;
-            case ClientCommand.BLOCK_UPLOAD:
-                switch(message.data[0] & 0x3) {
-                    case 0:
-                        // Initiate upload
-                        this._blockUploadInitiate(client, message.data);
-                        break;
-                    case 1:
-                        // End upload
-                        this._blockUploadEnd(client);
-                        break;
-                    case 2:
-                        // Confirm block
-                        this._blockUploadConfirm(client, message.data);
-                        break;
-                    case 3:
-                        // Start upload
-                        this._blockUploadProcess(client);
-                        break;
-                }
-                break;
-            case ClientCommand.BLOCK_DOWNLOAD:
-                this._blockDownload(client, message.data);
-                break;
-            default:
-                client.abort(SdoCode.BAD_COMMAND);
-                break;
-        }
+    _abortTransfer(transfer, code) {
+        const sendBuffer = Buffer.alloc(8);
+        sendBuffer.writeUInt8(0x80);
+        sendBuffer.writeUInt16LE(transfer.index, 1);
+        sendBuffer.writeUInt8(transfer.subIndex, 3);
+        sendBuffer.writeUInt32LE(code, 4);
+        this.send(transfer.cobId, sendBuffer);
+        transfer.reject(code);
     }
 }
 
-module.exports=exports=SdoServer;
+////////////////////////////////// Deprecated //////////////////////////////////
+
+/**
+ * Initialize the device and audit the object dictionary.
+ *
+ * @deprecated Use {@link SdoServer#start} instead.
+ * @function
+ */
+SdoServer.prototype.init = deprecate(function () {
+    this.start();
+}, 'SdoServer.init() is deprecated. Use SdoServer.start() instead.');
+
+/**
+ * Get an SDO client parameter entry.
+ *
+ * @param {number} clientId - server COB-ID of the entry to get.
+ * @returns {DataObject | null} the matching entry.
+ * @deprecated Use {@link Eds#getSdoServerParameters} instead.
+ * @function
+ */
+SdoServer.prototype.getClient = deprecate(
+    function (clientId) {
+        for (let [index, entry] of this.eds.entries()) {
+            index = parseInt(index, 16);
+            if (index < 0x1200 || index > 0x127F)
+                continue;
+
+            if (entry[3] !== undefined && entry[3].value === clientId)
+                return entry;
+        }
+
+        return null;
+    }, 'SdoServer.getClient() is deprecated. Use Eds.getSdoServerParameters() instead.');
+
+/**
+ * Add an SDO server parameter entry.
+ *
+ * @param {number} clientId - client COB-ID to add.
+ * @param {number} cobIdTx - Sdo COB-ID for outgoing messages (to client).
+ * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from client).
+ * @deprecated Use {@link Eds#addSdoServerParameter} instead.
+ * @function
+ */
+SdoServer.prototype.addClient = deprecate(
+    function (clientId, cobIdTx=0x580, cobIdRx=0x600) {
+        if((cobIdTx & 0xF) == 0x0)
+            cobIdTx |= clientId;
+
+        if((cobIdRx & 0xF) == 0x0)
+            cobIdRx |= clientId;
+
+        this.eds.addSdoServerParameter(clientId, cobIdTx, cobIdRx);
+    }, 'SdoServer.addClient() is deprecated. Use Eds.addSdoServerParameter() instead.');
+
+/**
+ * Remove an SDO server parameter entry.
+ *
+ * @param {number} clientId - client COB-ID of the entry to remove.
+ * @deprecated Use {@link Eds#removeSdoServerParameter} instead.
+ * @function
+ */
+SdoServer.prototype.removeClient = deprecate(
+    function (clientId) {
+        this.eds.removeSdoServerParameter(clientId);
+    }, 'SdoServer.removeClient() is deprecated. Use Eds.removeSdoServerParameter() instead.');
+
+module.exports = exports = { SdoServer };

@@ -1,8 +1,10 @@
 /**
  * @file Implements the CANopen Service Data Object (SDO) protocol.
  * @author Wilkins White
- * @copyright 2021 Daxbot
+ * @copyright 2024 Daxbot
  */
+
+const EventEmitter = require('events');
 
 /**
  * CANopen abort codes.
@@ -155,7 +157,7 @@ const ServerCommand = {
  * @private
  */
 function codeToString(code) {
-    switch(code) {
+    switch (code) {
         case SdoCode.TOGGLE_BIT:
             return 'Toggle bit not altered';
         case SdoCode.TIMEOUT:
@@ -173,7 +175,7 @@ function codeToString(code) {
         case SdoCode.UNSUPPORTED_ACCESS:
             return 'Unsupported access to an object';
         case SdoCode.WRITE_ONLY:
-            return 'Attempt to read a write only object'
+            return 'Attempt to read a write only object';
         case SdoCode.READ_ONLY:
             return 'Attempt to write a read only object';
         case SdoCode.OBJECT_UNDEFINED:
@@ -231,13 +233,13 @@ function codeToString(code) {
  * @param {number} subIndex - object subIndex.
  */
 class SdoError extends Error {
-    constructor(code, index, subIndex=null) {
+    constructor(code, index, subIndex = null) {
         const message = codeToString(code);
 
-        let tag = index
+        let tag = index;
         if (typeof index === 'number')
             tag = `0x${index.toString(16)}`;
-        if(subIndex !== null)
+        if (subIndex !== null)
             tag += `.${subIndex.toString()}`;
 
         super(`${message} [${tag}]`);
@@ -251,14 +253,14 @@ class SdoError extends Error {
 /**
  * Represents an SDO transfer.
  *
- * @memberof SdoClient
  * @private
  */
-class SdoTransfer {
+class SdoTransfer extends EventEmitter {
     constructor(args) {
+        super();
+
         this._resolve = args.resolve;
         this._reject = args.reject;
-        this.device = args.device;
         this.index = args.index;
         this.subIndex = args.subIndex;
         this.timeout = args.timeout;
@@ -292,32 +294,18 @@ class SdoTransfer {
     /** Begin the transfer timeout. */
     start() {
         this.active = true;
-        if(this.timeout) {
-            this.timer = setTimeout(() => {
-                this.abort(SdoCode.TIMEOUT);
-            }, this.timeout);
+        if (this.timeout) {
+            this.timer = setTimeout(
+                () => this.abort(SdoCode.TIMEOUT), this.timeout);
         }
     }
 
     /** Refresh the transfer timeout. */
     refresh() {
-        if(!this.timeout || this.timer == null)
+        if (!this.timeout || this.timer == null)
             return;
 
         this.timer.refresh();
-    }
-
-    /**
-     * Send a data buffer.
-     *
-     * @param {Buffer} data - data to send.
-     * @returns {number} Number of bits sent or -1 for error
-     */
-    send(data) {
-        return this.device.send({
-            id: this.cobId,
-            data: data,
-        });
     }
 
     /**
@@ -327,7 +315,7 @@ class SdoTransfer {
      */
     resolve(data) {
         this.reset();
-        if(this._resolve)
+        if (this._resolve)
             this._resolve(data);
     }
 
@@ -338,7 +326,7 @@ class SdoTransfer {
      */
     reject(code) {
         this.reset();
-        if(this._reject)
+        if (this._reject)
             this._reject(new SdoError(code, this.index, this.subIndex));
     }
 
@@ -348,18 +336,11 @@ class SdoTransfer {
      * @param {SdoCode} code - SDO abort code.
      */
     abort(code) {
-        const sendBuffer = Buffer.alloc(8);
-        sendBuffer.writeUInt8(0x80);
-        sendBuffer.writeUInt16LE(this.index, 1);
-        sendBuffer.writeUInt8(this.subIndex, 3);
-        sendBuffer.writeUInt32LE(code, 4);
-
-        this.send(sendBuffer);
-        this.reject(code);
+        this.emit('abort', code);
     }
 }
 
-module.exports=exports={
+module.exports = exports = {
     ClientCommand,
     ServerCommand,
     SdoCode,

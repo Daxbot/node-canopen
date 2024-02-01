@@ -1,19 +1,18 @@
 /**
  * @file Implements the CANopen Emergency (EMCY) protocol.
  * @author Wilkins White
- * @copyright 2021 Daxbot
+ * @copyright 2024 Daxbot
  */
 
-const Device = require('../device');
-const { DataObject } = require('../eds');
-const { ObjectType, AccessType, DataType } = require('../types');
+const Protocol = require('./protocol');
+const { DataObject, Eds, EdsError } = require('../eds');
+const { deprecate } = require('util');
 
 /**
  * CANopen emergency error code classes.
  *
  * @enum {number}
  * @see CiA301 "Emergency object (EMCY)" (§7.2.7)
- * @memberof EmcyMessage
  */
 const EmcyType = {
     /** Error reset or no error. */
@@ -90,14 +89,13 @@ const EmcyType = {
 
     /** CANopen device specific error. */
     DEVICE_SPECIFIC: 0xff00,
-}
+};
 
 /**
  * CANopen emergency error codes.
  *
  * @enum {number}
  * @see CiA301 "Emergency object (EMCY)" (§7.2.7)
- * @memberof EmcyMessage
  */
 const EmcyCode = {
     /** CAN overrun (objects lost). */
@@ -132,32 +130,49 @@ const EmcyCode = {
 
     /** Unexpected TIME data length. */
     TIME_LENGTH: EmcyType.PROTOCOL | 0x60,
-}
+};
 
 /**
  * Structure for storing and parsing CANopen emergency objects.
  *
- * @param {EmcyCode} code - error code.
- * @param {number} register - error register.
- * @param {Buffer} info - error info.
+ * @param {object} args - arguments.
+ * @param {EmcyCode} args.code - error code.
+ * @param {number} args.register - error register (Object 0x1001).
+ * @param {Buffer} args.info - error info.
  */
 class EmcyMessage {
-    constructor(code, register, info=null) {
-        this.code = code;
-        this.register = register;
+    constructor(...args) {
+        if(typeof args[0] === 'object') {
+            args = args[0];
+        }
+        else {
+            args = {
+                code: args[0],
+                register: args[1],
+                info: args[2],
+            };
+        }
+
+        this.code = args.code;
+        this.register = args.register || 0;
         this.info = Buffer.alloc(5);
 
-        if(info) {
-            if(!Buffer.isBuffer(info) || info.length > 5)
-                throw TypeError("info must be a Buffer of length 0-5");
+        if (args.info) {
+            if (!Buffer.isBuffer(args.info) || args.info.length > 5)
+                throw TypeError('info must be a Buffer of length [0-5]');
 
-            info.copy(this.info);
+            args.info.copy(this.info);
         }
     }
 
+    /**
+     * Convert to a string.
+     *
+     * @returns {string} string representation.
+     */
     toString() {
         // Check codes
-        switch(this.code) {
+        switch (this.code) {
             case EmcyCode.CAN_OVERRUN:
                 return 'CAN overrun';
             case EmcyCode.BUS_PASSIVE:
@@ -183,7 +198,7 @@ class EmcyMessage {
         }
 
         // Check class
-        switch(this.code & 0xff00) {
+        switch (this.code & 0xff00) {
             case EmcyType.ERROR_RESET:
                 return 'Error reset';
             case EmcyType.GENERIC_ERROR:
@@ -233,8 +248,15 @@ class EmcyMessage {
             case EmcyType.DEVICE_SPECIFIC:
                 return 'CANopen device specific';
         }
+
+        return `Unknown error (0x${this.code.toString(16)})`;
     }
 
+    /**
+     * Convert to a Buffer.
+     *
+     * @returns {Buffer} encoded data.
+     */
     toBuffer() {
         let data = Buffer.alloc(8);
         data.writeUInt16LE(this.code);
@@ -242,6 +264,16 @@ class EmcyMessage {
         this.info.copy(data, 3);
 
         return data;
+    }
+
+    /**
+     * Returns true if the object is an instance of EmcyMessage.
+     *
+     * @param {object} obj - object to test.
+     * @returns {boolean} true if obj is an EmcyMessage.
+     */
+    static isMessage(obj) {
+        return obj instanceof EmcyMessage;
     }
 }
 
@@ -254,334 +286,413 @@ class EmcyMessage {
  *
  * This class implements the EMCY write service for producing emergency objects.
  *
- * @param {Device} device - parent device.
+ * @param {Eds} eds - Eds object.
  * @see CiA301 "Emergency object" (§7.2.7)
- * @example
- * const can = require('socketcan');
- *
- * const channel = can.createRawChannel('can0');
- * const device = new Device({ id: 0xa });
- *
- * channel.addListener('onMessage', (message) => device.receive(message));
- * device.setTransmitFunction((message) => channel.send(message));
- *
- * device.init();
- * channel.start();
- *
- * device.emcy.cobId = 0x80;
- * device.emcy.write(0x1000);
+ * @implements {Protocol}
  */
-class Emcy {
-    constructor(device) {
-        this.device = device;
-        this.pending = Promise.resolve();
+class Emcy extends Protocol {
+    constructor(eds) {
+        super(eds);
+
+        this.sendQueue = [];
+        this.sendTimer = null;
+        this.consumers = [];
         this._valid = false;
         this._cobId = null;
-        this._inhibitTime = 0;
     }
 
     /**
-     * Error register (Object 0x1001).
+     * Get object 0x1001 - Error register.
      *
      * @type {number}
+     * @deprecated Use {@link Eds#getErrorRegister} instead.
      */
     get register() {
-        return this.device.getValue(0x1001);
-    }
-
-    set register(value) {
-        let obj1001 = this.device.eds.getEntry(0x1001);
-        if(obj1001 === undefined) {
-            obj1001 = this.device.eds.addEntry(0x1001, {
-                parameterName:  'Error register',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED8,
-                accessType:     AccessType.READ_ONLY,
-            });
-        }
-
-        obj1001.value = value;
+        return this.eds.getErrorRegister();
     }
 
     /**
-     * Error history (Object 0x1003).
+     * Set object 0x1001 - Error register.
      *
-     * @type {Array<number>}
+     * @type {number}
+     * @deprecated Use {@link Eds#setErrorRegister} instead.
      */
-    get history() {
-        const obj1003 = this.device.eds.getEntry(0x1003);
-        if(obj1003 === undefined)
-            return [];
-
-        return obj1003.value;
+    set register(flags) {
+        this.eds.setErrorRegister(flags);
     }
 
     /**
-     * Emcy valid bit (Object 0x1014, bit 31).
+     * Get object 0x1014 [bit 31] - EMCY valid.
      *
      * @type {boolean}
+     * @deprecated Use {@link Eds#getEmcyValid} instead.
      */
     get valid() {
-        return this._valid;
-    }
-
-    set valid(valid) {
-        let obj1014 = this.device.eds.getEntry(0x1014);
-        if(obj1014 === undefined) {
-            obj1014 = this.device.eds.addEntry(0x1014, {
-                parameterName:  'COB-ID EMCY',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-
-        if(valid)
-            obj1014.value |= (1 << 31);
-        else
-            obj1014.value &= ~(1 << 31);
+        return this.eds.getEmcyValid();
     }
 
     /**
-     * Emcy COB-ID (Object 0x1014, bits 0-28).
+     * Set object 0x1014 [bit 31] - EMCY valid.
+     *
+     * @type {boolean}
+     * @deprecated Use {@link Eds#setEmcyValid} instead.
+     */
+    set valid(valid) {
+        this.eds.setEmcyValid(valid);
+    }
+
+    /**
+     * Get object 0x1014 - COB-ID EMCY.
      *
      * @type {number}
+     * @deprecated Use {@link Eds#getEmcyCobId} instead.
      */
     get cobId() {
-        return this._cobId;
-    }
-
-    set cobId(cobId) {
-        let obj1014 = this.device.eds.getEntry(0x1014);
-        if(obj1014 === undefined) {
-            obj1014 = this.device.eds.addEntry(0x1014, {
-                parameterName:  'COB-ID EMCY',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-
-        cobId &= 0x7FF;
-        obj1014.value = (obj1014.value & ~(0x7FF)) | cobId;
+        return this.eds.getEmcyCobId();
     }
 
     /**
-     * Emcy inhibit time (Object 0x1015).
+     * Set object 0x1014 - COB-ID EMCY.
      *
      * @type {number}
+     * @deprecated Use {@link Eds#setEmcyCobId} instead.
      */
-    get inhibitTime() {
-        return this._inhibitTime;
-    }
-
-    set inhibitTime(time) {
-        let obj1015 = this.device.eds.getEntry(0x1015);
-        if(obj1015 === undefined) {
-            obj1015 = this.device.eds.addEntry(0x1015, {
-                parameterName:  'Inhibit time EMCY',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED16,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-
-        time &= 0xFFFF;
-        obj1015.value = time
+    set cobId(value) {
+        this.eds.setEmcyCobId(value);
     }
 
     /**
-     * Configures the number of sub-entries for 0x1003 (Pre-defined error field).
+     * Get object 0x1015 - Inhibit time EMCY.
      *
-     * @param {number} length - how many historical error events should be kept.
+     * @type {number}
+     * @deprecated Use {@link Eds#getEmcyInhibitTime} instead.
      */
-    setHistoryLength(length) {
-        if(length === undefined || length < 0)
-            throw ReferenceError('error field size must >= 0');
-
-        let obj1003 = this.device.eds.getEntry(0x1003);
-        if(obj1003 === undefined) {
-            obj1003 = this.device.eds.addEntry(0x1003, {
-                parameterName:  'Pre-defined error field',
-                objectType:     ObjectType.ARRAY,
-            });
-        }
-
-        while(length < obj1003.subNumber - 1) {
-            // Remove extra entries
-            this.device.eds.removeSubEntry(0x1003, obj1003.subNumber - 1);
-        }
-
-        while(length > obj1003.subNumber - 1) {
-            // Add new entries
-            const index = obj1003.subNumber;
-            this.device.eds.addSubEntry(0x1003, index, {
-                parameterName:  `Standard error field ${index}`,
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
+    get inhibitTime() {
+        return this.eds.getEmcyInhibitTime();
     }
 
-    /** Initialize members and begin emergency monitoring. */
-    init() {
-        // Object 0x1001 - Error register.
-        this.register = 0;
-
-        // Object 0x1014 - COB-ID EMCY.
-        let obj1014 = this.device.eds.getEntry(0x1014);
-        if(obj1014 === undefined) {
-            obj1014 = this.device.eds.addEntry(0x1014, {
-                parameterName:  'COB-ID EMCY',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-        else {
-            this._parse1014(obj1014);
-        }
-
-        // Object 0x1015 - Inhibit time EMCY.
-        let obj1015 = this.device.eds.getEntry(0x1015);
-        if(obj1015 === undefined) {
-            obj1015 = this.device.eds.addEntry(0x1015, {
-                parameterName:  'Inhibit time EMCY',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED16,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-        else {
-            this._parse1015(obj1015);
-        }
-
-        obj1014.addListener('update', this._parse1014.bind(this));
-        obj1015.addListener('update', this._parse1015.bind(this));
-
-        this.device.addListener('message', this._onMessage.bind(this));
+    /**
+     * Set object 0x1015 - Inhibit time EMCY.
+     *
+     * @type {number}
+     * @deprecated Use {@link Eds#setEmcyInhibitTime} instead.
+     */
+    set inhibitTime(value) {
+        this.eds.setEmcyInhibitTime(value);
     }
 
     /**
      * Service: EMCY write.
      *
-     * @param {number} code - error code.
-     * @param {Buffer} info - error info.
-     * @returns {Promise} resolves once the message has been sent.
+     * @param {object} args - arguments.
+     * @param {number} args.code - error code.
+     * @param {Buffer} [args.info] - error info.
      */
-    write(code, info=null) {
-        if(!this.valid)
-            throw TypeError('EMCY is disabled');
+    write(...args) {
+        if(!this._valid)
+            throw new EdsError('EMCY production is disabled');
 
-        this.pending = this.pending.then(() => {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    // Create emergency object.
-                    const em = new EmcyMessage(code, this.register, info);
+        if (!this._cobId)
+            throw new EdsError('COB-ID EMCY may not be 0');
 
-                    let cobId = this.cobId;
-                    if((cobId & 0xF) == 0)
-                        cobId |= this.device.id;
+        let code, info;
+        if(typeof args[0] === 'object') {
+            // write({ code, info })
+            code = args.code;
+            info = args.info;
+        }
+        else {
+            // write(code, info)
+            code = args[0];
+            info = args[1];
+        }
 
-                    // Send object.
-                    this.device.send({
-                        id:     cobId,
-                        data:   em.toBuffer(),
-                    });
+        const register = this.eds.getErrorRegister();
+        const em = new EmcyMessage({ code, register, info });
 
-                    resolve();
-                }, this._inhibitTime / 10);
-            });
-        });
-
-        return this.pending;
+        if(this.sendTimer)
+            this.sendQueue.push([ this._cobId, em.toBuffer() ]);
+        else
+            this.send(this._cobId, em.toBuffer());
     }
 
     /**
-     * Called when a new CAN message is received.
+     * Start the module.
+     *
+     * @override
+     */
+    start() {
+        if(!this.started) {
+            const obj1014 = this.eds.getEntry(0x1014);
+            if(obj1014)
+                this._addEntry(obj1014);
+
+            const obj1015 = this.eds.getEntry(0x1015);
+            if(obj1015)
+                this._addEntry(obj1015);
+
+            const obj1028 = this.eds.getEntry(0x1028);
+            if(obj1028)
+                this._addEntry(obj1028);
+
+            this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+            this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+
+            super.start();
+        }
+    }
+
+    /**
+     * Stop the module.
+     *
+     * @override
+     */
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newEntry');
+            this.removeEdsCallback('removeEntry');
+
+            const obj1014 = this.eds.getEntry(0x1014);
+            if(obj1014)
+                this._removeEntry(obj1014);
+
+            const obj1015 = this.eds.getEntry(0x1015);
+            if(obj1015)
+                this._removeEntry(obj1015);
+
+            const obj1028 = this.eds.getEntry(0x1028);
+            if(obj1028)
+                this._removeEntry(obj1028);
+
+            super.stop();
+        }
+    }
+
+
+    /**
+     * Call when a new CAN message is received.
      *
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
-     * @private
+     * @fires Emcy#emergency
+     * @override
      */
-    _onMessage(message) {
-        const mask = (this.cobId & 0xF) ? 0x7FF : 0x7F0;
-        if((message.id & mask) != this.cobId)
+    receive({ id, data }) {
+        if (data.length != 8)
             return;
 
-        const deviceId = message.id & 0xF;
-        if(deviceId == 0)
-            return;
-
-        const code = message.data.readUInt16LE(0);
-        const reg = message.data.readUInt8(2);
-        const em = new EmcyMessage(code, reg, message.data.slice(3));
-
-        if(deviceId == this.device.id) {
-            // Object 0x1001 - Error register.
-            this.register = reg;
-
-            // Object 0x1003 - Pre-defined error field.
-            const obj1003 = this.device.eds.getEntry(0x1003);
-            if(obj1003) {
-                // Shift out oldest value.
-                const errorCount = obj1003[0].value;
-                for(let i = errorCount; i > 1; --i)
-                    obj1003[i-1].raw.copy(obj1003[i].raw);
-
-                // Set new code at sub-index 1.
-                obj1003[1].raw.writeUInt16LE(code);
-
-                // Update error count.
-                if(errorCount < (obj1003.subNumber - 1))
-                    obj1003[0].raw.writeUInt8(errorCount + 1);
+        for (let cobId of this.consumers) {
+            if (id === cobId) {
+                /**
+                 * An emergency message was received.
+                 *
+                 * @event Emcy#emergency
+                 * @type {object}
+                 * @property {number} cobId - message identifier.
+                 * @property {EmcyMessage} em - message object.
+                 */
+                this.emit('emergency', {
+                    cobId: id,
+                    em: new EmcyMessage({
+                        code: data.readUInt16LE(0),
+                        register: data.readUInt8(2),
+                        info: data.subarray(3),
+                    }),
+                });
+                break;
             }
         }
+    }
 
-        this.device.emit('emergency', deviceId, em);
+    /**
+     * Listens for new Eds entries.
+     *
+     * @param {DataObject} entry - new entry.
+     * @private
+     */
+    _addEntry(entry) {
+        switch(entry.index) {
+            case 0x1014:
+                this.addUpdateCallback(entry, (obj) => this._parse1014(obj));
+                this._parse1014(entry);
+                break;
+            case 0x1015:
+                this.addUpdateCallback(entry, (obj) => this._parse1015(obj));
+                this._parse1015(entry);
+                break;
+            case 0x1028:
+                this.addUpdateCallback(entry, (obj) => this._parse1028(obj));
+                this._parse1028(entry);
+                break;
+        }
+    }
+
+    /**
+     * Listens for removed Eds entries.
+     *
+     * @param {DataObject} entry - removed entry.
+     * @private
+     */
+    _removeEntry(entry) {
+        switch(entry.index) {
+            case 0x1014:
+                this.removeUpdateCallback(entry);
+                this._clear1014();
+                break;
+            case 0x1015:
+                this.removeUpdateCallback(entry);
+                this._clear1015();
+                break;
+            case 0x1028:
+                this.removeUpdateCallback(entry);
+                this._clear1028();
+                break;
+        }
     }
 
     /**
      * Called when 0x1014 (COB-ID EMCY) is updated.
      *
-     * @param {DataObject} data - updated DataObject.
+     * @param {DataObject} entry - updated DataObject.
+     * @listens DataObject#update
      * @private
      */
-    _parse1014(data) {
-        /* Object 0x1014 - COB-ID EMCY.
-         *   bit 0..10      11-bit CAN base frame.
-         *   bit 11..28     29-bit CAN extended frame.
-         *   bit 29         Frame type.
-         *   bit 30         Reserved (0x00).
-         *   bit 31         EMCY valid.
-         */
-        const value = data.value;
-        const valid = (value >> 31) & 0x1
+    _parse1014(entry) {
+        const value = entry.value;
+        const valid = (value >> 31) & 0x1;
         const rtr = (value >> 29) & 0x1;
         const cobId = value & 0x7FF;
 
-        if(rtr == 0x1)
-            throw TypeError("CAN extended frames are not supported.")
+        if(rtr != 0x1) {
+            this._valid = !valid;
+            this._cobId = cobId;
+        }
+        else {
+            this._clear1014();
+        }
+    }
 
-        if(cobId == 0)
-            throw TypeError('COB-ID EMCY can not be 0.');
-
-        this._valid = !valid;
-        this._cobId = cobId;
+    /**
+     * Called when 0x1014 (COB-ID EMCY) is removed.
+     *
+     * @private
+     */
+    _clear1014() {
+        this._valid = false;
+        this._cobId = null;
     }
 
     /**
      * Called when 0x1015 (Inhibit time EMCY) is updated.
      *
-     * @param {DataObject} data - updated DataObject.
+     * @param {DataObject} entry - updated DataObject.
+     * @listens DataObject#update
      * @private
      */
-    _parse1015(data) {
-        this._inhibitTime = data.value;
+    _parse1015(entry) {
+        // Clear the old timer
+        this._clear1015();
+
+        const inhibitTime = entry.value;
+        if(inhibitTime) {
+            const delay = inhibitTime / 10; // 100 μs
+            this.sendTimer = setInterval(() => {
+                if(this.sendQueue.length > 0) {
+                    const [ id, data ] = this.sendQueue.shift();
+                    this.send(id, data);
+                }
+            }, delay);
+        }
+        else {
+            // If the inhibitTime is 0, then send all queued messages
+            while(this.sendQueue.length > 0) {
+                const [ id, data ] = this.sendQueue.shift();
+                this.send(id, data);
+            }
+        }
+    }
+
+    /**
+     * Called when 0x1015 (Inhibit time EMCY) is removed.
+     *
+     * @private
+     */
+    _clear1015() {
+        clearInterval(this.sendTimer);
+        this.sendTimer = null;
+    }
+
+    /**
+     * Called when 0x1028 (Emergency consumer object) is updated.
+     *
+     * @listens DataObject#update
+     * @private
+     */
+    _parse1028() {
+        this.consumers = this.eds.getEmcyConsumers();
+    }
+
+    /**
+     * Called when 0x1028 (Emergency consumer object) is removed.
+     *
+     * @private
+     */
+    _clear1028() {
+        this.consumers = [];
     }
 }
 
-module.exports=exports={ EmcyType, EmcyCode, EmcyMessage, Emcy };
+////////////////////////////////// Deprecated //////////////////////////////////
+
+/**
+ * Initialize the device and audit the object dictionary.
+ *
+ * @deprecated Use {@link Emcy#start} instead.
+ * @function
+ */
+Emcy.prototype.init = deprecate(
+    function() {
+        const { ObjectType, DataType } = require('../types');
+
+        this.register = 0;
+
+        let obj1014 = this.eds.getEntry(0x1014);
+        if(obj1014 === undefined) {
+            obj1014 = this.eds.addEntry(0x1014, {
+                parameterName:  'COB-ID EMCY',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+            });
+        }
+
+        let obj1015 = this.eds.getEntry(0x1015);
+        if(obj1015 === undefined) {
+            obj1015 = this.eds.addEntry(0x1015, {
+                parameterName:  'Inhibit time EMCY',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED16,
+            });
+        }
+
+        if((this.cobId & 0xF) == 0)
+            this.cobId |= this.deviceId;
+
+        this.eds.addEmcyConsumer(this.cobId);
+
+        this.start();
+    }, 'Emcy.init() is deprecated. Use Emcy.start() instead.');
+
+/**
+ * Configures the number of sub-entries for 0x1003 (Pre-defined error field).
+ *
+ * @param {number} length - how many historical error events should be kept.
+ * @deprecated Use {@link Eds#setHistoryLength} instead.
+ * @function
+ */
+Emcy.prototype.setHistoryLength = deprecate(
+    function (length) {
+        this.eds.setErrorHistoryLength(length);
+    }, 'Emcy.setHistoryLength is deprecated. Use Eds.setHistoryLength() instead.');
+
+module.exports = exports = { EmcyType, EmcyCode, EmcyMessage, Emcy };

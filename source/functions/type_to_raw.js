@@ -1,8 +1,5 @@
-const util = require('util');
 const { DataType } = require('../types');
-
-/** Time offset in milliseconds between January 1, 1970 and January 1, 1984. */
-const EPOCH_OFFSET = 441763200 * 1000;
+const { dateToTime } = require('./date');
 
 /**
  * Convert a string to a Buffer.
@@ -15,7 +12,7 @@ function stringToRaw(value) {
     let raw = (value) ? Buffer.from(value) : Buffer.alloc(0);
 
     const end = raw.indexOf('\0');
-    if(end != -1)
+    if (end != -1)
         raw = raw.subarray(0, end);
 
     return raw;
@@ -29,23 +26,10 @@ function stringToRaw(value) {
  * @private
  */
 function dateToRaw(value) {
-    let raw = Buffer.alloc(6);
-    if(!util.types.isDate(value))
-        value = new Date(value);
-
-    // Milliseconds since January 1, 1984
-    let time = value.getTime() - EPOCH_OFFSET;
-    if(time < 0)
-        time = 0;
-
-    // Days since epoch
-    const days = Math.floor(time / 8.64e7);
+    const raw = Buffer.alloc(6);
+    const { days, ms } = dateToTime(value);
     raw.writeUInt16LE(days, 4);
-
-    // Milliseconds since midnight
-    const ms = time - (days * 8.64e7);
     raw.writeUInt32LE(ms, 0);
-
     return raw;
 }
 
@@ -54,91 +38,92 @@ function dateToRaw(value) {
  *
  * @param {number | bigint | string | Date} value - data to convert.
  * @param {DataType | string} type - how to interpret the data.
+ * @param {number} [scaleFactor] - optional multiplier for numeric types.
  * @returns {Buffer} converted Buffer.
  */
-function typeToRaw(value, type) {
-    if(value === undefined || value === null)
+function typeToRaw(value, type, scaleFactor=1.0) {
+    if (value === undefined || value === null)
         value = 0;
 
-    if(typeof type === 'string')
+    if (typeof type === 'string')
         type = DataType[type];
 
     let raw;
-    switch(type) {
+    switch (type) {
         case DataType.BOOLEAN:
-            raw = Buffer.from(value ? [1] : [0] );
+            raw = Buffer.from(value ? [1] : [0]);
             break;
         case DataType.INTEGER8:
             raw = Buffer.alloc(1);
-            raw.writeInt8(value)
+            raw.writeInt8(value / scaleFactor);
             break;
         case DataType.UNSIGNED8:
             raw = Buffer.alloc(1);
-            raw.writeUInt8(value)
+            raw.writeUInt8(value / scaleFactor);
             break;
         case DataType.INTEGER16:
             raw = Buffer.alloc(2);
-            raw.writeInt16LE(value);
+            raw.writeInt16LE(value / scaleFactor);
             break;
         case DataType.UNSIGNED16:
             raw = Buffer.alloc(2);
-            raw.writeUInt16LE(value);
+            raw.writeUInt16LE(value / scaleFactor);
             break;
         case DataType.INTEGER24:
             raw = Buffer.alloc(3);
-            raw.writeIntLE(value, 0, 3);
+            raw.writeIntLE(value / scaleFactor, 0, 3);
             break;
         case DataType.UNSIGNED24:
             raw = Buffer.alloc(3);
-            raw.writeUIntLE(value, 0, 3);
+            raw.writeUIntLE(value / scaleFactor, 0, 3);
             break;
         case DataType.INTEGER32:
             raw = Buffer.alloc(4);
-            raw.writeInt32LE(value);
+            raw.writeInt32LE(value / scaleFactor);
             break;
         case DataType.UNSIGNED32:
             raw = Buffer.alloc(4);
-            raw.writeUInt32LE(value);
+            raw.writeUInt32LE(value / scaleFactor);
             break;
         case DataType.INTEGER40:
             raw = Buffer.alloc(5);
-            raw.writeIntLE(value, 0, 5);
+            raw.writeIntLE(value / scaleFactor, 0, 5);
             break;
         case DataType.UNSIGNED40:
             raw = Buffer.alloc(5);
-            raw.writeUIntLE(value, 0, 5);
+            raw.writeUIntLE(value / scaleFactor, 0, 5);
             break;
         case DataType.INTEGER48:
             raw = Buffer.alloc(6);
-            raw.writeIntLE(value, 0, 6);
+            raw.writeIntLE(value / scaleFactor, 0, 6);
             break;
         case DataType.UNSIGNED48:
             raw = Buffer.alloc(6);
-            raw.writeUIntLE(value, 0, 6);
+            raw.writeUIntLE(value / scaleFactor, 0, 6);
             break;
         case DataType.INTEGER56:
         case DataType.INTEGER64:
-            if(typeof value != 'bigint')
+            if (typeof value != 'bigint')
                 value = BigInt(value);
 
             raw = Buffer.alloc(8);
-            raw.writeBigInt64LE(value);
+            raw.writeBigInt64LE(value / BigInt(scaleFactor));
             break;
         case DataType.UNSIGNED56:
         case DataType.UNSIGNED64:
-            if(typeof value != 'bigint')
+            if (typeof value != 'bigint')
                 value = BigInt(value);
 
             raw = Buffer.alloc(8);
-            raw.writeBigUInt64LE(value);
+            raw.writeBigUInt64LE(value / BigInt(scaleFactor));
             break;
         case DataType.REAL32:
             raw = Buffer.alloc(4);
-            raw.writeFloatLE(value);
+            raw.writeFloatLE(value / scaleFactor);
             break;
         case DataType.REAL64:
             raw = Buffer.alloc(8);
-            raw.writeDoubleLE(value);
+            raw.writeDoubleLE(value / scaleFactor);
             break;
         case DataType.VISIBLE_STRING:
             raw = stringToRaw(value);
@@ -156,4 +141,4 @@ function typeToRaw(value, type) {
     return raw;
 }
 
-module.exports=exports=typeToRaw;
+module.exports = exports = typeToRaw;

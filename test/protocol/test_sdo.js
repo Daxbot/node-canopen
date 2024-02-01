@@ -1,6 +1,6 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const { Device, AccessType, DataType } = require('../../index.js');
+const { Device, AccessType, DataType } = require('../../index');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
@@ -36,89 +36,108 @@ const longTypes = [
     ['TIME_DIFFERENCE', new Date()],
 ];
 
-describe('Sdo', function() {
-    let device = null;
+describe('Sdo', function () {
+    it('should emit start once', function (done) {
+        const device = new Device({ id: 0xA});
 
-    beforeEach(function() {
-        device = new Device({ id: 0xA, loopback: true });
-        device.sdo.addServer(device.id);
-        device.sdoServer.addClient(device.id);
+        device.sdo.on('start', () => done());
+        device.sdo.start();
+        device.sdo.start();
     });
 
-    describe('Expediated transfer', function() {
-        for(let [type, value] of shortTypes) {
-            it("should transfer " + type, function() {
-                device.init();
+    it('should emit stop once', function (done) {
+        const device = new Device({ id: 0xA});
+        device.sdo.start();
+
+        device.sdo.on('stop', () => done());
+        device.sdo.stop();
+        device.sdo.stop();
+    });
+
+    describe('Expediated transfer', function () {
+        for (let [type, value] of shortTypes) {
+            it('should transfer ' + type, async function () {
+                const device = new Device({ id: 0xA, loopback: true });
+                device.eds.addSdoClientParameter(device.id);
+                device.eds.addSdoServerParameter(device.id);
+                device.start();
 
                 const index = DataType[type];
-                return device.sdo.download({
+                await device.sdo.download({
                     serverId: device.id,
                     data: value,
                     dataType: type,
                     index: index,
-                })
-                .then(() => {
-                    return device.sdo.upload({
-                        serverId: device.id,
-                        index: index,
-                        dataType: type,
-                    });
-                })
-                .then((result) => {
-                    if(Buffer.isBuffer(result))
-                        expect(Buffer.compare(result, value)).to.equal(0);
-                    else
-                        expect(result).to.equal(value);
                 });
+
+                const result = await device.sdo.upload({
+                    serverId: device.id,
+                    index: index,
+                    dataType: type,
+                });
+
+                if (Buffer.isBuffer(result))
+                    expect(Buffer.compare(result, value)).to.equal(0);
+                else
+                    expect(result).to.equal(value);
+
+                device.stop();
             });
         }
     });
 
-    describe('Segmented transfer', function() {
-        for(let [type, value] of longTypes) {
-            it("should transfer " + type, function() {
-                device.init();
+    describe('Segmented transfer', function () {
+        for (let [type, value] of longTypes) {
+            it('should transfer ' + type, async function () {
+                const device = new Device({ id: 0xA, loopback: true });
+                device.eds.addSdoClientParameter(device.id);
+                device.eds.addSdoServerParameter(device.id);
+                device.start();
 
                 const index = DataType[type];
-                return device.sdo.download({
+                await device.sdo.download({
                     serverId: device.id,
                     data: value,
                     dataType: type,
                     index: index,
-                })
-                .then(() => {
-                    return device.sdo.upload({
-                        serverId: device.id,
-                        index: index,
-                        dataType: type,
-                    });
-                })
-                .then((result) => {
-                    if(result instanceof Date)
-                        expect(result.getTime()).to.equal(value.getTime());
-                    else if(Buffer.isBuffer(result))
-                        expect(Buffer.compare(result, value)).to.equal(0);
-                    else if(typeof result == 'bigint')
-                        expect(Number(result)).to.equal(Number(value));
-                    else
-                        expect(result).to.equal(value);
                 });
+
+                const result = await device.sdo.upload({
+                    serverId: device.id,
+                    index: index,
+                    dataType: type,
+                });
+
+                if (result instanceof Date)
+                    expect(result.getTime()).to.equal(value.getTime());
+                else if (Buffer.isBuffer(result))
+                    expect(Buffer.compare(result, value)).to.equal(0);
+                else if (typeof result == 'bigint')
+                    expect(Number(result)).to.equal(Number(value));
+                else
+                    expect(result).to.equal(value);
+
+                device.stop();
             });
         }
 
-        it('should transfer subindexes >= 1', async function() {
-            const testString = 'I am a long string that will take multiple messages to transfer'
-            device.init();
+        it('should transfer subindexes >= 1', async function () {
+            const device = new Device({ id: 0xA, loopback: true });
+            device.eds.addSdoClientParameter(device.id);
+            device.eds.addSdoServerParameter(device.id);
+            device.start();
+
+            const testString = 'I am a long string that will take multiple messages to transfer';
             device.eds.addEntry(0x1234, {
-                parameterName:  'Test entry',
-                objectType:     6,
-                subNumber:      1
+                parameterName: 'Test entry',
+                objectType: 6,
+                subNumber: 1
             });
             device.eds.addSubEntry(0x1234, 0, {
-                parameterName:  'A long name',
-                dataType:       DataType.VISIBLE_STRING,
-                accessType:     AccessType.READ_WRITE,
-                defaultValue:   testString,
+                parameterName: 'A long name',
+                dataType: DataType.VISIBLE_STRING,
+                accessType: AccessType.READ_WRITE,
+                defaultValue: testString,
             });
 
             const result = await device.sdo.upload({
@@ -128,128 +147,125 @@ describe('Sdo', function() {
                 dataType: DataType.VISIBLE_STRING
             });
 
-            expect(result).to.equal(testString)
+            expect(result).to.equal(testString);
 
-            return device.sdo.download({
+            await device.sdo.download({
                 serverId: device.id,
                 data: result,
                 dataType: DataType.VISIBLE_STRING,
                 index: 0x1234,
                 subIndex: 0
             });
+
+            device.stop();
         });
     });
 
-    describe('Block transfer', function() {
-        for(let [type, value] of shortTypes) {
-            it("should transfer " + type, function() {
-                device.init();
+    describe('Block transfer', function () {
+        for (let [type, value] of shortTypes) {
+            it('should transfer ' + type, async function () {
+                const device = new Device({ id: 0xA, loopback: true });
+                device.eds.addSdoClientParameter(device.id);
+                device.eds.addSdoServerParameter(device.id);
+                device.start();
 
                 const index = DataType[type];
-                return device.sdo.download({
+                await device.sdo.download({
                     serverId: device.id,
                     data: value,
                     dataType: type,
                     index: index,
                     blockTransfer: true,
-                })
-                .then(() => {
-                    return device.sdo.upload({
-                        serverId: device.id,
-                        index: index,
-                        dataType: type,
-                        blockTransfer: true,
-                    });
-                })
-                .then((result) => {
-                    if(Buffer.isBuffer(result))
-                        expect(Buffer.compare(result, value)).to.equal(0);
-                    else
-                        expect(result).to.equal(value);
                 });
+
+                const result = await device.sdo.upload({
+                    serverId: device.id,
+                    index: index,
+                    dataType: type,
+                    blockTransfer: true,
+                });
+
+                if (Buffer.isBuffer(result))
+                    expect(Buffer.compare(result, value)).to.equal(0);
+                else
+                    expect(result).to.equal(value);
+
+                device.stop();
             });
         }
 
-        for(let [type, value] of longTypes) {
-            it("should transfer " + type, function() {
-                device.init();
+        for (let [type, value] of longTypes) {
+            it('should transfer ' + type, async function () {
+                const device = new Device({ id: 0xA, loopback: true });
+                device.eds.addSdoClientParameter(device.id);
+                device.eds.addSdoServerParameter(device.id);
+                device.start();
 
                 const index = DataType[type];
-                return device.sdo.download({
+                await device.sdo.download({
                     serverId: device.id,
                     data: value,
                     dataType: type,
                     index: index,
                     blockTransfer: true,
-                })
-                .then(() => {
-                    return device.sdo.upload({
-                        serverId: device.id,
-                        index: index,
-                        dataType: type,
-                        blockTransfer: true,
-                    });
-                })
-                .then((result) => {
-                    if(result instanceof Date)
-                        expect(result.getTime()).to.equal(value.getTime());
-                    else if(Buffer.isBuffer(result))
-                        expect(Buffer.compare(result, value)).to.equal(0);
-                    else if(typeof result == 'bigint')
-                        expect(Number(result)).to.equal(Number(value));
-                    else
-                        expect(result).to.equal(value);
                 });
+
+                const result = await device.sdo.upload({
+                    serverId: device.id,
+                    index: index,
+                    dataType: type,
+                    blockTransfer: true,
+                });
+
+                if (result instanceof Date)
+                    expect(result.getTime()).to.equal(value.getTime());
+                else if (Buffer.isBuffer(result))
+                    expect(Buffer.compare(result, value)).to.equal(0);
+                else if (typeof result == 'bigint')
+                    expect(Number(result)).to.equal(Number(value));
+                else
+                    expect(result).to.equal(value);
+
+                device.stop();
             });
         }
 
-        it('should use multiple blocks', function() {
-            const data = Buffer.alloc(1024);
-            for(let i = 0; i < 1024; ++i)
+        it('should use multiple blocks', async function () {
+            const device = new Device({ id: 0xA, loopback: true });
+            device.eds.addSdoClientParameter(device.id);
+            device.eds.addSdoServerParameter(device.id);
+            device.start();
+
+            const data = Buffer.alloc(64);
+            for (let i = 0; i < data.length; ++i)
                 data[i] = Math.floor(Math.random() * 0xff);
 
-            device.init();
-            device.sdo.blockSize = 1;
-            device.sdoServer.blockSize = 1;
+            device.protocol.sdoClient.blockSize = 1;
+            device.protocol.sdoServer.blockSize = 1;
 
             device.eds.addEntry(0x1234, {
-                parameterName:  'A long buffer',
-                dataType:       DataType.DOMAIN,
-                accessType:     AccessType.READ_WRITE,
+                parameterName: 'A long buffer',
+                dataType: DataType.DOMAIN,
+                accessType: AccessType.READ_WRITE,
             });
 
-            return device.sdo.download({
+            await device.sdo.download({
                 serverId: device.id,
                 data: data,
                 dataType: DataType.DOMAIN,
                 index: 0x1234,
                 blockTransfer: true,
-            })
-            .then(() => {
-                return device.sdo.upload({
-                    serverId: device.id,
-                    dataType: DataType.DOMAIN,
-                    index: 0x1234,
-                    blockTransfer: true,
-                });
-            })
-            .then((result) => {
-                expect(Buffer.compare(data, result)).to.equal(0);
             });
-        });
-    });
 
-    describe('Error handling', function() {
-        it('should abort if timeout is exceeded', function() {
-            // Set server to non-existant COB-ID
-            device.setValueArray(0x1280, 3, 0x1);
-            device.init();
+            const result = await device.sdo.upload({
+                serverId: device.id,
+                dataType: DataType.DOMAIN,
+                index: 0x1234,
+                blockTransfer: true,
+            });
 
-            return expect(device.sdo.upload({
-                serverId: 0x1,
-                index: 0x1000,
-                subIndex: 1,
-            })).to.be.rejectedWith("SDO protocol timed out");
+            expect(Buffer.compare(data, result)).to.equal(0);
+            device.stop();
         });
     });
 });

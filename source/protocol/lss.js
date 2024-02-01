@@ -1,17 +1,57 @@
 /**
  * @file Implements the CANopen Layer Setting Services (LSS) protocol.
  * @author Wilkins White
- * @copyright 2021 Daxbot
+ * @copyright 2024 Daxbot
  */
 
-const Device = require('../device');
+const Protocol = require('./protocol');
+const { Eds } = require('../eds');
+const { deprecate } = require('util');
+
+/**
+ * Check an Lss address against the device address.
+ *
+ * @param {object} identity - identity object.
+ * @param {number} identity.vendorId - vendor id.
+ * @param {number} identity.productCode - product code.
+ * @param {number} identity.revisionNumber - revision number.
+ * @param {number} identity.serialNumber - serial number.
+ * @param {Array} address - Lss address.
+ * @param {number} address.0 - device vendor id.
+ * @param {number} address.1 - device product code.
+ * @param {number} address.2 - device revision number.
+ * @param {number} address.3 - device serial number.
+ * @returns {boolean} true if the address matches.
+ * @private
+ */
+function checkLssAddress(identity, address) {
+    return address[0] === identity.vendorId
+        && address[1] === identity.productCode
+        && address[2] === identity.revisionNumber
+        && address[3] === identity.serialNumber;
+}
+
+/**
+ * Mask and compare two unsigned integers.
+ *
+ * @param {number} a - first number.
+ * @param {number} b - second number.
+ * @param {number} mask - bit mask.
+ * @returns {boolean} true if the masked values are equal.
+ * @private
+ */
+function maskCompare(a, b, mask) {
+    a = (a & mask) >>> 0;
+    b = (b & mask) >>> 0;
+
+    return a === b;
+}
 
 /**
  * CANopen LSS command specifiers.
  *
  * @enum {number}
  * @see CiA305 "LSS Protocol Descriptions" (§3.8.2)
- * @memberof Lss
  * @private
  */
 const LssCommand = {
@@ -29,7 +69,7 @@ const LssCommand = {
     INQUIRE_PRODUCT_CODE: 91,
     INQUIRE_REVISION_NUMBER: 92,
     INQUIRE_SERIAL_NUMBER: 93,
-}
+};
 
 /**
  * CANopen LSS modes.
@@ -43,34 +83,32 @@ const LssMode = {
 
     /** All LSS services are available. */
     CONFIGURATION: 1,
-}
+};
 
 /**
  * Errors generated during LSS services.
  *
- * @param {string} message - error message.
- * @param {number} code - error code.
- * @param {number} info - error info code.
+ * @param {object} args - arguments.
+ * @param {string} args.message - error message.
+ * @param {number} args.code - error code.
+ * @param {number} args.info - error info code.
  */
 class LssError extends Error {
-    constructor(message, code, info) {
-        super(message);
-        this.code = code;
-        this.info = info;
+    constructor(...args) {
+        if(typeof args[0] === 'object') {
+            args = args[0];
+        }
+        else {
+            args = {
+                message: args[0],
+                code: args[1],
+                info: args[2],
+            };
+        }
 
-        this.name = this.constructor.name;
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
-
-/**
- * Errors generated from LSS service timeouts.
- *
- * @param {string} message - error message.
- */
-class LssTimeout extends Error {
-    constructor() {
-        super('LSS timeout');
+        super(args.message);
+        this.code = args.code;
+        this.info = args.info;
 
         this.name = this.constructor.name;
         Error.captureStackTrace(this, this.constructor);
@@ -80,72 +118,28 @@ class LssTimeout extends Error {
 /**
  * CANopen LSS protocol handler.
  *
- * @param {Device} device - parent device.
+ * @param {Eds} eds - Eds object.
  * @see CiA305 "Layer Settings Services and Protocol (LSS)"
+ * @implements {Protocol}
  */
-class Lss {
-    constructor(device) {
-        this.device = device;
+class Lss extends Protocol {
+    constructor(eds) {
+        super(eds);
+
         this._mode = LssMode.OPERATION;
         this.pending = {};
         this.select = [];
         this.scanState = 0;
+        this.identity = {
+            vendorId: null,
+            productCode: null,
+            revisionNumber: null,
+            serialNumber: null,
+        };
     }
 
     /**
-     * Device identity vendor id (Object 0x1018.1).
-     *
-     * @type {number}
-     */
-    get vendorId() {
-        return this.device.getValueArray(0x1018, 1);
-    }
-
-    set vendorId(value) {
-        this.device.setValueArray(0x1018, 1, value);
-    }
-
-    /**
-     * Device identity product code (Object 0x1018.2).
-     *
-     * @type {number}
-     */
-    get productCode() {
-        return this.device.getValueArray(0x1018, 2);
-    }
-
-    set productCode(value) {
-        this.device.setValueArray(0x1018, 2, value);
-    }
-
-    /**
-     * Device identity revision number (Object 0x1018.3).
-     *
-     * @type {number}
-     */
-    get revisionNumber() {
-        return this.device.getValueArray(0x1018, 3);
-    }
-
-    set revisionNumber(value) {
-        this.device.setValueArray(0x1018, 3, value);
-    }
-
-    /**
-     * Device identity serial number (Object 0x1018.4).
-     *
-     * @type {number}
-     */
-    get serialNumber() {
-        return this.device.getValueArray(0x1018, 4);
-    }
-
-    set serialNumber(value) {
-        this.device.setValueArray(0x1018, 4, value);
-    }
-
-    /**
-     * Device LSS mode.
+     * Device LSS Mode.
      *
      * @type {LssMode}
      */
@@ -153,20 +147,104 @@ class Lss {
         return this._mode;
     }
 
-    set mode(newMode) {
-        const oldMode = this.mode;
-        if(newMode !== oldMode) {
-            this._mode = newMode;
-            this.device.emit('lssChangeMode', newMode);
-        }
+    /**
+     * Vendor id.
+     *
+     * @type {number}
+     * @deprecated Use {@link Eds#getIdentity} instead.
+     */
+    get vendorId() {
+        return this.eds.getSubEntry(0x1018, 1).value;
     }
 
-    /** Begin listening for LSS command responses. */
-    init() {
-        if(!this.device.eds.lssSupported)
-            return;
+    /**
+     * Vendor id.
+     *
+     * @type {number}
+     * @deprecated Use {@link Eds#setIdentity} instead.
+     */
+    set vendorId(value) {
+        this.eds.getSubEntry(0x1018, 1).value = value;
+    }
 
-        this.device.addListener('message', this._onMessage.bind(this));
+    /**
+     * Product code.
+     *
+     * @type {number}
+     * @deprecated Use {@link Eds#getIdentity} instead.
+     */
+    get productCode() {
+        return this.eds.getSubEntry(0x1018, 2).value;
+    }
+
+    /**
+     * Product code.
+     *
+     * @type {number}
+     * @deprecated Use {@link Eds#setIdentity} instead.
+     */
+    set productCode(value) {
+        this.eds.getSubEntry(0x1018, 2).value = value;
+    }
+
+    /**
+     * Revision number.
+     *
+     * @type {number}
+     * @deprecated Use {@link Eds#getIdentity} instead.
+     */
+    get revisionNumber() {
+        return this.eds.getSubEntry(0x1018, 3).value;
+    }
+
+    /**
+     * Revision number.
+     *
+     * @type {number}
+     * @deprecated Use {@link Eds#setIdentity} instead.
+     */
+    set revisionNumber(value) {
+        this.eds.getSubEntry(0x1018, 3).value = value;
+    }
+
+    /**
+     * Serial number.
+     *
+     * @type {number}
+     * @deprecated Use {@link Eds#getIdentity} instead.
+     */
+    get serialNumber() {
+        return this.eds.getSubEntry(0x1018, 4).value;
+    }
+
+    /**
+     * Serial number.
+     *
+     * @type {number}
+     * @deprecated Use {@link Eds#setIdentity} instead.
+     */
+    set serialNumber(value) {
+        this.eds.getSubEntry(0x1018, 4).value = value;
+    }
+
+    /**
+     * Set the LSS mode.
+     *
+     * @param {LssMode} mode - new mode.
+     * @fires Lss#changeMode
+     */
+    setMode(mode) {
+        if(mode !== this._mode) {
+            this._mode = mode;
+
+            /**
+             * The LSS mode changed.
+             *
+             * @event Lss#changeMode
+             * @type {LssMode}
+             */
+            this.emit('changeMode', mode);
+        }
     }
 
     /**
@@ -175,20 +253,20 @@ class Lss {
      * Identifies exactly one LSS consumer device and switches it to
      * configuration mode.
      *
-     * @param {object} args - arguments.
-     * @param {number} args.vendorId - vendor-id hint (optional).
-     * @param {number} args.productCode - product-code hint (optional).
-     * @param {number} args.revisionNumber - revision-number hint (optional).
-     * @param {number} args.serialNumber - serial-number hint (optional).
-     * @param {number} args.timeout - how long to wait for nodes to respond.
+     * @param {object} [args] - arguments.
+     * @param {number} [args.vendorId] - vendor-id hint.
+     * @param {number} [args.productCode] - product-code hint.
+     * @param {number} [args.revisionNumber] - revision-number hint.
+     * @param {number} [args.serialNumber] - serial-number hint.
+     * @param {number} [args.timeout] - how long to wait for nodes to respond.
      * @returns {Promise<null | object>} resolves to the discovered device's id (or null).
      * @see https://www.can-cia.org/fileadmin/resources/documents/proceedings/2008_pfeiffer.pdf
      */
     async fastscan(args={}) {
-        let vendorId = args.vendorId || null;
-        let productCode = args.productCode || null;
-        let revisionNumber = args.revisionNumber || null;
-        let serialNumber = args.serialNumber || null;
+        let vendorId = args.vendorId;
+        let productCode = args.productCode;
+        let revisionNumber = args.revisionNumber;
+        let serialNumber = args.serialNumber;
         let timeout = args.timeout || 20;
         let timeoutFlag = false;
 
@@ -202,16 +280,16 @@ class Lss {
             this._sendLssRequest(
                 LssCommand.FASTSCAN, Buffer.from([0, 0, 0, 0, 0x80]));
 
-            this.pending[0x4f] = {resolve, timer};
+            this.pending[0x4f] = { resolve, timer };
         });
 
-        if(timeoutFlag)
+        if (timeoutFlag)
             return null; // No devices
 
         // Find vendor-id
-        if(vendorId === null) {
+        if (vendorId === undefined) {
             vendorId = 0;
-            for(let i = 31; i >= 0; --i) {
+            for (let i = 31; i >= 0; --i) {
                 await new Promise((resolve) => {
                     const timer = setTimeout(() => {
                         const bit = (1 << i) >>> 0;
@@ -226,7 +304,7 @@ class Lss {
                     data[6] = 0; // LSS next
                     this._sendLssRequest(LssCommand.FASTSCAN, data);
 
-                    this.pending[0x4f] = {resolve, timer};
+                    this.pending[0x4f] = { resolve, timer };
                 });
             }
         }
@@ -234,7 +312,7 @@ class Lss {
         // Verify vendor-id
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssError('failed to verify vendorId', 255, 0));
+                reject(new LssError('unverified vendorId', 255, 0));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -244,13 +322,13 @@ class Lss {
             data[6] = 1; // LSS next
             this._sendLssRequest(LssCommand.FASTSCAN, data);
 
-            this.pending[0x4f] = {resolve, timer};
+            this.pending[0x4f] = { resolve, timer };
         });
 
         // Find product-code
-        if(productCode === null) {
+        if (productCode === undefined) {
             productCode = 0;
-            for(let i = 31; i >= 0; --i) {
+            for (let i = 31; i >= 0; --i) {
                 await new Promise((resolve) => {
                     const timer = setTimeout(() => {
                         const bit = (1 << i) >>> 0;
@@ -265,7 +343,7 @@ class Lss {
                     data[6] = 1; // LSS next
                     this._sendLssRequest(LssCommand.FASTSCAN, data);
 
-                    this.pending[0x4f] = {resolve, timer};
+                    this.pending[0x4f] = { resolve, timer };
                 });
             }
         }
@@ -273,7 +351,7 @@ class Lss {
         // Verify product-code
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssError('failed to verify productCode', 255, 0));
+                reject(new LssError('unverified productCode', 255, 0));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -283,13 +361,13 @@ class Lss {
             data[6] = 2; // LSS next
             this._sendLssRequest(LssCommand.FASTSCAN, data);
 
-            this.pending[0x4f] = {resolve, timer};
+            this.pending[0x4f] = { resolve, timer };
         });
 
         // Find revision-number
-        if(revisionNumber === null) {
+        if (revisionNumber === undefined) {
             revisionNumber = 0;
-            for(let i = 31; i >= 0; --i) {
+            for (let i = 31; i >= 0; --i) {
                 await new Promise((resolve) => {
                     const timer = setTimeout(() => {
                         const bit = (1 << i) >>> 0;
@@ -304,7 +382,7 @@ class Lss {
                     data[6] = 2; // LSS next
                     this._sendLssRequest(LssCommand.FASTSCAN, data);
 
-                    this.pending[0x4f] = {resolve, timer};
+                    this.pending[0x4f] = { resolve, timer };
                 });
             }
         }
@@ -312,7 +390,7 @@ class Lss {
         // Verify revision-number
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssError('failed to verify revisionNumber', 255, 0));
+                reject(new LssError('unverified revisionNumber', 255, 0));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -322,13 +400,13 @@ class Lss {
             data[6] = 3; // LSS next
             this._sendLssRequest(LssCommand.FASTSCAN, data);
 
-            this.pending[0x4f] = {resolve, timer};
+            this.pending[0x4f] = { resolve, timer };
         });
 
         // Find serial-number
-        if(serialNumber === null) {
+        if (serialNumber === undefined) {
             serialNumber = 0;
-            for(let i = 31; i >= 0; --i) {
+            for (let i = 31; i >= 0; --i) {
                 await new Promise((resolve) => {
                     const timer = setTimeout(() => {
                         const bit = (1 << i) >>> 0;
@@ -343,7 +421,7 @@ class Lss {
                     data[6] = 3; // LSS next
                     this._sendLssRequest(LssCommand.FASTSCAN, data);
 
-                    this.pending[0x4f] = {resolve, timer};
+                    this.pending[0x4f] = { resolve, timer };
                 });
             }
         }
@@ -351,7 +429,7 @@ class Lss {
         // Verify serial-number
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssError('failed to verify serialNumber', 255, 0));
+                reject(new LssError('unverified serialNumber', 255, 0));
             }, timeout);
 
             const data = Buffer.alloc(7);
@@ -361,7 +439,7 @@ class Lss {
             data[6] = 0; // LSS next
             this._sendLssRequest(LssCommand.FASTSCAN, data);
 
-            this.pending[0x4f] = {resolve, timer};
+            this.pending[0x4f] = { resolve, timer };
         });
 
         return { vendorId, productCode, revisionNumber, serialNumber };
@@ -374,8 +452,8 @@ class Lss {
      * @see CiA305 "Switch Mode Global" (§3.9.1)
      */
     switchModeGlobal(mode) {
-        if(mode === undefined)
-            throw ReferenceError("mode cannot be undefined");
+        if (mode === undefined)
+            throw ReferenceError('mode not defined');
 
         this._sendLssRequest(
             LssCommand.SWITCH_MODE_GLOBAL, Buffer.from([mode]));
@@ -384,40 +462,53 @@ class Lss {
     /**
      * Service: switch mode selective.
      *
-     * @param {number} vendorId - LSS consumer vendor-id.
-     * @param {number} productCode - LSS consumer product-code.
-     * @param {number} revisionNumber - LSS consumer revision-number.
-     * @param {number} serialNumber - LSS consumer serial-number.
-     * @param {number} timeout - time until promise is rejected.
+     * @param {object} args - arguments.
+     * @param {number} args.vendorId - LSS consumer vendor-id.
+     * @param {number} args.productCode - LSS consumer product-code.
+     * @param {number} args.revisionNumber - LSS consumer revision-number.
+     * @param {number} args.serialNumber - LSS consumer serial-number.
+     * @param {number} [args.timeout] - time until promise is rejected.
      * @returns {Promise<LssMode>} - the actual mode of the LSS consumer.
      * @see CiA305 "Switch Mode Selective" (§3.9.2)
      */
-    switchModeSelective(
-        vendorId, productCode, revisionNumber, serialNumber, timeout=20) {
+    switchModeSelective(...args) {
+        if(typeof args[0] === 'object') {
+            args = args[0];
+        }
+        else {
+            args = {
+                vendorId: args[0],
+                productCode: args[1],
+                revisionNumber: args[2],
+                serialNumber: args[3],
+                timeout: args[4],
+            };
+        }
+
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssTimeout());
-            }, timeout);
+                reject(new LssError('timeout'));
+            }, args.timeout);
 
             const data = Buffer.alloc(4);
 
             // Send vendor-id
-            data.writeUInt32LE(vendorId);
+            data.writeUInt32LE(args.vendorId);
             this._sendLssRequest(LssCommand.SWITCH_MODE_VENDOR_ID, data);
 
             // Send product-code
-            data.writeUInt32LE(productCode);
+            data.writeUInt32LE(args.productCode);
             this._sendLssRequest(LssCommand.SWITCH_MODE_PRODUCT_CODE, data);
 
             // Send revision-number
-            data.writeUInt32LE(revisionNumber);
+            data.writeUInt32LE(args.revisionNumber);
             this._sendLssRequest(LssCommand.SWITCH_MODE_REVISION_NUMBER, data);
 
             // Send serial-number
-            data.writeUInt32LE(serialNumber);
+            data.writeUInt32LE(args.serialNumber);
             this._sendLssRequest(LssCommand.SWITCH_MODE_SERIAL_NUMBER, data);
 
-            this.pending[68] = {resolve, timer};
+            this.pending[68] = { resolve, timer };
         });
     }
 
@@ -429,10 +520,10 @@ class Lss {
      * @returns {Promise} resolves when the service is finished.
      * @see CiA305 "Configure Node-ID Protocol" (§3.10.1)
      */
-    configureNodeId(nodeId, timeout=20) {
-        return new Promise((resolve, reject) => {
+    async configureNodeId(nodeId, timeout = 20) {
+        const result = await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssTimeout());
+                reject(new LssError('timeout'));
             }, timeout);
 
             this._sendLssRequest(
@@ -442,27 +533,24 @@ class Lss {
                 resolve,
                 timer
             };
-        })
-        .then((result) => {
-            const code = result[0];
-            if(code == 0)
-                return; // Success
-
-            let message = '';
-            switch(code) {
-                case 1:
-                    message = 'Node-ID out of range';
-                    break;
-                case 255:
-                    message = 'Implementation specific error';
-                    break;
-                default:
-                    message = 'Unsupported error code';
-                    break;
-            }
-
-            throw new LssError(message, code, result[1]);
         });
+
+        let message = '';
+        switch (result[0]) {
+            case 0:
+                return; // Success
+            case 1:
+                message = 'Node-ID out of range';
+                break;
+            case 255:
+                message = 'Implementation specific error';
+                break;
+            default:
+                message = 'Unsupported error code';
+                break;
+        }
+
+        throw new LssError(message, result[0], result[1]);
     }
 
     /**
@@ -474,40 +562,38 @@ class Lss {
      * @returns {Promise} resolves when the service is finished.
      * @see CiA305 "Configure Bit Timing Parameters Protocol" (§3.10.2)
      */
-    configureBitTiming(tableSelect, tableIndex, timeout=20) {
-        return new Promise((resolve, reject) => {
+    async configureBitTiming(tableSelect, tableIndex, timeout = 20) {
+        const result = await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssTimeout());
+                reject(new LssError('timeout'));
             }, timeout);
 
             this._sendLssRequest(
-                LssCommand.CONFIGURE_BIT_TIMING, Buffer.from([tableSelect, tableIndex]));
+                LssCommand.CONFIGURE_BIT_TIMING,
+                Buffer.from([tableSelect, tableIndex]));
 
             this.pending[LssCommand.CONFIGURE_BIT_TIMING] = {
                 resolve,
                 timer
             };
-        })
-        .then((result) => {
-            const code = result[0];
-            if(code == 0)
-                return; // Success
-
-            let message = '';
-            switch(code) {
-                case 1:
-                    message = 'Bit timing not supported';
-                    break;
-                case 255:
-                    message = 'Implementation specific error';
-                    break;
-                default:
-                    message = 'Unsupported error code';
-                    break;
-            }
-
-            throw new LssError(message, code, result[1]);
         });
+
+        let message = '';
+        switch (result[0]) {
+            case 0:
+                return; // Success
+            case 1:
+                message = 'Bit timing not supported';
+                break;
+            case 255:
+                message = 'Implementation specific error';
+                break;
+            default:
+                message = 'Unsupported error code';
+                break;
+        }
+
+        throw new LssError(message, result[0], result[1]);
     }
 
     /**
@@ -529,10 +615,10 @@ class Lss {
      * @returns {Promise} resolves when the service is finished.
      * @see CiA305 "Store Configuration Protocol" (§3.10.4)
      */
-    storeConfiguration(timeout=20) {
-        return new Promise((resolve, reject) => {
+    async storeConfiguration(timeout = 20) {
+        const result = await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
-                reject(new LssTimeout());
+                reject(new LssError('timeout'));
             }, timeout);
 
             this._sendLssRequest(LssCommand.STORE_CONFIGURATION);
@@ -541,30 +627,27 @@ class Lss {
                 resolve,
                 timer
             };
-        })
-        .then((result) => {
-            const code = result[0];
-            if(code == 0)
-                return; // Success
-
-            let message = '';
-            switch(code) {
-                case 1:
-                    message = 'Store configuration not supported';
-                    break;
-                case 2:
-                    message = 'Storage media access error';
-                    break;
-                case 255:
-                    message = 'Implementation specific error';
-                    break;
-                default:
-                    message = 'Unsupported error code';
-                    break;
-            }
-
-            throw new LssError(message, code, result[1]);
         });
+
+        let message = '';
+        switch (result[0]) {
+            case 0:
+                return; // Success
+            case 1:
+                message = 'Store configuration not supported';
+                break;
+            case 2:
+                message = 'Storage media access error';
+                break;
+            case 255:
+                message = 'Implementation specific error';
+                break;
+            default:
+                message = 'Unsupported error code';
+                break;
+        }
+
+        throw new LssError(message, result[0], result[1]);
     }
 
     /**
@@ -574,11 +657,10 @@ class Lss {
      * @returns {Promise<number>} - LSS consumer vendor-id.
      * @see CiA305 "Inquire Identity Vendor-ID Protocol" (§3.11.1.1)
      */
-    async inquireVendorId(timeout=20) {
+    async inquireVendorId(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-                reject(new LssTimeout());
-            }, timeout);
+            const timer = setTimeout(
+                () => reject(new LssError('timeout')), timeout);
 
             this._sendLssRequest(LssCommand.INQUIRE_VENDOR_ID);
 
@@ -598,11 +680,10 @@ class Lss {
      * @returns {Promise<number>} - LSS consumer product-code.
      * @see CiA305 "Inquire Identity Product-Code Protocol" (§3.11.1.2)
      */
-    async inquireProductCode(timeout=20) {
+    async inquireProductCode(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-                reject(new LssTimeout());
-            }, timeout);
+            const timer = setTimeout(
+                () => reject(new LssError('timeout')), timeout);
 
             this._sendLssRequest(LssCommand.INQUIRE_PRODUCT_CODE);
 
@@ -622,11 +703,10 @@ class Lss {
      * @returns {Promise<number>} - LSS consumer revision-number.
      * @see CiA305 "Inquire Identity Revision-Number Protocol" (§3.11.1.3)
      */
-    async inquireRevisionNumber(timeout=20) {
+    async inquireRevisionNumber(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-                reject(new LssTimeout());
-            }, timeout);
+            const timer = setTimeout(
+                () => reject(new LssError('timeout')), timeout);
 
             this._sendLssRequest(LssCommand.INQUIRE_REVISION_NUMBER);
 
@@ -646,11 +726,10 @@ class Lss {
      * @returns {Promise<number>} - LSS consumer serial-number.
      * @see CiA305 "Inquire Identity Serial-Number Protocol" (§3.11.1.4)
      */
-    async inquireSerialNumber(timeout=20) {
+    async inquireSerialNumber(timeout = 20) {
         const result = await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-                reject(new LssTimeout());
-            }, timeout);
+            const timer = setTimeout(
+                () => reject(new LssError('timeout')), timeout);
 
             this._sendLssRequest(LssCommand.INQUIRE_SERIAL_NUMBER);
 
@@ -664,191 +743,158 @@ class Lss {
     }
 
     /**
-     * Send an LSS request object.
+     * Start the module.
      *
-     * @param {LssCommand} command - LSS command specifier.
-     * @param {Buffer} data - command data.
-     * @private
+     * @override
      */
-    _sendLssRequest(command, data) {
-        const sendBuffer = Buffer.alloc(8);
-        sendBuffer[0] = command;
+    start() {
+        if(!this.started) {
+            const obj1018 = this.eds.getEntry(0x1018);
+            if(obj1018)
+                this._addEntry(obj1018);
 
-        if(data !== undefined)
-            data.copy(sendBuffer, 1);
+            this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+            this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
 
-        this.device.send({
-            id:     0x7e5,
-            data:   sendBuffer,
-        });
+            super.start();
+        }
     }
 
     /**
-     * Send an LSS response object.
+     * Stop the module.
      *
-     * @param {LssCommand} command - LSS command specifier.
-     * @param {number} code - response code.
-     * @param {number} info - response info.
-     * @private
+     * @override
      */
-    _sendLssResponse(command, code, info=0) {
-        const sendBuffer = Buffer.alloc(8);
-        sendBuffer[0] = command;
-        sendBuffer[1] = code;
-        sendBuffer[2] = info;
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newEntry');
+            this.removeEdsCallback('removeEntry');
 
-        this.device.send({
-            id:     0x7e4,
-            data:   sendBuffer,
-        });
+            const obj1018 = this.eds.getEntry(0x1018);
+            if(obj1018)
+                this._removeEntry(obj1018);
+
+            super.stop();
+        }
     }
 
     /**
-     * Check an Lss address against the device address.
-     *
-     * @param {Array} address - Lss address.
-     * @param {number} address.0 - device vendor id.
-     * @param {number} address.1 - device product code.
-     * @param {number} address.2 - device revision number.
-     * @param {number} address.3 - device serial number.
-     * @returns {boolean} true if the address matches.
-     * @private
-     */
-    _checkLssAddress(address) {
-        return address[0] === this.vendorId
-            && address[1] === this.productCode
-            && address[2] === this.revisionNumber
-            && address[3] === this.serialNumber;
-    }
-
-    /**
-     * Mask and compare two unsigned integers.
-     *
-     * @param {number} a - first number.
-     * @param {number} b - second number.
-     * @param {number} mask - bit mask.
-     * @returns {boolean} true if the masked values are equal.
-     */
-    _maskCompare(a, b, mask) {
-        a = (a & mask) >>> 0;
-        b = (b & mask) >>> 0;
-
-        return a === b;
-    }
-
-    /**
-     * Called when a new CAN message is received.
+     * Call when a new CAN message is received.
      *
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
-     * @private
+     * @fires Lss#changeMode
+     * @fires Lss#changeDeviceId
+     * @override
      */
-    _onMessage(message) {
-        if(message.id === 0x7e4) {
-            const cs = message.data[0];
-            if(this.pending[cs] !== undefined) {
+    receive({ id, data }) {
+        if (id === 0x7e4) {
+            const cs = data[0];
+            if (this.pending[cs] !== undefined) {
                 clearTimeout(this.pending[cs].timer);
-                this.pending[cs].resolve(message.data.slice(1));
+                this.pending[cs].resolve(data.slice(1));
             }
         }
-        else if(message.id === 0x7e5) {
-            const cs = message.data[0];
+        else if (id === 0x7e5) {
+            const cs = data[0];
 
-            if(cs === LssCommand.FASTSCAN) {
+            if (cs === LssCommand.FASTSCAN) {
                 // Fastscan is only available for unconfigured nodes.
-                if(this.device.id !== null)
-                    return;
+                const bitCheck = data[5];
+                const lssSub = data[6];
+                const lssNext = data[7];
 
-                const bitCheck = message.data[5];
-                const lssSub = message.data[6];
-                const lssNext = message.data[7];
-
-                if(bitCheck === 0x80) {
+                if (bitCheck === 0x80) {
                     // Reset state
                     this.scanState = 0;
                     this._sendLssResponse(0x4f);
                 }
-                else if(this.scanState === lssSub) {
-                    if(bitCheck > 0x1f || lssSub > 3 || lssNext > 3)
+                else if (this.scanState === lssSub) {
+                    if (bitCheck > 0x1f || lssSub > 3 || lssNext > 3)
                         return; // Invalid request
 
-                    const data = message.data.readUInt32LE(1);
+                    const value = data.readUInt32LE(1);
                     const mask = (0xffffffff << bitCheck) >>> 0;
                     let match = false;
 
-                    switch(lssSub) {
+                    switch (lssSub) {
                         case 0:
                             // Test vendor id
-                            match = this._maskCompare(
-                                this.vendorId, data, mask);
+                            match = maskCompare(
+                                this.identity.vendorId, value, mask);
                             break;
 
                         case 1:
                             // Test product code
-                            match = this._maskCompare(
-                                this.productCode, data, mask);
+                            match = maskCompare(
+                                this.identity.productCode, value, mask);
                             break;
 
                         case 2:
                             // Test revision number
-                            match = this._maskCompare(
-                                this.revisionNumber, data, mask);
+                            match = maskCompare(
+                                this.identity.revisionNumber, value, mask);
                             break;
 
                         case 3:
-                            match = this._maskCompare(
-                                this.serialNumber, data, mask);
+                            match = maskCompare(
+                                this.identity.serialNumber, value, mask);
                             break;
                     }
 
-                    if(match) {
+                    if (match) {
                         this.scanState = lssNext;
-                        if(bitCheck === 0 && lssNext < lssSub)
-                            this.mode = LssMode.CONFIGURATION;
+                        if (bitCheck === 0 && lssNext < lssSub)
+                            this.setMode(LssMode.CONFIGURATION);
 
                         this._sendLssResponse(0x4f);
                     }
                 }
+                return;
             }
 
             // Switch mode commands
-            switch(cs) {
+            switch (cs) {
                 case LssCommand.SWITCH_MODE_GLOBAL:
-                    this.mode = message.data[1];
+                    this.setMode(data[1]);
                     this.select = [];
                     return;
 
                 case LssCommand.SWITCH_MODE_VENDOR_ID:
-                    this.select[0] = message.data.readUInt32LE(1);
+                    this.select[0] = data.readUInt32LE(1);
                     return;
 
                 case LssCommand.SWITCH_MODE_PRODUCT_CODE:
-                    this.select[1] = message.data.readUInt32LE(1);
+                    this.select[1] = data.readUInt32LE(1);
                     return;
 
                 case LssCommand.SWITCH_MODE_REVISION_NUMBER:
-                    this.select[2] = message.data.readUInt32LE(1);
+                    this.select[2] = data.readUInt32LE(1);
                     return;
 
                 case LssCommand.SWITCH_MODE_SERIAL_NUMBER:
-                    this.select[3] = message.data.readUInt32LE(1);
-                    if(this._checkLssAddress(this.select))
-                        this.mode = LssMode.CONFIGURATION;
+                    this.select[3] = data.readUInt32LE(1);
+                    if (checkLssAddress(this.identity, this.select))
+                        this.setMode(LssMode.CONFIGURATION);
                     return;
             }
 
             // Configuration commands
-            if(this.mode !== LssMode.CONFIGURATION)
+            if (this.mode !== LssMode.CONFIGURATION)
                 return;
 
-            switch(cs) {
+            switch (cs) {
                 case LssCommand.CONFIGURE_NODE_ID:
                     try {
-                        this.device.id = message.data[1];
+                        /**
+                         * LssCommand.CONFIGURE_NODE_ID was received.
+                         *
+                         * @event Lss#changeDeviceId
+                         * @type {number}
+                         */
+                        this.emit('changeDeviceId', data[1]);
                         this._sendLssResponse(cs, 0);
-                        this.device.emit('lssChangeDeviceId', this.device.id);
                     }
                     catch {
                         // Error: Node-ID out of range
@@ -867,23 +913,145 @@ class Lss {
                     return;
 
                 case LssCommand.INQUIRE_VENDOR_ID:
-                    this._sendLssResponse(cs, this.vendorId);
+                    this._sendLssResponse(cs, this.identity.vendorId);
                     return;
 
                 case LssCommand.INQUIRE_PRODUCT_CODE:
-                    this._sendLssResponse(cs, this.productCode);
+                    this._sendLssResponse(cs, this.identity.productCode);
                     return;
 
                 case LssCommand.INQUIRE_REVISION_NUMBER:
-                    this._sendLssResponse(cs, this.revisionNumber);
+                    this._sendLssResponse(cs, this.identity.revisionNumber);
                     return;
 
                 case LssCommand.INQUIRE_SERIAL_NUMBER:
-                    this._sendLssResponse(cs, this.serialNumber);
+                    this._sendLssResponse(cs, this.identity.serialNumber);
                     return;
             }
         }
     }
+
+    /**
+     * Listens for new Eds entries.
+     *
+     * @param {DataObject} entry - new entry.
+     * @private
+     */
+    _addEntry(entry) {
+        if(entry.index === 0x1018) {
+            this.addUpdateCallback(entry, (obj) => this._parse1018(obj));
+            this._parse1018(entry);
+        }
+    }
+
+    /**
+     * Listens for removed Eds entries.
+     *
+     * @param {DataObject} entry - removed entry.
+     * @private
+     */
+    _removeEntry(entry) {
+        if(entry.index === 0x1018) {
+            this.removeUpdateCallback(entry);
+            this._clear1018();
+        }
+    }
+
+    /**
+     * Called when 0x1018 (Identity object) is updated.
+     *
+     * @param {DataObject} entry - updated DataObject.
+     * @listens DataObject#update
+     * @private
+     */
+    _parse1018(entry) {
+        if(!entry)
+            return;
+
+        const subIndex = entry.subIndex;
+        if(subIndex === null) {
+            const maxSubIndex = entry[0].value;
+            for(let i = 1; i <= maxSubIndex; ++i)
+                this._parse1018(entry.at(i));
+        }
+        else {
+            switch(subIndex) {
+                case 1:
+                    this.identity.vendorId = entry.value;
+                    break;
+                case 2:
+                    this.identity.productCode = entry.value;
+                    break;
+                case 3:
+                    this.identity.revisionNumber = entry.value;
+                    break;
+                case 4:
+                    this.identity.serialNumber = entry.value;
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Called when 0x1018 (Identity object) is removed.
+     *
+     * @private
+     */
+    _clear1018() {
+        this.identity = {
+            vendorId: null,
+            productCode: null,
+            revisionNumber: null,
+            serialNumber: null,
+        };
+    }
+
+    /**
+     * Send an LSS request object.
+     *
+     * @param {LssCommand} command - LSS command specifier.
+     * @param {Buffer} data - command data.
+     * @private
+     */
+    _sendLssRequest(command, data) {
+        const sendBuffer = Buffer.alloc(8);
+        sendBuffer[0] = command;
+
+        if (data !== undefined)
+            data.copy(sendBuffer, 1);
+
+        this.send(0x7e5, sendBuffer);
+    }
+
+    /**
+     * Send an LSS response object.
+     *
+     * @param {LssCommand} command - LSS command specifier.
+     * @param {number} code - response code.
+     * @param {number} info - response info.
+     * @private
+     */
+    _sendLssResponse(command, code, info = 0) {
+        const sendBuffer = Buffer.alloc(8);
+        sendBuffer[0] = command;
+        sendBuffer[1] = code;
+        sendBuffer[2] = info;
+
+        this.send(0x7e4, sendBuffer);
+    }
 }
 
-module.exports=exports={ LssMode, LssError, LssTimeout, Lss };
+////////////////////////////////// Deprecated //////////////////////////////////
+
+/**
+ * Initialize the device and audit the object dictionary.
+ *
+ * @deprecated Use {@link Lss#start} instead.
+ * @function
+ */
+Lss.prototype.init = deprecate(
+    function() {
+        this.start();
+    }, 'Lss.init() is deprecated. Use Lss.start() instead.');
+
+module.exports = exports = { LssMode, LssError, Lss };

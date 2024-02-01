@@ -1,83 +1,98 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const { Device } = require('../../index');
+const { Device, DataType, EdsError, typeToRaw } = require('../../index');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-describe('Time', function() {
-    let device = null;
+describe('Time', function () {
+    it('should emit start once', function (done) {
+        const device = new Device({ id: 0xA});
 
-    beforeEach(function() {
-        device = new Device({ id: 0xA, loopback: true });
+        device.time.on('start', () => done());
+        device.time.start();
+        device.time.start();
     });
 
-    describe('Module initialization', function() {
-        it('should throw if cobId is 0', function() {
-            device.time.cobId = 0;
-            return expect(() => {
-                device.time.init();
-            }).to.throw(TypeError);
-        });
+    it('should emit stop once', function (done) {
+        const device = new Device({ id: 0xA});
+        device.time.start();
+
+        device.time.on('stop', () => done());
+        device.time.stop();
+        device.time.stop();
     });
 
-    describe('Object dictionary updates', function() {
-        it('should listen for updates to 0x1012', function(done) {
-            device.time.cobId = 0x80;
-            device.time.produce = true;
-            device.time.consume = true;
-            device.init()
-
-            const obj1012 = device.eds.getEntry(0x1012);
-            obj1012.addListener('update', () => {
-                setImmediate(() => {
-                    expect(device.time.cobId).to.equal(0x90);
-                    expect(device.time.produce).to.equal(false);
-                    expect(device.time.consume).to.equal(false);
-                    done();
-                });
-            });
-
-            obj1012.value = 0x90;
-        });
+    it('should reference time from January 1, 1984', function () {
+        const date = new Date('1984-01-01');
+        const raw = typeToRaw(date, DataType.TIME_OF_DAY);
+        expect(raw.compare(Buffer.alloc(6))).to.be.equal(0);
     });
 
-    describe('Producer', function() {
-        it('should throw if produce is false', function() {
-            device.time.cobId = 0x80;
-            device.time.produce = false;
-            device.time.consume = true;
-            device.init();
+    it('should produce a time object', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setTimeCobId(0x100);
+        device.eds.setTimeProducerEnable(true);
+        device.eds.setTimeConsumerEnable(true);
 
-            return expect(() => {
-                device.time.write();
-            }).to.throw(TypeError);
+        device.time.on('time', () => {
+            device.time.stop();
+            done();
         });
 
-        it('should produce a time object', function(done) {
-            device.time.cobId = 0x80;
-            device.time.produce = true;
-            device.time.consume = true;
-            device.init();
-
-            device.addListener('message', () => {
-                done();
-            });
-            device.time.write();
-        });
+        device.time.start();
+        device.time.write();
     });
 
-    describe('Consumer', function() {
-        it('should emit on consuming a time object', function(done) {
-            device.time.cobId = 0x80;
-            device.time.produce = true;
-            device.time.consume = true;
-            device.init();
+    it('should throw if produce is false', function () {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setTimeCobId(0x100);
+        device.time.start();
 
-            device.on('time', () => {
-                done();
-            });
-            device.time.write();
+        expect(() => device.time.write()).to.throw(EdsError);
+    });
+
+    it('should listen to Eds#newEntry', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.time.start();
+
+        device.time.on('time', () => {
+            device.time.stop();
+            done();
         });
+
+        device.eds.setTimeCobId(0x100);
+        device.eds.setTimeProducerEnable(true);
+        device.eds.setTimeConsumerEnable(true);
+        device.time.write();
+    });
+
+    it('should listen to Eds#removeEntry', function () {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setTimeCobId(0x100);
+        device.eds.setTimeProducerEnable(true);
+        device.time.start();
+
+        device.eds.removeEntry(0x1012);
+        expect(() => device.time.write()).to.throw(EdsError);
+    });
+
+    it('should listen to DataObject#update', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setTimeCobId(0x100);
+        device.eds.setTimeProducerEnable(false);
+        device.eds.setTimeConsumerEnable(false);
+        device.time.start();
+
+        device.time.on('time', () => {
+            device.time.stop();
+            done();
+        });
+
+        expect(() => device.time.write()).to.throw(EdsError);
+
+        device.eds.setTimeProducerEnable(true);
+        device.eds.setTimeConsumerEnable(true);
+        device.time.write();
     });
 });

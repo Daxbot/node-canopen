@@ -1,7 +1,5 @@
 const { DataType } = require('../types');
-
-/** Time offset in milliseconds between January 1, 1970 and January 1, 1984. */
-const EPOCH_OFFSET = 441763200 * 1000;
+const { timeToDate } = require('./date');
 
 /**
  * Convert a Buffer to a string.
@@ -14,7 +12,7 @@ function rawToString(raw) {
     raw = raw.toString();
 
     const end = raw.indexOf('\0');
-    if(end != -1)
+    if (end != -1)
         raw = raw.substring(0, end);
 
     return raw;
@@ -30,7 +28,7 @@ function rawToString(raw) {
 function rawToDate(raw) {
     const ms = raw.readUInt32LE(0);
     const days = raw.readUInt16LE(4);
-    return new Date((days * 8.64e7) + ms + EPOCH_OFFSET);
+    return timeToDate(days, ms);
 }
 
 /**
@@ -38,47 +36,48 @@ function rawToDate(raw) {
  *
  * @param {Buffer} raw - data to convert.
  * @param {DataType | string} type - how to interpret the data.
+ * @param {number} [scaleFactor] - optional multiplier for numeric types.
  * @returns {number | bigint | string | Date} converted data.
  */
-function rawToType(raw, type) {
-    if(typeof type === 'string')
+function rawToType(raw, type, scaleFactor=1.0) {
+    if (typeof type === 'string')
         type = DataType[type];
 
-    switch(type) {
+    switch (type) {
         case DataType.BOOLEAN:
             return !!raw.readUInt8();
         case DataType.INTEGER8:
-            return raw.readInt8();
+            return raw.readInt8() * scaleFactor;
         case DataType.INTEGER16:
-            return raw.readInt16LE();
+            return raw.readInt16LE() * scaleFactor;
         case DataType.INTEGER24:
-            return raw.readIntLE(0, 3);
+            return raw.readIntLE(0, 3) * scaleFactor;
         case DataType.INTEGER32:
-            return raw.readInt32LE();
+            return raw.readInt32LE() * scaleFactor;
         case DataType.INTEGER40:
-            return raw.readIntLE(0, 5);
+            return raw.readIntLE(0, 5) * scaleFactor;
         case DataType.INTEGER48:
-            return raw.readIntLE(0, 6);
+            return raw.readIntLE(0, 6) * scaleFactor;
         case DataType.INTEGER64:
-            return raw.readBigInt64LE()
+            return raw.readBigInt64LE() * BigInt(scaleFactor);
         case DataType.UNSIGNED8:
-            return raw.readUInt8();
+            return raw.readUInt8() * scaleFactor;
         case DataType.UNSIGNED16:
-            return raw.readUInt16LE();
+            return raw.readUInt16LE() * scaleFactor;
         case DataType.UNSIGNED24:
-            return raw.readUIntLE(0, 3);
+            return raw.readUIntLE(0, 3) * scaleFactor;
         case DataType.UNSIGNED32:
-            return raw.readUInt32LE();
+            return raw.readUInt32LE() * scaleFactor;
         case DataType.UNSIGNED40:
-            return raw.readUIntLE(0, 5);
+            return raw.readUIntLE(0, 5) * scaleFactor;
         case DataType.UNSIGNED48:
-            return raw.readUIntLE(0, 6);
+            return raw.readUIntLE(0, 6) * scaleFactor;
         case DataType.UNSIGNED64:
-            return raw.readBigUInt64LE();
+            return raw.readBigUInt64LE() * BigInt(scaleFactor);
         case DataType.REAL32:
-            return raw.readFloatLE();
+            return raw.readFloatLE() * scaleFactor;
         case DataType.REAL64:
-            return raw.readDoubleLE();
+            return raw.readDoubleLE() * scaleFactor;
         case DataType.VISIBLE_STRING:
         case DataType.UNICODE_STRING:
             return rawToString(raw);
@@ -90,4 +89,4 @@ function rawToType(raw, type) {
     }
 }
 
-module.exports=exports=rawToType;
+module.exports = exports = rawToType;

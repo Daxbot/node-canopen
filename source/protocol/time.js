@@ -1,14 +1,15 @@
 /**
  * @file Implements the CANopen Time Stamp (TIME) protocol.
  * @author Wilkins White
- * @copyright 2021 Daxbot
+ * @copyright 2024 Daxbot
  */
 
-const Device = require('../device');
-const { DataObject } = require('../eds');
-const { ObjectType, AccessType, DataType } = require('../types');
+const Protocol = require('./protocol');
+const { Eds, EdsError } = require('../eds');
+const { DataType } = require('../types');
 const rawToType = require('../functions/raw_to_type');
 const typeToRaw = require('../functions/type_to_raw');
+const { deprecate } = require('util');
 
 /**
  * CANopen TIME protocol handler.
@@ -17,162 +18,180 @@ const typeToRaw = require('../functions/type_to_raw');
  * provides a simple network clock. There should be at most one time stamp
  * producer on the network.
  *
- * @param {Device} device - parent device.
+ * @param {Eds} eds - Eds object.
  * @see CiA301 "Time stamp object (TIME)" (§7.2.6)
- * @example
- * const can = require('socketcan');
- *
- * const channel = can.createRawChannel('can0');
- * const device = new Device({ id: 0xa });
- *
- * channel.addListener('onMessage', (message) => device.receive(message));
- * device.setTransmitFunction((message) => channel.send(message));
- *
- * device.init();
- * channel.start();
- *
- * device.time.cobId = 0x80 + device.id;
- * device.time.produce = true;
- * device.time.write();
+ * @implements {Protocol}
  */
-class Time {
-    constructor(device) {
-        this.device = device;
-        this._produce = false;
+class Time extends Protocol {
+    constructor(eds) {
+        super(eds);
         this._consume = false;
+        this._produce = false;
         this._cobId = null;
     }
 
     /**
-     * Time stamp producer enable bit (Object 0x1012, bit 30).
+     * Get object 0x1012 [bit 30] - Time producer enable.
      *
      * @type {boolean}
+     * @deprecated Use {@link Eds#getTimeProducerEnable} instead.
      */
     get produce() {
-        return this._produce;
-    }
-
-    set produce(produce) {
-        let obj1012 = this.device.eds.getEntry(0x1012);
-        if(obj1012 === undefined) {
-            obj1012 = this.device.eds.addEntry(0x1012, {
-                parameterName:  'COB-ID TIME',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-
-        if(produce)
-            obj1012.value |= (1 << 30);
-        else
-            obj1012.value &= ~(1 << 30);
+        return this.eds.getTimeProducerEnable();
     }
 
     /**
-     * Time stamp consumer enable bit (Object 0x1012, bit 31).
+     * Set object 0x1012 [bit 30] - Time producer enable.
      *
      * @type {boolean}
+     * @deprecated Use {@link Eds#setTimeProducerEnable} instead.
      */
-    get consume() {
-        return this._consume;
-    }
-
-    set consume(consume) {
-        let obj1012 = this.device.eds.getEntry(0x1012);
-        if(obj1012 === undefined) {
-            obj1012 = this.device.eds.addEntry(0x1012, {
-                parameterName:  'COB-ID TIME',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-
-        let raw = obj1012.raw;
-        if(consume)
-            raw[3] |= (1 << 7); // bit 31
-        else
-            raw[3] &= ~(1 << 7); // bit 31
-
-        obj1012.raw = raw;
+    set produce(enable) {
+        this.eds.setTimeProducerEnable(enable);
     }
 
     /**
-     * Time COB-ID (Object 0x1012, bits 0-28).
+     * Get object 0x1012 [bit 31] - Time consumer enable.
+     *
+     * @type {boolean}
+     * @deprecated Use {@link Eds#getTimeConsumerEnable} instead.
+     */
+    get consume() {
+        return this.eds.getTimeConsumerEnable();
+    }
+
+    /**
+     * Set object 0x1012 [bit 31] - Time consumer enable.
+     *
+     * @type {boolean}
+     * @deprecated Use {@link Eds#setTimeConsumerEnable} instead.
+     */
+    set consume(enable) {
+        this.eds.setTimeConsumerEnable(enable);
+    }
+
+    /**
+     * Get object 0x1012 - COB-ID TIME.
      *
      * @type {number}
+     * @deprecated Use {@link Eds#getTimeCobId} instead.
      */
     get cobId() {
-        return this._cobId;
+        return this.eds.getTimeCobId();
     }
 
+    /**
+     * Set object 0x1012 - COB-ID TIME.
+     *
+     * @type {number}
+     * @deprecated Use {@link Eds#setTimeCobId} instead.
+     */
     set cobId(cobId) {
-        let obj1012 = this.device.eds.getEntry(0x1012);
-        if(obj1012 === undefined) {
-            obj1012 = this.device.eds.addEntry(0x1012, {
-                parameterName:  'COB-ID TIME',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-
-        cobId &= 0x7FF;
-        obj1012.value = (obj1012.value & ~(0x7FF)) | cobId;
-    }
-
-    /** Initialize members and begin consuming time stamp objects. */
-    init() {
-        // Object 0x1012 - COB-ID TIME
-        let obj1012 = this.device.eds.getEntry(0x1012);
-        if(obj1012 === undefined) {
-            obj1012 = this.device.eds.addEntry(0x1012, {
-                parameterName:  'COB-ID TIME',
-                objectType:     ObjectType.VAR,
-                dataType:       DataType.UNSIGNED32,
-                accessType:     AccessType.READ_WRITE,
-            });
-        }
-        else {
-            this._parse1012(obj1012);
-        }
-
-        obj1012.addListener('update', this._parse1012.bind(this));
-        this.device.addListener('message', this._onMessage.bind(this));
+        this.eds.setTimeCobId(cobId);
     }
 
     /**
      * Service: TIME write.
      *
      * @param {Date} date - date to write.
+     * @fires Protocol#message
      */
-    write(date=new Date()) {
-        if(!this.produce)
-            throw TypeError('TIME production is disabled.');
+    write(date) {
+        if (!this._produce)
+            throw new EdsError('TIME production is disabled');
 
-        const data = typeToRaw(date, DataType.TIME_OF_DAY);
-        this.device.send({
-            id:     this.cobId,
-            data:   data,
-        });
+        if(!this._cobId)
+            throw new EdsError('COB-ID TIME may not be 0');
+
+        if(!date)
+            date = new Date();
+
+        this.send(this._cobId, typeToRaw(date, DataType.TIME_OF_DAY));
     }
 
     /**
-     * Called when a new CAN message is received.
+     * Start the module.
+     *
+     * @override
+     */
+    start() {
+        if(!this.started) {
+            const obj1012 = this.eds.getEntry(0x1012);
+            if(obj1012)
+                this._addEntry(obj1012);
+
+            this.addEdsCallback('newEntry', (obj) => this._addEntry(obj));
+            this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
+
+            super.start();
+        }
+    }
+
+    /**
+     * Stop the module.
+     *
+     * @override
+     */
+    stop() {
+        if(this.started) {
+            this.removeEdsCallback('newEntry');
+            this.removeEdsCallback('removeEntry');
+
+            const obj1012 = this.eds.getEntry(0x1012);
+            if(obj1012)
+                this._removeEntry(obj1012);
+
+            super.stop();
+        }
+    }
+
+    /**
+     * Call when a new CAN message is received.
      *
      * @param {object} message - CAN frame.
      * @param {number} message.id - CAN message identifier.
      * @param {Buffer} message.data - CAN message data;
-     * @param {number} message.len - CAN message length in bytes.
+     * @fires Time#time
+     * @override
+     */
+    receive({ id, data }) {
+        if (this._consume && this._cobId === id) {
+            const date = rawToType(data, DataType.TIME_OF_DAY);
+
+            /**
+             * A Time object was received.
+             *
+             * @event Time#time
+             * @type {Date}
+             */
+            this.emit('time', date);
+        }
+    }
+
+    /**
+     * Listens for new Eds entries.
+     *
+     * @param {DataObject} entry - new entry.
      * @private
      */
-    _onMessage(message) {
-        if(!this.consume || (message.id & 0x7FF) !== this.cobId)
-            return;
+    _addEntry(entry) {
+        if(entry.index === 0x1012) {
+            this.addUpdateCallback(entry, (obj) => this._parse1012(obj));
+            this._parse1012(entry);
+        }
+    }
 
-        const date = rawToType(message.data, DataType.TIME_OF_DAY);
-        this.device.emit('time', date);
+    /**
+     * Listens for removed Eds entries.
+     *
+     * @param {DataObject} entry - removed entry.
+     * @private
+     */
+    _removeEntry(entry) {
+        if(entry.index === 0x1012) {
+            this.removeUpdateCallback(entry);
+            this._clear1012();
+        }
     }
 
     /**
@@ -182,29 +201,56 @@ class Time {
      * @private
      */
     _parse1012(data) {
-        /* Object 0x1012 - COB-ID TIME.
-         *   bit 0..10      11-bit CAN base frame.
-         *   bit 11..28     29-bit CAN extended frame.
-         *   bit 29         Frame type.
-         *   bit 30         Produce time objects.
-         *   bit 31         Consume time objects.
-         */
         const value = data.value;
         const consume = (value >> 31) & 0x1;
         const produce = (value >> 30) & 0x1;
         const rtr = (value >> 29) & 0x1;
         const cobId = value & 0x7FF;
 
-        if(rtr == 0x1)
-            throw TypeError("CAN extended frames are not supported.")
+        if(rtr != 0x1) {
+            this._consume = !!consume;
+            this._produce = !!produce;
+            this._cobId = cobId;
+        }
+        else {
+            this._clear1012();
+        }
+    }
 
-        if(cobId == 0)
-            throw TypeError('COB-ID TIME can not be 0.');
-
-        this._consume = !!consume;
-        this._produce = !!produce;
-        this._cobId = cobId;
+    /**
+     * Called when 0x1012 (COB-ID TIME) is removed.
+     *
+     * @private
+     */
+    _clear1012() {
+        this._consume = false;
+        this._produce = false;
+        this._cobId = null;
     }
 }
 
-module.exports=exports={ Time };
+////////////////////////////////// Deprecated //////////////////////////////////
+
+/**
+ * Initialize the device and audit the object dictionary.
+ *
+ * @deprecated Use {@link Time#start} instead.
+ * @function
+ */
+Time.prototype.init = deprecate(
+    function () {
+        const { ObjectType, DataType } = require('../types');
+
+        let obj1012 = this.eds.getEntry(0x1012);
+        if(obj1012 === undefined) {
+            obj1012 = this.eds.addEntry(0x1012, {
+                parameterName:  'COB-ID TIME',
+                objectType:     ObjectType.VAR,
+                dataType:       DataType.UNSIGNED32,
+            });
+        }
+
+        this.start();
+    }, 'Time.init() is deprecated. Use Time.start() instead.');
+
+module.exports = exports = { Time };
