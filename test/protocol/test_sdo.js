@@ -54,6 +54,29 @@ describe('Sdo', function () {
         device.sdo.stop();
     });
 
+    it('should transfer using the deprecated API', async function() {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.sdo.addServer(device.id);
+        device.sdoServer.addClient(device.id);
+        device.init();
+
+        await device.sdo.download({
+            serverId: device.id,
+            data: 0xc0ffee,
+            dataType: DataType.UNSIGNED32,
+            index: 7,
+        });
+
+        const result = await device.sdo.upload({
+            serverId: device.id,
+            index: 7,
+            dataType: DataType.UNSIGNED32,
+        });
+
+        expect(result).to.equal(0xc0ffee);
+        device.stop();
+    });
+
     describe('Expediated transfer', function () {
         for (let [type, value] of shortTypes) {
             it('should transfer ' + type, async function () {
@@ -84,6 +107,32 @@ describe('Sdo', function () {
                 device.stop();
             });
         }
+
+        it('should transfer to any valid node id [1 - 127]', async function () {
+            let device;
+            for(let id = 1; id < 0x7F; ++id) {
+                device = new Device({ id, loopback: true });
+                device.eds.addSdoClientParameter(device.id);
+                device.eds.addSdoServerParameter(device.id);
+                device.start();
+
+                await device.sdo.download({
+                    serverId: device.id,
+                    data: 0xc0ffee,
+                    dataType: DataType.UNSIGNED32,
+                    index: 7,
+                });
+
+                const result = await device.sdo.upload({
+                    serverId: device.id,
+                    index: 7,
+                    dataType: DataType.UNSIGNED32,
+                });
+
+                expect(result).to.equal(0xc0ffee);
+                device.stop();
+            }
+        });
     });
 
     describe('Segmented transfer', function () {
@@ -158,6 +207,32 @@ describe('Sdo', function () {
             });
 
             device.stop();
+        });
+
+        it('should transfer to any valid node id [1 - 127]', async function () {
+            let device;
+            for(let id = 1; id < 0x7F; ++id) {
+                device = new Device({ id, loopback: true });
+                device.eds.addSdoClientParameter(id);
+                device.eds.addSdoServerParameter(id);
+                device.start();
+
+                await device.sdo.download({
+                    serverId: device.id,
+                    data: 'long visible string',
+                    dataType: DataType.VISIBLE_STRING,
+                    index: 9,
+                });
+
+                const result = await device.sdo.upload({
+                    serverId: device.id,
+                    index: 9,
+                    dataType: DataType.VISIBLE_STRING,
+                });
+
+                expect(result).to.equal('long visible string');
+                device.stop();
+            }
         });
     });
 

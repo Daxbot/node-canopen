@@ -218,12 +218,12 @@ class Device extends EventEmitter {
         if (!this.id)
             throw new Error('id must be set');
 
-        if(!this._resetListener) {
+        if (!this._resetListener) {
             this._resetListener = (resetEds) => this._reset(resetEds);
             this.nmt.addListener('reset', this._resetListener);
         }
 
-        if(!this._stateListener) {
+        if (!this._stateListener) {
             this._stateListener = (state) => this._changeState(state);
             this.nmt.addListener('changeState', this._stateListener);
         }
@@ -237,11 +237,14 @@ class Device extends EventEmitter {
      * @since 6.0.0
      */
     stop() {
-        this.nmt.removeListener('reset', this._resetListener);
-        this._resetListener = null;
+        try {
+            this.nmt.removeListener('reset', this._resetListener);
+            this._resetListener = null;
 
-        this.nmt.removeListener('changeState', this._stateListener);
-        this._stateListener = null;
+            this.nmt.removeListener('changeState', this._stateListener);
+            this._stateListener = null;
+        }
+        catch (e) { /* ignore */ }
 
         for (const obj of Object.values(this.protocol))
             obj.stop();
@@ -588,7 +591,7 @@ class Device extends EventEmitter {
      * @listens Nmt#reset
      * @private
      */
-    _reset(resetEds=false) {
+    _reset(resetEds = false) {
         if (resetEds)
             this.eds.reset();
 
@@ -769,7 +772,7 @@ Device.prototype.init = deprecate(
             this.emit('time', date);
         });
 
-        if(this.lss) {
+        if (this.lss) {
             this.lss.addListener('changeMode', (mode) => {
                 /**
                  * Change of LSS mode (deprecated).
@@ -800,7 +803,7 @@ Device.prototype.init = deprecate(
         this.emcy.deviceId = this.id;
 
         for (const obj of Object.values(this.protocol)) {
-            if(typeof obj.init === 'function')
+            if (typeof obj.init === 'function')
                 obj.init();
         }
 
@@ -829,7 +832,7 @@ Device.prototype.setTransmitFunction = deprecate(
  */
 Device.prototype.mapEds = deprecate(
     function (args) {
-        if(args.serverId !== undefined)
+        if (args.serverId !== undefined)
             args.id = args.serverId;
 
         this.mapRemoteNode(args);
