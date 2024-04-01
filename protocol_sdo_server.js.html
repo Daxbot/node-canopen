@@ -856,10 +856,10 @@ SdoServer.prototype.getClient = deprecate(
  */
 SdoServer.prototype.addClient = deprecate(
     function (clientId, cobIdTx=0x580, cobIdRx=0x600) {
-        if((cobIdTx &amp; 0xF) == 0x0)
+        if((cobIdTx &amp; 0x7F) == 0x0)
             cobIdTx |= clientId;
 
-        if((cobIdRx &amp; 0xF) == 0x0)
+        if((cobIdRx &amp; 0x7F) == 0x0)
             cobIdRx |= clientId;
 
         this.eds.addSdoServerParameter(clientId, cobIdTx, cobIdRx);

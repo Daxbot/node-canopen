@@ -179,27 +179,11 @@ class SdoClient extends Protocol {
         const blockTransfer = args.blockTransfer || false;
 
         let server = this.serverMap[deviceId];
+
         if (server === undefined) {
-            // Attempt to use default server
-            if (this.serverMap[0] === undefined) {
-                const id = deviceId.toString(16);
-                throw new ReferenceError(`SDO server 0x${id} not mapped`);
-            }
-
-            let cobIdRx = this.serverMap[0].cobIdRx;
-            if ((cobIdRx &amp; 0xF) == 0x0)
-                cobIdRx |= deviceId;
-
-            let cobIdTx = this.serverMap[0].cobIdTx;
-            if ((cobIdTx &amp; 0xF) == 0x0)
-                cobIdTx |= deviceId;
-
-            server = this.serverMap[deviceId] = {
-                cobIdRx: cobIdRx,
-                cobIdTx: cobIdTx,
-                pending: {},
-                queue: new Queue(),
-            };
+            // User must call Eds#addSdoClientParameter() first.
+            const id = deviceId.toString(16);
+            throw new ReferenceError(`SDO server 0x${id} not mapped`);
         }
 
         if (index === undefined)
@@ -269,27 +253,11 @@ class SdoClient extends Protocol {
         const blockTransfer = args.blockTransfer || false;
 
         let server = this.serverMap[deviceId];
+
         if (server === undefined) {
-            // Attempt to use default server
-            if (this.serverMap[0] === undefined) {
-                const id = deviceId.toString(16);
-                throw new ReferenceError(`SDO server 0x${id} not mapped`);
-            }
-
-            let cobIdRx = this.serverMap[0].cobIdRx;
-            if ((cobIdRx &amp; 0xF) == 0x0)
-                cobIdRx |= deviceId;
-
-            let cobIdTx = this.serverMap[0].cobIdTx;
-            if ((cobIdTx &amp; 0xF) == 0x0)
-                cobIdTx |= deviceId;
-
-            server = this.serverMap[deviceId] = {
-                cobIdRx: cobIdRx,
-                cobIdTx: cobIdTx,
-                pending: Promise.resolve(),
-                queue: new Queue(),
-            };
+            // User must call Eds#addSdoClientParameter() first.
+            const id = deviceId.toString(16);
+            throw new ReferenceError(`SDO server 0x${id} not mapped`);
         }
 
         if (index === undefined)
@@ -957,10 +925,10 @@ SdoClient.prototype.getServer = deprecate(
  */
 SdoClient.prototype.addServer = deprecate(
     function (serverId, cobIdTx=0x600, cobIdRx=0x580) {
-        if((cobIdTx &amp; 0xF) == 0x0)
+        if((cobIdTx &amp; 0x7F) == 0x0)
             cobIdTx |= serverId;
 
-        if((cobIdRx &amp; 0xF) == 0x0)
+        if((cobIdRx &amp; 0x7F) == 0x0)
             cobIdRx |= serverId;
 
         this.eds.addSdoClientParameter(serverId, cobIdTx, cobIdRx);
