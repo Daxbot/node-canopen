@@ -15,7 +15,9 @@ const { Device, DataType } = require('../../index.js');
  */
 async function main(device, serverId) {
     // Add the SDO client parameters.
-    device.eds.addSdoClientParameter(serverId, 0x600, 0x580);
+    const cobIdTx = 0x600 | device.id; // client to server
+    const cobIdRx = 0x580 | device.id; // server to client
+    device.eds.addSdoClientParameter(serverId, cobIdTx, cobIdRx);
     device.start();
 
     // Write date to the server then read it back.

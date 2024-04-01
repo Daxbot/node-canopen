@@ -39,6 +39,11 @@ old indexing is provided so that iterating directly on Eds.dataObjects will
 still work as expected, however you should switch to using the new iterator
 methods (Eds.values(), Eds.entries(), Eds.keys()).
 
+5. SDO client/server parameters will no longer assume you want to add the
+node ID if you choose 0x580/0x600 for the SDO COB-IDs. As far as I can tell this
+is not officially in the standard, but was a convienence added to some other
+libraries.
+
 ## Documentation
 
 Pre-built documentation for the latest release is available

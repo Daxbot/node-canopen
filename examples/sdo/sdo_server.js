@@ -16,7 +16,9 @@ const { Device, DataType } = require('../../index.js');
 async function main(device, clientId) {
     await new Promise((resolve) => {
         // Add the SDO server parameters.
-        device.eds.addSdoServerParameter(clientId, 0x580, 0x600);
+        const cobIdTx = 0x580 | clientId; // client to server
+        const cobIdRx = 0x600 | clientId; // server to client
+        device.eds.addSdoServerParameter(clientId, cobIdTx, cobIdRx);
         device.start();
 
         // Create an additional entry to be accessed by the SDO client.
