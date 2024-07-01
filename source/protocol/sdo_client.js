@@ -142,7 +142,7 @@ class SdoClient extends Protocol {
 
         const data = await server.queue.push(() => {
             return new Promise((resolve, reject) => {
-                this.transfers[server.cobIdRx] = new SdoTransfer({
+                const transfer = new SdoTransfer({
                     resolve,
                     reject,
                     index,
@@ -151,29 +151,21 @@ class SdoClient extends Protocol {
                     cobId: server.cobIdTx,
                 });
 
+                this.transfers[server.cobIdRx] = transfer
+
                 const sendBuffer = Buffer.alloc(8);
                 sendBuffer.writeUInt16LE(index, 1);
                 sendBuffer.writeUInt8(subIndex, 3);
 
-                if (blockTransfer) {
-                    const header = (ClientCommand.BLOCK_UPLOAD << 5)
-                        | (1 << 2); // CRC supported
-
-                    sendBuffer.writeUInt8(header);
-                    sendBuffer.writeUInt16LE(this.blockSize, 4);
-                }
-                else {
-                    const header = (ClientCommand.UPLOAD_INITIATE << 5);
-                    sendBuffer.writeUInt8(header);
-                }
-
-                const transfer = this.transfers[server.cobIdRx];
-                transfer.start();
+                if (blockTransfer)
+                    this._blockUploadStart(transfer);
+                else
+                    this._uploadStart(transfer);
 
                 transfer.addListener('abort',
                     (code) => this._abortTransfer(transfer, code));
 
-                this.send(server.cobIdTx, sendBuffer);
+                transfer.start();
             });
         });
 
@@ -231,7 +223,7 @@ class SdoClient extends Protocol {
 
         await server.queue.push(() => {
             return new Promise((resolve, reject) => {
-                this.transfers[server.cobIdRx] = new SdoTransfer({
+                const transfer = new SdoTransfer({
                     cobId: server.cobIdTx,
                     resolve,
                     reject,
@@ -241,45 +233,21 @@ class SdoClient extends Protocol {
                     timeout,
                 });
 
+                this.transfers[server.cobIdRx] = transfer;
+
                 const sendBuffer = Buffer.alloc(8);
                 sendBuffer.writeUInt16LE(index, 1);
                 sendBuffer.writeUInt8(subIndex, 3);
 
-                if (blockTransfer) {
-                    // Block transfer
-                    const header = (ClientCommand.BLOCK_DOWNLOAD << 5)
-                        | (1 << 2)                  // CRC supported
-                        | (1 << 1);                 // Data size indicated
-
-                    sendBuffer.writeUInt8(header);
-                    sendBuffer.writeUInt32LE(data.length, 4);
-                }
-                else if (data.length > 4) {
-                    // Segmented transfer
-                    const header = (ClientCommand.DOWNLOAD_INITIATE << 5)
-                        | (1 << 0);                 // Data size indicated
-
-                    sendBuffer.writeUInt8(header);
-                    sendBuffer.writeUInt32LE(data.length, 4);
-                }
-                else {
-                    // Expedited transfer
-                    const header = (ClientCommand.DOWNLOAD_INITIATE << 5)
-                        | ((4 - data.length) << 2)  // Number of empty bytes
-                        | (1 << 1)                  // Expedited transfer
-                        | (1 << 0);                 // Data size indicated
-
-                    sendBuffer.writeUInt8(header);
-                    data.copy(sendBuffer, 4);
-                }
-
-                const transfer = this.transfers[server.cobIdRx];
-                transfer.start();
+                if (blockTransfer)
+                    this._blockDownloadStart(transfer);
+                else
+                    this._downloadStart(transfer);
 
                 transfer.addListener('abort',
                     (code) => this._abortTransfer(transfer, code));
 
-                this.send(server.cobIdTx, sendBuffer);
+                transfer.start();
             });
         });
     }
@@ -352,7 +320,7 @@ class SdoClient extends Protocol {
                 return;
             }
 
-            // Awknowledge block
+            // Acknowledge block
             if (transfer.blockFinished
                 || transfer.blockSequence == this.blockSize) {
 
@@ -453,6 +421,21 @@ class SdoClient extends Protocol {
     }
 
     /**
+     * Start an SDO upload.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @fires Protocol#message
+     * @private
+     */
+    _uploadStart(transfer) {
+        const sendBuffer = Buffer.alloc(8);
+        sendBuffer.writeUInt16LE(transfer.index, 1);
+        sendBuffer.writeUInt8(transfer.subIndex, 3);
+        sendBuffer.writeUInt8(ClientCommand.UPLOAD_INITIATE << 5);
+        this.send(transfer.cobId, sendBuffer);
+    }
+
+    /**
      * Handle ServerCommand.UPLOAD_INITIATE.
      *
      * @param {SdoTransfer} transfer - SDO context.
@@ -524,6 +507,41 @@ class SdoClient extends Protocol {
 
             transfer.refresh();
         }
+    }
+
+    /**
+     * Start an SDO download.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @fires Protocol#message
+     * @private
+     */
+    _downloadStart(transfer) {
+        const sendBuffer = Buffer.alloc(8);
+        sendBuffer.writeUInt16LE(transfer.index, 1);
+        sendBuffer.writeUInt8(transfer.subIndex, 3);
+
+        const length = transfer.data.length;
+        if (length > 4) {
+            // Segmented transfer
+            const header = (ClientCommand.DOWNLOAD_INITIATE << 5)
+                | (1 << 0);             // Data size indicated
+
+            sendBuffer.writeUInt8(header);
+            sendBuffer.writeUInt32LE(length, 4);
+        }
+        else {
+            // Expedited transfer
+            const header = (ClientCommand.DOWNLOAD_INITIATE << 5)
+                | ((4 - length) << 2)   // Number of empty bytes
+                | (1 << 1)              // Expedited transfer
+                | (1 << 0);             // Data size indicated
+
+            sendBuffer.writeUInt8(header);
+            transfer.data.copy(sendBuffer, 4);
+        }
+
+        this.send(transfer.cobId, sendBuffer);
     }
 
     /**
@@ -603,6 +621,28 @@ class SdoClient extends Protocol {
     }
 
     /**
+     * Start an SDO block download.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @fires Protocol#message
+     * @private
+     */
+    _blockDownloadStart(transfer) {
+        const sendBuffer = Buffer.alloc(8);
+        sendBuffer.writeUInt16LE(transfer.index, 1);
+        sendBuffer.writeUInt8(transfer.subIndex, 3);
+
+        const header = (ClientCommand.BLOCK_DOWNLOAD << 5)
+            | (1 << 2)                  // CRC supported
+            | (1 << 1);                 // Data size indicated
+
+        sendBuffer.writeUInt8(header);
+        sendBuffer.writeUInt32LE(transfer.data.length, 4);
+
+        this.send(transfer.cobId, sendBuffer);
+    }
+
+    /**
      * Download a data block.
      *
      * Sub-blocks are scheduled using setInterval to avoid blocking during
@@ -618,6 +658,9 @@ class SdoClient extends Protocol {
             clearInterval(transfer.blockInterval);
         }
 
+        if (this._blockDownloadTimeout > 1)
+            this._blockDownloadTimeout = this._blockDownloadTimeout >> 1;
+
         transfer.blockInterval = setInterval(() => {
             if (!transfer.active) {
                 // Transfer was interrupted
@@ -625,10 +668,6 @@ class SdoClient extends Protocol {
                 transfer.blockInterval = null;
                 return;
             }
-
-            if (this._blockDownloadTimeout > 1)
-                this._blockDownloadTimeout = this._blockDownloadTimeout >> 1;
-
 
             const sendBuffer = Buffer.alloc(8);
             const offset = 7 * (transfer.blockSequence
@@ -736,6 +775,27 @@ class SdoClient extends Protocol {
      */
     _blockDownloadEnd(transfer) {
         transfer.resolve();
+    }
+
+    /**
+     * Start an SDO block upload.
+     *
+     * @param {SdoTransfer} transfer - SDO context.
+     * @fires Protocol#message
+     * @private
+     */
+    _blockUploadStart(transfer) {
+        const sendBuffer = Buffer.alloc(8);
+        sendBuffer.writeUInt16LE(transfer.index, 1);
+        sendBuffer.writeUInt8(transfer.subIndex, 3);
+
+        const header = (ClientCommand.BLOCK_UPLOAD << 5)
+            | (1 << 2); // CRC supported
+
+        sendBuffer.writeUInt8(header);
+        sendBuffer.writeUInt16LE(this.blockSize, 4);
+
+        this.send(transfer.cobId, sendBuffer);
     }
 
     /**
