@@ -2411,6 +2411,8 @@ class Eds extends EventEmitter {
     /**
      * Set object 0x1017 - Producer heartbeat time.
      *
+     * A value of zero disables the heartbeat.
+     *
      * @param {number} producerTime - Producer heartbeat time in ms.
      * @param {object} [options] - DataObject creation options.
      * @param {AccessType} [options.accessType] - DataObject access type.
@@ -2418,9 +2420,6 @@ class Eds extends EventEmitter {
      * @since 6.0.0
      */
     setHeartbeatProducerTime(producerTime, options = {}) {
-        if (!producerTime)
-            throw new EdsError('producerTime may not be 0');
-
         let obj1017 = this.getEntry(0x1017);
         if (!obj1017) {
             obj1017 = this.addEntry(0x1017, {
