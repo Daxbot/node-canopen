@@ -51,6 +51,23 @@ describe('Nmt', function () {
         device.nmt._sendHeartbeat(device.id);
     });
 
+    it('should stop the heartbeat if producer time is 0', function (done) {
+        const device = new Device({ id: 0xA, loopback: true });
+        device.eds.setHeartbeatProducerTime(1);
+        device.eds.addHeartbeatConsumer(device.id, 10);
+
+        device.nmt.addListener('timeout', (deviceId) => {
+            expect(deviceId).to.equal(device.id);
+            device.nmt.stop();
+            done();
+        });
+
+        device.nmt.start();
+        setTimeout(() => {
+            device.eds.setHeartbeatProducerTime(0); // Stop heartbeat
+        }, 3);
+    });
+
     it('should emit on NMT state change', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
         device.eds.setHeartbeatProducerTime(1);
