@@ -80,8 +80,6 @@ class SdoClient extends Protocol {
         this.serverMap = {};
         this.transfers = {};
         this._blockSize = 127;
-        // Minimum timeout for the sdo block download.
-        this._blockDownloadTimeout = 1;
     }
 
     /**
@@ -118,6 +116,7 @@ class SdoClient extends Protocol {
      * @param {DataType} [args.dataType] - expected data type.
      * @param {number} [args.timeout] - time before transfer is aborted.
      * @param {boolean} [args.blockTransfer] - use block transfer protocol.
+     * @param {boolean} [args.blockInterval] - minimum time between data blocks.
      * @returns {Promise<Buffer | number | bigint | string | Date>} resolves when the upload is complete.
      * @fires Protocol#message
      */
@@ -128,6 +127,7 @@ class SdoClient extends Protocol {
         const timeout = args.timeout || 30;
         const dataType = args.dataType || null;
         const blockTransfer = args.blockTransfer || false;
+        const blockInterval = args.blockInterval || 2;
 
         let server = this.serverMap[deviceId];
 
@@ -148,10 +148,11 @@ class SdoClient extends Protocol {
                     index,
                     subIndex,
                     timeout,
+                    blockInterval,
                     cobId: server.cobIdTx,
                 });
 
-                this.transfers[server.cobIdRx] = transfer
+                this.transfers[server.cobIdRx] = transfer;
 
                 const sendBuffer = Buffer.alloc(8);
                 sendBuffer.writeUInt16LE(index, 1);
@@ -185,6 +186,7 @@ class SdoClient extends Protocol {
      * @param {DataType} [args.dataType] - type of data to download.
      * @param {number} [args.timeout] - time before transfer is aborted.
      * @param {boolean} [args.blockTransfer] - use block transfer protocol.
+     * @param {boolean} [args.blockInterval] - minimum time between data blocks.
      * @fires Protocol#message
      */
     async download(args) {
@@ -194,6 +196,7 @@ class SdoClient extends Protocol {
         const timeout = args.timeout || 30;
         const dataType = args.dataType || null;
         const blockTransfer = args.blockTransfer || false;
+        const blockInterval = args.blockInterval || 2;
 
         let server = this.serverMap[deviceId];
 
@@ -231,6 +234,7 @@ class SdoClient extends Protocol {
                     subIndex,
                     data,
                     timeout,
+                    blockInterval,
                 });
 
                 this.transfers[server.cobIdRx] = transfer;
@@ -653,19 +657,16 @@ class SdoClient extends Protocol {
      * @private
      */
     _blockDownloadProcess(transfer) {
-        if (transfer.blockInterval) {
+        if (transfer.blockTimer) {
             // Re-schedule timer
-            clearInterval(transfer.blockInterval);
+            clearInterval(transfer.blockTimer);
         }
 
-        if (this._blockDownloadTimeout > 1)
-            this._blockDownloadTimeout = this._blockDownloadTimeout >> 1;
-
-        transfer.blockInterval = setInterval(() => {
+        transfer.blockTimer = setInterval(() => {
             if (!transfer.active) {
                 // Transfer was interrupted
-                clearInterval(transfer.blockInterval);
-                transfer.blockInterval = null;
+                clearInterval(transfer.blockTimer);
+                transfer.blockTimer = null;
                 return;
             }
 
@@ -685,10 +686,10 @@ class SdoClient extends Protocol {
 
             if (transfer.blockFinished
                 || transfer.blockSequence >= transfer.blockSize) {
-                clearInterval(transfer.blockInterval);
-                transfer.blockInterval = null;
+                clearInterval(transfer.blockTimer);
+                transfer.blockTimer = null;
             }
-        }, this._blockDownloadTimeout);
+        }, transfer.blockInterval || 1);
     }
 
     /**

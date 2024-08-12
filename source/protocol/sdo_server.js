@@ -478,16 +478,16 @@ class SdoServer extends Protocol {
      * @private
      */
     _blockUploadProcess(client) {
-        if (client.blockInterval) {
+        if (client.blockTimer) {
             // Re-schedule timer
-            clearInterval(client.blockInterval);
+            clearInterval(client.blockTimer);
         }
 
-        client.blockInterval = setInterval(() => {
+        client.blockTimer = setInterval(() => {
             if (!client.active) {
                 // Transfer was interrupted
-                clearInterval(client.blockInterval);
-                client.blockInterval = null;
+                clearInterval(client.blockTimer);
+                client.blockTimer = null;
                 return;
             }
 
@@ -508,8 +508,8 @@ class SdoServer extends Protocol {
 
             if (client.blockFinished
                 || client.blockSequence >= client.blockSize) {
-                clearInterval(client.blockInterval);
-                client.blockInterval = null;
+                clearInterval(client.blockTimer);
+                client.blockTimer = null;
             }
         });
     }
