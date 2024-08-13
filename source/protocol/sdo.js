@@ -267,11 +267,12 @@ class SdoTransfer extends EventEmitter {
         this.cobId = args.cobId;
         this.data = args.data || Buffer.alloc(0);
         this.size = this.data.length;
+        this.blockInterval = args.blockInterval;
 
         this.active = false;
         this.toggle = 0;
         this.timer = null;
-        this.blockInterval = null;
+        this.blockTimer = null;
         this.blockDownload = false;
         this.blockFinished = false;
         this.blockSequence = 0;
@@ -281,10 +282,10 @@ class SdoTransfer extends EventEmitter {
     /** Reset internal values. */
     reset() {
         clearTimeout(this.timer);
-        clearInterval(this.blockInterval);
+        clearInterval(this.blockTimer);
         this.active = false;
         this.timer = null;
-        this.blockInterval = null;
+        this.blockTimer = null;
         this.blockTransfer = false;
         this.blockFinished = false;
         this.blockSequence = 0;
