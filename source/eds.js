@@ -2692,18 +2692,6 @@ class Eds extends EventEmitter {
         if (deviceId < 0 || deviceId > 0x7F)
             throw RangeError('deviceId must be in range [0-127]');
 
-        for (let [index, entry] of this.entries()) {
-            index = parseInt(index, 16);
-            if (index < 0x1200 || index > 0x127F)
-                continue;
-
-            const subObj = entry.at(3);
-            if (subObj && subObj.value === deviceId) {
-                deviceId = '0x' + deviceId.toString(16);
-                throw new EdsError(`SDO client ${deviceId} already exists`);
-            }
-        }
-
         let index = options.index;
         if (index) {
             if (this.getEntry(options.index))
@@ -2849,18 +2837,6 @@ class Eds extends EventEmitter {
 
         if (!deviceId || deviceId < 1 || deviceId > 0x7F)
             throw new RangeError('deviceId must be in range [1-127]');
-
-        for (let [index, entry] of this.entries()) {
-            index = parseInt(index, 16);
-            if (index < 0x1280 || index > 0x12FF)
-                continue;
-
-            const subObj = entry.at(3);
-            if (subObj && subObj.value === deviceId) {
-                deviceId = '0x' + deviceId.toString(16);
-                throw new EdsError(`SDO server ${deviceId} already exists`);
-            }
-        }
 
         let index = options.index;
         if (index) {

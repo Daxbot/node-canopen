@@ -77,7 +77,7 @@ class Queue {
 class SdoClient extends Protocol {
     constructor(eds) {
         super(eds);
-        this.serverMap = {};
+        this.sdoServers = [];
         this.transfers = {};
         this._blockSize = 127;
     }
@@ -116,7 +116,9 @@ class SdoClient extends Protocol {
      * @param {DataType} [args.dataType] - expected data type.
      * @param {number} [args.timeout] - time before transfer is aborted.
      * @param {boolean} [args.blockTransfer] - use block transfer protocol.
-     * @param {boolean} [args.blockInterval] - minimum time between data blocks.
+     * @param {number} [args.blockInterval] - minimum time between data blocks.
+     * @param {number} [args.blockInterval] - minimum time between data blocks.
+     * @param {number} [args.cobIdRx] -  COB-ID server -> client.
      * @returns {Promise<Buffer | number | bigint | string | Date>} resolves when the upload is complete.
      * @fires Protocol#message
      */
@@ -128,10 +130,10 @@ class SdoClient extends Protocol {
         const dataType = args.dataType || null;
         const blockTransfer = args.blockTransfer || false;
         const blockInterval = args.blockInterval || 2;
+        const cobIdRx = args.cobIdRx || null;
 
-        let server = this.serverMap[deviceId];
-
-        if (server === undefined) {
+        let server = this._getServer({ deviceId, cobIdRx });
+        if (!server) {
             // User must call Eds#addSdoClientParameter() first.
             const id = deviceId.toString(16);
             throw new ReferenceError(`SDO server 0x${id} not mapped`);
@@ -186,7 +188,8 @@ class SdoClient extends Protocol {
      * @param {DataType} [args.dataType] - type of data to download.
      * @param {number} [args.timeout] - time before transfer is aborted.
      * @param {boolean} [args.blockTransfer] - use block transfer protocol.
-     * @param {boolean} [args.blockInterval] - minimum time between data blocks.
+     * @param {number} [args.blockInterval] - minimum time between data blocks.
+     * @param {number} [args.cobIdRx] -  COB-ID server -> client.
      * @fires Protocol#message
      */
     async download(args) {
@@ -197,9 +200,9 @@ class SdoClient extends Protocol {
         const dataType = args.dataType || null;
         const blockTransfer = args.blockTransfer || false;
         const blockInterval = args.blockInterval || 2;
+        const cobIdRx = args.cobIdRx || null;
 
-        let server = this.serverMap[deviceId];
-
+        let server = this._getServer({ deviceId, cobIdRx });
         if (server === undefined) {
             // User must call Eds#addSdoClientParameter() first.
             const id = deviceId.toString(16);
@@ -263,7 +266,7 @@ class SdoClient extends Protocol {
      */
     start() {
         if(!this.started) {
-            this.serverMap = {};
+            this.sdoServers = [];
             for (const server of this.eds.getSdoClientParameters())
                 this._addServer(server);
 
@@ -388,6 +391,25 @@ class SdoClient extends Protocol {
     }
 
     /**
+     * Returns the first SDO server matching deviceId.
+     *
+     * @param {object} args - SDO client parameters.
+     * @param {number} args.deviceId - device identifier.
+     * @param {number} args.cobIdRx - COB-ID server -> client.
+     * @returns {object | null} server object if found.
+     */
+    _getServer({ deviceId, cobIdRx }) {
+        for(const server of this.sdoServers) {
+            if(server.deviceId === deviceId) {
+                if(!cobIdRx || cobIdRx === server.cobIdRx)
+                    return server;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Add an SDO server.
      *
      * @param {object} args - SDO client parameters.
@@ -397,11 +419,12 @@ class SdoClient extends Protocol {
      * @private
      */
     _addServer({ deviceId, cobIdTx, cobIdRx }) {
-        this.serverMap[deviceId] = {
+        this.sdoServers.push({
+            deviceId,
             cobIdTx,
             cobIdRx,
             queue: new Queue(),
-        };
+        });
     }
 
     /**
@@ -421,7 +444,17 @@ class SdoClient extends Protocol {
             delete this.transfers[cobIdRx];
         }
 
-        delete this.serverMap[deviceId];
+        const sdoServers = [];
+        for(const server of this.sdoServers) {
+            if(server.deviceId === deviceId) {
+                if(!cobIdRx || cobIdRx === server.cobIdRx)
+                    continue; // Remove server
+            }
+
+            sdoServers.push(server);
+        }
+
+        this.sdoServers = sdoServers;
     }
 
     /**
