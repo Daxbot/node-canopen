@@ -3527,13 +3527,13 @@ class Eds extends EventEmitter {
             return null;
 
         const cobIdRx = subObj1.value;
-        if (!cobIdRx || ((cobIdRx >> 31) & 0x1) == 0x1)
+        if (!cobIdRx || ((cobIdRx >> 29) & 0x1) == 0x1)
             throw new EdsError('CAN extended frames are not supported');
 
         result[0] = cobIdRx & 0x7FF;
 
         const cobIdTx = subObj2.value;
-        if (!cobIdTx || ((cobIdTx >> 31) & 0x1) == 0x1)
+        if (!cobIdTx || ((cobIdTx >> 29) & 0x1) == 0x1)
             throw new EdsError('CAN extended frames are not supported');
 
         result[1] = cobIdTx & 0x7FF;
