@@ -2941,6 +2941,9 @@ class Eds extends EventEmitter {
                 continue;
 
             const pdo = this._parsePdo(index);
+            if (!pdo)
+                continue;
+
             delete pdo.syncStart; // Not used by RPDOs
 
             rpdo.push(pdo);
@@ -3172,6 +3175,9 @@ class Eds extends EventEmitter {
                 continue;
 
             const pdo = this._parsePdo(index);
+            if (!pdo)
+                continue;
+
             tpdo.push(pdo);
         }
 
