@@ -333,24 +333,23 @@ class Device extends EventEmitter {
                     if (subIndex !== null)
                         obj = eds.getEntry(obj.index);
 
-                    if (mapped.includes(obj.index))
-                        continue; // Already mapped
+                    if (!mapped[obj.index]) {
+                        mapped[obj.index] = dataIndex;
 
-                    mapped.push(obj.index);
-
-                    // Add data object to device EDS
-                    this.eds.addEntry(dataIndex, obj);
-                    for (let j = 1; j < obj.subNumber; ++j)
-                        this.eds.addSubEntry(dataIndex, j, obj[j]);
+                        // Add data object to device EDS
+                        this.eds.addEntry(dataIndex, obj);
+                        for (let j = 1; j < obj.subNumber; ++j)
+                            this.eds.addSubEntry(dataIndex, j, obj[j]);
+                    }
 
                     // Prepare to map the new data object
                     if (subIndex) {
                         dataObjects.push(
-                            this.eds.getSubEntry(dataIndex, subIndex));
+                            this.eds.getSubEntry(mapped[obj.index], subIndex));
                     }
                     else {
                         dataObjects.push(
-                            this.eds.getEntry(dataIndex));
+                            this.eds.getEntry(mapped[obj.index]));
                     }
                 }
 
