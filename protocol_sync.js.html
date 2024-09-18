@@ -359,7 +359,7 @@ class Sync extends Protocol {
                 else {
                     this.send(this._cobId, Buffer.alloc(0));
                 }
-            }, this._cyclePeriod / 1000);
+            }, cyclePeriod / 1000);
         }
     }
 
