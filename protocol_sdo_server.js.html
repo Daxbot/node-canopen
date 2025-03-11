@@ -611,7 +611,7 @@ class SdoServer extends Protocol {
         sendBuffer.writeUInt8(header);
         sendBuffer.writeUInt16LE(client.index, 1);
         sendBuffer.writeUInt8(client.subIndex, 3);
-        sendBuffer.writeUInt16LE(client.data.length, 4);
+        sendBuffer.writeUInt32LE(client.data.length, 4);
 
         this.send(client.cobId, sendBuffer);
 
