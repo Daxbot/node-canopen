@@ -305,13 +305,15 @@ describe('Sdo', function () {
             });
         }
 
-        it('should use multiple blocks', async function () {
+        it('should handle large transfers', async function () {
+            this.timeout(60000);
+
             const device = new Device({ id: 0xA, loopback: true });
             device.eds.addSdoClientParameter(device.id);
             device.eds.addSdoServerParameter(device.id);
             device.start();
 
-            const data = Buffer.alloc(64);
+            const data = Buffer.alloc(65*1024);
             for (let i = 0; i < data.length; ++i)
                 data[i] = Math.floor(Math.random() * 0xff);
 
