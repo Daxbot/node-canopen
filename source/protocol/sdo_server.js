@@ -29,6 +29,7 @@ class SdoServer extends Protocol {
         super(eds);
         this.transfers = {};
         this._blockSize = 127;
+        this._blockInterval = null;
     }
 
     /**
@@ -38,6 +39,16 @@ class SdoServer extends Protocol {
      */
     get blockSize() {
         return this._blockSize;
+    }
+
+    /**
+     * Time delay between each segment during a block transfer.
+     *
+     * @type {number}
+     * @since 6.2.0
+     */
+    get blockInterval() {
+        return this._blockInterval;
     }
 
     /**
@@ -51,6 +62,19 @@ class SdoServer extends Protocol {
             throw RangeError('blockSize must be in range [1-127]');
 
         this._blockSize = value;
+    }
+
+    /**
+     * Set the time delay between each segment during a block transfer.
+     *
+     * @param {number} value - block interval in milliseconds.
+     * @since 6.2.0
+     */
+    setBlockInterval(value) {
+        if(value < 0)
+            throw RangeError('blockInterval must be positive or zero');
+
+        this._blockInterval = value;
     }
 
     /**
@@ -470,7 +494,7 @@ class SdoServer extends Protocol {
     /**
      * Download a data block.
      *
-     * Sub-blocks are scheduled using setInterval to avoid blocking during
+     * Sub-blocks are scheduled on the event loop to avoid blocking during
      * large transfers.
      *
      * @param {SdoTransfer} client - SDO context.
@@ -478,40 +502,37 @@ class SdoServer extends Protocol {
      * @private
      */
     _blockUploadProcess(client) {
-        if (client.blockTimer) {
-            // Re-schedule timer
-            clearInterval(client.blockTimer);
+        if (!client.active) {
+            // Transfer was interrupted
+            return;
         }
 
-        client.blockTimer = setInterval(() => {
-            if (!client.active) {
-                // Transfer was interrupted
-                clearInterval(client.blockTimer);
-                client.blockTimer = null;
-                return;
+        const sendBuffer = Buffer.alloc(8);
+        const offset = 7 * (client.blockSequence
+            + (client.blockCount * client.blockSize));
+
+        sendBuffer[0] = ++client.blockSequence;
+        if ((offset + 7) >= client.data.length) {
+            sendBuffer[0] |= 0x80; // Last block
+            client.blockFinished = true;
+        }
+
+        client.data.copy(sendBuffer, 1, offset, offset + 7);
+        this.send(client.cobId, sendBuffer);
+
+        client.refresh();
+
+        if (!client.blockFinished && client.blockSequence < client.blockSize) {
+            if(this._blockInterval === 0) {
+                // Fire segments as fast as possible
+                setImmediate(() => this._blockUploadProcess(client));
             }
-
-            const sendBuffer = Buffer.alloc(8);
-            const offset = 7 * (client.blockSequence
-                + (client.blockCount * client.blockSize));
-
-            sendBuffer[0] = ++client.blockSequence;
-            if ((offset + 7) >= client.data.length) {
-                sendBuffer[0] |= 0x80; // Last block
-                client.blockFinished = true;
+            else {
+                // If blockInterval is undefined, then default to 1 ms
+                setTimeout(() => this._blockUploadProcess(client),
+                    this._blockInterval || 1);
             }
-
-            client.data.copy(sendBuffer, 1, offset, offset + 7);
-            this.send(client.cobId, sendBuffer);
-
-            client.refresh();
-
-            if (client.blockFinished
-                || client.blockSequence >= client.blockSize) {
-                clearInterval(client.blockTimer);
-                client.blockTimer = null;
-            }
-        });
+        }
     }
 
     /**

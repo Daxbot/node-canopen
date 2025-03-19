@@ -234,6 +234,41 @@ describe('Sdo', function () {
                 device.stop();
             }
         });
+
+        it('should handle large transfers', async function () {
+            const device = new Device({ id: 0xA, loopback: true });
+            device.eds.addSdoClientParameter(device.id);
+            device.eds.addSdoServerParameter(device.id);
+            device.start();
+
+            const data = Buffer.alloc(65*1024);
+            for (let i = 0; i < data.length; ++i)
+                data[i] = Math.floor(Math.random() * 0xff);
+
+            device.eds.addEntry(0x1234, {
+                parameterName: 'A long buffer',
+                dataType: DataType.DOMAIN,
+                accessType: AccessType.READ_WRITE,
+            });
+
+            await device.sdo.download({
+                serverId: device.id,
+                data: data,
+                dataType: DataType.DOMAIN,
+                index: 0x1234,
+                blockTransfer: false,
+            });
+
+            const result = await device.sdo.upload({
+                serverId: device.id,
+                dataType: DataType.DOMAIN,
+                index: 0x1234,
+                blockTransfer: false,
+            });
+
+            expect(Buffer.compare(data, result)).to.equal(0);
+            device.stop();
+        });
     });
 
     describe('Block transfer', function () {
@@ -306,8 +341,6 @@ describe('Sdo', function () {
         }
 
         it('should handle large transfers', async function () {
-            this.timeout(60000);
-
             const device = new Device({ id: 0xA, loopback: true });
             device.eds.addSdoClientParameter(device.id);
             device.eds.addSdoServerParameter(device.id);
@@ -317,8 +350,9 @@ describe('Sdo', function () {
             for (let i = 0; i < data.length; ++i)
                 data[i] = Math.floor(Math.random() * 0xff);
 
-            device.protocol.sdoClient.blockSize = 1;
-            device.protocol.sdoServer.blockSize = 1;
+            device.sdo.setBlockSize(127);
+            device.sdoServer.setBlockSize(127);
+            device.sdoServer.setBlockInterval(0);
 
             device.eds.addEntry(0x1234, {
                 parameterName: 'A long buffer',
@@ -332,6 +366,7 @@ describe('Sdo', function () {
                 dataType: DataType.DOMAIN,
                 index: 0x1234,
                 blockTransfer: true,
+                blockInterval: 0,
             });
 
             const result = await device.sdo.upload({

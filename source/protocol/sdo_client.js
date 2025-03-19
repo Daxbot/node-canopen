@@ -117,7 +117,6 @@ class SdoClient extends Protocol {
      * @param {number} [args.timeout] - time before transfer is aborted.
      * @param {boolean} [args.blockTransfer] - use block transfer protocol.
      * @param {number} [args.blockInterval] - minimum time between data blocks.
-     * @param {number} [args.blockInterval] - minimum time between data blocks.
      * @param {number} [args.cobIdRx] -  COB-ID server -> client.
      * @returns {Promise<Buffer | number | bigint | string | Date>} resolves when the upload is complete.
      * @fires Protocol#message
@@ -129,7 +128,7 @@ class SdoClient extends Protocol {
         const timeout = args.timeout || 30;
         const dataType = args.dataType || null;
         const blockTransfer = args.blockTransfer || false;
-        const blockInterval = args.blockInterval || 2;
+        const blockInterval = args.blockInterval;
         const cobIdRx = args.cobIdRx || null;
 
         let server = this._getServer({ deviceId, cobIdRx });
@@ -199,7 +198,7 @@ class SdoClient extends Protocol {
         const timeout = args.timeout || 30;
         const dataType = args.dataType || null;
         const blockTransfer = args.blockTransfer || false;
-        const blockInterval = args.blockInterval || 2;
+        const blockInterval = args.blockInterval;
         const cobIdRx = args.cobIdRx || null;
 
         let server = this._getServer({ deviceId, cobIdRx });
@@ -682,7 +681,7 @@ class SdoClient extends Protocol {
     /**
      * Download a data block.
      *
-     * Sub-blocks are scheduled using setInterval to avoid blocking during
+     * Sub-blocks are scheduled on the event loop to avoid blocking during
      * large transfers.
      *
      * @param {SdoTransfer} transfer - SDO context.
@@ -690,39 +689,37 @@ class SdoClient extends Protocol {
      * @private
      */
     _blockDownloadProcess(transfer) {
-        if (transfer.blockTimer) {
-            // Re-schedule timer
-            clearInterval(transfer.blockTimer);
+        if (!transfer.active) {
+            // Transfer was interrupted
+            return;
         }
 
-        transfer.blockTimer = setInterval(() => {
-            if (!transfer.active) {
-                // Transfer was interrupted
-                clearInterval(transfer.blockTimer);
-                transfer.blockTimer = null;
-                return;
+        const sendBuffer = Buffer.alloc(8);
+        const offset = 7 * (transfer.blockSequence
+            + (transfer.blockCount * transfer.blockSize));
+
+        sendBuffer[0] = ++transfer.blockSequence;
+        if ((offset + 7) >= transfer.data.length) {
+            sendBuffer[0] |= 0x80; // Last block
+            transfer.blockFinished = true;
+        }
+
+        transfer.data.copy(sendBuffer, 1, offset, offset + 7);
+        this.send(transfer.cobId, sendBuffer);
+        transfer.refresh();
+
+        if (!transfer.blockFinished
+            && transfer.blockSequence < transfer.blockSize) {
+            if(transfer.blockInterval === 0) {
+                // Fire segments as fast as possible
+                setImmediate(() => this._blockDownloadProcess(transfer));
             }
-
-            const sendBuffer = Buffer.alloc(8);
-            const offset = 7 * (transfer.blockSequence
-                + (transfer.blockCount * transfer.blockSize));
-
-            sendBuffer[0] = ++transfer.blockSequence;
-            if ((offset + 7) >= transfer.data.length) {
-                sendBuffer[0] |= 0x80; // Last block
-                transfer.blockFinished = true;
+            else {
+                // If blockInterval is undefined, then default to 1 ms
+                setTimeout(() => this._blockDownloadProcess(transfer),
+                    transfer.blockInterval || 1)
             }
-
-            transfer.data.copy(sendBuffer, 1, offset, offset + 7);
-            this.send(transfer.cobId, sendBuffer);
-            transfer.refresh();
-
-            if (transfer.blockFinished
-                || transfer.blockSequence >= transfer.blockSize) {
-                clearInterval(transfer.blockTimer);
-                transfer.blockTimer = null;
-            }
-        }, transfer.blockInterval || 1);
+        }
     }
 
     /**
