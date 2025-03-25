@@ -145,6 +145,8 @@ class SdoServer extends Protocol {
                 return;
             }
 
+            client.refresh();
+
             // Awknowledge block
             if (client.blockFinished
                 || client.blockSequence == this.blockSize) {
@@ -156,14 +158,10 @@ class SdoServer extends Protocol {
                 sendBuffer.writeUInt8(header);
                 sendBuffer.writeInt8(client.blockSequence, 1);
                 sendBuffer.writeUInt8(this.blockSize, 2);
-
+                client.blockSequence = 0; // Reset sequence
                 this.send(client.cobId, sendBuffer);
-
-                // Reset sequence
-                client.blockSequence = 0;
             }
 
-            client.refresh();
             return;
         }
 
@@ -253,6 +251,7 @@ class SdoServer extends Protocol {
         client.index = data.readUInt16LE(1);
         client.subIndex = data.readUInt8(3);
 
+        const sendBuffer = Buffer.alloc(8);
         if (data[0] & 0x02) {
             // Expedited client
             let entry = this.eds.getEntry(client.index);
@@ -292,28 +291,23 @@ class SdoServer extends Protocol {
 
             entry.raw = raw;
 
-            const sendBuffer = Buffer.alloc(8);
             sendBuffer.writeUInt8(ServerCommand.DOWNLOAD_INITIATE << 5);
             sendBuffer.writeUInt16LE(client.index, 1);
             sendBuffer.writeUInt8(client.subIndex, 3);
-
-            this.send(client.cobId, sendBuffer);
         }
         else {
             // Segmented client
             client.data = Buffer.alloc(0);
             client.size = 0;
             client.toggle = 0;
+            client.start();
 
-            const sendBuffer = Buffer.alloc(8);
             sendBuffer.writeUInt8(ServerCommand.DOWNLOAD_INITIATE << 5);
             sendBuffer.writeUInt16LE(client.index, 1);
             sendBuffer.writeUInt8(client.subIndex, 3);
-
-            this.send(client.cobId, sendBuffer);
-
-            client.start();
         }
+
+        this.send(client.cobId, sendBuffer);
     }
 
     /**
@@ -347,9 +341,9 @@ class SdoServer extends Protocol {
             return;
         }
 
+        const sendBuffer = Buffer.alloc(8);
         if (entry.size <= 4) {
             // Expedited client
-            const sendBuffer = Buffer.alloc(8);
             const header = (ServerCommand.UPLOAD_INITIATE << 5)
                 | ((4 - entry.size) << 2)
                 | 0x2;
@@ -362,27 +356,23 @@ class SdoServer extends Protocol {
 
             if (entry.size < 4)
                 sendBuffer[0] |= ((4 - entry.size) << 2) | 0x1;
-
-            this.send(client.cobId, sendBuffer);
         }
         else {
             // Segmented client
             client.data = Buffer.from(entry.raw);
             client.size = 0;
             client.toggle = 0;
+            client.start();
 
-            const sendBuffer = Buffer.alloc(8);
             const header = (ServerCommand.UPLOAD_INITIATE << 5) | 0x1;
 
             sendBuffer.writeUInt8(header, 0);
             sendBuffer.writeUInt16LE(client.index, 1);
             sendBuffer.writeUInt8(client.subIndex, 3);
             sendBuffer.writeUInt32LE(client.data.length, 4);
-
-            this.send(client.cobId, sendBuffer);
-
-            client.start();
         }
+
+        this.send(client.cobId, sendBuffer);
     }
 
     /**
@@ -413,10 +403,9 @@ class SdoServer extends Protocol {
         sendBuffer.writeUInt8(header, 0);
         client.toggle ^= 1;
         client.size += count;
+        client.refresh();
 
         this.send(client.cobId, sendBuffer);
-
-        client.refresh();
     }
 
     /**
@@ -485,10 +474,9 @@ class SdoServer extends Protocol {
 
         sendBuffer.writeUInt8(header);
         client.toggle ^= 1;
+        client.refresh();
 
         this.send(client.cobId, sendBuffer);
-
-        client.refresh();
     }
 
     /**
@@ -518,10 +506,9 @@ class SdoServer extends Protocol {
         }
 
         client.data.copy(sendBuffer, 1, offset, offset + 7);
-        this.send(client.cobId, sendBuffer);
-
         client.refresh();
 
+        // Schedule next call
         if (!client.blockFinished && client.blockSequence < client.blockSize) {
             if(this._blockInterval === 0) {
                 // Fire segments as fast as possible
@@ -533,6 +520,8 @@ class SdoServer extends Protocol {
                     this._blockInterval || 1);
             }
         }
+
+        this.send(client.cobId, sendBuffer);
     }
 
     /**
@@ -573,6 +562,7 @@ class SdoServer extends Protocol {
         client.blockCount = 0;
         client.blockSequence = 0;
         client.blockFinished = false;
+        client.start();
 
         // Confirm transfer
         const header = (ServerCommand.BLOCK_UPLOAD << 5)
@@ -586,8 +576,6 @@ class SdoServer extends Protocol {
         sendBuffer.writeUInt32LE(client.data.length, 4);
 
         this.send(client.cobId, sendBuffer);
-
-        client.start();
     }
 
     /**
@@ -623,9 +611,9 @@ class SdoServer extends Protocol {
                     sendBuffer.writeUInt16LE(crcValue, 1);
                 }
 
-                this.send(client.cobId, sendBuffer);
-
                 client.refresh();
+
+                this.send(client.cobId, sendBuffer);
                 return;
             }
         }
@@ -735,7 +723,7 @@ class SdoServer extends Protocol {
 
             this.send(client.cobId, sendBuffer);
 
-            client.resolve();
+            client.resolve(); // Resolve the promise
         }
         else {
             // Initiate block transfer
@@ -757,10 +745,8 @@ class SdoServer extends Protocol {
             sendBuffer.writeUInt16LE(client.index, 1);
             sendBuffer.writeUInt8(client.subIndex, 3);
             sendBuffer.writeUInt8(this.blockSize, 4);
-
-            this.send(client.cobId, sendBuffer);
-
             client.start();
+            this.send(client.cobId, sendBuffer);
         }
     }
 

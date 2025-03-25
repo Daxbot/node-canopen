@@ -277,10 +277,10 @@ class Lss extends Protocol {
                 resolve();
             }, timeout);
 
+            this.pending[0x4f] = { resolve, timer };
+
             this._sendLssRequest(
                 LssCommand.FASTSCAN, Buffer.from([0, 0, 0, 0, 0x80]));
-
-            this.pending[0x4f] = { resolve, timer };
         });
 
         if (timeoutFlag)
@@ -302,9 +302,9 @@ class Lss extends Protocol {
                     data[4] = i; // Bit checked
                     data[5] = 0; // LSS sub
                     data[6] = 0; // LSS next
-                    this._sendLssRequest(LssCommand.FASTSCAN, data);
 
                     this.pending[0x4f] = { resolve, timer };
+                    this._sendLssRequest(LssCommand.FASTSCAN, data);
                 });
             }
         }
@@ -320,9 +320,9 @@ class Lss extends Protocol {
             data[4] = 0; // Bit checked
             data[5] = 0; // LSS sub
             data[6] = 1; // LSS next
-            this._sendLssRequest(LssCommand.FASTSCAN, data);
 
             this.pending[0x4f] = { resolve, timer };
+            this._sendLssRequest(LssCommand.FASTSCAN, data);
         });
 
         // Find product-code
@@ -341,9 +341,9 @@ class Lss extends Protocol {
                     data[4] = i; // Bit checked
                     data[5] = 1; // LSS sub
                     data[6] = 1; // LSS next
-                    this._sendLssRequest(LssCommand.FASTSCAN, data);
 
                     this.pending[0x4f] = { resolve, timer };
+                    this._sendLssRequest(LssCommand.FASTSCAN, data);
                 });
             }
         }
@@ -359,9 +359,9 @@ class Lss extends Protocol {
             data[4] = 0; // Bit checked
             data[5] = 1; // LSS sub
             data[6] = 2; // LSS next
-            this._sendLssRequest(LssCommand.FASTSCAN, data);
 
             this.pending[0x4f] = { resolve, timer };
+            this._sendLssRequest(LssCommand.FASTSCAN, data);
         });
 
         // Find revision-number
@@ -380,9 +380,9 @@ class Lss extends Protocol {
                     data[4] = i; // Bit checked
                     data[5] = 2; // LSS sub
                     data[6] = 2; // LSS next
-                    this._sendLssRequest(LssCommand.FASTSCAN, data);
 
                     this.pending[0x4f] = { resolve, timer };
+                    this._sendLssRequest(LssCommand.FASTSCAN, data);
                 });
             }
         }
@@ -398,9 +398,9 @@ class Lss extends Protocol {
             data[4] = 0; // Bit checked
             data[5] = 2; // LSS sub
             data[6] = 3; // LSS next
-            this._sendLssRequest(LssCommand.FASTSCAN, data);
 
             this.pending[0x4f] = { resolve, timer };
+            this._sendLssRequest(LssCommand.FASTSCAN, data);
         });
 
         // Find serial-number
@@ -419,9 +419,9 @@ class Lss extends Protocol {
                     data[4] = i; // Bit checked
                     data[5] = 3; // LSS sub
                     data[6] = 3; // LSS next
-                    this._sendLssRequest(LssCommand.FASTSCAN, data);
 
                     this.pending[0x4f] = { resolve, timer };
+                    this._sendLssRequest(LssCommand.FASTSCAN, data);
                 });
             }
         }
@@ -437,9 +437,9 @@ class Lss extends Protocol {
             data[4] = 0; // Bit checked
             data[5] = 3; // LSS sub
             data[6] = 0; // LSS next
-            this._sendLssRequest(LssCommand.FASTSCAN, data);
 
             this.pending[0x4f] = { resolve, timer };
+            this._sendLssRequest(LssCommand.FASTSCAN, data);
         });
 
         return { vendorId, productCode, revisionNumber, serialNumber };
@@ -490,6 +490,8 @@ class Lss extends Protocol {
                 reject(new LssError('timeout'));
             }, args.timeout);
 
+            this.pending[68] = { resolve, timer };
+
             const data = Buffer.alloc(4);
 
             // Send vendor-id
@@ -507,8 +509,6 @@ class Lss extends Protocol {
             // Send serial-number
             data.writeUInt32LE(args.serialNumber);
             this._sendLssRequest(LssCommand.SWITCH_MODE_SERIAL_NUMBER, data);
-
-            this.pending[68] = { resolve, timer };
         });
     }
 
@@ -526,13 +526,13 @@ class Lss extends Protocol {
                 reject(new LssError('timeout'));
             }, timeout);
 
-            this._sendLssRequest(
-                LssCommand.CONFIGURE_NODE_ID, Buffer.from([nodeId]));
-
             this.pending[LssCommand.CONFIGURE_NODE_ID] = {
                 resolve,
                 timer
             };
+
+            this._sendLssRequest(
+                LssCommand.CONFIGURE_NODE_ID, Buffer.from([nodeId]));
         });
 
         let message = '';
@@ -568,14 +568,14 @@ class Lss extends Protocol {
                 reject(new LssError('timeout'));
             }, timeout);
 
-            this._sendLssRequest(
-                LssCommand.CONFIGURE_BIT_TIMING,
-                Buffer.from([tableSelect, tableIndex]));
-
             this.pending[LssCommand.CONFIGURE_BIT_TIMING] = {
                 resolve,
                 timer
             };
+
+            this._sendLssRequest(
+                LssCommand.CONFIGURE_BIT_TIMING,
+                Buffer.from([tableSelect, tableIndex]));
         });
 
         let message = '';
@@ -621,12 +621,12 @@ class Lss extends Protocol {
                 reject(new LssError('timeout'));
             }, timeout);
 
-            this._sendLssRequest(LssCommand.STORE_CONFIGURATION);
-
             this.pending[LssCommand.STORE_CONFIGURATION] = {
                 resolve,
                 timer
             };
+
+            this._sendLssRequest(LssCommand.STORE_CONFIGURATION);
         });
 
         let message = '';
@@ -662,12 +662,12 @@ class Lss extends Protocol {
             const timer = setTimeout(
                 () => reject(new LssError('timeout')), timeout);
 
-            this._sendLssRequest(LssCommand.INQUIRE_VENDOR_ID);
-
             this.pending[LssCommand.INQUIRE_VENDOR_ID] = {
                 resolve,
                 timer
             };
+
+            this._sendLssRequest(LssCommand.INQUIRE_VENDOR_ID);
         });
 
         return result.readUInt32LE();
@@ -685,12 +685,12 @@ class Lss extends Protocol {
             const timer = setTimeout(
                 () => reject(new LssError('timeout')), timeout);
 
-            this._sendLssRequest(LssCommand.INQUIRE_PRODUCT_CODE);
-
             this.pending[LssCommand.INQUIRE_PRODUCT_CODE] = {
                 resolve,
                 timer
             };
+
+            this._sendLssRequest(LssCommand.INQUIRE_PRODUCT_CODE);
         });
 
         return result.readUInt32LE();
@@ -708,12 +708,12 @@ class Lss extends Protocol {
             const timer = setTimeout(
                 () => reject(new LssError('timeout')), timeout);
 
-            this._sendLssRequest(LssCommand.INQUIRE_REVISION_NUMBER);
-
             this.pending[LssCommand.INQUIRE_REVISION_NUMBER] = {
                 resolve,
                 timer
             };
+
+            this._sendLssRequest(LssCommand.INQUIRE_REVISION_NUMBER);
         });
 
         return result.readUInt32LE();
@@ -731,12 +731,12 @@ class Lss extends Protocol {
             const timer = setTimeout(
                 () => reject(new LssError('timeout')), timeout);
 
-            this._sendLssRequest(LssCommand.INQUIRE_SERIAL_NUMBER);
-
             this.pending[LssCommand.INQUIRE_SERIAL_NUMBER] = {
                 resolve,
                 timer
             };
+
+            this._sendLssRequest(LssCommand.INQUIRE_SERIAL_NUMBER);
         });
 
         return result.readUInt32LE();

@@ -159,15 +159,15 @@ class SdoClient extends Protocol {
                 sendBuffer.writeUInt16LE(index, 1);
                 sendBuffer.writeUInt8(subIndex, 3);
 
-                if (blockTransfer)
-                    this._blockUploadStart(transfer);
-                else
-                    this._uploadStart(transfer);
-
                 transfer.addListener('abort',
                     (code) => this._abortTransfer(transfer, code));
 
                 transfer.start();
+
+                if (blockTransfer)
+                    this._blockUploadStart(transfer);
+                else
+                    this._uploadStart(transfer);
             });
         });
 
@@ -245,15 +245,16 @@ class SdoClient extends Protocol {
                 sendBuffer.writeUInt16LE(index, 1);
                 sendBuffer.writeUInt8(subIndex, 3);
 
+                transfer.addListener('abort',
+                    (code) => this._abortTransfer(transfer, code));
+
+                transfer.start();
+
                 if (blockTransfer)
                     this._blockDownloadStart(transfer);
                 else
                     this._downloadStart(transfer);
 
-                transfer.addListener('abort',
-                    (code) => this._abortTransfer(transfer, code));
-
-                transfer.start();
             });
         });
     }
@@ -326,6 +327,8 @@ class SdoClient extends Protocol {
                 return;
             }
 
+            transfer.refresh();
+
             // Acknowledge block
             if (transfer.blockFinished
                 || transfer.blockSequence == this.blockSize) {
@@ -338,13 +341,10 @@ class SdoClient extends Protocol {
                 sendBuffer.writeInt8(transfer.blockSequence, 1);
                 sendBuffer.writeUInt8(this.blockSize, 2);
 
+                transfer.blockSequence = 0; // Reset sequence
+
                 this.send(transfer.cobId, sendBuffer);
-
-                // Reset sequence
-                transfer.blockSequence = 0;
             }
-
-            transfer.refresh();
             return;
         }
 
@@ -493,9 +493,9 @@ class SdoClient extends Protocol {
             if (data[0] & 0x1)
                 transfer.size = data.readUInt32LE(4);
 
-            this.send(transfer.cobId, sendBuffer);
-
             transfer.refresh();
+
+            this.send(transfer.cobId, sendBuffer);
         }
     }
 
@@ -532,6 +532,7 @@ class SdoClient extends Protocol {
         else {
             transfer.toggle ^= 1;
             transfer.data = buffer;
+            transfer.refresh();
 
             const sendBuffer = Buffer.alloc(8);
             const header = (ClientCommand.UPLOAD_SEGMENT << 5)
@@ -540,8 +541,6 @@ class SdoClient extends Protocol {
             sendBuffer.writeUInt8(header);
 
             this.send(transfer.cobId, sendBuffer);
-
-            transfer.refresh();
         }
     }
 
@@ -597,6 +596,7 @@ class SdoClient extends Protocol {
         const sendBuffer = Buffer.alloc(8);
         transfer.size = Math.min(7, transfer.data.length);
         transfer.data.copy(sendBuffer, 1, 0, transfer.size);
+        transfer.refresh();
 
         let header = (ClientCommand.DOWNLOAD_SEGMENT << 5)
             | ((7 - transfer.size) << 1);
@@ -607,8 +607,6 @@ class SdoClient extends Protocol {
         sendBuffer.writeUInt8(header);
 
         this.send(transfer.cobId, sendBuffer);
-
-        transfer.refresh();
     }
 
     /**
@@ -641,6 +639,7 @@ class SdoClient extends Protocol {
 
         transfer.toggle ^= 1;
         transfer.size += count;
+        transfer.refresh();
 
         let header = (ClientCommand.DOWNLOAD_SEGMENT << 5)
             | (transfer.toggle << 4)
@@ -652,8 +651,6 @@ class SdoClient extends Protocol {
         sendBuffer.writeUInt8(header);
 
         this.send(transfer.cobId, sendBuffer);
-
-        transfer.refresh();
     }
 
     /**
@@ -705,9 +702,9 @@ class SdoClient extends Protocol {
         }
 
         transfer.data.copy(sendBuffer, 1, offset, offset + 7);
-        this.send(transfer.cobId, sendBuffer);
         transfer.refresh();
 
+        // Schedule next call
         if (!transfer.blockFinished
             && transfer.blockSequence < transfer.blockSize) {
             if(transfer.blockInterval === 0) {
@@ -720,6 +717,8 @@ class SdoClient extends Protocol {
                     transfer.blockInterval || 1)
             }
         }
+
+        this.send(transfer.cobId, sendBuffer);
     }
 
     /**
@@ -779,9 +778,9 @@ class SdoClient extends Protocol {
                     sendBuffer.writeUInt16LE(crcValue, 1);
                 }
 
-                this.send(transfer.cobId, sendBuffer);
-
                 transfer.refresh();
+
+                this.send(transfer.cobId, sendBuffer);
                 return;
             }
         }
@@ -875,7 +874,7 @@ class SdoClient extends Protocol {
 
             this.send(transfer.cobId, sendBuffer);
 
-            transfer.resolve(transfer.data);
+            transfer.resolve(transfer.data); // Resolve the promise
         }
         else {
             // Initiate block transfer
@@ -887,6 +886,7 @@ class SdoClient extends Protocol {
             transfer.blockSequence = 0;
             transfer.blockFinished = false;
             transfer.blockCrc = !!(data[0] & (1 << 2));
+            transfer.refresh();
 
             // Confirm transfer
             const header = (ClientCommand.BLOCK_UPLOAD << 5)
@@ -896,8 +896,6 @@ class SdoClient extends Protocol {
             sendBuffer.writeUInt8(header);
 
             this.send(transfer.cobId, sendBuffer);
-
-            transfer.refresh();
         }
     }
 
