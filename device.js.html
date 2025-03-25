@@ -114,8 +114,8 @@ class Device extends EventEmitter {
 
         if (args.loopback) {
             this.addListener('message', (m) => {
-                /* We use setImmediate here to allow the method that called
-                 * send() to run to completion before receive() is processed.
+                /* We use setImmediate here to decouple the send/receive calls
+                 * so that we don't overflow the call stack
                  */
                 setImmediate(() => this.receive(m));
             });
