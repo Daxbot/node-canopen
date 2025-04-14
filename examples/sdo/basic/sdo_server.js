@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { Device, DataType } = require('../../index.js');
+const { Device, DataType } = require('../../../index.js');
 
 /* eslint no-console: "off" */
 
