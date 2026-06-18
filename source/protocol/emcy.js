@@ -5,7 +5,8 @@
  */
 
 const Protocol = require('./protocol');
-const { DataObject, Eds, EdsError } = require('../eds');
+const { EdsError } = require('canopen-eds');
+const { DataObject, Eds } = require('../eds');
 const { deprecate } = require('util');
 
 /**
@@ -653,7 +654,7 @@ class Emcy extends Protocol {
  */
 Emcy.prototype.init = deprecate(
     function() {
-        const { ObjectType, DataType } = require('../types');
+        const { ObjectType, DataType } = require('canopen-eds');
 
         this.register = 0;
 

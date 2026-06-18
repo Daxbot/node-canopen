@@ -18,9 +18,6 @@ class Protocol extends EventEmitter {
     constructor(eds) {
         super();
 
-        if(!Eds.isEds(eds))
-            throw new TypeError('not an Eds');
-
         this.eds = eds;
         this.started = false;
         this.callbacks = {};

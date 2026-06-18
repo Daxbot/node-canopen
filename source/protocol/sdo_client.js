@@ -6,7 +6,7 @@
 
 const Protocol = require('./protocol');
 const { DataObject, Eds } = require('../eds');
-const { DataType } = require('../types');
+const { DataType } = require('canopen-eds');
 const { SdoCode, SdoTransfer, ClientCommand, ServerCommand } = require('./sdo');
 const calculateCrc = require('../functions/crc');
 const rawToType = require('../functions/raw_to_type');

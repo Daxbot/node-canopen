@@ -1,5 +1,5 @@
 /**
- * @file Implements a CANopen Electronic Data Sheet (EDS)
+ * @file Implements a CANopen Object Dictionary (OD)
  * @author Wilkins White
  * @copyright 2024 Daxbot
  */
@@ -7,131 +7,21 @@
 // External modules
 const { EOL } = require('os');
 const EventEmitter = require('events');
+const path = require('path');
 const fs = require('fs');
-const ini = require('ini');
+
+const { ObjectType, AccessType, DataType, Eds, EdsError, parseEds } = require('canopen-eds');
+const { parseXdd } = require('canopen-xdd');
 
 // Local modules
-const { ObjectType, AccessType, DataType, } = require('./types');
 const rawToType = require('./functions/raw_to_type');
 const typeToRaw = require('./functions/type_to_raw');
 
 /**
- * Parse EDS date and time.
- *
- * @param {string} time - time string (hh:mm[AM|PM]).
- * @param {string} date - date string (mm-dd-yyyy).
- * @returns {Date} parsed Date.
- * @private
- */
-function parseDate(time, date) {
-    const postMeridiem = time.includes('PM');
-
-    time = time
-        .replace('AM', '')
-        .replace('PM', '');
-
-    let [hours, minutes] = time.split(':');
-    let [month, day, year] = date.split('-');
-
-    hours = parseInt(hours);
-    minutes = parseInt(minutes);
-    month = parseInt(month);
-    day = parseInt(day);
-    year = parseInt(year);
-
-    if (postMeridiem)
-        hours += 12;
-
-    return new Date(year, month - 1, day, hours, minutes);
-}
-
-/**
- * Helper method to turn EDS file data into {@link DataObject} data.
- *
- * @param {object} data - EDS style data to convert.
- * @returns {object} DataObject style data.
- * @private
- */
-function edsToEntry(data) {
-    return {
-        parameterName: data['ParameterName'],
-        objectType: parseInt(data['ObjectType']) || undefined,
-        dataType: parseInt(data['DataType']) || undefined,
-        lowLimit: parseInt(data['LowLimit']) || undefined,
-        highLimit: parseInt(data['HighLimit']) || undefined,
-        accessType: data['AccessType'],
-        defaultValue: data['DefaultValue'],
-        pdoMapping: data['PDOMapping'],
-        objFlags: parseInt(data['ObjFlags']) || undefined,
-        compactSubObj: parseInt(data['CompactSubObj']) || undefined
-    };
-}
-
-/**
- * Formats a {@link DataObject} for writing to an EDS file.
- *
- * @param {DataObject} entry - DataObject style data to convert.
- * @returns {object} EDS style data.
- * @private
- */
-function entryToEds(entry) {
-    if(!DataObject.isDataObject(entry))
-        throw new TypeError('entry is not a DataObject');
-
-    let data = {};
-
-    data['ParameterName'] = entry.parameterName;
-    data['ObjectType'] = `0x${entry.objectType.toString(16)}`;
-
-    if (entry.subNumber !== undefined)
-        data['SubNumber'] = `0x${entry.subNumber.toString(16)}`;
-
-    if (entry.dataType !== undefined)
-        data['DataType'] = `0x${entry.dataType.toString(16)}`;
-
-    if (entry.lowLimit !== undefined)
-        data['LowLimit'] = entry.lowLimit.toString();
-
-    if (entry.highLimit !== undefined)
-        data['HighLimit'] = entry.highLimit.toString();
-
-    if (entry.accessType !== undefined)
-        data['AccessType'] = entry.accessType;
-
-    if (entry.defaultValue !== undefined)
-        data['DefaultValue'] = entry.defaultValue.toString();
-
-    if (entry.pdoMapping !== undefined)
-        data['PDOMapping'] = (entry.pdoMapping) ? '1' : '0';
-
-    if (entry.objFlags !== undefined)
-        data['ObjFlags'] = entry.objFlags.toString();
-
-    if (entry.compactSubObj !== undefined)
-        data['CompactSubObj'] = (entry.compactSubObj) ? '1' : '0';
-
-    return data;
-}
-
-/**
- * Errors generated due to an improper EDS configuration.
- *
- * @param {string} message - error message.
- */
-class EdsError extends Error {
-    constructor(message) {
-        super(message);
-
-        this.name = this.constructor.name;
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
-
-/**
  * A CANopen Data Object.
  *
- * DataObjects should not be created directly, use {@link Eds#addEntry} or
- * {@link Eds#addSubEntry} instead.
+ * DataObjects should not be created directly, use {@link ObjectDictionary#addEntry} or
+ * {@link ObjectDictionary#addSubEntry} instead.
  *
  * @param {string} key - object index key (e.g., 1018sub3)
  * @param {object} data - creation parameters.
@@ -307,7 +197,7 @@ class DataObject extends EventEmitter {
     }
 
     /**
-     * The Eds index.
+     * The ObjectDictionary index.
      *
      * @type {number}
      */
@@ -316,7 +206,7 @@ class DataObject extends EventEmitter {
     }
 
     /**
-     * The Eds subIndex.
+     * The ObjectDictionary subIndex.
      *
      * @type {number | null}
      */
@@ -481,7 +371,7 @@ class DataObject extends EventEmitter {
         if (raw === undefined || raw === null)
             raw = typeToRaw(0, this.dataType);
 
-        if(this.raw && Buffer.compare(raw, this.raw) == 0)
+        if (this.raw && Buffer.compare(raw, this.raw) == 0)
             return;
 
         this._raw = raw;
@@ -492,7 +382,6 @@ class DataObject extends EventEmitter {
      * The cooked value.
      *
      * @type {number | bigint | string | Date}
-     * @see {@link Eds.typeToRaw}
      */
     get value() {
         if (!this.subNumber)
@@ -568,7 +457,7 @@ class DataObject extends EventEmitter {
      * @param {DataObject | object} data - An existing {@link DataObject} or
      * the data to create one.
      * @returns {DataObject} new DataObject.
-     * @see {@link Eds#addSubEntry}
+     * @see {@link ObjectDictionary#addSubEntry}
      * @private
      */
     addSubObject(subIndex, data) {
@@ -605,7 +494,7 @@ class DataObject extends EventEmitter {
      *
      * @param {number} subIndex - sub-entry index to remove.
      * @returns {DataObject} removed DataObject.
-     * @see {@link Eds#removeSubEntry}
+     * @see {@link ObjectDictionary#removeSubEntry}
      * @private
      */
     removeSubObject(subIndex) {
@@ -635,7 +524,7 @@ class DataObject extends EventEmitter {
      * @private
      */
     _emitUpdate(obj) {
-        if(this.parent) {
+        if (this.parent) {
             this.parent._emitUpdate(this);
         }
         else {
@@ -650,431 +539,44 @@ class DataObject extends EventEmitter {
 }
 
 /**
- * A CANopen Electronic Data Sheet.
+ * A CANopen Object Dictionary.
  *
- * This class provides methods for loading and saving CANopen EDS v4.0 files.
+ * This class provides a collection of DataObjects.
  *
- * @param {object} info - file info.
- * @param {string} info.fileName - file name.
- * @param {string} info.fileVersion - file version.
- * @param {string} info.fileRevision - file revision.
- * @param {string} info.description - What the file is for.
- * @param {Date} info.creationDate - When the file was created.
- * @param {string} info.createdBy - Who created the file.
- * @param {string} info.vendorName - The device vendor name.
- * @param {number} info.vendorNumber - the device vendor number.
- * @param {string} info.productName - the device product name.
- * @param {number} info.productNumber - the device product number.
- * @param {number} info.revisionNumber - the device revision number.
- * @param {string} info.orderCode - the device order code.
- * @param {Array<number>} info.baudRates - supported buadrates
- * @param {boolean} info.lssSupported - true if LSS is supported.
  * @see CiA306 "Electronic data sheet specification for CANopen"
  */
-class Eds extends EventEmitter {
-    constructor(info = {}) {
+class ObjectDictionary extends EventEmitter {
+    /**
+     * Create a new ObjectDictionary.
+     *
+     * By default, this initializes all mandatory entries from canopen-eds
+     * defaults (same as `new Eds()`).
+     *
+     * @param {Eds | object} [source] - Eds instance or ObjectDictionary model
+     * object.
+     */
+    constructor(source) {
         super();
 
-        this.fileInfo = {
-            EDSVersion: '4.0'
-        };
-
-        this.deviceInfo = {
-            SimpleBootUpMaster: 0,
-            SimpleBootUpSlave: 0,
-            Granularity: 8,
-            DynamicChannelsSupported: 0,
-            CompactPDO: 0,
-            GroupMessaging: 0,
-        };
-
-        this.dummyUsage = {};
-        this._dataObjects = {};
-        this.comments = [];
+        this.dataObjects = {};
         this.nameLookup = {};
 
-        if(typeof info === 'object') {
-            // fileInfo
-            this.fileName = info.fileName || '';
-            this.fileVersion = info.fileVersion || 1;
-            this.fileRevision = info.fileRevision || 1;
-            this.description = info.description || '';
-            this.creationDate = info.creationDate || new Date();
-            this.createdBy = info.createdBy || 'node-canopen';
-
-            // deviceInfo
-            this.vendorName = info.vendorName || '';
-            this.vendorNumber = info.vendorNumber || 0;
-            this.productName = info.productName || '';
-            this.productNumber = info.productNumber || 0;
-            this.revisionNumber = info.revisionNumber || 0;
-            this.orderCode = info.orderCode || '';
-            this.baudRates = info.baudRates || [];
-            this.lssSupported = info.lssSupported || false;
-
-            // Add default data types
-            for (const [name, index] of Object.entries(DataType)) {
-                this.addEntry(index, {
-                    parameterName: name,
-                    objectType: ObjectType.DEFTYPE,
-                    dataType: DataType[name],
-                    accessType: AccessType.READ_WRITE,
-                });
-            }
-
-            // Add mandatory objects (0x1000, 0x1001, 0x1018)
-            this.addEntry(0x1000, {
-                parameterName: 'Device type',
-                objectType: ObjectType.VAR,
-                dataType: DataType.UNSIGNED32,
-                accessType: AccessType.READ_ONLY,
-            });
-
-            this.setErrorRegister(0);
-
-            this.setIdentity({
-                vendorId: info.vendorNumber,
-                productCode: info.productNumber,
-                revisionNumber: info.revisionNumber,
-                serialNumber: 0,
-            });
+        if (source === undefined) {
+            source = new Eds();
         }
-        else if(typeof info === 'string') {
-            this.load(info);
+
+        if (source instanceof Eds) {
+            source = source._model;
         }
-    }
 
-    /**
-     * Constructs and returns the Eds DataObjects keyed by decimal string. This
-     * is provided to support old tools. For new code use the new Eds iterator
-     * methods (keyed by hex string) instead.
-     *
-     * @type {object}
-     * @deprecated Use {@link Eds#entries} instead.
-     */
-    get dataObjects() {
-        const entries = {};
-        for(const entry of this.values())
-            entries[entry.index] = entry;
+        if (!source || typeof source !== 'object')
+            throw new TypeError('source must be an Eds or model object');
 
-        return entries;
+        this._loadModel(source);
     }
 
     [Symbol.iterator]() {
         return this.values();
-    }
-
-    /**
-     * File name.
-     *
-     * @type {string}
-     */
-    get fileName() {
-        return this.fileInfo['FileName'];
-    }
-
-    set fileName(value) {
-        this.fileInfo['FileName'] = String(value);
-    }
-
-    /**
-     * File version (8-bit unsigned integer).
-     *
-     * @type {number}
-     */
-    get fileVersion() {
-        return this.fileInfo['FileVersion'];
-    }
-
-    set fileVersion(value) {
-        this.fileInfo['FileVersion'] = Number(value);
-    }
-
-    /**
-     * File revision (8-bit unsigned integer).
-     *
-     * @type {number}
-     */
-    get fileRevision() {
-        return this.fileInfo['FileRevision'];
-    }
-
-    set fileRevision(value) {
-        this.fileInfo['FileRevision'] = Number(value);
-    }
-
-    /**
-     * File description.
-     *
-     * @type {string}
-     */
-    get description() {
-        return this.fileInfo['Description'];
-    }
-
-    set description(value) {
-        this.fileInfo['Description'] = String(value);
-    }
-
-    /**
-     * File creation time.
-     *
-     * @type {Date}
-     */
-    get creationDate() {
-        const time = this.fileInfo['CreationTime'];
-        const date = this.fileInfo['CreationDate'];
-        return parseDate(time, date);
-    }
-
-    set creationDate(value) {
-        const hours = value.getHours().toString().padStart(2, '0');
-        const minutes = value.getMinutes().toString().padStart(2, '0');
-        const time = hours + ':' + minutes;
-
-        const month = (value.getMonth() + 1).toString().padStart(2, '0');
-        const day = value.getDate().toString().padStart(2, '0');
-        const year = value.getFullYear().toString();
-        const date = month + '-' + day + '-' + year;
-
-        this.fileInfo['CreationTime'] = time;
-        this.fileInfo['CreationDate'] = date;
-    }
-
-    /**
-     * Name or description of the file creator (max 245 characters).
-     *
-     * @type {string}
-     */
-    get createdBy() {
-        return this.fileInfo['CreatedBy'];
-    }
-
-    set createdBy(value) {
-        this.fileInfo['CreatedBy'] = String(value);
-    }
-
-    /**
-     * Time of the last modification.
-     *
-     * @type {Date}
-     */
-    get modificationDate() {
-        const time = this.fileInfo['ModificationTime'];
-        const date = this.fileInfo['ModificationDate'];
-        return parseDate(time, date);
-    }
-
-    set modificationDate(value) {
-        const hours = value.getHours().toString().padStart(2, '0');
-        const minutes = value.getMinutes().toString().padStart(2, '0');
-        const time = hours + ':' + minutes;
-
-        const month = (value.getMonth() + 1).toString().padStart(2, '0');
-        const day = value.getDate().toString().padStart(2, '0');
-        const year = value.getFullYear().toString();
-        const date = month + '-' + day + '-' + year;
-
-        this.fileInfo['ModificationTime'] = time;
-        this.fileInfo['ModificationDate'] = date;
-    }
-
-    /**
-     * Name or description of the last modifier (max 244 characters).
-     *
-     * @type {string}
-     */
-    get modifiedBy() {
-        return this.fileInfo['ModifiedBy'];
-    }
-
-    set modifiedBy(value) {
-        this.fileInfo['ModifiedBy'] = String(value);
-    }
-
-    /**
-     * Vendor name (max 244 characters).
-     *
-     * @type {string}
-     */
-    get vendorName() {
-        return this.deviceInfo['VendorName'];
-    }
-
-    set vendorName(value) {
-        this.deviceInfo['VendorName'] = String(value);
-    }
-
-    /**
-     * Unique vendor ID (32-bit unsigned integer).
-     *
-     * @type {number}
-     */
-    get vendorNumber() {
-        return this.deviceInfo['VendorNumber'];
-    }
-
-    set vendorNumber(value) {
-        this.deviceInfo['VendorNumber'] = Number(value);
-    }
-
-    /**
-     * Product name (max 243 characters).
-     *
-     * @type {string}
-     */
-    get productName() {
-        return this.deviceInfo['ProductName'];
-    }
-
-    set productName(value) {
-        this.deviceInfo['ProductName'] = String(value);
-    }
-
-    /**
-     * Product code (32-bit unsigned integer).
-     *
-     * @type {number}
-     */
-    get productNumber() {
-        return this.deviceInfo['ProductNumber'];
-    }
-
-    set productNumber(value) {
-        this.deviceInfo['ProductNumber'] = Number(value);
-    }
-
-    /**
-     * Revision number (32-bit unsigned integer).
-     *
-     * @type {number}
-     */
-    get revisionNumber() {
-        return this.deviceInfo['RevisionNumber'];
-    }
-
-    set revisionNumber(value) {
-        this.deviceInfo['RevisionNumber'] = Number(value);
-    }
-
-    /**
-     * Product order code (max 245 characters).
-     *
-     * @type {string}
-     */
-    get orderCode() {
-        return this.deviceInfo['OrderCode'];
-    }
-
-    set orderCode(value) {
-        this.deviceInfo['OrderCode'] = String(value);
-    }
-
-    /**
-     * Supported baud rates.
-     *
-     * @type {Array<number>}
-     */
-    get baudRates() {
-        let rates = [];
-
-        if (parseInt(this.deviceInfo['BaudRate_10']))
-            rates.push(10000);
-        if (parseInt(this.deviceInfo['BaudRate_20']))
-            rates.push(20000);
-        if (parseInt(this.deviceInfo['BaudRate_50']))
-            rates.push(50000);
-        if (parseInt(this.deviceInfo['BaudRate_125']))
-            rates.push(125000);
-        if (parseInt(this.deviceInfo['BaudRate_250']))
-            rates.push(250000);
-        if (parseInt(this.deviceInfo['BaudRate_500']))
-            rates.push(500000);
-        if (parseInt(this.deviceInfo['BaudRate_800']))
-            rates.push(800000);
-        if (parseInt(this.deviceInfo['BaudRate_1000']))
-            rates.push(1000000);
-
-        return rates;
-    }
-
-    set baudRates(rates) {
-        this.deviceInfo['BaudRate_10'] = rates.includes(10000) ? '1' : '0';
-        this.deviceInfo['BaudRate_20'] = rates.includes(20000) ? '1' : '0';
-        this.deviceInfo['BaudRate_50'] = rates.includes(50000) ? '1' : '0';
-        this.deviceInfo['BaudRate_125'] = rates.includes(125000) ? '1' : '0';
-        this.deviceInfo['BaudRate_250'] = rates.includes(250000) ? '1' : '0';
-        this.deviceInfo['BaudRate_500'] = rates.includes(500000) ? '1' : '0';
-        this.deviceInfo['BaudRate_800'] = rates.includes(800000) ? '1' : '0';
-        this.deviceInfo['BaudRate_1000'] = rates.includes(1e6) ? '1' : '0';
-    }
-
-    /**
-     * Indicates simple boot-up master functionality (not supported).
-     *
-     * @type {boolean}
-     */
-    get simpleBootUpMaster() {
-        return !!parseInt(this.deviceInfo['SimpleBootUpMaster']);
-    }
-
-    set simpleBootUpMaster(value) {
-        this.deviceInfo['SimpleBootUpMaster'] = (value) ? 1 : 0;
-    }
-
-    /**
-     * Indicates simple boot-up slave functionality (not supported).
-     *
-     * @type {boolean}
-     */
-    get simpleBootUpSlave() {
-        return !!parseInt(this.deviceInfo['SimpleBootUpSlave']);
-    }
-
-    set simpleBootUpSlave(value) {
-        this.deviceInfo['SimpleBootUpSlave'] = (value) ? 1 : 0;
-    }
-
-    /**
-     * Provides the granularity allowed for the mapping on this device - most
-     * devices support a granularity of 8. (8-bit integer, max 64).
-     *
-     * @type {number}
-     */
-    get granularity() {
-        return parseInt(this.deviceInfo['Granularity']);
-    }
-
-    set granularity(value) {
-        this.deviceInfo['Granularity'] = value;
-    }
-
-    /**
-     * Indicates the facility of dynamic variable generation (not supported).
-     *
-     * @type {boolean}
-     * @see CiA302
-     */
-    get dynamicChannelsSupported() {
-        return !!parseInt(this.deviceInfo['DynamicChannelsSupported']);
-    }
-
-    set dynamicChannelsSupported(value) {
-        this.deviceInfo['DynamicChannelsSupported'] = (value) ? 1 : 0;
-    }
-
-    /**
-     * Indicates the facility of multiplexed PDOs (not supported).
-     *
-     * @type {boolean}
-     * @see CiA301
-     */
-    get groupMessaging() {
-        return !!parseInt(this.deviceInfo['GroupMessaging']);
-    }
-
-    set groupMessaging(value) {
-        this.deviceInfo['GroupMessaging'] = (value) ? 1 : 0;
     }
 
     /**
@@ -1084,7 +586,7 @@ class Eds extends EventEmitter {
      */
     get nrOfRXPDO() {
         let count = 0;
-        for (let index of Object.keys(this._dataObjects)) {
+        for (let index of Object.keys(this.dataObjects)) {
             index = parseInt(index, 16);
             if (index >= 0x1400 && index <= 0x15FF)
                 count++;
@@ -1100,7 +602,7 @@ class Eds extends EventEmitter {
      */
     get nrOfTXPDO() {
         let count = 0;
-        for (let index of Object.keys(this._dataObjects)) {
+        for (let index of Object.keys(this.dataObjects)) {
             index = parseInt(index, 16);
             if (index >= 0x1800 && index <= 0x19FF)
                 count++;
@@ -1110,162 +612,115 @@ class Eds extends EventEmitter {
     }
 
     /**
-     * Indicates if LSS functionality is supported.
+     * Create a new ObjectDictionary from a file path.
      *
-     * @type {boolean}
-     */
-    get lssSupported() {
-        return !!(this.deviceInfo['LSS_Supported']);
-    }
-
-    set lssSupported(value) {
-        this.deviceInfo['LSS_Supported'] = (value) ? 1 : 0;
-    }
-
-    /**
-     * Returns true if the object is an instance of Eds.
-     *
-     * @param {object} obj - object to test.
-     * @returns {boolean} true if obj is Eds.
+     * @param {string} filePath - path to file.
+     * @returns {ObjectDictionary} new ObjectDictionary object.
      * @since 6.0.0
      */
-    static isEds(obj) {
-        return obj instanceof Eds;
+    static fromFile(filePath) {
+        const ext = path.extname(filePath).toLowerCase();
+
+        switch (ext) {
+            case '.xdd':
+            case '.xml':
+                return new ObjectDictionary(parseXdd(fs.readFileSync(filePath, 'utf-8')));
+            case '.eds':
+                return new ObjectDictionary(parseEds(fs.readFileSync(filePath, 'utf-8')));
+            default:
+                throw new TypeError(`Unsupported file extension: ${ext}`);
+        }
     }
 
     /**
-     * Create a new Eds from a file path.
+     * Populate this ObjectDictionary from a plain ObjectDictionaryModel object, clearing any existing data.
      *
-     * @param {string} path - path to file.
-     * @returns {Eds} new Eds object.
-     * @since 6.0.0
+     * @param {object} model - ObjectDictionaryModel plain object.
      */
-    static fromFile(path) {
-        const eds = new Eds();
-        eds.load(path);
-        return eds;
-    }
-
-    /**
-     * Read and parse an EDS file.
-     *
-     * @param {string} path - path to file.
-     */
-    load(path) {
-        // Parse EDS file
-        const file = ini.parse(fs.readFileSync(path, 'utf-8'));
-
-        // Clear existing entries
-        this._dataObjects = {};
+    _loadModel(model) {
+        this.dataObjects = {};
         this.nameLookup = {};
 
-        // Extract header fields
-        this.fileInfo = file['FileInfo'];
-        this.deviceInfo = file['DeviceInfo'];
-        this.dummyUsage = file['DummyUsage'];
-        this.comments = file['Comments'];
+        for (const [indexStr, entry] of Object.entries(model.objects || {})) {
+            const index = Number(indexStr);
+            const objectType = entry.objectType || ObjectType.VAR;
 
-        // Construct data objects.
-        const entries = Object.entries(file);
-        const indexMatch = RegExp('^[0-9A-Fa-f]{4}$');
-        const subIndexMatch = RegExp('^([0-9A-Fa-f]{4})sub([0-9A-Fa-f]+)$');
-
-        entries
-            .filter(([key]) => {
-                return indexMatch.test(key);
-            })
-            .forEach(([key, data]) => {
-                const index = parseInt(key, 16);
-                this.addEntry(index, edsToEntry(data));
-            });
-
-        entries
-            .filter(([key]) => {
-                return subIndexMatch.test(key);
-            })
-            .forEach(([key, data]) => {
-                let [index, subIndex] = key.split('sub');
-                index = parseInt(index, 16);
-                subIndex = parseInt(subIndex, 16);
-                this.addSubEntry(index, subIndex, edsToEntry(data));
-            });
-    }
-
-    /**
-     * Write an EDS file.
-     *
-     * @param {string} path - path to file, defaults to fileName.
-     * @param {object} [options] - optional inputs.
-     * @param {Date} [options.modificationDate] - file modification date to file.
-     * @param {Date} [options.modifiedBy] - file modification date to file.
-     */
-    save(path, options = {}) {
-        if (!path)
-            path = this.fileName;
-
-        this.modificationDate = options.modificationDate || new Date();
-        this.modifiedBy = options.modifiedBy || '';
-
-        this.deviceInfo['NrOfTXPDO'] = this.nrOfTXPDO;
-        this.deviceInfo['NrOfRXPDO'] = this.nrOfRXPDO;
-
-        const fd = fs.openSync(path, 'w');
-
-        // Write header fields
-        this._write(fd, ini.encode(this.fileInfo, { section: 'FileInfo' }));
-        this._write(fd, ini.encode(this.deviceInfo, { section: 'DeviceInfo' }));
-        this._write(fd, ini.encode(this.dummyUsage, { section: 'DummyUsage' }));
-        this._write(fd, ini.encode(this.comments, { section: 'Comments' }));
-
-        // Sort data objects
-        let mandObjects = {};
-        let mandCount = 0;
-
-        let optObjects = {};
-        let optCount = 0;
-
-        let mfrObjects = {};
-        let mfrCount = 0;
-
-        for (const key of this.keys()) {
-            let index = parseInt(key, 16);
-
-            if ([0x1000, 0x1001, 0x1018].includes(index)) {
-                mandCount += 1;
-                mandObjects[mandCount] = '0x' + key;
+            if (this.getEntry(index) !== undefined) {
+                try { this.removeEntry(index); }
+                catch { continue; }
             }
-            else if (index >= 0x1000 && index < 0x1FFF) {
-                optCount += 1;
-                optObjects[optCount] = '0x' + key;
+
+            if (objectType === ObjectType.VAR || objectType === ObjectType.DOMAIN) {
+                try {
+                    this.addEntry(index, {
+                        parameterName: entry.parameterName,
+                        objectType: entry.objectType,
+                        dataType: entry.dataType,
+                        accessType: entry.accessType,
+                        defaultValue: entry.defaultValue,
+                        pdoMapping: entry.pdoMapping,
+                        lowLimit: entry.lowLimit !== undefined ? parseInt(entry.lowLimit) : undefined,
+                        highLimit: entry.highLimit !== undefined ? parseInt(entry.highLimit) : undefined,
+                        objFlags: entry.objFlags,
+                        compactSubObj: entry.compactSubObj,
+                    });
+                }
+                catch { /* skip */ }
             }
-            else if (index >= 0x2000 && index < 0x5FFF) {
-                mfrCount += 1;
-                mfrObjects[mfrCount] = '0x' + key;
+            else if (objectType === ObjectType.DEFTYPE) {
+                try {
+                    this.addEntry(index, {
+                        parameterName: entry.parameterName,
+                        objectType: entry.objectType,
+                        dataType: entry.dataType,
+                        accessType: entry.accessType,
+                    });
+                }
+                catch { /* skip */ }
             }
-            else if (index >= 0x6000 && index < 0xFFFF) {
-                optCount += 1;
-                optObjects[optCount] = '0x' + key;
+            else if (
+                objectType === ObjectType.ARRAY ||
+                objectType === ObjectType.RECORD ||
+                objectType === ObjectType.DEFSTRUCT
+            ) {
+                let parentEntry;
+                try {
+                    parentEntry = this.addEntry(index, {
+                        parameterName: entry.parameterName,
+                        objectType: entry.objectType,
+                    });
+                }
+                catch { continue; }
+
+                const subs = entry.subObjects || {};
+                const maxSub = subs[0] !== undefined
+                    ? (parseInt(subs[0].defaultValue) || 0)
+                    : Math.max(0, ...Object.keys(subs).map(Number).filter(n => n > 0));
+
+                if (parentEntry[0] && !isNaN(maxSub))
+                    parentEntry[0].value = maxSub;
+
+                for (const [subIndexStr, sub] of Object.entries(subs)) {
+                    const subIndex = parseInt(subIndexStr);
+                    if (subIndex === 0) continue;
+                    try {
+                        this.addSubEntry(index, subIndex, {
+                            parameterName: sub.parameterName,
+                            objectType: ObjectType.VAR,
+                            dataType: sub.dataType,
+                            accessType: sub.accessType,
+                            defaultValue: sub.defaultValue,
+                            pdoMapping: sub.pdoMapping,
+                            lowLimit: sub.lowLimit !== undefined ? parseInt(sub.lowLimit) : undefined,
+                            highLimit: sub.highLimit !== undefined ? parseInt(sub.highLimit) : undefined,
+                            objFlags: sub.objFlags,
+                            compactSubObj: sub.compactSubObj,
+                        });
+                    }
+                    catch { /* skip */ }
+                }
             }
         }
-
-        // Write data objects
-        mandObjects['SupportedObjects'] = mandCount;
-        this._write(fd, ini.encode(mandObjects, { section: 'MandatoryObjects' }));
-
-        this._writeObjects(fd, mandObjects);
-
-        optObjects['SupportedObjects'] = optCount;
-        this._write(fd, ini.encode(optObjects, { section: 'OptionalObjects' }));
-
-        this._writeObjects(fd, optObjects);
-
-        mfrObjects['SupportedObjects'] = mfrCount;
-        this._write(fd, ini.encode(
-            mfrObjects, { section: 'ManufacturerObjects' }));
-
-        this._writeObjects(fd, mfrObjects);
-
-        fs.closeSync(fd);
     }
 
     /**
@@ -1275,7 +730,7 @@ class Eds extends EventEmitter {
      * @since 6.0.0
      */
     keys() {
-        return Object.keys(this._dataObjects).values();
+        return Object.keys(this.dataObjects).values();
     }
 
     /**
@@ -1285,7 +740,7 @@ class Eds extends EventEmitter {
      * @since 6.0.0
      */
     values() {
-        return Object.values(this._dataObjects).values();
+        return Object.values(this.dataObjects).values();
     }
 
     /**
@@ -1295,7 +750,7 @@ class Eds extends EventEmitter {
      * @since 6.0.0
      */
     entries() {
-        return Object.entries(this._dataObjects).values();
+        return Object.entries(this.dataObjects).values();
     }
 
     /**
@@ -1305,7 +760,7 @@ class Eds extends EventEmitter {
      */
     reset() {
         for (const entry of this.values()) {
-            if(entry.objectType === ObjectType.VAR)
+            if (entry.objectType === ObjectType.VAR)
                 entry.value = entry.defaultValue;
         }
     }
@@ -1344,7 +799,7 @@ class Eds extends EventEmitter {
         else {
             // Index lookup.
             const key = index.toString(16).padStart(4, '0');
-            entry = this._dataObjects[key];
+            entry = this.dataObjects[key];
         }
 
         return entry;
@@ -1359,11 +814,11 @@ class Eds extends EventEmitter {
      * @fires Eds#newEntry
      */
     addEntry(index, data) {
-        if(typeof index !== 'number')
+        if (typeof index !== 'number')
             throw new TypeError('index must be a number');
 
         const key = index.toString(16).padStart(4, '0');
-        if (this._dataObjects[key] !== undefined)
+        if (this.dataObjects[key] !== undefined)
             throw new EdsError(`${key} already exists`);
 
         const entry = new DataObject(key, data);
@@ -1376,7 +831,7 @@ class Eds extends EventEmitter {
          */
         this.emit('newEntry', entry);
 
-        this._dataObjects[key] = entry;
+        this.dataObjects[key] = entry;
 
         if (this.nameLookup[entry.parameterName] === undefined)
             this.nameLookup[entry.parameterName] = [];
@@ -1404,7 +859,7 @@ class Eds extends EventEmitter {
         if (this.nameLookup[entry.parameterName].length == 0)
             delete this.nameLookup[entry.parameterName];
 
-        delete this._dataObjects[entry.key];
+        delete this.dataObjects[entry.key];
 
         /**
          * A DataObject was removed from the Eds.
@@ -2650,7 +2105,7 @@ class Eds extends EventEmitter {
                 continue;
 
             const result = this._parseSdoParameter(entry);
-            if(result) {
+            if (result) {
                 parameters.push({
                     cobIdRx: result[0],
                     cobIdTx: result[1],
@@ -2761,7 +2216,7 @@ class Eds extends EventEmitter {
                 continue;
 
             const result = this._parseSdoParameter(entry);
-            if(result && result[2] === deviceId) {
+            if (result && result[2] === deviceId) {
                 this.removeEntry(index);
 
                 /**
@@ -2796,7 +2251,7 @@ class Eds extends EventEmitter {
                 continue;
 
             const result = this._parseSdoParameter(entry);
-            if(result) {
+            if (result) {
                 parameters.push({
                     cobIdTx: result[0],
                     cobIdRx: result[1],
@@ -3119,9 +2574,6 @@ class Eds extends EventEmitter {
          * @since 6.0.0
          */
         this.emit('newRpdo', this._parsePdo(index));
-
-        // Update deviceInfo
-        this.deviceInfo['NrOfRXPDO'] = this.nrOfRXPDO;
     }
 
     /**
@@ -3141,9 +2593,6 @@ class Eds extends EventEmitter {
             if (pdo.cobId === cobId) {
                 this.removeEntry(index);
                 this.removeEntry(index + 0x200);
-
-                // Update deviceInfo
-                this.deviceInfo['NrOfRXPDO'] = this.nrOfRXPDO;
 
                 /**
                  * A transmit PDO was removed.
@@ -3352,9 +2801,6 @@ class Eds extends EventEmitter {
                 mapSub.defaultValue = value;
         }
 
-        // Update deviceInfo
-        this.deviceInfo['NrOfTXPDO'] = this.nrOfTXPDO;
-
         /**
          * A new transmit PDO was mapped.
          *
@@ -3382,9 +2828,6 @@ class Eds extends EventEmitter {
             if (pdo.cobId === cobId) {
                 this.removeEntry(index);
                 this.removeEntry(index + 0x200);
-
-                // Update deviceInfo
-                this.deviceInfo['NrOfTXPDO'] = this.nrOfTXPDO;
 
                 /**
                  * A transmit PDO was removed.
@@ -3499,7 +2942,7 @@ class Eds extends EventEmitter {
             const dataIndex = mapEntry[i].raw.readUInt16LE(2);
 
             let obj = this.getEntry(dataIndex);
-            if(obj) {
+            if (obj) {
                 if (dataSubIndex)
                     obj = obj[dataSubIndex];
 
@@ -3526,11 +2969,11 @@ class Eds extends EventEmitter {
         let result = [];
 
         const subObj1 = entry.at(1);
-        if(!subObj1)
+        if (!subObj1)
             return null;
 
         const subObj2 = entry.at(2);
-        if(!subObj2)
+        if (!subObj2)
             return null;
 
         const cobIdRx = subObj1.value;
@@ -3550,55 +2993,8 @@ class Eds extends EventEmitter {
 
         return result;
     }
-
-    /**
-     * Helper method to write strings to an EDS file.
-     *
-     * @param {number} fd - file descriptor to write.
-     * @param {string} data - string to write.
-     * @private
-     */
-    _write(fd, data) {
-        const nullMatch = new RegExp('=null', 'g');
-        data = data.replace(nullMatch, '=');
-        if (data.length > 0)
-            fs.writeSync(fd, data + EOL);
-    }
-
-
-    /**
-     * Helper method to write objects to an EDS file.
-     *
-     * @param {number} fd - file descriptor to write.
-     * @param {object} objects - objects to write.
-     * @private
-     */
-    _writeObjects(fd, objects) {
-        for (const [key, value] of Object.entries(objects)) {
-            if (key == 'SupportedObjects')
-                continue;
-
-            const index = parseInt(value, 16);
-            const dataObject = this._dataObjects[index.toString(16)];
-
-            // Write top level object
-            const section = index.toString(16);
-            this._write(fd, ini.encode(entryToEds(dataObject), {
-                section: section
-            }));
-
-            // Write sub-objects
-            for (let i = 0; i < dataObject.subNumber; i++) {
-                if (dataObject[i]) {
-                    const subSection = section + 'sub' + i;
-                    const subObject = dataObject[i];
-                    this._write(fd, ini.encode(entryToEds(subObject), {
-                        section: subSection
-                    }));
-                }
-            }
-        }
-    }
 }
 
-module.exports = exports = { EdsError, DataObject, Eds };
+module.exports = exports = {
+    EdsError, DataObject, ObjectDictionary, Eds: ObjectDictionary,
+};

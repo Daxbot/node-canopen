@@ -5,8 +5,8 @@
  */
 
 const Protocol = require('./protocol');
-const { Eds, EdsError } = require('../eds');
-const { DataType } = require('../types');
+const { Eds } = require('../eds');
+const { DataType, EdsError } = require('canopen-eds');
 const rawToType = require('../functions/raw_to_type');
 const typeToRaw = require('../functions/type_to_raw');
 const { deprecate } = require('util');
@@ -239,7 +239,7 @@ class Time extends Protocol {
  */
 Time.prototype.init = deprecate(
     function () {
-        const { ObjectType, DataType } = require('../types');
+        const { ObjectType, DataType } = require('canopen-eds');
 
         let obj1012 = this.eds.getEntry(0x1012);
         if(obj1012 === undefined) {

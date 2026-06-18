@@ -5,6 +5,7 @@
  */
 
 const EventEmitter = require('events');
+const { EdsError } = require('canopen-eds');
 const { deprecate } = require('util');
 
 const { Emcy } = require('./protocol/emcy');
@@ -15,7 +16,7 @@ const { SdoClient } = require('./protocol/sdo_client');
 const { SdoServer } = require('./protocol/sdo_server');
 const { Sync } = require('./protocol/sync');
 const { Time } = require('./protocol/time');
-const { Eds, EdsError } = require('./eds');
+const { Eds } = require('./eds');
 
 /**
  * A CANopen device.
@@ -38,9 +39,6 @@ class Device extends EventEmitter {
             this.eds = Eds.fromFile(args.eds);
         else
             this.eds = args.eds || new Eds();
-
-        if (!Eds.isEds(this.eds))
-            throw new EdsError('bad Eds');
 
         this.protocol = {
             emcy: new Emcy(this.eds),

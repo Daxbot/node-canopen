@@ -1,4 +1,3 @@
-const edsCreation = require('./eds/eds_creation');
 const emcyConsumer = require('./emcy/emcy_consumer');
 const emcyProducer = require('./emcy/emcy_producer');
 const lssConsumer = require('./lss/lss_consumer');
@@ -16,7 +15,6 @@ const timeConsumer = require('./time/time_consumer');
 const timeProducer = require('./time/time_producer');
 
 module.exports = exports = {
-    edsCreation,
     emcyConsumer,
     emcyProducer,
     lssConsumer,

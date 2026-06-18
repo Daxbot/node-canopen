@@ -609,7 +609,7 @@ class Nmt extends Protocol {
  */
 Nmt.prototype.init = deprecate(
     function () {
-        const { ObjectType, DataType } = require('../types');
+        const { ObjectType, DataType } = require('canopen-eds');
 
         let obj1016 = this.eds.getEntry(0x1016);
         if(obj1016 === undefined) {

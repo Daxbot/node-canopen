@@ -5,7 +5,8 @@
  */
 
 const Protocol = require('./protocol');
-const { DataObject, Eds, EdsError } = require('../eds');
+const { EdsError } = require('canopen-eds');
+const { DataObject, Eds } = require('../eds');
 const { deprecate } = require('util');
 
 /**

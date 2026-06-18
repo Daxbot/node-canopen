@@ -5,7 +5,8 @@
  */
 
 const Protocol = require('./protocol');
-const { Eds, EdsError } = require('../eds');
+const { EdsError } = require('canopen-eds');
+const { Eds } = require('../eds');
 const { deprecate } = require('util');
 
 /**
@@ -354,7 +355,7 @@ class Sync extends Protocol {
  */
 Sync.prototype.init = deprecate(
     function () {
-        const { ObjectType, DataType } = require('../types');
+        const { ObjectType, DataType } = require('canopen-eds');
 
         let obj1005 = this.eds.getEntry(0x1005);
         if(obj1005 === undefined) {

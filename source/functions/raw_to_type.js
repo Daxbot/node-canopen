@@ -1,4 +1,4 @@
-const { DataType } = require('../types');
+const { DataType } = require('canopen-eds');
 const { timeToDate } = require('./date');
 
 /**

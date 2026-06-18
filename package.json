@@ -25,6 +25,7 @@
     "can-bus"
   ],
   "dependencies": {
+    "fast-xml-parser": "^5.9.2",
     "ini": "^3.0.1",
     "node-crc": "^1.3.2"
   },
