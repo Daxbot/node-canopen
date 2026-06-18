@@ -155,7 +155,12 @@ class DataObject extends EventEmitter {
         // Exclude computed getter fields from the data spread
         const { subNumber: _, ...rest } = data;
         Object.assign(this, rest);
-        this.parent = null;
+        Object.defineProperty(this, 'parent', {
+            value: null,
+            writable: true,
+            enumerable: false,
+            configurable: true,
+        });
 
         this.key = key;
         if (this.key === undefined)
@@ -572,7 +577,12 @@ class DataObject extends EventEmitter {
 
         const key = this.key + 'sub' + subIndex;
         const entry = new DataObject(key, data);
-        entry.parent = this;
+        Object.defineProperty(entry, 'parent', {
+            value: this,
+            writable: true,
+            enumerable: false,
+            configurable: true,
+        });
 
         this._subObjects.set(subIndex, entry);
 
