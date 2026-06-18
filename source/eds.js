@@ -55,7 +55,6 @@ function parseDate(time, date) {
 function edsToEntry(data) {
     return {
         parameterName: data['ParameterName'],
-        subNumber: parseInt(data['SubNumber']) || undefined,
         objectType: parseInt(data['ObjectType']) || undefined,
         dataType: parseInt(data['DataType']) || undefined,
         lowLimit: parseInt(data['LowLimit']) || undefined,
@@ -153,7 +152,9 @@ class DataObject extends EventEmitter {
     constructor(key, data) {
         super();
 
-        Object.assign(this, data);
+        // Exclude computed getter fields from the data spread
+        const { subNumber: _, ...rest } = data;
+        Object.assign(this, rest);
         this.parent = null;
 
         this.key = key;
@@ -247,8 +248,8 @@ class DataObject extends EventEmitter {
                     }
                 }
 
-                // Create sub-objects array
-                this._subObjects = [];
+                // Create sub-objects map
+                this._subObjects = new Map();
                 Object.defineProperty(this, '_subObjects', {
                     enumerable: false
                 });
@@ -419,6 +420,18 @@ class DataObject extends EventEmitter {
     }
 
     /**
+     * Number of sub-entries including sub-index 0, or undefined for VAR/DOMAIN.
+     *
+     * @type {number | undefined}
+     */
+    get subNumber() {
+        if (!this._subObjects)
+            return undefined;
+
+        return this._subObjects.size;
+    }
+
+    /**
      * Size of the raw data in bytes including sub-entries.
      *
      * @type {number}
@@ -428,11 +441,9 @@ class DataObject extends EventEmitter {
             return this.raw.length;
 
         let size = 0;
-        for (let i = 1; i <= this._subObjects[0].value; ++i) {
-            if (this._subObjects[i] === undefined)
-                continue;
-
-            size += this._subObjects[i].size;
+        for (const [k, sub] of this._subObjects) {
+            if (k === 0) continue;
+            size += sub.size;
         }
 
         return size;
@@ -448,11 +459,9 @@ class DataObject extends EventEmitter {
             return this._raw;
 
         const data = [];
-        for (let i = 1; i <= this._subObjects[0].value; ++i) {
-            if (this._subObjects[i] === undefined)
-                continue;
-
-            data.push(this._subObjects[i].raw);
+        for (const [k, sub] of this._subObjects) {
+            if (k === 0) continue;
+            data.push(sub.raw);
         }
 
         return data;
@@ -485,11 +494,9 @@ class DataObject extends EventEmitter {
             return rawToType(this.raw, this.dataType, this.scaleFactor);
 
         const data = [];
-        for (let i = 1; i <= this._subObjects[0].value; ++i) {
-            if (this._subObjects[i] === undefined)
-                continue;
-
-            data.push(this._subObjects[i].value);
+        for (const [k, sub] of this._subObjects) {
+            if (k === 0) continue;
+            data.push(sub.value);
         }
 
         return data;
@@ -546,7 +553,7 @@ class DataObject extends EventEmitter {
         if (!this._subObjects)
             throw new TypeError('not an Array type');
 
-        return this._subObjects[index];
+        return this._subObjects.get(index);
     }
 
     /**
@@ -567,7 +574,7 @@ class DataObject extends EventEmitter {
         const entry = new DataObject(key, data);
         entry.parent = this;
 
-        this._subObjects[subIndex] = entry;
+        this._subObjects.set(subIndex, entry);
 
         // Allow access to the sub-object using bracket notation
         if (!Object.prototype.hasOwnProperty.call(this, subIndex)) {
@@ -577,15 +584,8 @@ class DataObject extends EventEmitter {
         }
 
         // Update max sub-index
-        if (this._subObjects[0].value < subIndex)
-            this._subObjects[0]._raw.writeUInt8(subIndex);
-
-        // Update subNumber
-        this.subNumber = 1;
-        for (let i = 1; i <= this._subObjects[0].value; ++i) {
-            if (this._subObjects[i] !== undefined)
-                this.subNumber += 1;
-        }
+        if (this._subObjects.get(0).value < subIndex)
+            this._subObjects.get(0)._raw.writeUInt8(subIndex);
 
         return entry;
     }
@@ -602,25 +602,16 @@ class DataObject extends EventEmitter {
         if (!this._subObjects)
             throw new TypeError('not an Array type');
 
-        const obj = this._subObjects[subIndex];
-        delete this._subObjects[subIndex];
+        const obj = this._subObjects.get(subIndex);
+        this._subObjects.delete(subIndex);
 
         // Update max sub-index
-        if (subIndex >= this._subObjects[0].value) {
-            // Find the next highest sub-index
-            for (let i = subIndex; i >= 0; --i) {
-                if (this._subObjects[i] !== undefined) {
-                    this._subObjects[0]._raw.writeUInt8(i);
-                    break;
-                }
+        if (subIndex >= this._subObjects.get(0).value) {
+            let newMax = 0;
+            for (const k of this._subObjects.keys()) {
+                if (k > newMax) newMax = k;
             }
-        }
-
-        // Update subNumber
-        this.subNumber = 1;
-        for (let i = 1; i <= this._subObjects[0].value; ++i) {
-            if (this._subObjects[i] !== undefined)
-                this.subNumber += 1;
+            this._subObjects.get(0)._raw.writeUInt8(newMax);
         }
 
         return obj;
@@ -2617,8 +2608,8 @@ class Eds extends EventEmitter {
     removeEmcyConsumer(cobId) {
         const obj1028 = this.getEntry(0x1028);
         if (obj1028 !== undefined) {
-            for (let i = 1; i <= obj1028._subObjects[0].value; ++i) {
-                const subObject = obj1028._subObjects[i];
+            for (let i = 1; i <= obj1028.at(0).value; ++i) {
+                const subObject = obj1028.at(i);
                 if (subObject === undefined)
                     continue;
 
