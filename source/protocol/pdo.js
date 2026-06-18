@@ -389,7 +389,7 @@ Pdo.prototype.getReceive = deprecate(
             if (index < 0x1400 || index > 0x15FF)
                 continue;
 
-            if (entry[1] !== undefined && entry[1].value === cobId)
+            if (entry.at(1) !== undefined && entry.at(1).value === cobId)
                 return entry;
         }
 
@@ -443,7 +443,7 @@ Pdo.prototype.getTransmit = deprecate(
             if (index < 0x1800 || index > 0x19FF)
                 continue;
 
-            if (entry[1] !== undefined && entry[1].value === cobId)
+            if (entry.at(1) !== undefined && entry.at(1).value === cobId)
                 return entry;
         }
 

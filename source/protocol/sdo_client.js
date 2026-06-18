@@ -946,7 +946,7 @@ SdoClient.prototype.getServer = deprecate(
             if (index < 0x1280 || index > 0x12FF)
                 continue;
 
-            if (entry[3].value === serverId)
+            if (entry.at(3).value === serverId)
                 return entry;
         }
 

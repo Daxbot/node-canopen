@@ -796,7 +796,7 @@ SdoServer.prototype.getClient = deprecate(
             if (index < 0x1200 || index > 0x127F)
                 continue;
 
-            if (entry[3] !== undefined && entry[3].value === clientId)
+            if (entry.at(3) !== undefined && entry.at(3).value === clientId)
                 return entry;
         }
 

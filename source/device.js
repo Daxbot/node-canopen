@@ -339,7 +339,7 @@ class Device extends EventEmitter {
                         // Add data object to device EDS
                         this.eds.addEntry(dataIndex, obj);
                         for (let j = 1; j < obj.subNumber; ++j)
-                            this.eds.addSubEntry(dataIndex, j, obj[j]);
+                            this.eds.addSubEntry(dataIndex, j, obj.at(j));
                     }
 
                     // Prepare to map the new data object

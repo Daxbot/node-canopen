@@ -1425,7 +1425,7 @@ class Eds extends EventEmitter {
                 `${index.toString(16)} does not support sub objects`);
         }
 
-        return entry[subIndex] || null;
+        return entry.at(subIndex) || null;
     }
 
     /**
@@ -1469,7 +1469,7 @@ class Eds extends EventEmitter {
                 `${index.toString(16)} does not support sub objects`);
         }
 
-        if (entry[subIndex] === undefined)
+        if (entry.at(subIndex) === undefined)
             return;
 
         // Delete the entry
@@ -2386,10 +2386,10 @@ class Eds extends EventEmitter {
         const obj1018 = this.getEntry(0x1018);
         if (obj1018) {
             return {
-                vendorId: obj1018[1].value,
-                productCode: obj1018[2].value,
-                revisionNumber: obj1018[3].value,
-                serialNumber: obj1018[4].value,
+                vendorId: obj1018.at(1).value,
+                productCode: obj1018.at(2).value,
+                revisionNumber: obj1018.at(3).value,
+                serialNumber: obj1018.at(4).value,
             };
         }
 
@@ -2450,27 +2450,27 @@ class Eds extends EventEmitter {
         }
 
         if (identity.vendorId !== undefined) {
-            obj1018[1].value = identity.vendorId;
+            obj1018.at(1).value = identity.vendorId;
             if (options.saveDefault)
-                obj1018[1].defaultValue = identity.vendorId;
+                obj1018.at(1).defaultValue = identity.vendorId;
         }
 
         if (identity.productCode !== undefined) {
-            obj1018[2].value = identity.productCode;
+            obj1018.at(2).value = identity.productCode;
             if (options.saveDefault)
-                obj1018[2].defaultValue = identity.productCode;
+                obj1018.at(2).defaultValue = identity.productCode;
         }
 
         if (identity.revisionNumber !== undefined) {
-            obj1018[3].value = identity.revisionNumber;
+            obj1018.at(3).value = identity.revisionNumber;
             if (options.saveDefault)
-                obj1018[3].defaultValue = identity.revisionNumber;
+                obj1018.at(3).defaultValue = identity.revisionNumber;
         }
 
         if (identity.serialNumber !== undefined) {
-            obj1018[4].value = identity.serialNumber;
+            obj1018.at(4).value = identity.serialNumber;
             if (options.saveDefault)
-                obj1018[4].defaultValue = identity.serialNumber;
+                obj1018.at(4).defaultValue = identity.serialNumber;
         }
     }
 
@@ -3419,10 +3419,10 @@ class Eds extends EventEmitter {
          *   bit 30         RTR allowed.
          *   bit 31         PDO valid.
          */
-        if (commEntry[1] === undefined)
+        if (commEntry.at(1) === undefined)
             throw new EdsError('missing PDO COB-ID');
 
-        let cobId = commEntry[1].value;
+        let cobId = commEntry.at(1).value;
         if (!cobId || ((cobId >> 31) & 0x1) == 0x1)
             return;
 
@@ -3434,28 +3434,25 @@ class Eds extends EventEmitter {
         /* sub-index 2 (mandatory):
          *   bit 0..7       Transmission type.
          */
-        if (commEntry[2] === undefined)
+        if (commEntry.at(2) === undefined)
             throw new EdsError('missing PDO transmission type');
 
-        const transmissionType = commEntry[2].value;
+        const transmissionType = commEntry.at(2).value;
 
         /* sub-index 3 (optional):
          *   bit 0..15      Inhibit time.
          */
-        const inhibitTime = (commEntry[3] !== undefined)
-            ? commEntry[3].value : 0;
+        const inhibitTime = commEntry.at(3) ? commEntry.at(3).value : 0;
 
         /* sub-index 5 (optional):
          *   bit 0..15      Event timer value.
          */
-        const eventTime = (commEntry[5] !== undefined)
-            ? commEntry[5].value : 0;
+        const eventTime = commEntry.at(5) ? commEntry.at(5).value : 0;
 
         /* sub-index 6 (optional):
          *   bit 0..7       SYNC start value.
          */
-        const syncStart = (commEntry[6] !== undefined)
-            ? commEntry[6].value : 0;
+        const syncStart = commEntry.at(6) ? commEntry.at(6).value : 0;
 
         let pdo = {
             cobId,
@@ -3513,13 +3510,16 @@ class Eds extends EventEmitter {
      * @private
      */
     _parseSdoParameter(entry) {
+        if (entry.subNumber === undefined)
+            return null;
+
         let result = [];
 
-        const subObj1 = entry[1];
+        const subObj1 = entry.at(1);
         if(!subObj1)
             return null;
 
-        const subObj2 = entry[2];
+        const subObj2 = entry.at(2);
         if(!subObj2)
             return null;
 
@@ -3535,11 +3535,8 @@ class Eds extends EventEmitter {
 
         result[1] = cobIdTx & 0x7FF;
 
-        const subObj3 = entry[3];
-        if(subObj3)
-            result[2] = subObj3.value;
-        else
-            result[2] = 0;
+        const subObj3 = entry.at(3);
+        result[2] = subObj3 ? subObj3.value : 0;
 
         return result;
     }
