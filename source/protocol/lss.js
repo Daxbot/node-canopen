@@ -5,7 +5,7 @@
  */
 
 const Protocol = require('./protocol');
-const { Eds } = require('../eds');
+const { ObjectDictionary } = require('../eds');
 const { deprecate } = require('util');
 
 /**
@@ -118,7 +118,7 @@ class LssError extends Error {
 /**
  * CANopen LSS protocol handler.
  *
- * @param {Eds} eds - Eds object.
+ * @param {ObjectDictionary} eds - ObjectDictionary object.
  * @see CiA305 "Layer Settings Services and Protocol (LSS)"
  * @implements {Protocol}
  */
@@ -151,80 +151,80 @@ class Lss extends Protocol {
      * Vendor id.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getIdentity} instead.
+     * @deprecated Use {@link ObjectDictionary#getIdentity} instead.
      */
     get vendorId() {
-        return this.eds.getSubEntry(0x1018, 1).value;
+        return this.od.getSubEntry(0x1018, 1).value;
     }
 
     /**
      * Vendor id.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setIdentity} instead.
+     * @deprecated Use {@link ObjectDictionary#setIdentity} instead.
      */
     set vendorId(value) {
-        this.eds.getSubEntry(0x1018, 1).value = value;
+        this.od.getSubEntry(0x1018, 1).value = value;
     }
 
     /**
      * Product code.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getIdentity} instead.
+     * @deprecated Use {@link ObjectDictionary#getIdentity} instead.
      */
     get productCode() {
-        return this.eds.getSubEntry(0x1018, 2).value;
+        return this.od.getSubEntry(0x1018, 2).value;
     }
 
     /**
      * Product code.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setIdentity} instead.
+     * @deprecated Use {@link ObjectDictionary#setIdentity} instead.
      */
     set productCode(value) {
-        this.eds.getSubEntry(0x1018, 2).value = value;
+        this.od.getSubEntry(0x1018, 2).value = value;
     }
 
     /**
      * Revision number.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getIdentity} instead.
+     * @deprecated Use {@link ObjectDictionary#getIdentity} instead.
      */
     get revisionNumber() {
-        return this.eds.getSubEntry(0x1018, 3).value;
+        return this.od.getSubEntry(0x1018, 3).value;
     }
 
     /**
      * Revision number.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setIdentity} instead.
+     * @deprecated Use {@link ObjectDictionary#setIdentity} instead.
      */
     set revisionNumber(value) {
-        this.eds.getSubEntry(0x1018, 3).value = value;
+        this.od.getSubEntry(0x1018, 3).value = value;
     }
 
     /**
      * Serial number.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getIdentity} instead.
+     * @deprecated Use {@link ObjectDictionary#getIdentity} instead.
      */
     get serialNumber() {
-        return this.eds.getSubEntry(0x1018, 4).value;
+        return this.od.getSubEntry(0x1018, 4).value;
     }
 
     /**
      * Serial number.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setIdentity} instead.
+     * @deprecated Use {@link ObjectDictionary#setIdentity} instead.
      */
     set serialNumber(value) {
-        this.eds.getSubEntry(0x1018, 4).value = value;
+        this.od.getSubEntry(0x1018, 4).value = value;
     }
 
     /**
@@ -749,7 +749,7 @@ class Lss extends Protocol {
      */
     start() {
         if(!this.started) {
-            const obj1018 = this.eds.getEntry(0x1018);
+            const obj1018 = this.od.getEntry(0x1018);
             if(obj1018)
                 this._addEntry(obj1018);
 
@@ -770,7 +770,7 @@ class Lss extends Protocol {
             this.removeEdsCallback('newEntry');
             this.removeEdsCallback('removeEntry');
 
-            const obj1018 = this.eds.getEntry(0x1018);
+            const obj1018 = this.od.getEntry(0x1018);
             if(obj1018)
                 this._removeEntry(obj1018);
 
@@ -932,7 +932,7 @@ class Lss extends Protocol {
     }
 
     /**
-     * Listens for new Eds entries.
+     * Listens for new ObjectDictionary entries.
      *
      * @param {DataObject} entry - new entry.
      * @private
@@ -945,7 +945,7 @@ class Lss extends Protocol {
     }
 
     /**
-     * Listens for removed Eds entries.
+     * Listens for removed ObjectDictionary entries.
      *
      * @param {DataObject} entry - removed entry.
      * @private

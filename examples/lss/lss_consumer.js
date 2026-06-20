@@ -17,7 +17,7 @@ async function main(device) {
         // these numbers will be provided by them. However, if your goal is to
         // use LSS to configure multiple custom nodes you can set this to whatever
         // you want.
-        device.eds.setIdentity({
+        device.od.setIdentity({
             vendorId: Math.floor(Math.random() * 0xffffffff),
             productCode: Math.floor(Math.random() * 0xffffffff),
             revisionNumber: Math.floor(Math.random() * 0xffffffff),

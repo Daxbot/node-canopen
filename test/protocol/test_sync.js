@@ -25,9 +25,9 @@ describe('Sync', function () {
 
     it('should produce a sync object', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setSyncCobId(0x80);
-        device.eds.setSyncGenerationEnable(true);
-        device.eds.setSyncCyclePeriod(1);
+        device.od.setSyncCobId(0x80);
+        device.od.setSyncGenerationEnable(true);
+        device.od.setSyncCyclePeriod(1);
 
         device.sync.addListener('sync', () => {
             device.sync.stop();
@@ -39,10 +39,10 @@ describe('Sync', function () {
 
     it('should increment the counter', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setSyncCobId(0x80);
-        device.eds.setSyncGenerationEnable(true);
-        device.eds.setSyncCyclePeriod(1);
-        device.eds.setSyncOverflow(100);
+        device.od.setSyncCobId(0x80);
+        device.od.setSyncGenerationEnable(true);
+        device.od.setSyncCyclePeriod(1);
+        device.od.setSyncOverflow(100);
 
         let lastCount = null;
         device.sync.addListener('sync', (count) => {
@@ -58,13 +58,13 @@ describe('Sync', function () {
 
     it('should throw if generate is false', function () {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setSyncCobId(0x80);
+        device.od.setSyncCobId(0x80);
         device.sync.start();
 
         return expect(() => device.sync.write()).to.throw(EdsError);
     });
 
-    it('should listen to Eds#newEntry', function (done) {
+    it('should listen to ObjectDictionary#newEntry', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
         device.sync.start();
 
@@ -73,16 +73,16 @@ describe('Sync', function () {
             done();
         });
 
-        device.eds.setSyncCobId(0x80);
-        device.eds.setSyncGenerationEnable(true);
-        device.eds.setSyncCyclePeriod(1);
+        device.od.setSyncCobId(0x80);
+        device.od.setSyncGenerationEnable(true);
+        device.od.setSyncCyclePeriod(1);
     });
 
-    it('should listen to Eds#removeEntry', function (done) {
+    it('should listen to ObjectDictionary#removeEntry', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setSyncCobId(0x80);
-        device.eds.setSyncGenerationEnable(true);
-        device.eds.setSyncCyclePeriod(1);
+        device.od.setSyncCobId(0x80);
+        device.od.setSyncGenerationEnable(true);
+        device.od.setSyncCyclePeriod(1);
         device.sync.start();
 
         const timer = setTimeout(() => {
@@ -91,16 +91,16 @@ describe('Sync', function () {
         }, 20);
 
         device.sync.on('sync', () => {
-            device.eds.removeEntry(0x1006);
+            device.od.removeEntry(0x1006);
             timer.refresh();
         });
     });
 
     it('should listen to DataObject#update', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setSyncCobId(0x80);
-        device.eds.setSyncGenerationEnable(true);
-        device.eds.setSyncCyclePeriod(1);
+        device.od.setSyncCobId(0x80);
+        device.od.setSyncGenerationEnable(true);
+        device.od.setSyncCyclePeriod(1);
         device.sync.start();
 
         const timer = setTimeout(() => {
@@ -109,7 +109,7 @@ describe('Sync', function () {
         }, 20);
 
         device.sync.on('sync', () => {
-            device.eds.setSyncGenerationEnable(false);
+            device.od.setSyncGenerationEnable(false);
             timer.refresh();
         });
     });

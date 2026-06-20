@@ -5,7 +5,7 @@
  */
 
 const Protocol = require('./protocol');
-const { Eds } = require('../eds');
+const { ObjectDictionary } = require('../eds');
 const { DataType, EdsError } = require('canopen-eds');
 const rawToType = require('../functions/raw_to_type');
 const typeToRaw = require('../functions/type_to_raw');
@@ -18,7 +18,7 @@ const { deprecate } = require('util');
  * provides a simple network clock. There should be at most one time stamp
  * producer on the network.
  *
- * @param {Eds} eds - Eds object.
+ * @param {ObjectDictionary} eds - ObjectDictionary object.
  * @see CiA301 "Time stamp object (TIME)" (§7.2.6)
  * @implements {Protocol}
  */
@@ -34,60 +34,60 @@ class Time extends Protocol {
      * Get object 0x1012 [bit 30] - Time producer enable.
      *
      * @type {boolean}
-     * @deprecated Use {@link Eds#getTimeProducerEnable} instead.
+     * @deprecated Use {@link ObjectDictionary#getTimeProducerEnable} instead.
      */
     get produce() {
-        return this.eds.getTimeProducerEnable();
+        return this.od.getTimeProducerEnable();
     }
 
     /**
      * Set object 0x1012 [bit 30] - Time producer enable.
      *
      * @type {boolean}
-     * @deprecated Use {@link Eds#setTimeProducerEnable} instead.
+     * @deprecated Use {@link ObjectDictionary#setTimeProducerEnable} instead.
      */
     set produce(enable) {
-        this.eds.setTimeProducerEnable(enable);
+        this.od.setTimeProducerEnable(enable);
     }
 
     /**
      * Get object 0x1012 [bit 31] - Time consumer enable.
      *
      * @type {boolean}
-     * @deprecated Use {@link Eds#getTimeConsumerEnable} instead.
+     * @deprecated Use {@link ObjectDictionary#getTimeConsumerEnable} instead.
      */
     get consume() {
-        return this.eds.getTimeConsumerEnable();
+        return this.od.getTimeConsumerEnable();
     }
 
     /**
      * Set object 0x1012 [bit 31] - Time consumer enable.
      *
      * @type {boolean}
-     * @deprecated Use {@link Eds#setTimeConsumerEnable} instead.
+     * @deprecated Use {@link ObjectDictionary#setTimeConsumerEnable} instead.
      */
     set consume(enable) {
-        this.eds.setTimeConsumerEnable(enable);
+        this.od.setTimeConsumerEnable(enable);
     }
 
     /**
      * Get object 0x1012 - COB-ID TIME.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getTimeCobId} instead.
+     * @deprecated Use {@link ObjectDictionary#getTimeCobId} instead.
      */
     get cobId() {
-        return this.eds.getTimeCobId();
+        return this.od.getTimeCobId();
     }
 
     /**
      * Set object 0x1012 - COB-ID TIME.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setTimeCobId} instead.
+     * @deprecated Use {@link ObjectDictionary#setTimeCobId} instead.
      */
     set cobId(cobId) {
-        this.eds.setTimeCobId(cobId);
+        this.od.setTimeCobId(cobId);
     }
 
     /**
@@ -116,7 +116,7 @@ class Time extends Protocol {
      */
     start() {
         if(!this.started) {
-            const obj1012 = this.eds.getEntry(0x1012);
+            const obj1012 = this.od.getEntry(0x1012);
             if(obj1012)
                 this._addEntry(obj1012);
 
@@ -137,7 +137,7 @@ class Time extends Protocol {
             this.removeEdsCallback('newEntry');
             this.removeEdsCallback('removeEntry');
 
-            const obj1012 = this.eds.getEntry(0x1012);
+            const obj1012 = this.od.getEntry(0x1012);
             if(obj1012)
                 this._removeEntry(obj1012);
 
@@ -169,7 +169,7 @@ class Time extends Protocol {
     }
 
     /**
-     * Listens for new Eds entries.
+     * Listens for new ObjectDictionary entries.
      *
      * @param {DataObject} entry - new entry.
      * @private
@@ -182,7 +182,7 @@ class Time extends Protocol {
     }
 
     /**
-     * Listens for removed Eds entries.
+     * Listens for removed ObjectDictionary entries.
      *
      * @param {DataObject} entry - removed entry.
      * @private
@@ -241,9 +241,9 @@ Time.prototype.init = deprecate(
     function () {
         const { ObjectType, DataType } = require('canopen-eds');
 
-        let obj1012 = this.eds.getEntry(0x1012);
+        let obj1012 = this.od.getEntry(0x1012);
         if(obj1012 === undefined) {
-            obj1012 = this.eds.addEntry(0x1012, {
+            obj1012 = this.od.addEntry(0x1012, {
                 parameterName:  'COB-ID TIME',
                 objectType:     ObjectType.VAR,
                 dataType:       DataType.UNSIGNED32,

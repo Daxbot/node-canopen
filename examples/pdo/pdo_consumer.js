@@ -14,12 +14,12 @@ const { Device, DataType } = require('../../index');
 async function main(device) {
     await new Promise((resolve) => {
         // Create a new RPDO entry that receives the value of object 0x2000
-        const obj2000 = device.eds.addEntry(0x2000, {
+        const obj2000 = device.od.addEntry(0x2000, {
             parameterName: 'Test object',
             dataType: DataType.UNSIGNED8,
         });
 
-        device.eds.addReceivePdo({
+        device.od.addReceivePdo({
             cobId: 0x180,               // Send with ID 0x180
             dataObjects: [obj2000],     // Map 0x2000
         });

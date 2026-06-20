@@ -5,12 +5,12 @@
  */
 
 const EventEmitter = require('events');
-const { Eds } = require('../eds');
+const { ObjectDictionary } = require('../eds');
 
 /**
  * A base class extended by the protocol modules.
  *
- * @param {Eds} eds - Eds object.
+ * @param {ObjectDictionary} eds - ObjectDictionary object.
  * @interface
  * @since 6.0.0
  */
@@ -18,7 +18,7 @@ class Protocol extends EventEmitter {
     constructor(eds) {
         super();
 
-        this.eds = eds;
+        this.od = eds;
         this.started = false;
         this.callbacks = {};
     }
@@ -95,7 +95,7 @@ class Protocol extends EventEmitter {
     }
 
     /**
-     * Add a listener to the Eds.
+     * Add a listener to the ObjectDictionary.
      *
      * @param {string} eventName - the name of the event.
      * @param {Function} listener - the callback function.
@@ -105,16 +105,16 @@ class Protocol extends EventEmitter {
             throw new Error(eventName + ' already exists');
 
         this.callbacks[eventName] = listener;
-        this.eds.addListener(eventName, listener);
+        this.od.addListener(eventName, listener);
     }
 
     /**
-     * Remove a listener from the Eds.
+     * Remove a listener from the ObjectDictionary.
      *
      * @param {string} eventName - the name of the event.
      */
     removeEdsCallback(eventName) {
-        this.eds.removeListener(eventName, this.callbacks[eventName]);
+        this.od.removeListener(eventName, this.callbacks[eventName]);
         delete this.callbacks[eventName];
     }
 

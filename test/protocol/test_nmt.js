@@ -25,8 +25,8 @@ describe('Nmt', function () {
 
     it('should emit on heartbeat detected', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setHeartbeatProducerTime(10);
-        device.eds.addHeartbeatConsumer(device.id, 10);
+        device.od.setHeartbeatProducerTime(10);
+        device.od.addHeartbeatConsumer(device.id, 10);
 
         device.nmt.addListener('heartbeat', ({ deviceId }) => {
             expect(deviceId).to.equal(device.id);
@@ -39,7 +39,7 @@ describe('Nmt', function () {
 
     it('should emit on heartbeat timeout', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.addHeartbeatConsumer(device.id, 10);
+        device.od.addHeartbeatConsumer(device.id, 10);
 
         device.nmt.addListener('timeout', (deviceId) => {
             expect(deviceId).to.equal(device.id);
@@ -53,8 +53,8 @@ describe('Nmt', function () {
 
     it('should stop the heartbeat if producer time is 0', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setHeartbeatProducerTime(1);
-        device.eds.addHeartbeatConsumer(device.id, 10);
+        device.od.setHeartbeatProducerTime(1);
+        device.od.addHeartbeatConsumer(device.id, 10);
 
         device.nmt.addListener('timeout', (deviceId) => {
             expect(deviceId).to.equal(device.id);
@@ -64,14 +64,14 @@ describe('Nmt', function () {
 
         device.nmt.start();
         setTimeout(() => {
-            device.eds.setHeartbeatProducerTime(0); // Stop heartbeat
+            device.od.setHeartbeatProducerTime(0); // Stop heartbeat
         }, 3);
     });
 
     it('should emit on NMT state change', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setHeartbeatProducerTime(1);
-        device.eds.addHeartbeatConsumer(device.id, 10);
+        device.od.setHeartbeatProducerTime(1);
+        device.od.addHeartbeatConsumer(device.id, 10);
 
         device.nmt.addListener('changeState', (state) => {
             if (state) {
@@ -83,33 +83,33 @@ describe('Nmt', function () {
         device.nmt.start();
     });
 
-    it('should listen to Eds#newEntry', function (done) {
+    it('should listen to ObjectDictionary#newEntry', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
         device.nmt.start();
 
-        expect(device.eds.getHeartbeatProducerTime()).to.be.null;
-        expect(device.eds.getHeartbeatConsumers()).to.be.an('array').that.is.empty;
+        expect(device.od.getHeartbeatProducerTime()).to.be.null;
+        expect(device.od.getHeartbeatConsumers()).to.be.an('array').that.is.empty;
 
         device.nmt.once('heartbeat', () => {
             device.nmt.stop();
             done();
         });
 
-        device.eds.setHeartbeatProducerTime(1);
-        device.eds.addHeartbeatConsumer(device.id, 10);
+        device.od.setHeartbeatProducerTime(1);
+        device.od.addHeartbeatConsumer(device.id, 10);
     });
 
-    it('should listen to Eds#removeEntry', function (done) {
+    it('should listen to ObjectDictionary#removeEntry', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setHeartbeatProducerTime(1);
-        device.eds.addHeartbeatConsumer(device.id, 10);
+        device.od.setHeartbeatProducerTime(1);
+        device.od.addHeartbeatConsumer(device.id, 10);
 
         device.nmt.once('heartbeat', () => {
             device.nmt.once('timeout', () => {
                 done();
             });
 
-            device.eds.removeEntry(0x1017); // Producer time
+            device.od.removeEntry(0x1017); // Producer time
         });
 
         device.nmt.start();
@@ -117,8 +117,8 @@ describe('Nmt', function () {
 
     it('should listen to DataObject#update', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setHeartbeatProducerTime(1);
-        device.eds.addHeartbeatConsumer(0x7F, 10); // Not our device
+        device.od.setHeartbeatProducerTime(1);
+        device.od.addHeartbeatConsumer(0x7F, 10); // Not our device
         device.nmt.start();
 
         device.nmt.once('heartbeat', () => {
@@ -126,6 +126,6 @@ describe('Nmt', function () {
             done();
         });
 
-        device.eds.addHeartbeatConsumer(device.id, 10); // Our device
+        device.od.addHeartbeatConsumer(device.id, 10); // Our device
     });
 });

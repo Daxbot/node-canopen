@@ -19,24 +19,24 @@ async function main(device, clientId) {
         // Add the SDO server parameters.
         const cobIdTx = 0x580 | clientId; // client to server
         const cobIdRx = 0x600 | clientId; // server to client
-        device.eds.addSdoServerParameter(clientId, cobIdTx, cobIdRx);
+        device.od.addSdoServerParameter(clientId, cobIdTx, cobIdRx);
         device.start();
 
-        const obj2000 = device.eds.addEntry(0x2000, {
+        const obj2000 = device.od.addEntry(0x2000, {
             parameterName: 'File path',
             dataType: DataType.VISIBLE_STRING,
             defaultValue: '',
             accessType: AccessType.READ_WRITE,
         });
 
-        const obj2001 = device.eds.addEntry(0x2001, {
+        const obj2001 = device.od.addEntry(0x2001, {
             parameterName: 'File size',
             dataType: DataType.UNSIGNED32,
             defaultValue: 0,
             accessType: AccessType.READ_ONLY,
         });
 
-        const obj2002 = device.eds.addEntry(0x2002, {
+        const obj2002 = device.od.addEntry(0x2002, {
             parameterName: 'File data',
             dataType: DataType.DOMAIN,
             accessType: AccessType.READ_WRITE,

@@ -12,12 +12,12 @@ const { Device, DataType } = require('../../index');
 async function main(device) {
     await new Promise((resolve) => {
         // Create a new TPDO entry that sends the value of object 0x2000
-        const obj2000 = device.eds.addEntry(0x2000, {
+        const obj2000 = device.od.addEntry(0x2000, {
             parameterName: 'Test object',
             dataType: DataType.UNSIGNED8,
         });
 
-        device.eds.addTransmitPdo({
+        device.od.addTransmitPdo({
             cobId: 0x180,               // Send with ID 0x180
             transmissionType: 254,      // Send on value change
             dataObjects: [obj2000],     // Map the value of 0x2000

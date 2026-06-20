@@ -81,8 +81,8 @@ describe('Sdo', function () {
         for (let [type, value] of shortTypes) {
             it('should transfer ' + type, async function () {
                 const device = new Device({ id: 0xA, loopback: true });
-                device.eds.addSdoClientParameter(device.id);
-                device.eds.addSdoServerParameter(device.id);
+                device.od.addSdoClientParameter(device.id);
+                device.od.addSdoServerParameter(device.id);
                 device.start();
 
                 const index = DataType[type];
@@ -112,8 +112,8 @@ describe('Sdo', function () {
             let device;
             for(let id = 1; id < 0x7F; ++id) {
                 device = new Device({ id, loopback: true });
-                device.eds.addSdoClientParameter(device.id);
-                device.eds.addSdoServerParameter(device.id);
+                device.od.addSdoClientParameter(device.id);
+                device.od.addSdoServerParameter(device.id);
                 device.start();
 
                 await device.sdo.download({
@@ -139,8 +139,8 @@ describe('Sdo', function () {
         for (let [type, value] of longTypes) {
             it('should transfer ' + type, async function () {
                 const device = new Device({ id: 0xA, loopback: true });
-                device.eds.addSdoClientParameter(device.id);
-                device.eds.addSdoServerParameter(device.id);
+                device.od.addSdoClientParameter(device.id);
+                device.od.addSdoServerParameter(device.id);
                 device.start();
 
                 const index = DataType[type];
@@ -172,17 +172,17 @@ describe('Sdo', function () {
 
         it('should transfer subindexes >= 1', async function () {
             const device = new Device({ id: 0xA, loopback: true });
-            device.eds.addSdoClientParameter(device.id);
-            device.eds.addSdoServerParameter(device.id);
+            device.od.addSdoClientParameter(device.id);
+            device.od.addSdoServerParameter(device.id);
             device.start();
 
             const testString = 'I am a long string that will take multiple messages to transfer';
-            device.eds.addEntry(0x1234, {
+            device.od.addEntry(0x1234, {
                 parameterName: 'Test entry',
                 objectType: 6,
                 subNumber: 1
             });
-            device.eds.addSubEntry(0x1234, 0, {
+            device.od.addSubEntry(0x1234, 0, {
                 parameterName: 'A long name',
                 dataType: DataType.VISIBLE_STRING,
                 accessType: AccessType.READ_WRITE,
@@ -213,8 +213,8 @@ describe('Sdo', function () {
             let device;
             for(let id = 1; id < 0x7F; ++id) {
                 device = new Device({ id, loopback: true });
-                device.eds.addSdoClientParameter(id);
-                device.eds.addSdoServerParameter(id);
+                device.od.addSdoClientParameter(id);
+                device.od.addSdoServerParameter(id);
                 device.start();
 
                 await device.sdo.download({
@@ -237,15 +237,15 @@ describe('Sdo', function () {
 
         it('should handle large transfers', async function () {
             const device = new Device({ id: 0xA, loopback: true });
-            device.eds.addSdoClientParameter(device.id);
-            device.eds.addSdoServerParameter(device.id);
+            device.od.addSdoClientParameter(device.id);
+            device.od.addSdoServerParameter(device.id);
             device.start();
 
             const data = Buffer.alloc(65*1024);
             for (let i = 0; i < data.length; ++i)
                 data[i] = Math.floor(Math.random() * 0xff);
 
-            device.eds.addEntry(0x1234, {
+            device.od.addEntry(0x1234, {
                 parameterName: 'A long buffer',
                 dataType: DataType.DOMAIN,
                 accessType: AccessType.READ_WRITE,
@@ -275,8 +275,8 @@ describe('Sdo', function () {
         for (let [type, value] of shortTypes) {
             it('should transfer ' + type, async function () {
                 const device = new Device({ id: 0xA, loopback: true });
-                device.eds.addSdoClientParameter(device.id);
-                device.eds.addSdoServerParameter(device.id);
+                device.od.addSdoClientParameter(device.id);
+                device.od.addSdoServerParameter(device.id);
                 device.start();
 
                 const index = DataType[type];
@@ -307,8 +307,8 @@ describe('Sdo', function () {
         for (let [type, value] of longTypes) {
             it('should transfer ' + type, async function () {
                 const device = new Device({ id: 0xA, loopback: true });
-                device.eds.addSdoClientParameter(device.id);
-                device.eds.addSdoServerParameter(device.id);
+                device.od.addSdoClientParameter(device.id);
+                device.od.addSdoServerParameter(device.id);
                 device.start();
 
                 const index = DataType[type];
@@ -342,8 +342,8 @@ describe('Sdo', function () {
 
         it('should handle large transfers', async function () {
             const device = new Device({ id: 0xA, loopback: true });
-            device.eds.addSdoClientParameter(device.id);
-            device.eds.addSdoServerParameter(device.id);
+            device.od.addSdoClientParameter(device.id);
+            device.od.addSdoServerParameter(device.id);
             device.start();
 
             const data = Buffer.alloc(65*1024);
@@ -354,7 +354,7 @@ describe('Sdo', function () {
             device.sdoServer.setBlockSize(127);
             device.sdoServer.setBlockInterval(0);
 
-            device.eds.addEntry(0x1234, {
+            device.od.addEntry(0x1234, {
                 parameterName: 'A long buffer',
                 dataType: DataType.DOMAIN,
                 accessType: AccessType.READ_WRITE,

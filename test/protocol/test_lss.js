@@ -1,6 +1,6 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const { Eds, Device, LssMode } = require('../../index');
+const { ObjectDictionary, Device, LssMode } = require('../../index');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
@@ -33,11 +33,11 @@ describe('Lss', function () {
         device.lss.stop();
     });
 
-    it('should listen to Eds#newEntry', function () {
-        const eds = new Eds();
+    it('should listen to ObjectDictionary#newEntry', function () {
+        const eds = new ObjectDictionary();
         eds.removeEntry(0x1018);
 
-        const device = new Device({ eds, enableLss: true });
+        const device = new Device({ od: eds, enableLss: true });
         expect(device.lss.identity.vendorId).to.be.null;
         expect(device.lss.identity.productCode).to.be.null;
         expect(device.lss.identity.revisionNumber).to.be.null;
@@ -56,14 +56,14 @@ describe('Lss', function () {
         expect(device.lss.identity.serialNumber).to.equal(4);
     });
 
-    it('should listen to Eds#removeEntry', function () {
+    it('should listen to ObjectDictionary#removeEntry', function () {
         const device = new Device({ enableLss: true });
         expect(device.lss.identity.vendorId).to.equal(0);
         expect(device.lss.identity.productCode).to.equal(0);
         expect(device.lss.identity.revisionNumber).to.equal(0);
         expect(device.lss.identity.serialNumber).to.equal(0);
 
-        device.eds.removeEntry(0x1018);
+        device.od.removeEntry(0x1018);
         expect(device.lss.identity.vendorId).to.be.null;
         expect(device.lss.identity.productCode).to.be.null;
         expect(device.lss.identity.revisionNumber).to.be.null;
@@ -72,7 +72,7 @@ describe('Lss', function () {
 
     it('should listen to DataObject#update', function () {
         const device = new Device({ enableLss: true });
-        device.eds.setIdentity({
+        device.od.setIdentity({
             vendorId: 1,
             productCode: 2,
             revisionNumber: 3,
@@ -112,7 +112,7 @@ describe('Lss', function () {
                 done();
             });
 
-            device.eds.setIdentity(identity);
+            device.od.setIdentity(identity);
             device.lss.switchModeSelective(identity);
         });
 
@@ -128,7 +128,7 @@ describe('Lss', function () {
         };
 
         before(function () {
-            device.eds.setIdentity(identity);
+            device.od.setIdentity(identity);
             device.lss.switchModeSelective(identity);
         });
 
@@ -168,7 +168,7 @@ describe('Lss', function () {
     describe('Fastscan', function () {
         it('should fastscan', async function () {
             const device = new Device({ loopback: true, enableLss: true });
-            device.eds.setIdentity({
+            device.od.setIdentity({
                 vendorId: rand32(),
                 productCode: rand32(),
                 revisionNumber: rand32(),

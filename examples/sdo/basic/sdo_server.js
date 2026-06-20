@@ -18,11 +18,11 @@ async function main(device, clientId) {
         // Add the SDO server parameters.
         const cobIdTx = 0x580 | clientId; // client to server
         const cobIdRx = 0x600 | clientId; // server to client
-        device.eds.addSdoServerParameter(clientId, cobIdTx, cobIdRx);
+        device.od.addSdoServerParameter(clientId, cobIdTx, cobIdRx);
         device.start();
 
         // Create an additional entry to be accessed by the SDO client.
-        const obj2000 = device.eds.addEntry(0x2000, {
+        const obj2000 = device.od.addEntry(0x2000, {
             parameterName: 'Test string',
             dataType: DataType.VISIBLE_STRING,
         });

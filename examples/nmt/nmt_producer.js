@@ -11,7 +11,7 @@ const { Device } = require('../../index.js');
  */
 async function main(device) {
     await new Promise((resolve) => {
-        device.eds.setHeartbeatProducerTime(20);
+        device.od.setHeartbeatProducerTime(20);
         device.start();
 
         setTimeout(() => {

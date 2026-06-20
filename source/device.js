@@ -16,7 +16,7 @@ const { SdoClient } = require('./protocol/sdo_client');
 const { SdoServer } = require('./protocol/sdo_server');
 const { Sync } = require('./protocol/sync');
 const { Time } = require('./protocol/time');
-const { Eds } = require('./eds');
+const { ObjectDictionary } = require('./eds');
 
 /**
  * A CANopen device.
@@ -24,7 +24,7 @@ const { Eds } = require('./eds');
  * This class represents a single addressable device (or node) on the bus.
  *
  * @param {object} args - arguments.
- * @param {Eds} args.eds - the device's electronic data sheet.
+ * @param {ObjectDictionary} args.od - the device's electronic data sheet.
  * @param {number} [args.id] - device identifier [1-127].
  * @param {boolean} [args.loopback] - enable loopback mode.
  * @param {boolean} [args.enableLss] - enable layer setting services.
@@ -35,20 +35,20 @@ class Device extends EventEmitter {
         this._stateListener = null;
         this._resetListener = null;
 
-        if (typeof args.eds === 'string')
-            this.eds = Eds.fromFile(args.eds);
+        if (typeof args.od === 'string')
+            this.od = ObjectDictionary.fromFile(args.od);
         else
-            this.eds = args.eds || new Eds();
+            this.od = args.od || new ObjectDictionary();
 
         this.protocol = {
-            emcy: new Emcy(this.eds),
-            lss: new Lss(this.eds),
-            nmt: new Nmt(this.eds),
-            pdo: new Pdo(this.eds),
-            sdoClient: new SdoClient(this.eds),
-            sdoServer: new SdoServer(this.eds),
-            sync: new Sync(this.eds),
-            time: new Time(this.eds),
+            emcy: new Emcy(this.od),
+            lss: new Lss(this.od),
+            nmt: new Nmt(this.od),
+            pdo: new Pdo(this.od),
+            sdoClient: new SdoClient(this.od),
+            sdoServer: new SdoServer(this.od),
+            sync: new Sync(this.od),
+            time: new Time(this.od),
         };
 
         for (const obj of Object.values(this.protocol))
@@ -71,7 +71,7 @@ class Device extends EventEmitter {
         }
 
         if (args.enableLss === undefined)
-            args.enableLss = this.eds.lssSupported;
+            args.enableLss = this.od.lssSupported;
 
         if (args.enableLss) {
             this.lss.addListener('changeDeviceId', (id) => this.id = id);
@@ -80,13 +80,13 @@ class Device extends EventEmitter {
     }
 
     /**
-     * Accessor for version 5 Eds DataObjects. Do not use.
+     * Accessor for version 5 ObjectDictionary DataObjects. Do not use.
      *
      * @type {object}
-     * @deprecated Use {@link Eds#entries} instead.
+     * @deprecated Use {@link ObjectDictionary#entries} instead.
      */
     get dataObjects() {
-        return this.eds.dataObjects;
+        return this.od.dataObjects;
     }
 
     /**
@@ -260,7 +260,7 @@ class Device extends EventEmitter {
      *
      * @param {object} args - method arguments.
      * @param {number} args.id - the remote node's CAN identifier.
-     * @param {Eds | string} args.eds - the server's EDS.
+     * @param {ObjectDictionary | string} args.od - the server's EDS.
      * @param {number} [args.dataStart] - start index for SDO entries.
      * @param {boolean} [args.skipEmcy] - Skip EMCY producer -> consumer.
      * @param {boolean} [args.skipNmt] - Skip NMT producer -> consumer.
@@ -269,15 +269,15 @@ class Device extends EventEmitter {
      * @since 6.0.0
      */
     mapRemoteNode(args = {}) {
-        let eds = args.eds;
+        let eds = args.od;
         if (typeof eds === 'string')
-            eds = Eds.fromFile(eds);
+            eds = ObjectDictionary.fromFile(eds);
 
         if (!args.skipEmcy) {
             // Map EMCY producer -> consumer
             const cobId = eds.getEmcyCobId();
             if (cobId)
-                this.eds.addEmcyConsumer(cobId);
+                this.od.addEmcyConsumer(cobId);
         }
 
         if (!args.skipNmt) {
@@ -287,7 +287,7 @@ class Device extends EventEmitter {
                 if (!args.id)
                     throw new ReferenceError('id required to map NMT');
 
-                this.eds.addHeartbeatConsumer(args.id, ms * 2);
+                this.od.addHeartbeatConsumer(args.id, ms * 2);
             }
         }
 
@@ -304,7 +304,7 @@ class Device extends EventEmitter {
                 const cobIdTx = client.cobIdRx; // client -> server
                 const cobIdRx = client.cobIdTx; // server -> client
 
-                this.eds.addSdoClientParameter(args.id, cobIdTx, cobIdRx);
+                this.od.addSdoClientParameter(args.id, cobIdTx, cobIdRx);
             }
         }
 
@@ -319,7 +319,7 @@ class Device extends EventEmitter {
                 const dataObjects = [];
                 for (let obj of pdo.dataObjects) {
                     // Find the next open SDO index
-                    while (this.eds.getEntry(dataIndex) !== undefined) {
+                    while (this.od.getEntry(dataIndex) !== undefined) {
                         if (dataIndex >= 0xFFFF)
                             throw new RangeError('dataIndex must be <= 0xFFFF');
 
@@ -335,24 +335,24 @@ class Device extends EventEmitter {
                         mapped[obj.index] = dataIndex;
 
                         // Add data object to device EDS
-                        this.eds.addEntry(dataIndex, obj);
+                        this.od.addEntry(dataIndex, obj);
                         for (let j = 1; j < obj.subNumber; ++j)
-                            this.eds.addSubEntry(dataIndex, j, obj.at(j));
+                            this.od.addSubEntry(dataIndex, j, obj.at(j));
                     }
 
                     // Prepare to map the new data object
                     if (subIndex) {
                         dataObjects.push(
-                            this.eds.getSubEntry(mapped[obj.index], subIndex));
+                            this.od.getSubEntry(mapped[obj.index], subIndex));
                     }
                     else {
                         dataObjects.push(
-                            this.eds.getEntry(mapped[obj.index]));
+                            this.od.getEntry(mapped[obj.index]));
                     }
                 }
 
                 pdo.dataObjects = dataObjects;
-                this.eds.addReceivePdo(pdo);
+                this.od.addReceivePdo(pdo);
             }
         }
     }
@@ -364,7 +364,7 @@ class Device extends EventEmitter {
      * @returns {number | bigint | string | Date} entry value.
      */
     getValue(index) {
-        const entry = this.eds.getEntry(index);
+        const entry = this.od.getEntry(index);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -383,7 +383,7 @@ class Device extends EventEmitter {
      * @returns {number | bigint | string | Date} entry value.
      */
     getValueArray(index, subIndex) {
-        const entry = this.eds.getSubEntry(index, subIndex);
+        const entry = this.od.getSubEntry(index, subIndex);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -401,7 +401,7 @@ class Device extends EventEmitter {
      * @returns {Buffer} entry data.
      */
     getRaw(index) {
-        const entry = this.eds.getEntry(index);
+        const entry = this.od.getEntry(index);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -420,7 +420,7 @@ class Device extends EventEmitter {
      * @returns {Buffer} entry data.
      */
     getRawArray(index, subIndex) {
-        const entry = this.eds.getSubEntry(index, subIndex);
+        const entry = this.od.getSubEntry(index, subIndex);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -438,7 +438,7 @@ class Device extends EventEmitter {
      * @returns {number | bigint | string | Date} entry value.
      */
     getScale(index) {
-        const entry = this.eds.getEntry(index);
+        const entry = this.od.getEntry(index);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -457,7 +457,7 @@ class Device extends EventEmitter {
      * @returns {number | bigint | string | Date} entry value.
      */
     getScaleArray(index, subIndex) {
-        const entry = this.eds.getSubEntry(index, subIndex);
+        const entry = this.od.getSubEntry(index, subIndex);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -475,7 +475,7 @@ class Device extends EventEmitter {
      * @param {number | bigint | string | Date} value - value to set.
      */
     setValue(index, value) {
-        const entry = this.eds.getEntry(index);
+        const entry = this.od.getEntry(index);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -494,7 +494,7 @@ class Device extends EventEmitter {
      * @param {number | bigint | string | Date} value - value to set.
      */
     setValueArray(index, subIndex, value) {
-        const entry = this.eds.getSubEntry(index, subIndex);
+        const entry = this.od.getSubEntry(index, subIndex);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -512,7 +512,7 @@ class Device extends EventEmitter {
      * @param {Buffer} raw - raw Buffer to set.
      */
     setRaw(index, raw) {
-        const entry = this.eds.getEntry(index);
+        const entry = this.od.getEntry(index);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -531,7 +531,7 @@ class Device extends EventEmitter {
      * @param {Buffer} raw - raw Buffer to set.
      */
     setRawArray(index, subIndex, raw) {
-        const entry = this.eds.getSubEntry(index, subIndex);
+        const entry = this.od.getSubEntry(index, subIndex);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -550,7 +550,7 @@ class Device extends EventEmitter {
      * @since 6.0.0
      */
     setScale(index, scaleFactor) {
-        const entry = this.eds.getEntry(index);
+        const entry = this.od.getEntry(index);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -570,7 +570,7 @@ class Device extends EventEmitter {
      * @since 6.0.0
      */
     setScaleArray(index, subIndex, scaleFactor) {
-        const entry = this.eds.getSubEntry(index, subIndex);
+        const entry = this.od.getSubEntry(index, subIndex);
         if (!entry) {
             if (typeof index === 'number')
                 index = '0x' + index.toString(16);
@@ -584,13 +584,13 @@ class Device extends EventEmitter {
     /**
      * Reset the Device.
      *
-     * @param {boolean} [resetEds] - if true, then perform an Eds reset.
+     * @param {boolean} [resetEds] - if true, then perform an ObjectDictionary reset.
      * @listens Nmt#reset
      * @private
      */
     _reset(resetEds = false) {
         if (resetEds)
-            this.eds.reset();
+            this.od.reset();
 
         setImmediate(() => {
             // Stop all modules

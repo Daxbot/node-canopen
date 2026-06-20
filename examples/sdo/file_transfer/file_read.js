@@ -20,7 +20,7 @@ async function main(device, serverId, infile, outfile) {
     // Add the SDO client parameters.
     const cobIdTx = 0x600 | device.id; // client to server
     const cobIdRx = 0x580 | device.id; // server to client
-    device.eds.addSdoClientParameter(serverId, cobIdTx, cobIdRx);
+    device.od.addSdoClientParameter(serverId, cobIdTx, cobIdRx);
     device.start();
 
     // First write the path to 0x2000

@@ -24,23 +24,23 @@ describe('Device', function () {
     describe('mapRemoteNode', function() {
         it('should map Emcy', function() {
             const remote = new Device({ id: 0xA });
-            remote.eds.setEmcyCobId(0x8B);
+            remote.od.setEmcyCobId(0x8B);
 
             const local = new Device({ id: 0xB });
             local.mapRemoteNode(remote);
 
-            expect(local.eds.getEmcyConsumers()).to.be.an('array');
-            expect(local.eds.getEmcyConsumers()[0]).to.equal(0x8B);
+            expect(local.od.getEmcyConsumers()).to.be.an('array');
+            expect(local.od.getEmcyConsumers()[0]).to.equal(0x8B);
         });
 
         it('should map Nmt', function() {
             const remote = new Device({ id: 0xA });
-            remote.eds.setHeartbeatProducerTime(500);
+            remote.od.setHeartbeatProducerTime(500);
 
             const local = new Device({ id: 0xB });
             local.mapRemoteNode(remote);
 
-            const consumers = local.eds.getHeartbeatConsumers();
+            const consumers = local.od.getHeartbeatConsumers();
             expect(consumers).to.be.an('array');
             expect(consumers[0]).to.exist;
             expect(consumers[0].deviceId).to.equal(0xA);
@@ -49,12 +49,12 @@ describe('Device', function () {
 
         it('should map Sdo', function() {
             const remote = new Device({ id: 0xA });
-            remote.eds.addSdoServerParameter(0xB);
+            remote.od.addSdoServerParameter(0xB);
 
             const local = new Device({ id: 0xB });
             local.mapRemoteNode(remote);
 
-            const servers = local.eds.getSdoClientParameters();
+            const servers = local.od.getSdoClientParameters();
             expect(servers).to.be.an('array');
             expect(servers[0]).to.exist;
             expect(servers[0].deviceId).to.equal(0xA);
@@ -63,12 +63,12 @@ describe('Device', function () {
         it('should map Pdo', function() {
             const remote = new Device({ id: 0xA });
 
-            const obj2000 = remote.eds.addEntry(0x2000, {
+            const obj2000 = remote.od.addEntry(0x2000, {
                 parameterName: 'Test object',
                 dataType: DataType.UNSIGNED8,
             });
 
-            remote.eds.addTransmitPdo({
+            remote.od.addTransmitPdo({
                 cobId: 0x180,
                 dataObjects: [ obj2000 ]
             });
@@ -76,9 +76,9 @@ describe('Device', function () {
             const local = new Device({ id: 0xB });
             local.mapRemoteNode(remote);
 
-            expect(local.eds.getEntry(0x2000)).to.exist;
+            expect(local.od.getEntry(0x2000)).to.exist;
 
-            const rpdo = local.eds.getReceivePdos();
+            const rpdo = local.od.getReceivePdos();
             expect(rpdo).to.be.an('array');
             expect(rpdo[0]).to.exist;
             expect(rpdo[0].cobId).to.equal(0x180);

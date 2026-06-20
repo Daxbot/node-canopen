@@ -1,14 +1,14 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const Protocol = require('../../source/protocol/protocol');
-const { DataType, Eds } = require('../../index');
+const { DataType, ObjectDictionary } = require('../../index');
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
 describe('Protocol', function () {
-    it('should add Eds callbacks', function (done) {
-        const eds = new Eds();
+    it('should add ObjectDictionary callbacks', function (done) {
+        const eds = new ObjectDictionary();
         expect(eds.listenerCount('newEntry')).to.equal(0);
 
         const protocol = new Protocol(eds);
@@ -21,8 +21,8 @@ describe('Protocol', function () {
         });
     });
 
-    it('should remove Eds callbacks', function (done) {
-        const eds = new Eds();
+    it('should remove ObjectDictionary callbacks', function (done) {
+        const eds = new ObjectDictionary();
         expect(eds.listenerCount('newEntry')).to.equal(0);
 
         const callback = () => {
@@ -46,7 +46,7 @@ describe('Protocol', function () {
     });
 
     it('should add DataObject callbacks', function (done) {
-        const eds = new Eds();
+        const eds = new ObjectDictionary();
         const protocol = new Protocol(eds);
 
         const obj2000 = eds.addEntry(0x2000, {
@@ -62,7 +62,7 @@ describe('Protocol', function () {
     });
 
     it('should remove DataObject callbacks', function (done) {
-        const eds = new Eds();
+        const eds = new ObjectDictionary();
         const protocol = new Protocol(eds);
 
         const obj2000 = eds.addEntry(0x2000, {
@@ -85,7 +85,7 @@ describe('Protocol', function () {
     });
 
     it('should throw on repeated add', function (done) {
-        const eds = new Eds();
+        const eds = new ObjectDictionary();
         const protocol = new Protocol(eds);
 
         const obj2000 = eds.addEntry(0x2000, {

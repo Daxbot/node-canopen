@@ -2996,5 +2996,5 @@ class ObjectDictionary extends EventEmitter {
 }
 
 module.exports = exports = {
-    EdsError, DataObject, ObjectDictionary, Eds: ObjectDictionary,
+    EdsError, DataObject, ObjectDictionary,
 };

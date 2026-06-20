@@ -20,7 +20,7 @@ async function main(device) {
             resolve();
         });
 
-        device.eds.addEmcyConsumer(0x8A);
+        device.od.addEmcyConsumer(0x8A);
         device.start();
     });
 }

@@ -6,7 +6,7 @@
 
 const Protocol = require('./protocol');
 const { EdsError } = require('canopen-eds');
-const { DataObject, Eds } = require('../eds');
+const { DataObject, ObjectDictionary } = require('../eds');
 const { deprecate } = require('util');
 
 /**
@@ -287,7 +287,7 @@ class EmcyMessage {
  *
  * This class implements the EMCY write service for producing emergency objects.
  *
- * @param {Eds} eds - Eds object.
+ * @param {ObjectDictionary} eds - ObjectDictionary object.
  * @see CiA301 "Emergency object" (§7.2.7)
  * @implements {Protocol}
  */
@@ -306,80 +306,80 @@ class Emcy extends Protocol {
      * Get object 0x1001 - Error register.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getErrorRegister} instead.
+     * @deprecated Use {@link ObjectDictionary#getErrorRegister} instead.
      */
     get register() {
-        return this.eds.getErrorRegister();
+        return this.od.getErrorRegister();
     }
 
     /**
      * Set object 0x1001 - Error register.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setErrorRegister} instead.
+     * @deprecated Use {@link ObjectDictionary#setErrorRegister} instead.
      */
     set register(flags) {
-        this.eds.setErrorRegister(flags);
+        this.od.setErrorRegister(flags);
     }
 
     /**
      * Get object 0x1014 [bit 31] - EMCY valid.
      *
      * @type {boolean}
-     * @deprecated Use {@link Eds#getEmcyValid} instead.
+     * @deprecated Use {@link ObjectDictionary#getEmcyValid} instead.
      */
     get valid() {
-        return this.eds.getEmcyValid();
+        return this.od.getEmcyValid();
     }
 
     /**
      * Set object 0x1014 [bit 31] - EMCY valid.
      *
      * @type {boolean}
-     * @deprecated Use {@link Eds#setEmcyValid} instead.
+     * @deprecated Use {@link ObjectDictionary#setEmcyValid} instead.
      */
     set valid(valid) {
-        this.eds.setEmcyValid(valid);
+        this.od.setEmcyValid(valid);
     }
 
     /**
      * Get object 0x1014 - COB-ID EMCY.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getEmcyCobId} instead.
+     * @deprecated Use {@link ObjectDictionary#getEmcyCobId} instead.
      */
     get cobId() {
-        return this.eds.getEmcyCobId();
+        return this.od.getEmcyCobId();
     }
 
     /**
      * Set object 0x1014 - COB-ID EMCY.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setEmcyCobId} instead.
+     * @deprecated Use {@link ObjectDictionary#setEmcyCobId} instead.
      */
     set cobId(value) {
-        this.eds.setEmcyCobId(value);
+        this.od.setEmcyCobId(value);
     }
 
     /**
      * Get object 0x1015 - Inhibit time EMCY.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getEmcyInhibitTime} instead.
+     * @deprecated Use {@link ObjectDictionary#getEmcyInhibitTime} instead.
      */
     get inhibitTime() {
-        return this.eds.getEmcyInhibitTime();
+        return this.od.getEmcyInhibitTime();
     }
 
     /**
      * Set object 0x1015 - Inhibit time EMCY.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setEmcyInhibitTime} instead.
+     * @deprecated Use {@link ObjectDictionary#setEmcyInhibitTime} instead.
      */
     set inhibitTime(value) {
-        this.eds.setEmcyInhibitTime(value);
+        this.od.setEmcyInhibitTime(value);
     }
 
     /**
@@ -408,7 +408,7 @@ class Emcy extends Protocol {
             info = args[1];
         }
 
-        const register = this.eds.getErrorRegister();
+        const register = this.od.getErrorRegister();
         const em = new EmcyMessage({ code, register, info });
 
         if(this.sendTimer)
@@ -424,15 +424,15 @@ class Emcy extends Protocol {
      */
     start() {
         if(!this.started) {
-            const obj1014 = this.eds.getEntry(0x1014);
+            const obj1014 = this.od.getEntry(0x1014);
             if(obj1014)
                 this._addEntry(obj1014);
 
-            const obj1015 = this.eds.getEntry(0x1015);
+            const obj1015 = this.od.getEntry(0x1015);
             if(obj1015)
                 this._addEntry(obj1015);
 
-            const obj1028 = this.eds.getEntry(0x1028);
+            const obj1028 = this.od.getEntry(0x1028);
             if(obj1028)
                 this._addEntry(obj1028);
 
@@ -453,15 +453,15 @@ class Emcy extends Protocol {
             this.removeEdsCallback('newEntry');
             this.removeEdsCallback('removeEntry');
 
-            const obj1014 = this.eds.getEntry(0x1014);
+            const obj1014 = this.od.getEntry(0x1014);
             if(obj1014)
                 this._removeEntry(obj1014);
 
-            const obj1015 = this.eds.getEntry(0x1015);
+            const obj1015 = this.od.getEntry(0x1015);
             if(obj1015)
                 this._removeEntry(obj1015);
 
-            const obj1028 = this.eds.getEntry(0x1028);
+            const obj1028 = this.od.getEntry(0x1028);
             if(obj1028)
                 this._removeEntry(obj1028);
 
@@ -507,7 +507,7 @@ class Emcy extends Protocol {
     }
 
     /**
-     * Listens for new Eds entries.
+     * Listens for new ObjectDictionary entries.
      *
      * @param {DataObject} entry - new entry.
      * @private
@@ -530,7 +530,7 @@ class Emcy extends Protocol {
     }
 
     /**
-     * Listens for removed Eds entries.
+     * Listens for removed ObjectDictionary entries.
      *
      * @param {DataObject} entry - removed entry.
      * @private
@@ -631,7 +631,7 @@ class Emcy extends Protocol {
      * @private
      */
     _parse1028() {
-        this.consumers = this.eds.getEmcyConsumers();
+        this.consumers = this.od.getEmcyConsumers();
     }
 
     /**
@@ -658,18 +658,18 @@ Emcy.prototype.init = deprecate(
 
         this.register = 0;
 
-        let obj1014 = this.eds.getEntry(0x1014);
+        let obj1014 = this.od.getEntry(0x1014);
         if(obj1014 === undefined) {
-            obj1014 = this.eds.addEntry(0x1014, {
+            obj1014 = this.od.addEntry(0x1014, {
                 parameterName:  'COB-ID EMCY',
                 objectType:     ObjectType.VAR,
                 dataType:       DataType.UNSIGNED32,
             });
         }
 
-        let obj1015 = this.eds.getEntry(0x1015);
+        let obj1015 = this.od.getEntry(0x1015);
         if(obj1015 === undefined) {
-            obj1015 = this.eds.addEntry(0x1015, {
+            obj1015 = this.od.addEntry(0x1015, {
                 parameterName:  'Inhibit time EMCY',
                 objectType:     ObjectType.VAR,
                 dataType:       DataType.UNSIGNED16,
@@ -679,7 +679,7 @@ Emcy.prototype.init = deprecate(
         if((this.cobId & 0xF) == 0)
             this.cobId |= this.deviceId;
 
-        this.eds.addEmcyConsumer(this.cobId);
+        this.od.addEmcyConsumer(this.cobId);
 
         this.start();
     }, 'Emcy.init() is deprecated. Use Emcy.start() instead.');
@@ -688,12 +688,12 @@ Emcy.prototype.init = deprecate(
  * Configures the number of sub-entries for 0x1003 (Pre-defined error field).
  *
  * @param {number} length - how many historical error events should be kept.
- * @deprecated Use {@link Eds#setHistoryLength} instead.
+ * @deprecated Use {@link ObjectDictionary#setHistoryLength} instead.
  * @function
  */
 Emcy.prototype.setHistoryLength = deprecate(
     function (length) {
-        this.eds.setErrorHistoryLength(length);
-    }, 'Emcy.setHistoryLength is deprecated. Use Eds.setHistoryLength() instead.');
+        this.od.setErrorHistoryLength(length);
+    }, 'Emcy.setHistoryLength is deprecated. Use ObjectDictionary.setHistoryLength() instead.');
 
 module.exports = exports = { EmcyType, EmcyCode, EmcyMessage, Emcy };

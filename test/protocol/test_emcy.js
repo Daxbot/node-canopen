@@ -25,8 +25,8 @@ describe('Emcy', function () {
 
     it('should produce an emergency object', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setEmcyCobId(0x8A);
-        device.eds.addEmcyConsumer(0x8A);
+        device.od.setEmcyCobId(0x8A);
+        device.od.addEmcyConsumer(0x8A);
         device.emcy.start();
 
         const code = 0x1000;
@@ -41,9 +41,9 @@ describe('Emcy', function () {
 
     it('should inhibit send', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setEmcyCobId(0x8A);
-        device.eds.setEmcyInhibitTime(1000); // 0.1 seconds
-        device.eds.addEmcyConsumer(0x8A);
+        device.od.setEmcyCobId(0x8A);
+        device.od.setEmcyInhibitTime(1000); // 0.1 seconds
+        device.od.addEmcyConsumer(0x8A);
         device.emcy.start();
 
         const code = 0x1000;
@@ -75,31 +75,31 @@ describe('Emcy', function () {
         expect(() => device.emcy.write(0x1000)).to.throw(EdsError);
     });
 
-    it('should listen to Eds#newEntry', function (done) {
+    it('should listen to ObjectDictionary#newEntry', function (done) {
         const device = new Device({ id: 0xA, loopback: true });
         device.emcy.start();
 
-        expect(device.eds.getEmcyCobId()).to.be.null;
-        expect(device.eds.getEmcyConsumers()).to.be.an('array').that.is.empty;
+        expect(device.od.getEmcyCobId()).to.be.null;
+        expect(device.od.getEmcyConsumers()).to.be.an('array').that.is.empty;
 
         device.emcy.addListener('emergency', () => done());
 
-        device.eds.setEmcyCobId(0x8A);
-        device.eds.addEmcyConsumer(0x8A);
+        device.od.setEmcyCobId(0x8A);
+        device.od.addEmcyConsumer(0x8A);
         device.emcy.write(0x1000);
     });
 
-    it('should listen to Eds#removeEntry', function () {
+    it('should listen to ObjectDictionary#removeEntry', function () {
         const device = new Device({ id: 0xA, loopback: true });
-        device.eds.setEmcyCobId(0x8A);
-        device.eds.addEmcyConsumer(0x8A);
+        device.od.setEmcyCobId(0x8A);
+        device.od.addEmcyConsumer(0x8A);
         device.emcy.start();
 
-        device.eds.removeEntry(0x1014);
-        device.eds.removeEntry(0x1028);
+        device.od.removeEntry(0x1014);
+        device.od.removeEntry(0x1028);
 
-        expect(device.eds.getEmcyCobId()).to.be.null;
-        expect(device.eds.getEmcyConsumers()).to.be.an('array').that.is.empty;
+        expect(device.od.getEmcyCobId()).to.be.null;
+        expect(device.od.getEmcyConsumers()).to.be.an('array').that.is.empty;
     });
 
     it('should listen to DataObject#update', function (done) {
@@ -115,12 +115,12 @@ describe('Emcy', function () {
             }
         });
 
-        device.eds.setEmcyCobId(0x8A);
-        device.eds.addEmcyConsumer(0x8A);
+        device.od.setEmcyCobId(0x8A);
+        device.od.addEmcyConsumer(0x8A);
         device.emcy.write(0x1000);
 
-        device.eds.setEmcyCobId(0x8B);
-        device.eds.addEmcyConsumer(0x8B);
+        device.od.setEmcyCobId(0x8B);
+        device.od.addEmcyConsumer(0x8B);
         device.emcy.write(0x1000);
     });
 });

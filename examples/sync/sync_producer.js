@@ -14,10 +14,10 @@ const { Device } = require('../../index.js');
 async function main(device) {
     await new Promise((resolve) => {
         // Send Sync messages with ID 0x80
-        device.eds.setSyncCobId(0x80);
-        device.eds.setSyncGenerationEnable(true);
-        device.eds.setSyncCyclePeriod(1e5); // Every 100 ms
-        device.eds.setSyncOverflow(3); // Overflow at 3
+        device.od.setSyncCobId(0x80);
+        device.od.setSyncGenerationEnable(true);
+        device.od.setSyncCyclePeriod(1e5); // Every 100 ms
+        device.od.setSyncOverflow(3); // Overflow at 3
         device.start();
 
         setTimeout(() => {

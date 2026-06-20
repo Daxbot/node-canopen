@@ -13,7 +13,7 @@ const { Device, EmcyType } = require('../../index.js');
  */
 async function main(device) {
     await new Promise((resolve) => {
-        device.eds.setEmcyCobId(0x8A);
+        device.od.setEmcyCobId(0x8A);
         device.start();
 
         device.emcy.write({

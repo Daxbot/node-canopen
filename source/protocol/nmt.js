@@ -5,7 +5,7 @@
  */
 
 const Protocol = require('./protocol');
-const { DataObject, Eds } = require('../eds');
+const { DataObject, ObjectDictionary } = require('../eds');
 const { deprecate } = require('util');
 
 /**
@@ -69,7 +69,7 @@ const NmtCommand = {
  * This class implements the NMT node control services and tracks the device's
  * current NMT consumer state.
  *
- * @param {Eds} eds - Eds object.
+ * @param {ObjectDictionary} eds - ObjectDictionary object.
  * @see CiA301 "Network management" (§7.2.8)
  * @implements {Protocol}
  */
@@ -110,7 +110,7 @@ class Nmt extends Protocol {
      * Get object 0x1017 - Producer heartbeat time.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getHeartbeatProducerTime} instead.
+     * @deprecated Use {@link ObjectDictionary#getHeartbeatProducerTime} instead.
      */
     get producerTime() {
         return this.getHeartbeatProducerTime();
@@ -120,10 +120,10 @@ class Nmt extends Protocol {
      * Set object 0x1017 - Producer heartbeat time.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setHeartbeatProducerTime} instead.
+     * @deprecated Use {@link ObjectDictionary#setHeartbeatProducerTime} instead.
      */
     set producerTime(value) {
-        this.eds.setHeartbeatProducerTime(value);
+        this.od.setHeartbeatProducerTime(value);
     }
 
     /**
@@ -154,7 +154,7 @@ class Nmt extends Protocol {
      * @since 5.1.0
      */
     getConsumerTime(deviceId) {
-        const obj1016 = this.eds.getEntry(0x1016);
+        const obj1016 = this.od.getEntry(0x1016);
         if (obj1016) {
             const maxSubIndex = obj1016[0].value;
             for (let i = 1; i <= maxSubIndex; ++i) {
@@ -300,11 +300,11 @@ class Nmt extends Protocol {
      */
     start() {
         if(!this.started) {
-            const obj1016 = this.eds.getEntry(0x1016);
+            const obj1016 = this.od.getEntry(0x1016);
             if(obj1016)
                 this._addEntry(obj1016);
 
-            const obj1017 = this.eds.getEntry(0x1017);
+            const obj1017 = this.od.getEntry(0x1017);
             if(obj1017)
                 this._addEntry(obj1017);
 
@@ -328,11 +328,11 @@ class Nmt extends Protocol {
             this.removeEdsCallback('newEntry');
             this.removeEdsCallback('removeEntry');
 
-            const obj1016 = this.eds.getEntry(0x1016);
+            const obj1016 = this.od.getEntry(0x1016);
             if(obj1016)
                 this._removeEntry(obj1016);
 
-            const obj1017 = this.eds.getEntry(0x1017);
+            const obj1017 = this.od.getEntry(0x1017);
             if(obj1017)
                 this._removeEntry(obj1017);
 
@@ -404,10 +404,10 @@ class Nmt extends Protocol {
     }
 
     /**
-     * Listens for new Eds entries.
+     * Listens for new ObjectDictionary entries.
      *
      * @param {DataObject} entry - new entry.
-     * @listens Eds#newEntry
+     * @listens ObjectDictionary#newEntry
      * @private
      */
     _addEntry(entry) {
@@ -424,10 +424,10 @@ class Nmt extends Protocol {
     }
 
     /**
-     * Listens for removed Eds entries.
+     * Listens for removed ObjectDictionary entries.
      *
      * @param {DataObject} entry - removed entry.
-     * @listens Eds#newEntry
+     * @listens ObjectDictionary#newEntry
      * @private
      */
     _removeEntry(entry) {
@@ -611,17 +611,17 @@ Nmt.prototype.init = deprecate(
     function () {
         const { ObjectType, DataType } = require('canopen-eds');
 
-        let obj1016 = this.eds.getEntry(0x1016);
+        let obj1016 = this.od.getEntry(0x1016);
         if(obj1016 === undefined) {
-            obj1016 = this.eds.addEntry(0x1016, {
+            obj1016 = this.od.addEntry(0x1016, {
                 parameterName:  'Consumer heartbeat time',
                 objectType:     ObjectType.ARRAY,
             });
         }
 
-        let obj1017 = this.eds.getEntry(0x1017);
+        let obj1017 = this.od.getEntry(0x1017);
         if(obj1017 === undefined) {
-            obj1017 = this.eds.addEntry(0x1017, {
+            obj1017 = this.od.addEntry(0x1017, {
                 parameterName:  'Producer heartbeat time',
                 objectType:     ObjectType.VAR,
                 dataType:       DataType.UNSIGNED32,
@@ -641,7 +641,7 @@ Nmt.prototype.init = deprecate(
  */
 Nmt.prototype.getConsumer = deprecate(
     function (deviceId) {
-        const obj1016 = this.eds.getEntry(0x1016);
+        const obj1016 = this.od.getEntry(0x1016);
         if (obj1016) {
             const maxSubIndex = obj1016[0].value;
             for (let i = 1; i <= maxSubIndex; ++i) {
@@ -663,24 +663,24 @@ Nmt.prototype.getConsumer = deprecate(
  * @param {number} deviceId - device COB-ID to add.
  * @param {number} timeout - milliseconds before a timeout is reported.
  * @param {number} [subIndex] - sub-index to store the entry, optional.
- * @deprecated Use {@link Eds#addHeartbeatConsumer} instead.
+ * @deprecated Use {@link ObjectDictionary#addHeartbeatConsumer} instead.
  * @function
  */
 Nmt.prototype.addConsumer = deprecate(
     function (deviceId, timeout, subIndex) {
-        this.eds.addHeartbeatConsumer(deviceId, timeout, { subIndex });
-    }, 'Nmt.addConsumer() is deprecated. Use Eds.addConsumer() instead.');
+        this.od.addHeartbeatConsumer(deviceId, timeout, { subIndex });
+    }, 'Nmt.addConsumer() is deprecated. Use ObjectDictionary.addConsumer() instead.');
 
 /**
  * Remove an entry from 0x1016 (Consumer heartbeat time).
  *
  * @param {number} deviceId - device COB-ID of the entry to remove.
- * @deprecated Use {@link Eds#removeHeartbeatConsumer} instead.
+ * @deprecated Use {@link ObjectDictionary#removeHeartbeatConsumer} instead.
  * @function
  */
 Nmt.prototype.removeConsumer = deprecate(
     function (deviceId) {
-        this.eds.removeHeartbeatConsumer(deviceId);
-    }, 'Nmt.removeConsumer() is deprecated. Use Eds.removeHeartbeatConsumer() instead.');
+        this.od.removeHeartbeatConsumer(deviceId);
+    }, 'Nmt.removeConsumer() is deprecated. Use ObjectDictionary.removeHeartbeatConsumer() instead.');
 
 module.exports = exports = { NmtState, Nmt };

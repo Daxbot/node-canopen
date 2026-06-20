@@ -6,7 +6,7 @@
 
 const Protocol = require('./protocol');
 const { EdsError } = require('canopen-eds');
-const { DataObject, Eds } = require('../eds');
+const { DataObject, ObjectDictionary } = require('../eds');
 const { deprecate } = require('util');
 
 /**
@@ -17,7 +17,7 @@ const { deprecate } = require('util');
  * network. Unlike the SDO protocol, PDO transfers are performed with no
  * protocol overhead.
  *
- * @param {Eds} eds - Eds object.
+ * @param {ObjectDictionary} eds - ObjectDictionary object.
  * @see CiA301 "Process data objects (PDO)" (§7.2.2)
  * @implements {Protocol}
  */
@@ -63,7 +63,7 @@ class Pdo extends Protocol {
      */
     start() {
         if(!this.started) {
-            const obj1005 = this.eds.getEntry(0x1005);
+            const obj1005 = this.od.getEntry(0x1005);
             if(obj1005)
                 this._addEntry(obj1005);
 
@@ -71,14 +71,14 @@ class Pdo extends Protocol {
             this.addEdsCallback('removeEntry', (obj) => this._removeEntry(obj));
 
             this.receiveMap = {};
-            for (const pdo of this.eds.getReceivePdos())
+            for (const pdo of this.od.getReceivePdos())
                 this._addRpdo(pdo);
 
             this.addEdsCallback('newRpdo', (pdo) => this._addRpdo(pdo));
             this.addEdsCallback('removeRpdo', (pdo) => this._removeRpdo(pdo));
 
             this.transmitMap = {};
-            for (const pdo of this.eds.getTransmitPdos())
+            for (const pdo of this.od.getTransmitPdos())
                 this._addTpdo(pdo);
 
             this.addEdsCallback('newTpdo', (pdo) => this._addTpdo(pdo));
@@ -98,20 +98,20 @@ class Pdo extends Protocol {
             this.removeEdsCallback('newEntry');
             this.removeEdsCallback('removeEntry');
 
-            const obj1005 = this.eds.getEntry(0x1005);
+            const obj1005 = this.od.getEntry(0x1005);
             if(obj1005)
                 this._removeEntry(obj1005);
 
             this.removeEdsCallback('newRpdo');
             this.removeEdsCallback('removeRpdo');
 
-            for (const pdo of this.eds.getReceivePdos())
+            for (const pdo of this.od.getReceivePdos())
                 this._removeRpdo(pdo);
 
             this.removeEdsCallback('newTpdo');
             this.removeEdsCallback('removeTpdo');
 
-            for (const pdo of this.eds.getTransmitPdos())
+            for (const pdo of this.od.getTransmitPdos())
                 this._removeTpdo(pdo);
 
             super.stop();
@@ -174,7 +174,7 @@ class Pdo extends Protocol {
     }
 
     /**
-     * Listens for new Eds entries.
+     * Listens for new ObjectDictionary entries.
      *
      * @param {DataObject} entry - new entry.
      * @private
@@ -187,7 +187,7 @@ class Pdo extends Protocol {
     }
 
     /**
-     * Listens for removed Eds entries.
+     * Listens for removed ObjectDictionary entries.
      *
      * @param {DataObject} entry - removed entry.
      * @private
@@ -380,12 +380,12 @@ Pdo.prototype.init = deprecate(
  *
  * @param {number} cobId - COB-ID used by the RPDO.
  * @returns {DataObject | null} the matching entry.
- * @deprecated Use {@link Eds#getReceivePdos} instead.
+ * @deprecated Use {@link ObjectDictionary#getReceivePdos} instead.
  * @function
  */
 Pdo.prototype.getReceive = deprecate(
     function (cobId) {
-        for (let [index, entry] of this.eds.entries()) {
+        for (let [index, entry] of this.od.entries()) {
             index = parseInt(index, 16);
             if (index < 0x1400 || index > 0x15FF)
                 continue;
@@ -395,7 +395,7 @@ Pdo.prototype.getReceive = deprecate(
         }
 
         return null;
-    }, 'Pdo.getReceive() is deprecated. Use Eds.getReceivePdos() instead.');
+    }, 'Pdo.getReceive() is deprecated. Use ObjectDictionary.getReceivePdos() instead.');
 
 /**
  * Create a new RPDO communication/mapping parameter entry.
@@ -407,39 +407,39 @@ Pdo.prototype.getReceive = deprecate(
  * @param {number} [args.inhibitTime=0] - minimum time between writes.
  * @param {number} [args.eventTime=0] - how often to send timer based PDOs.
  * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
- * @deprecated Use {@link Eds#addReceivePdo} instead.
+ * @deprecated Use {@link ObjectDictionary#addReceivePdo} instead.
  * @function
  */
 Pdo.prototype.addReceive = deprecate(
     function (cobId, entries, args = {}) {
         args.cobId = cobId;
         args.dataObjects = entries;
-        this.eds.addReceivePdo(args);
-    }, 'Pdo.addReceive() is deprecated. Use Eds.addReceivePdo() instead.');
+        this.od.addReceivePdo(args);
+    }, 'Pdo.addReceive() is deprecated. Use ObjectDictionary.addReceivePdo() instead.');
 
 /**
  * Remove a RPDO communication/mapping parameter entry.
  *
  * @param {number} cobId - COB-ID used by the RPDO.
- * @deprecated Use {@link Eds#removeReceivePdo} instead.
+ * @deprecated Use {@link ObjectDictionary#removeReceivePdo} instead.
  * @function
  */
 Pdo.prototype.removeReceive = deprecate(
     function (cobId) {
-        this.eds.removeReceivePdo(cobId);
-    }, 'Pdo.removeReceive() is deprecated. Use Eds.removeReceivePdo() instead.');
+        this.od.removeReceivePdo(cobId);
+    }, 'Pdo.removeReceive() is deprecated. Use ObjectDictionary.removeReceivePdo() instead.');
 
 /**
  * Get a TPDO communication parameter entry.
  *
  * @param {number} cobId - COB-ID used by the TPDO.
  * @returns {DataObject | null} the matching entry.
- * @deprecated Use {@link Eds#getTransmitPdos} instead.
+ * @deprecated Use {@link ObjectDictionary#getTransmitPdos} instead.
  * @function
  */
 Pdo.prototype.getTransmit = deprecate(
     function (cobId) {
-        for (let [index, entry] of this.eds.entries()) {
+        for (let [index, entry] of this.od.entries()) {
             index = parseInt(index, 16);
             if (index < 0x1800 || index > 0x19FF)
                 continue;
@@ -449,7 +449,7 @@ Pdo.prototype.getTransmit = deprecate(
         }
 
         return null;
-    }, 'Pdo.getTransmit() is deprecated. Use Eds.getTransmitPdos() instead.');
+    }, 'Pdo.getTransmit() is deprecated. Use ObjectDictionary.getTransmitPdos() instead.');
 
 /**
  * Create a new TPDO communication/mapping parameter entry.
@@ -461,26 +461,26 @@ Pdo.prototype.getTransmit = deprecate(
  * @param {number} [args.inhibitTime=0] - minimum time between writes.
  * @param {number} [args.eventTime=0] - how often to send timer based PDOs.
  * @param {number} [args.syncStart=0] - initial counter value for sync based PDOs.
- * @deprecated Use {@link Eds#addTransmitPdo} instead.
+ * @deprecated Use {@link ObjectDictionary#addTransmitPdo} instead.
  * @function
  */
 Pdo.prototype.addTransmit = deprecate(
     function (cobId, entries, args = {}) {
         args.cobId = cobId;
         args.dataObjects = entries;
-        this.eds.addTransmitPdo(args);
-    }, 'Pdo.addTransmit() is deprecated. Use Eds.addTransmitPdo() instead.');
+        this.od.addTransmitPdo(args);
+    }, 'Pdo.addTransmit() is deprecated. Use ObjectDictionary.addTransmitPdo() instead.');
 
 /**
  * Remove a TPDO communication/mapping parameter entry.
  *
  * @param {number} cobId - COB-ID used by the TPDO.
- * @deprecated Use {@link Eds#removeTransmitPdo} instead.
+ * @deprecated Use {@link ObjectDictionary#removeTransmitPdo} instead.
  * @function
  */
 Pdo.prototype.removeTransmit = deprecate(
     function (cobId) {
-        this.eds.removeTransmitPdo(cobId);
-    }, 'Pdo.removeTransmit() is deprecated. Use Eds.removeTransmitPdo() instead.');
+        this.od.removeTransmitPdo(cobId);
+    }, 'Pdo.removeTransmit() is deprecated. Use ObjectDictionary.removeTransmitPdo() instead.');
 
 module.exports = exports = { Pdo };

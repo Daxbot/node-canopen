@@ -6,7 +6,7 @@
 
 const Protocol = require('./protocol');
 const { AccessType } = require('canopen-eds');
-const { DataObject, Eds } = require('../eds');
+const { DataObject, ObjectDictionary } = require('../eds');
 const { SdoCode, SdoTransfer, ClientCommand, ServerCommand } = require('./sdo');
 const calculateCrc = require('../functions/crc');
 const rawToType = require('../functions/raw_to_type');
@@ -20,7 +20,7 @@ const { deprecate } = require('util');
  * dictionary. An SDO is transfered as a sequence of segments with basic
  * error checking.
  *
- * @param {Eds} eds - parent device.
+ * @param {ObjectDictionary} eds - parent device.
  * @see CiA301 'Service data object (SDO)' (§7.2.4)
  * @implements {Protocol}
  */
@@ -85,7 +85,7 @@ class SdoServer extends Protocol {
     start() {
         if(!this.started) {
             this.transfers = {};
-            for (const client of this.eds.getSdoServerParameters())
+            for (const client of this.od.getSdoServerParameters())
                 this._addClient(client);
 
             this.addEdsCallback('newSdoClient',
@@ -108,7 +108,7 @@ class SdoServer extends Protocol {
             this.removeEdsCallback('newSdoClient');
             this.removeEdsCallback('removeSdoClient');
 
-            for (const client of this.eds.getSdoServerParameters())
+            for (const client of this.od.getSdoServerParameters())
                 this._removeClient(client);
 
             super.stop();
@@ -254,7 +254,7 @@ class SdoServer extends Protocol {
         const sendBuffer = Buffer.alloc(8);
         if (data[0] & 0x02) {
             // Expedited client
-            let entry = this.eds.getEntry(client.index);
+            let entry = this.od.getEntry(client.index);
             if (entry === undefined) {
                 this._abortTransfer(client, SdoCode.OBJECT_UNDEFINED);
                 return;
@@ -322,7 +322,7 @@ class SdoServer extends Protocol {
         client.index = data.readUInt16LE(1);
         client.subIndex = data.readUInt8(3);
 
-        let entry = this.eds.getEntry(client.index);
+        let entry = this.od.getEntry(client.index);
         if (entry === undefined) {
             this._abortTransfer(client, SdoCode.OBJECT_UNDEFINED);
             return;
@@ -429,7 +429,7 @@ class SdoServer extends Protocol {
         client.data = Buffer.concat([client.data, payload], size);
 
         if (data[0] & 1) {
-            let entry = this.eds.getEntry(client.index);
+            let entry = this.od.getEntry(client.index);
             if (entry === undefined) {
                 this._abortTransfer(client, SdoCode.OBJECT_UNDEFINED);
                 return;
@@ -538,7 +538,7 @@ class SdoServer extends Protocol {
         client.blockSize = data.readUInt32LE(4);
         client.blockCrc = !!(data[0] & (1 << 2));
 
-        let entry = this.eds.getEntry(client.index);
+        let entry = this.od.getEntry(client.index);
         if (entry === undefined) {
             this._abortTransfer(client, SdoCode.OBJECT_UNDEFINED);
             return;
@@ -678,7 +678,7 @@ class SdoServer extends Protocol {
             }
 
             // Get entry
-            let entry = this.eds.getEntry(client.index);
+            let entry = this.od.getEntry(client.index);
             if (entry === undefined) {
                 this._abortTransfer(client, SdoCode.OBJECT_UNDEFINED);
                 return;
@@ -786,12 +786,12 @@ SdoServer.prototype.init = deprecate(function () {
  *
  * @param {number} clientId - server COB-ID of the entry to get.
  * @returns {DataObject | null} the matching entry.
- * @deprecated Use {@link Eds#getSdoServerParameters} instead.
+ * @deprecated Use {@link ObjectDictionary#getSdoServerParameters} instead.
  * @function
  */
 SdoServer.prototype.getClient = deprecate(
     function (clientId) {
-        for (let [index, entry] of this.eds.entries()) {
+        for (let [index, entry] of this.od.entries()) {
             index = parseInt(index, 16);
             if (index < 0x1200 || index > 0x127F)
                 continue;
@@ -801,7 +801,7 @@ SdoServer.prototype.getClient = deprecate(
         }
 
         return null;
-    }, 'SdoServer.getClient() is deprecated. Use Eds.getSdoServerParameters() instead.');
+    }, 'SdoServer.getClient() is deprecated. Use ObjectDictionary.getSdoServerParameters() instead.');
 
 /**
  * Add an SDO server parameter entry.
@@ -809,7 +809,7 @@ SdoServer.prototype.getClient = deprecate(
  * @param {number} clientId - client COB-ID to add.
  * @param {number} cobIdTx - Sdo COB-ID for outgoing messages (to client).
  * @param {number} cobIdRx - Sdo COB-ID for incoming messages (from client).
- * @deprecated Use {@link Eds#addSdoServerParameter} instead.
+ * @deprecated Use {@link ObjectDictionary#addSdoServerParameter} instead.
  * @function
  */
 SdoServer.prototype.addClient = deprecate(
@@ -820,19 +820,19 @@ SdoServer.prototype.addClient = deprecate(
         if((cobIdRx & 0x7F) == 0x0)
             cobIdRx |= clientId;
 
-        this.eds.addSdoServerParameter(clientId, cobIdTx, cobIdRx);
-    }, 'SdoServer.addClient() is deprecated. Use Eds.addSdoServerParameter() instead.');
+        this.od.addSdoServerParameter(clientId, cobIdTx, cobIdRx);
+    }, 'SdoServer.addClient() is deprecated. Use ObjectDictionary.addSdoServerParameter() instead.');
 
 /**
  * Remove an SDO server parameter entry.
  *
  * @param {number} clientId - client COB-ID of the entry to remove.
- * @deprecated Use {@link Eds#removeSdoServerParameter} instead.
+ * @deprecated Use {@link ObjectDictionary#removeSdoServerParameter} instead.
  * @function
  */
 SdoServer.prototype.removeClient = deprecate(
     function (clientId) {
-        this.eds.removeSdoServerParameter(clientId);
-    }, 'SdoServer.removeClient() is deprecated. Use Eds.removeSdoServerParameter() instead.');
+        this.od.removeSdoServerParameter(clientId);
+    }, 'SdoServer.removeClient() is deprecated. Use ObjectDictionary.removeSdoServerParameter() instead.');
 
 module.exports = exports = { SdoServer };

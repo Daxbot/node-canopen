@@ -1,5 +1,5 @@
 const Device = require('./source/device');
-const { DataObject, Eds } = require('./source/eds');
+const { DataObject, ObjectDictionary } = require('./source/eds');
 const { ObjectType, AccessType, DataType } = require('canopen-eds');
 
 const {
@@ -24,7 +24,7 @@ const {
 module.exports = exports = {
     Device,
     DataObject,
-    Eds,
+    ObjectDictionary,
     SdoError,
     SdoCode,
     EmcyMessage,

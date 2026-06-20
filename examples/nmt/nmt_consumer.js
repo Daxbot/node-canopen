@@ -24,7 +24,7 @@ async function main(device, consumerId) {
             console.log('Heartbeat detected for 0x' +  deviceId.toString(16));
         });
 
-        device.eds.addHeartbeatConsumer(consumerId, 200);
+        device.od.addHeartbeatConsumer(consumerId, 200);
         device.start();
     });
 }

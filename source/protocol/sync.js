@@ -6,7 +6,7 @@
 
 const Protocol = require('./protocol');
 const { EdsError } = require('canopen-eds');
-const { Eds } = require('../eds');
+const { ObjectDictionary } = require('../eds');
 const { deprecate } = require('util');
 
 /**
@@ -16,7 +16,7 @@ const { deprecate } = require('util');
  * that provides a basic network synchronization mechanism. There should be
  * at most one sync producer on the network at a time.
  *
- * @param {Eds} eds - Eds object.
+ * @param {ObjectDictionary} eds - ObjectDictionary object.
  * @see CiA301 "Synchronization object (SYNC)" (§7.2.5)
  * @implements {Protocol}
  */
@@ -35,80 +35,80 @@ class Sync extends Protocol {
      * Get object 0x1005 [bit 30] - Sync generation enable.
      *
      * @type {boolean}
-     * @deprecated Use {@link Eds#getSyncGenerationEnable} instead.
+     * @deprecated Use {@link ObjectDictionary#getSyncGenerationEnable} instead.
      */
     get generate() {
-        return this.eds.getSyncGenerationEnable();
+        return this.od.getSyncGenerationEnable();
     }
 
     /**
      * Set object 0x1005 [bit 30] - Sync generation enable.
      *
      * @type {boolean}
-     * @deprecated Use {@link Eds#setSyncGenerationEnable} instead.
+     * @deprecated Use {@link ObjectDictionary#setSyncGenerationEnable} instead.
      */
     set generate(enable) {
-        this.eds.setSyncGenerationEnable(enable);
+        this.od.setSyncGenerationEnable(enable);
     }
 
     /**
      * Get object 0x1005 - COB-ID SYNC.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getSyncCobId} instead.
+     * @deprecated Use {@link ObjectDictionary#getSyncCobId} instead.
      */
     get cobId() {
-        return this.eds.getSyncCobId();
+        return this.od.getSyncCobId();
     }
 
     /**
      * Set object 0x1005 - COB-ID SYNC.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setSyncCobId} instead.
+     * @deprecated Use {@link ObjectDictionary#setSyncCobId} instead.
      */
     set cobId(cobId) {
-        this.eds.setSyncCobId(cobId);
+        this.od.setSyncCobId(cobId);
     }
 
     /**
      * Get object 0x1006 - Communication cycle period.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getSyncCyclePeriod} instead.
+     * @deprecated Use {@link ObjectDictionary#getSyncCyclePeriod} instead.
      */
     get cyclePeriod() {
-        return this.eds.getSyncCyclePeriod();
+        return this.od.getSyncCyclePeriod();
     }
 
     /**
      * Set object 0x1006 - Communication cycle period.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setSyncCyclePeriod} instead.
+     * @deprecated Use {@link ObjectDictionary#setSyncCyclePeriod} instead.
      */
     set cyclePeriod(period) {
-        this.eds.setSyncCyclePeriod(period);
+        this.od.setSyncCyclePeriod(period);
     }
 
     /**
      * Get object 0x1019 - Synchronous counter overflow value.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#getSyncOverflow} instead.
+     * @deprecated Use {@link ObjectDictionary#getSyncOverflow} instead.
      */
     get overflow() {
-        return this.eds.getSyncOverflow();
+        return this.od.getSyncOverflow();
     }
 
     /**
      * Set object 0x1019 - Synchronous counter overflow value.
      *
      * @type {number}
-     * @deprecated Use {@link Eds#setSyncOverflow} instead.
+     * @deprecated Use {@link ObjectDictionary#setSyncOverflow} instead.
      */
     set overflow(overflow) {
-        this.eds.setSyncOverflow(overflow);
+        this.od.setSyncOverflow(overflow);
     }
 
     /**
@@ -137,15 +137,15 @@ class Sync extends Protocol {
      */
     start() {
         if(!this.started) {
-            const obj1005 = this.eds.getEntry(0x1005);
+            const obj1005 = this.od.getEntry(0x1005);
             if(obj1005)
                 this._addEntry(obj1005);
 
-            const obj1006 = this.eds.getEntry(0x1006);
+            const obj1006 = this.od.getEntry(0x1006);
             if(obj1006)
                 this._addEntry(obj1006);
 
-            const obj1019 = this.eds.getEntry(0x1019);
+            const obj1019 = this.od.getEntry(0x1019);
             if(obj1019)
                 this._addEntry(obj1019);
 
@@ -166,15 +166,15 @@ class Sync extends Protocol {
             this.removeEdsCallback('newEntry');
             this.removeEdsCallback('removeEntry');
 
-            const obj1005 = this.eds.getEntry(0x1005);
+            const obj1005 = this.od.getEntry(0x1005);
             if(obj1005)
                 this._removeEntry(obj1005);
 
-            const obj1006 = this.eds.getEntry(0x1006);
+            const obj1006 = this.od.getEntry(0x1006);
             if(obj1006)
                 this._removeEntry(obj1006);
 
-            const obj1019 = this.eds.getEntry(0x1019);
+            const obj1019 = this.od.getEntry(0x1019);
             if(obj1019)
                 this._removeEntry(obj1019);
 
@@ -207,10 +207,10 @@ class Sync extends Protocol {
     }
 
     /**
-     * Listens for new Eds entries.
+     * Listens for new ObjectDictionary entries.
      *
      * @param {DataObject} entry - new entry.
-     * @listens Eds#newEntry
+     * @listens ObjectDictionary#newEntry
      * @private
      */
     _addEntry(entry) {
@@ -231,10 +231,10 @@ class Sync extends Protocol {
     }
 
     /**
-     * Listens for removed Eds entries.
+     * Listens for removed ObjectDictionary entries.
      *
      * @param {DataObject} entry - removed entry.
-     * @listens Eds#newEntry
+     * @listens ObjectDictionary#newEntry
      * @private
      */
     _removeEntry(entry) {
@@ -357,27 +357,27 @@ Sync.prototype.init = deprecate(
     function () {
         const { ObjectType, DataType } = require('canopen-eds');
 
-        let obj1005 = this.eds.getEntry(0x1005);
+        let obj1005 = this.od.getEntry(0x1005);
         if(obj1005 === undefined) {
-            obj1005 = this.eds.addEntry(0x1005, {
+            obj1005 = this.od.addEntry(0x1005, {
                 parameterName:  'COB-ID SYNC',
                 objectType:     ObjectType.VAR,
                 dataType:       DataType.UNSIGNED32,
             });
         }
 
-        let obj1006 = this.eds.getEntry(0x1006);
+        let obj1006 = this.od.getEntry(0x1006);
         if(obj1006 === undefined) {
-            obj1006 = this.eds.addEntry(0x1006, {
+            obj1006 = this.od.addEntry(0x1006, {
                 parameterName:  'Communication cycle period',
                 objectType:     ObjectType.VAR,
                 dataType:       DataType.UNSIGNED32,
             });
         }
 
-        let obj1019 = this.eds.getEntry(0x1019);
+        let obj1019 = this.od.getEntry(0x1019);
         if(obj1019 === undefined) {
-            obj1019 = this.eds.addEntry(0x1019, {
+            obj1019 = this.od.addEntry(0x1019, {
                 parameterName:  'Synchronous counter overflow value',
                 objectType:     ObjectType.VAR,
                 dataType:       DataType.UNSIGNED8,
